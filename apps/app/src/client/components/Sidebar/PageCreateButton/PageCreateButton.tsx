@@ -55,7 +55,7 @@ export const PageCreateButton = React.memo((): JSX.Element => {
       <div className="btn-group flex-grow-1">
         <CreateButton
           className="z-2"
-          onClick={createNewPageWithToastr}
+          onClick={() => openPageCreateModal(currentPagePath)}
           disabled={isNewPageCreating || isTodaysPageCreating || isTemplatePageCreating}
         />
       </div>
