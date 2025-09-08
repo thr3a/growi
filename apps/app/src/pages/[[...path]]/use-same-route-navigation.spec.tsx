@@ -6,7 +6,7 @@ import { vi } from 'vitest';
 import { mock } from 'vitest-mock-extended';
 
 import { useFetchCurrentPage } from '~/states/page';
-import { useEditingMarkdown } from '~/states/ui/editor';
+import { useSetEditingMarkdown } from '~/states/ui/editor';
 
 import { useSameRouteNavigation } from './use-same-route-navigation';
 
@@ -47,7 +47,7 @@ describe('useSameRouteNavigation', () => {
       fetchCurrentPage: mockFetchCurrentPage,
     });
 
-    (useEditingMarkdown as ReturnType<typeof vi.fn>).mockReturnValue(['', mockSetEditingMarkdown]);
+    (useSetEditingMarkdown as ReturnType<typeof vi.fn>).mockReturnValue(mockSetEditingMarkdown);
 
     mockFetchCurrentPage.mockResolvedValue(pageDataMock);
   });
