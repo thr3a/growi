@@ -24,9 +24,9 @@ import { useUpdatePage, extractRemoteRevisionDataFromErrorObj } from '~/client/s
 import { uploadAttachments } from '~/client/services/upload-attachments';
 import { toastError, toastSuccess, toastWarning } from '~/client/util/toastr';
 import { useShouldExpandContent } from '~/services/layout/use-should-expand-content';
-import { useIsEditable } from '~/states/context';
 import { useCurrentPathname, useCurrentUser } from '~/states/global';
 import {
+  useIsEditable,
   useCurrentPagePath,
   useCurrentPageData,
   useCurrentPageId,

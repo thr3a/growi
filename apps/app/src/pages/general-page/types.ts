@@ -5,8 +5,6 @@ import type {
 import type { RendererConfig } from '~/interfaces/services/renderer';
 import type { PageDocument } from '~/server/models/page';
 
-import type { CommonInitialProps } from '../common-props';
-
 export type IPageToShowRevisionWithMeta = IDataWithMeta<IPagePopulatedToShowRevision & PageDocument, IPageInfo>;
 
 export type RendererConfigProps = {
@@ -39,12 +37,17 @@ export type ServerConfigurationProps = {
   },
 }
 
-export type GeneralPageInitialProps = CommonInitialProps & RendererConfigProps & ServerConfigurationProps & {
-  pageWithMeta: IPageToShowRevisionWithMeta | null,
-  skipSSR?: boolean,
-
-  // Page state information determined on server-side
+export type GeneralPageStatesProps = {
   isNotFound: boolean,
   isForbidden: boolean,
   isNotCreatable: boolean,
+}
+
+// Do not include CommonEachProps for multi stage
+export type GeneralPageEachProps = GeneralPageStatesProps;
+
+// Do not include CommonEachProps for multi stage
+export type GeneralPageInitialProps = GeneralPageStatesProps & RendererConfigProps & ServerConfigurationProps & {
+  pageWithMeta: IPageToShowRevisionWithMeta | null,
+  skipSSR?: boolean,
 }

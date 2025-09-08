@@ -1,7 +1,8 @@
 import type { IShareLinkHasId } from '~/interfaces/share-link';
+import type { CommonEachProps, CommonInitialProps } from '~/pages/common-props';
 import type { GeneralPageInitialProps } from '~/pages/general-page';
 
-export type ShareLinkInitialProps = Pick<GeneralPageInitialProps, 'pageWithMeta' | 'skipSSR'> & (
+export type ShareLinkPageStatesProps = Pick<GeneralPageInitialProps, 'pageWithMeta' | 'skipSSR'> & (
   {
     isNotFound: true,
     isExpired: undefined,
@@ -16,3 +17,9 @@ export type ShareLinkInitialProps = Pick<GeneralPageInitialProps, 'pageWithMeta'
     shareLink: IShareLinkHasId,
   }
 );
+
+export type Stage2EachProps = ShareLinkPageStatesProps;
+export type Stage2InitialProps = Stage2EachProps & GeneralPageInitialProps;
+
+export type EachProps = CommonEachProps & Stage2EachProps;
+export type InitialProps = CommonEachProps & CommonInitialProps & Stage2InitialProps;

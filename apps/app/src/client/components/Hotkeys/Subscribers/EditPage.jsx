@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import PropTypes from 'prop-types';
 
-import { useIsEditable } from '~/states/context';
+import { useIsEditable } from '~/states/page';
 import { EditorMode, useEditorMode } from '~/states/ui/editor';
 
 const EditPage = (props) => {

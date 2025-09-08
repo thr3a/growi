@@ -3,8 +3,7 @@ import type { JSX } from 'react';
 import dynamic from 'next/dynamic';
 
 import { useHashChangedEffect } from '~/client/services/side-effects/hash-changed';
-import { useIsEditable } from '~/states/context';
-import { useLatestRevision } from '~/states/page';
+import { useIsEditable, useLatestRevision } from '~/states/page';
 import { EditorMode, useEditorMode } from '~/states/ui/editor';
 import { useReservedNextCaretLine } from '~/stores/editor';
 

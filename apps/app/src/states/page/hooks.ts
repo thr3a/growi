@@ -1,12 +1,16 @@
 import { pagePathUtils } from '@growi/core/dist/utils';
 import { useAtomValue } from 'jotai';
-
+import { useAtomCallback } from 'jotai/utils';
+import { useCallback, useMemo } from 'react';
+import { useIsGuestUser, useIsReadOnlyUser } from '../context';
 import { useCurrentPathname } from '../global';
-
 import {
   currentPageDataAtom,
   currentPageIdAtom,
   currentPagePathAtom,
+  isForbiddenAtom,
+  isIdenticalPathAtom,
+  isNotCreatableAtom,
   isRevisionOutdatedAtom,
   isTrashPageAtom,
   latestRevisionAtom,
@@ -35,6 +39,12 @@ export const useCurrentPageData = () => useAtomValue(currentPageDataAtom);
 export const usePageNotFound = () => useAtomValue(pageNotFoundAtom);
 
 export const usePageNotCreatable = () => useAtomValue(pageNotCreatableAtom);
+
+export const useIsIdenticalPath = () => useAtomValue(isIdenticalPathAtom);
+
+export const useIsForbidden = () => useAtomValue(isForbiddenAtom);
+
+export const useIsNotCreatable = () => useAtomValue(isNotCreatableAtom);
 
 export const useLatestRevision = () => useAtomValue(latestRevisionAtom);
 
@@ -88,3 +98,25 @@ export const useIsTrashPage = (): boolean => useAtomValue(isTrashPageAtom);
  */
 export const useIsRevisionOutdated = (): boolean =>
   useAtomValue(isRevisionOutdatedAtom);
+
+/**
+ * Computed hook for checking if current page is editable
+ */
+export const useIsEditable = () => {
+  const isGuestUser = useIsGuestUser();
+  const isReadOnlyUser = useIsReadOnlyUser();
+
+  const getCombinedConditions = useAtomCallback(
+    useCallback((get) => {
+      const isForbidden = get(isForbiddenAtom);
+      const isNotCreatable = get(isNotCreatableAtom);
+      const isIdenticalPath = get(isIdenticalPathAtom);
+
+      return !isForbidden && !isIdenticalPath && !isNotCreatable;
+    }, []),
+  );
+
+  return useMemo(() => {
+    return !isGuestUser && !isReadOnlyUser && getCombinedConditions();
+  }, [getCombinedConditions, isGuestUser, isReadOnlyUser]);
+};

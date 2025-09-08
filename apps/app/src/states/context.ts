@@ -2,27 +2,6 @@ import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { currentUserAtomGetter, growiCloudUriAtomGetter } from './global';
 
 /**
- * Atom for checking if current path is identical
- */
-const isIdenticalPathAtom = atom<boolean>(false);
-
-export const useIsIdenticalPath = () => useAtomValue(isIdenticalPathAtom);
-
-/**
- * Atom for checking if current page is forbidden
- */
-const isForbiddenAtom = atom<boolean>(false);
-
-export const useIsForbidden = () => useAtomValue(isForbiddenAtom);
-
-/**
- * Atom for checking if current page is not creatable
- */
-const isNotCreatableAtom = atom<boolean>(false);
-
-export const useIsNotCreatable = () => useAtomValue(isNotCreatableAtom);
-
-/**
  * Computed atom for checking if current user is a guest user
  * Depends on currentUser atom
  */
@@ -97,25 +76,3 @@ const growiDocumentationUrlAtom = atom((get) => {
 
 export const useGrowiDocumentationUrl = () =>
   useAtomValue(growiDocumentationUrlAtom);
-
-/**
- * Computed atom for checking if current page is editable
- * Depends on multiple atoms: isGuestUser, isReadOnlyUser, isForbidden, isNotCreatable, isIdenticalPath
- */
-const isEditableAtom = atom((get) => {
-  const isGuestUser = get(isGuestUserAtom);
-  const isReadOnlyUser = get(isReadOnlyUserAtom);
-  const isForbidden = get(isForbiddenAtom);
-  const isNotCreatable = get(isNotCreatableAtom);
-  const isIdenticalPath = get(isIdenticalPathAtom);
-
-  return (
-    !isForbidden &&
-    !isIdenticalPath &&
-    !isNotCreatable &&
-    !isGuestUser &&
-    !isReadOnlyUser
-  );
-});
-
-export const useIsEditable = () => useAtomValue(isEditableAtom);

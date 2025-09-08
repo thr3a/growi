@@ -10,8 +10,9 @@ import { PagePathNavTitle } from '~/components/Common/PagePathNavTitle';
 import type { RendererConfig } from '~/interfaces/services/renderer';
 import { useShouldExpandContent } from '~/services/layout/use-should-expand-content';
 import { generateSSRViewOptions } from '~/services/renderer/renderer';
-import { useIsForbidden, useIsIdenticalPath, useIsNotCreatable } from '~/states/context';
-import { useCurrentPageData, useCurrentPageId, usePageNotFound } from '~/states/page';
+import {
+  useIsForbidden, useIsIdenticalPath, useIsNotCreatable, useCurrentPageData, useCurrentPageId, usePageNotFound,
+} from '~/states/page';
 import { useViewOptions } from '~/stores/renderer';
 
 import { UserInfo } from '../User/UserInfo';

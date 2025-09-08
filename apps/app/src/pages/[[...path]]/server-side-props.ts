@@ -4,7 +4,6 @@ import { getServerSideBasicLayoutProps } from '../basic-layout-page';
 import {
   getServerSideI18nProps, getServerSideCommonInitialProps,
 } from '../common-props';
-import type { GeneralPageInitialProps } from '../general-page';
 import {
   getServerSideRendererConfigProps,
   getActivityAction,
@@ -16,7 +15,7 @@ import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 
 import { NEXT_JS_ROUTING_PAGE } from './consts';
 import { getPageDataForInitial, getPageDataForSameRoute } from './page-data-props';
-import type { PageEachProps } from './types';
+import type { Stage2InitialProps, Stage2EachProps } from './types';
 
 
 const nextjsRoutingProps = {
@@ -26,7 +25,7 @@ const nextjsRoutingProps = {
 };
 
 export async function getServerSidePropsForInitial(context: GetServerSidePropsContext):
-    Promise<GetServerSidePropsResult<GeneralPageInitialProps & PageEachProps>> {
+    Promise<GetServerSidePropsResult<Stage2InitialProps>> {
   const [
     commonInitialResult,
     basicLayoutResult,
@@ -67,7 +66,7 @@ export async function getServerSidePropsForInitial(context: GetServerSidePropsCo
   return mergedResult;
 }
 
-export async function getServerSidePropsForSameRoute(context: GetServerSidePropsContext): Promise<GetServerSidePropsResult<PageEachProps>> {
+export async function getServerSidePropsForSameRoute(context: GetServerSidePropsContext): Promise<GetServerSidePropsResult<Stage2EachProps>> {
   // Get page data
   const result = await getPageDataForSameRoute(context);
 

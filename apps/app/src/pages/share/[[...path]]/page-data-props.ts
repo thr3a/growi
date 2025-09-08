@@ -8,7 +8,7 @@ import type { IShareLink } from '~/interfaces/share-link';
 import type { PageModel } from '~/server/models/page';
 import type { ShareLinkModel } from '~/server/models/share-link';
 
-import type { ShareLinkInitialProps } from './types';
+import type { ShareLinkPageStatesProps } from './types';
 
 
 let mongooseModel: typeof model;
@@ -16,7 +16,7 @@ let Page: PageModel;
 let ShareLink: ShareLinkModel;
 
 export const getPageDataForInitial = async(context: GetServerSidePropsContext):
-    Promise<GetServerSidePropsResult<ShareLinkInitialProps>> => {
+    Promise<GetServerSidePropsResult<ShareLinkPageStatesProps>> => {
 
   const req = context.req as CrowiRequest;
   const { crowi, params } = req;

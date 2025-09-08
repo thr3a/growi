@@ -19,14 +19,13 @@ import { useHydratePageAtoms } from '~/states/page/hydrate';
 import { disableLinkSharingAtom, useRendererConfig } from '~/states/server-configurations';
 
 import type { NextPageWithLayout } from '../../_app.page';
-import type { GeneralPageInitialProps } from '../../general-page';
 import { useInitialCSRFetch } from '../../general-page';
 import { useHydrateGeneralPageConfigurationAtoms } from '../../general-page/hydrate';
 import { registerPageToShowRevisionWithMeta } from '../../general-page/superjson';
 
 import { NEXT_JS_ROUTING_PAGE } from './consts';
 import { getServerSidePropsForInitial } from './server-side-props';
-import type { ShareLinkInitialProps } from './types';
+import type { InitialProps } from './types';
 
 // call superjson custom register
 registerPageToShowRevisionWithMeta();
@@ -35,7 +34,6 @@ registerPageToShowRevisionWithMeta();
 const GrowiContextualSubNavigation = dynamic(() => import('~/client/components/Navbar/GrowiContextualSubNavigation'), { ssr: false });
 
 
-type InitialProps = CommonEachProps & GeneralPageInitialProps & ShareLinkInitialProps;
 type Props = CommonEachProps | InitialProps;
 
 const isInitialProps = (props: Props): props is InitialProps => {

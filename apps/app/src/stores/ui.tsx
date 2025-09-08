@@ -16,11 +16,11 @@ import useSWRImmutable from 'swr/immutable';
 
 import type { UpdateDescCountData } from '~/interfaces/websocket';
 import {
-  useIsEditable, useIsIdenticalPath, useIsReadOnlyUser, useIsSharedUser,
+  useIsReadOnlyUser, useIsSharedUser,
 } from '~/states/context';
 import { useCurrentUser } from '~/states/global';
 import {
-  usePageNotFound, useCurrentPagePath, useIsTrashPage, useCurrentPageId,
+  useIsEditable, useIsIdenticalPath, usePageNotFound, useCurrentPagePath, useIsTrashPage, useCurrentPageId,
 } from '~/states/page';
 import { useShareLinkId } from '~/states/page/hooks';
 import { EditorMode, useEditorMode } from '~/states/ui/editor';

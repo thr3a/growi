@@ -3,7 +3,6 @@ import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import {
   getServerSideI18nProps, getServerSideCommonInitialProps,
 } from '../../common-props';
-import type { GeneralPageInitialProps } from '../../general-page';
 import {
   getServerSideGeneralPageProps,
   getServerSideRendererConfigProps,
@@ -13,7 +12,7 @@ import { addActivity } from '../../utils/activity';
 import { mergeGetServerSidePropsResults } from '../../utils/server-side-props';
 
 import { getPageDataForInitial } from './page-data-props';
-import type { ShareLinkInitialProps } from './types';
+import type { Stage2InitialProps } from './types';
 
 
 const basisProps = {
@@ -25,7 +24,7 @@ const basisProps = {
 };
 
 export async function getServerSidePropsForInitial(context: GetServerSidePropsContext):
-    Promise<GetServerSidePropsResult<GeneralPageInitialProps & ShareLinkInitialProps>> {
+    Promise<GetServerSidePropsResult<Stage2InitialProps>> {
 
   const [
     commonInitialResult,

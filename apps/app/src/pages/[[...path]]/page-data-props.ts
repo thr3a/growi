@@ -9,13 +9,13 @@ import type { PageModel } from '~/server/models/page';
 import type { IPageRedirect, PageRedirectModel } from '~/server/models/page-redirect';
 
 import type { CommonEachProps } from '../common-props';
-import type { GeneralPageInitialProps } from '../general-page';
+import type { GeneralPageInitialProps, GeneralPageStatesProps } from '../general-page';
 
 import type { EachProps } from './types';
 
 // Utility to resolve path, redirect, and identical path page check
 type PathResolutionResult = {
-  resolvedPathname: string;
+  resolvedPagePath: string;
   isIdenticalPathPage: boolean;
   redirectFrom?: string;
 };
@@ -24,10 +24,7 @@ let mongooseModel: typeof model;
 let Page: PageModel;
 let PageRedirect: PageRedirectModel;
 
-async function resolvePathAndCheckIdentical(
-    path: string,
-    user: IUser | undefined,
-): Promise<PathResolutionResult> {
+async function initModels(): Promise<void> {
   if (mongooseModel == null) {
     mongooseModel = (await import('mongoose')).model;
   }
@@ -37,29 +34,70 @@ async function resolvePathAndCheckIdentical(
   if (PageRedirect == null) {
     PageRedirect = mongooseModel<IPageRedirect, PageRedirectModel>('PageRedirect');
   }
+}
+
+async function resolvePathAndCheckIdentical(
+    path: string,
+    user: IUser | undefined,
+): Promise<PathResolutionResult> {
+  await initModels();
 
   const isPermalink = _isPermalink(path);
-  let resolvedPathname = path;
+  let resolvedPagePath = path;
   let redirectFrom: string | undefined;
   let isIdenticalPathPage = false;
 
   if (!isPermalink) {
     const chains = await PageRedirect.retrievePageRedirectEndpoints(path);
     if (chains != null) {
-      resolvedPathname = chains.end.toPath;
+      resolvedPagePath = chains.end.toPath;
       redirectFrom = chains.start.fromPath;
     }
-    const multiplePagesCount = await Page.countByPathAndViewer(resolvedPathname, user, null, true);
+    const multiplePagesCount = await Page.countByPathAndViewer(resolvedPagePath, user, null, true);
     isIdenticalPathPage = multiplePagesCount > 1;
   }
-  return { resolvedPathname, isIdenticalPathPage, redirectFrom };
+  return { resolvedPagePath, isIdenticalPathPage, redirectFrom };
+}
+
+function getPageStatesPropsForIdenticalPathPage(): GeneralPageStatesProps {
+  return {
+    isNotFound: false,
+    isNotCreatable: true,
+    isForbidden: false,
+  };
+}
+
+async function getPageStatesProps(page: IPage | null, pagePath: string, pageId?: string | null): Promise<GeneralPageStatesProps> {
+  await initModels();
+
+  if (page != null) {
+    // Existing page
+    return {
+      isNotFound: page.isEmpty,
+      isNotCreatable: false,
+      isForbidden: false,
+    };
+  }
+
+  // Handle non-existent page
+  const isPermalink = _isPermalink(pagePath);
+  const count = isPermalink && pageId
+    ? await Page.count({ _id: pageId })
+    : await Page.count({ path: pagePath });
+
+  return {
+    isNotFound: true,
+    isNotCreatable: !isCreatablePage(pagePath),
+    isForbidden: count > 0,
+  };
 }
 
 // Page data retrieval for initial load - returns GetServerSidePropsResult
 export async function getPageDataForInitial(
     context: GetServerSidePropsContext,
 ): Promise<GetServerSidePropsResult<
-  Pick<GeneralPageInitialProps, 'pageWithMeta' | 'isNotFound' | 'isNotCreatable' | 'isForbidden' | 'skipSSR'> &
+  GeneralPageStatesProps &
+  Pick<GeneralPageInitialProps, 'pageWithMeta' | 'skipSSR'> &
   Pick<EachProps, 'currentPathname' | 'isIdenticalPathPage' | 'redirectFrom'>
 >> {
   const req: CrowiRequest = context.req as CrowiRequest;
@@ -77,25 +115,23 @@ export async function getPageDataForInitial(
   const pageId = _isPermalink(pathFromUrl) ? removeHeadingSlash(pathFromUrl) : null;
   const isPermalink = _isPermalink(pathFromUrl);
 
-  const { resolvedPathname, isIdenticalPathPage, redirectFrom } = await resolvePathAndCheckIdentical(pathFromUrl, user);
+  const { resolvedPagePath, isIdenticalPathPage, redirectFrom } = await resolvePathAndCheckIdentical(pathFromUrl, user);
 
   if (isIdenticalPathPage) {
     return {
       props: {
-        currentPathname: resolvedPathname,
+        currentPathname: resolvedPagePath,
         isIdenticalPathPage: true,
         pageWithMeta: null,
-        isNotFound: false,
-        isNotCreatable: true,
-        isForbidden: false,
         skipSSR: false,
         redirectFrom,
+        ...getPageStatesPropsForIdenticalPathPage(),
       },
     };
   }
 
   // Get full page data
-  const pageWithMeta = await pageService.findPageAndMetaDataByViewer(pageId, resolvedPathname, user, true);
+  const pageWithMeta = await pageService.findPageAndMetaDataByViewer(pageId, resolvedPagePath, user, true);
   const { data: page, meta } = pageWithMeta ?? {};
 
   // Add user to seen users
@@ -115,13 +151,13 @@ export async function getPageDataForInitial(
     const populatedPage = await page.populateDataToShowRevision(skipSSR);
 
     // Handle URL conversion
-    let finalPathname = resolvedPathname;
+    let finalPathname = resolvedPagePath;
     if (page != null && !page.isEmpty) {
       if (isPermalink) {
         finalPathname = page.path;
       }
       else {
-        const isToppage = isTopPage(resolvedPathname);
+        const isToppage = isTopPage(resolvedPagePath);
         if (!isToppage) {
           finalPathname = `/${page._id}`;
         }
@@ -133,30 +169,21 @@ export async function getPageDataForInitial(
         currentPathname: finalPathname,
         isIdenticalPathPage: false,
         pageWithMeta: { data: populatedPage, meta },
-        isNotFound: page.isEmpty,
-        isNotCreatable: false,
-        isForbidden: false,
         skipSSR,
         redirectFrom,
+        ...await getPageStatesProps(page, resolvedPagePath, pageId),
       },
     };
   }
 
-  // Handle non-existent page
-  const count = isPermalink
-    ? await Page.count({ _id: pageId })
-    : await Page.count({ path: resolvedPathname });
-
   return {
     props: {
-      currentPathname: resolvedPathname,
+      currentPathname: resolvedPagePath,
       isIdenticalPathPage: false,
       pageWithMeta: null,
-      isNotFound: true,
-      isNotCreatable: !isCreatablePage(resolvedPathname),
-      isForbidden: count > 0,
       skipSSR: false,
       redirectFrom,
+      ...await getPageStatesProps(null, resolvedPagePath, pageId),
     },
   };
 }
@@ -165,6 +192,7 @@ export async function getPageDataForInitial(
 export async function getPageDataForSameRoute(
     context: GetServerSidePropsContext,
 ): Promise<GetServerSidePropsResult<
+    GeneralPageStatesProps &
     Pick<CommonEachProps, 'currentPathname'> &
     Pick<EachProps, 'currentPathname' | 'isIdenticalPathPage' | 'redirectFrom'>
 >> {
@@ -175,30 +203,31 @@ export async function getPageDataForSameRoute(
   const pageId = _isPermalink(currentPathname) ? removeHeadingSlash(currentPathname) : null;
   const isPermalink = _isPermalink(currentPathname);
 
-  const { resolvedPathname, isIdenticalPathPage, redirectFrom } = await resolvePathAndCheckIdentical(currentPathname, user);
+  const { resolvedPagePath, isIdenticalPathPage, redirectFrom } = await resolvePathAndCheckIdentical(currentPathname, user);
 
   if (isIdenticalPathPage) {
     return {
       props: {
-        currentPathname: resolvedPathname,
+        currentPathname: resolvedPagePath,
         isIdenticalPathPage: true,
         redirectFrom,
+        ...getPageStatesPropsForIdenticalPathPage(),
       },
     };
   }
 
   // For same route access, do minimal page lookup
   const basicPageInfo = await Page.findOne(
-    isPermalink ? { _id: pageId } : { path: resolvedPathname },
+    isPermalink ? { _id: pageId } : { path: resolvedPagePath },
   ).exec();
 
-  let finalPathname = resolvedPathname;
+  let finalPathname = resolvedPagePath;
   if (basicPageInfo != null && !basicPageInfo.isEmpty) {
     if (isPermalink) {
       finalPathname = basicPageInfo.path;
     }
     else {
-      const isToppage = isTopPage(resolvedPathname);
+      const isToppage = isTopPage(resolvedPagePath);
       if (!isToppage) {
         finalPathname = `/${basicPageInfo._id}`;
       }
@@ -210,6 +239,7 @@ export async function getPageDataForSameRoute(
       currentPathname: finalPathname,
       isIdenticalPathPage: false,
       redirectFrom,
+      ...await getPageStatesProps(basicPageInfo, resolvedPagePath, pageId),
     },
   };
 }

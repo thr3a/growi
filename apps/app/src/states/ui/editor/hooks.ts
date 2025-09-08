@@ -1,8 +1,6 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useCallback } from 'react';
-
-import { useIsEditable } from '~/states/context';
-import { usePageNotFound } from '~/states/page';
+import { useIsEditable, usePageNotFound } from '~/states/page';
 
 import {
   editingMarkdownAtom,

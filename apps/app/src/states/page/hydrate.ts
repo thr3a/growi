@@ -4,6 +4,7 @@ import { useHydrateAtoms } from 'jotai/utils';
 import {
   currentPageDataAtom,
   currentPageIdAtom,
+  isForbiddenAtom,
   latestRevisionAtom,
   pageNotCreatableAtom,
   pageNotFoundAtom,
@@ -41,10 +42,11 @@ import {
 export const useHydratePageAtoms = (
   page: IPagePopulatedToShowRevision | undefined,
   options?: {
-    isNotFound?: boolean;
-    isNotCreatable?: boolean;
     isLatestRevision?: boolean;
     shareLinkId?: string;
+    isNotFound?: boolean; // always overwrited
+    isNotCreatable?: boolean; // always overwrited
+    isForbidden?: boolean; // always overwrited
     redirectFrom?: string; // always overwrited
     templateTags?: string[]; // always overwrited
     templateBody?: string; // always overwrited
@@ -54,9 +56,6 @@ export const useHydratePageAtoms = (
     // Core page state - automatically extract from page object
     [currentPageIdAtom, page?._id],
     [currentPageDataAtom, page],
-    [pageNotFoundAtom, options?.isNotFound ?? (page == null || page.isEmpty)],
-    [pageNotCreatableAtom, options?.isNotCreatable ?? false],
-    [latestRevisionAtom, options?.isLatestRevision ?? true],
 
     // ShareLink page state
     [shareLinkIdAtom, options?.shareLinkId],
@@ -69,6 +68,10 @@ export const useHydratePageAtoms = (
   // always overwrited
   useHydrateAtoms(
     [
+      [pageNotFoundAtom, options?.isNotFound ?? (page == null || page.isEmpty)],
+      [pageNotCreatableAtom, options?.isNotCreatable ?? false],
+      [isForbiddenAtom, options?.isForbidden ?? false],
+      [latestRevisionAtom, options?.isLatestRevision ?? true],
       [redirectFromAtom, options?.redirectFrom ?? undefined],
       // Template data - from options (not auto-extracted from page)
       [templateTagsAtom, options?.templateTags ?? []],

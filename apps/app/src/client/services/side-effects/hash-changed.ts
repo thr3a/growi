@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { useIsEditable } from '~/states/context';
+import { useIsEditable } from '~/states/page';
 import { useEditorMode, determineEditorModeByHash } from '~/states/ui/editor';
 
 /**

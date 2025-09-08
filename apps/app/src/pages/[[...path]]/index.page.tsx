@@ -24,10 +24,8 @@ import { useSetEditingMarkdown } from '~/states/ui/editor';
 import { useSWRMUTxCurrentPageYjsData } from '~/stores/yjs';
 
 import type { NextPageWithLayout } from '../_app.page';
-import type { BasicLayoutConfigurationProps } from '../basic-layout-page';
 import { useHydrateBasicLayoutConfigurationAtoms } from '../basic-layout-page/hydrate';
 import { getServerSideCommonEachProps } from '../common-props';
-import type { GeneralPageInitialProps } from '../general-page';
 import { useInitialCSRFetch } from '../general-page';
 import { useHydrateGeneralPageConfigurationAtoms } from '../general-page/hydrate';
 import { registerPageToShowRevisionWithMeta } from '../general-page/superjson';
@@ -37,7 +35,7 @@ import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 
 import { NEXT_JS_ROUTING_PAGE } from './consts';
 import { getServerSidePropsForInitial, getServerSidePropsForSameRoute } from './server-side-props';
-import type { EachProps } from './types';
+import type { EachProps, InitialProps } from './types';
 import { useSameRouteNavigation } from './use-same-route-navigation';
 import { useShallowRouting } from './use-shallow-routing';
 
@@ -70,7 +68,6 @@ const ConflictDiffModal = dynamic(() => import('~/client/components/PageEditor/C
 
 const EditablePageEffects = dynamic(() => import('~/client/components/Page/EditablePageEffects').then(mod => mod.EditablePageEffects), { ssr: false });
 
-type InitialProps = EachProps & GeneralPageInitialProps & BasicLayoutConfigurationProps;
 type Props = EachProps | InitialProps;
 
 const isInitialProps = (props: Props): props is InitialProps => {
@@ -89,6 +86,11 @@ const Page: NextPageWithLayout<Props> = (props: Props) => {
   const pageData = isInitialProps(props) ? props.pageWithMeta?.data : undefined;
   useHydratePageAtoms(pageData, {
     redirectFrom: props.redirectFrom ?? undefined,
+    isNotFound: props.isNotFound,
+    isNotCreatable: props.isNotCreatable,
+    isForbidden: props.isForbidden,
+    templateTags: props.templateTagData,
+    templateBody: props.templateBodyData,
   });
 
   const currentPage = useCurrentPageData();

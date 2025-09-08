@@ -14,8 +14,7 @@ import {
   DropdownToggle, DropdownMenu, DropdownItem, Modal,
 } from 'reactstrap';
 
-import { useIsEditable } from '~/states/context';
-import { useCurrentPageData, useCurrentPagePath } from '~/states/page';
+import { useIsEditable, useCurrentPageData, useCurrentPagePath } from '~/states/page';
 import {
   isAclEnabledAtom,
   isSlackConfiguredAtom,
