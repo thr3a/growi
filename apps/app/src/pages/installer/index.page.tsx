@@ -14,8 +14,8 @@ import type { CommonEachProps, CommonInitialProps } from '../common-props';
 import {
   getServerSideCommonEachProps, getServerSideCommonInitialProps, getServerSideI18nProps,
 } from '../common-props';
-import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 import { useCustomTitle } from '../utils/page-title-customization';
+import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 
 
 const InstallerForm = dynamic(() => import('~/client/components/InstallerForm'), { ssr: false });
@@ -85,7 +85,7 @@ export const getServerSideProps: GetServerSideProps = async(context: GetServerSi
     getServerSideCommonInitialProps(context),
     getServerSideCommonEachProps(context),
     getServerSideConfigurationProps(context),
-    getServerSideI18nProps(context, ['translation']),
+    getServerSideI18nProps(context, ['translation'], { preloadAllLang: true }),
   ]);
 
   return mergeGetServerSidePropsResults(commonInitialResult,

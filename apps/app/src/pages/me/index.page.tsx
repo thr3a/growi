@@ -155,7 +155,7 @@ export const getServerSideProps: GetServerSideProps = async(context: GetServerSi
     getServerSideCommonEachProps(context),
     getServerSideBasicLayoutProps(context),
     getServerSideConfigurationProps(context),
-    getServerSideI18nProps(context, ['translation', 'admin']),
+    getServerSideI18nProps(context, ['translation', 'admin'], { preloadAllLang: true }),
   ]);
 
   return mergeGetServerSidePropsResults(commonInitialResult,
