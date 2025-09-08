@@ -3,7 +3,7 @@ import {
 } from 'react';
 
 import {
-  useDrawerOpened, usePreferCollapsedMode, useSidebarMode, useCollapsedContentsOpened,
+  useDrawerOpened, useSetPreferCollapsedMode, useSidebarMode, useCollapsedContentsOpened,
 } from '~/states/ui/sidebar';
 
 
@@ -14,7 +14,7 @@ export const ToggleCollapseButton = memo((): JSX.Element => {
 
   const { isDrawerMode, isCollapsedMode } = useSidebarMode();
   const [isDrawerOpened, setIsDrawerOpened] = useDrawerOpened();
-  const [, setPreferCollapsedMode] = usePreferCollapsedMode();
+  const setPreferCollapsedMode = useSetPreferCollapsedMode();
   const [, setCollapsedContentsOpened] = useCollapsedContentsOpened();
 
   const toggleDrawer = useCallback(() => {

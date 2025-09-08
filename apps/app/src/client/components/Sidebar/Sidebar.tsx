@@ -13,7 +13,7 @@ import { useDeviceLargerThanXl } from '~/states/ui/device';
 import { EditorMode, useEditorMode } from '~/states/ui/editor';
 import {
   useDrawerOpened,
-  usePreferCollapsedMode,
+  useSetPreferCollapsedMode,
   useSidebarMode,
   useCollapsedContentsOpened,
   useCurrentProductNavWidth,
@@ -74,7 +74,7 @@ const ResizableContainer = memo((props: ResizableContainerProps): JSX.Element =>
   const { isDrawerMode, isCollapsedMode, isDockMode } = useSidebarMode();
   const [, setIsDrawerOpened] = useDrawerOpened();
   const [currentProductNavWidth, setCurrentProductNavWidth] = useCurrentProductNavWidth();
-  const [, setPreferCollapsedMode] = usePreferCollapsedMode();
+  const setPreferCollapsedMode = useSetPreferCollapsedMode();
   const [, setCollapsedContentsOpened] = useCollapsedContentsOpened();
 
   const [isClient, setClient] = useState(false);

@@ -117,7 +117,7 @@ export const use[Modal]Actions = (): [Modal]Actions => {
 ## ✅ 移行完了済み状態
 
 ### UI関連状態（完了）
-- ✅ **サイドバー状態**: `useDrawerOpened`, `usePreferCollapsedMode`, `useSidebarMode`, `useCurrentSidebarContents`, `useCollapsedContentsOpened`, `useCurrentProductNavWidth`
+- ✅ **サイドバー状態**: `useDrawerOpened`, `useSetPreferCollapsedMode`, `useSidebarMode`, `useCurrentSidebarContents`, `useCollapsedContentsOpened`, `useCurrentProductNavWidth`
 - ✅ **デバイス状態**: `useDeviceLargerThanXl`
 - ✅ **エディター状態**: `useEditorMode`, `useSelectedGrant`
 - ✅ **ページUI状態**: `usePageControlsX`

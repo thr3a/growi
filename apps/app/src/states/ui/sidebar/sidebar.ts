@@ -1,4 +1,5 @@
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useSetAtom } from 'jotai';
+import { useCallback, useMemo } from 'react';
 
 import { scheduleToPut } from '~/client/services/user-ui-settings';
 import { SidebarContentsType, SidebarMode } from '~/interfaces/ui';
@@ -22,9 +23,8 @@ const preferCollapsedModeAtomExt = atom(
   },
 );
 
-export const usePreferCollapsedMode = () => {
-  return useAtom(preferCollapsedModeAtomExt);
-};
+export const useSetPreferCollapsedMode = () =>
+  useSetAtom(preferCollapsedModeAtomExt);
 
 // Collapsed contents opened state (temporary UI state, no persistence needed)
 const isCollapsedContentsOpenedAtom = atom(false);
@@ -95,14 +95,28 @@ export const useSidebarMode = (): {
 } & DetectSidebarModeUtils => {
   const [sidebarMode] = useAtom(sidebarModeAtom);
 
-  const isDrawerMode = () => sidebarMode === SidebarMode.DRAWER;
-  const isCollapsedMode = () => sidebarMode === SidebarMode.COLLAPSED;
-  const isDockMode = () => sidebarMode === SidebarMode.DOCK;
+  const isDrawerMode = useCallback(
+    () => sidebarMode === SidebarMode.DRAWER,
+    [sidebarMode],
+  );
 
-  return {
-    sidebarMode,
-    isDrawerMode,
-    isCollapsedMode,
-    isDockMode,
-  };
+  const isCollapsedMode = useCallback(
+    () => sidebarMode === SidebarMode.COLLAPSED,
+    [sidebarMode],
+  );
+
+  const isDockMode = useCallback(
+    () => sidebarMode === SidebarMode.DOCK,
+    [sidebarMode],
+  );
+
+  return useMemo(
+    () => ({
+      sidebarMode,
+      isDrawerMode,
+      isCollapsedMode,
+      isDockMode,
+    }),
+    [sidebarMode, isDrawerMode, isCollapsedMode, isDockMode],
+  );
 };
