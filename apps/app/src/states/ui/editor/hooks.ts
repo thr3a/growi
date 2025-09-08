@@ -1,4 +1,4 @@
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useCallback } from 'react';
 
 import { useIsEditable } from '~/states/context';
@@ -50,7 +50,8 @@ export const useEditorMode = (): UseEditorModeReturn => {
   };
 };
 
-export const useEditingMarkdown = () => useAtom(editingMarkdownAtom);
+export const useEditingMarkdown = () => useAtomValue(editingMarkdownAtom);
+export const useSetEditingMarkdown = () => useSetAtom(editingMarkdownAtom);
 
 /**
  * Hook for managing selected grant in page editor

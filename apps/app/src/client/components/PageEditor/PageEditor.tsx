@@ -106,7 +106,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   const currentPathname = useCurrentPathname();
   const currentPage = useCurrentPageData();
   const [selectedGrant] = useSelectedGrant();
-  const [editingMarkdown] = useEditingMarkdown();
+  const editingMarkdown = useEditingMarkdown();
   const isEnabledAttachTitleHeader = useAtomValue(isEnabledAttachTitleHeaderAtom);
   const templateBody = useTemplateBody();
   const isEditable = useIsEditable();

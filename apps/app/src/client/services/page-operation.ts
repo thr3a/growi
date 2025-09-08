@@ -6,8 +6,8 @@ import urljoin from 'url-join';
 
 import type { SyncLatestRevisionBody } from '~/interfaces/yjs';
 import { useIsGuestUser } from '~/states/context';
-import { useCurrentPageId, useFetchCurrentPage, useSetRemoteLatestPageData } from '~/states/page';
-import { useEditingMarkdown } from '~/states/ui/editor';
+import { useFetchCurrentPage, useSetRemoteLatestPageData } from '~/states/page';
+import { useSetEditingMarkdown } from '~/states/ui/editor';
 import { usePageTagsForEditors } from '~/stores/editor';
 import {
   useSWRxApplicableGrant, useSWRxTagsInfo,
@@ -99,13 +99,12 @@ export type UpdateStateAfterSaveOption = {
 }
 
 export const useUpdateStateAfterSave = (pageId: string|undefined|null, opts?: UpdateStateAfterSaveOption): (() => Promise<void>) | undefined => {
-  const setCurrentPageId = useCurrentPageId();
   const isGuestUser = useIsGuestUser();
   const { fetchCurrentPage } = useFetchCurrentPage();
   const setRemoteLatestPageData = useSetRemoteLatestPageData();
   const { mutate: mutateTagsInfo } = useSWRxTagsInfo(pageId);
   const { sync: syncTagsInfoForEditor } = usePageTagsForEditors(pageId);
-  const [, setEditingMarkdown] = useEditingMarkdown();
+  const setEditingMarkdown = useSetEditingMarkdown();
   const { mutate: mutateCurrentGrantData } = useSWRxCurrentGrantData(isGuestUser ? null : pageId);
   const { mutate: mutateApplicableGrant } = useSWRxApplicableGrant(isGuestUser ? null : pageId);
 
@@ -142,7 +141,7 @@ export const useUpdateStateAfterSave = (pageId: string|undefined|null, opts?: Up
     setRemoteLatestPageData(remoterevisionData);
   },
   // eslint-disable-next-line max-len
-  [pageId, mutateTagsInfo, syncTagsInfoForEditor, setCurrentPageId, fetchCurrentPage, opts?.supressEditingMarkdownMutation, mutateCurrentGrantData, mutateApplicableGrant, setRemoteLatestPageData, setEditingMarkdown]);
+  [pageId, mutateTagsInfo, syncTagsInfoForEditor, fetchCurrentPage, opts?.supressEditingMarkdownMutation, mutateCurrentGrantData, mutateApplicableGrant, setRemoteLatestPageData, setEditingMarkdown]);
 };
 
 export const unlink = async(path: string): Promise<void> => {

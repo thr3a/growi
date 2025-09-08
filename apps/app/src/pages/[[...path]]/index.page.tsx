@@ -20,7 +20,7 @@ import {
 import { useHydratePageAtoms } from '~/states/page/hydrate';
 import { useRendererConfig } from '~/states/server-configurations';
 import { useSetupGlobalSocket, useSetupGlobalSocketForPage } from '~/states/socket-io';
-import { useEditingMarkdown } from '~/states/ui/editor';
+import { useSetEditingMarkdown } from '~/states/ui/editor';
 import { useSWRMUTxCurrentPageYjsData } from '~/stores/yjs';
 
 import type { NextPageWithLayout } from '../_app.page';
@@ -96,7 +96,7 @@ const Page: NextPageWithLayout<Props> = (props: Props) => {
   const currentPagePath = useCurrentPagePath();
   const isNotFound = usePageNotFound();
   const rendererConfig = useRendererConfig();
-  const [, setEditingMarkdown] = useEditingMarkdown();
+  const setEditingMarkdown = useSetEditingMarkdown();
 
   const { trigger: mutateCurrentPageYjsDataFromApi } = useSWRMUTxCurrentPageYjsData();
 
