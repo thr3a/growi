@@ -26,7 +26,7 @@ export const useSetupGlobalSocket = (): void => {
       return;
     }
 
-    mutate(async() => {
+    mutate(async () => {
       const { io } = await import('socket.io-client');
       const socket = io(GLOBAL_SOCKET_NS, {
         transports: ['websocket'],
@@ -40,7 +40,7 @@ export const useSetupGlobalSocket = (): void => {
   }, [data, mutate]);
 };
 
-// comment out for porduction build error: https://github.com/weseek/growi/pull/7131
+// comment out for porduction build error: https://github.com/growilabs/growi/pull/7131
 /*
  * Global Admin Socket
  */
