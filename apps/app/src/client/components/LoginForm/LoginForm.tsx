@@ -89,7 +89,7 @@ export const LoginForm = (props: LoginFormProps): JSX.Element => {
     setLoginErrors([]);
   }, [loginErrors.length]);
 
-  const handleLoginWithLocalSubmit = useCallback(async (e) => {
+  const handleLoginWithLocalSubmit = useCallback(async(e) => {
     e.preventDefault();
     resetLoginErrors();
     setIsLoading(true);
@@ -279,7 +279,7 @@ export const LoginForm = (props: LoginFormProps): JSX.Element => {
     setRegisterErrors([]);
   }, [registerErrors.length]);
 
-  const handleRegisterFormSubmit = useCallback(async (e, requestPath) => {
+  const handleRegisterFormSubmit = useCallback(async(e, requestPath) => {
     e.preventDefault();
     setEmailForRegistrationOrder('');
     setIsSuccessToRagistration(false);

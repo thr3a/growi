@@ -135,7 +135,7 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
     setSlackChannels(slackChannels);
   }, []);
 
-  const initializeEditor = useCallback(async () => {
+  const initializeEditor = useCallback(async() => {
     const dirtyNum = await cleanEditorDirtyMap(editorKey);
     mutateIsEnabledUnsavedWarning(dirtyNum > 0);
 
@@ -151,7 +151,7 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
     onCanceled?.();
   }, [onCanceled, initializeEditor]);
 
-  const postCommentHandler = useCallback(async () => {
+  const postCommentHandler = useCallback(async() => {
     const commentBodyToPost = codeMirrorEditor?.getDocString() ?? '';
 
     try {
@@ -209,7 +209,7 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
   }, [codeMirrorEditor, pageId]);
 
   const cmProps = useMemo(() => ({
-    onChange: async (value: string) => {
+    onChange: async(value: string) => {
       const dirtyNum = await evaluateEditorDirtyMap(editorKey, value);
       mutateIsEnabledUnsavedWarning(dirtyNum > 0);
     },

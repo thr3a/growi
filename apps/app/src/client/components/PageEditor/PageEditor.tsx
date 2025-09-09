@@ -167,7 +167,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   const scrollEditorHandlerThrottle = useMemo(() => throttle(25, scrollEditorHandler), [scrollEditorHandler]);
   const scrollPreviewHandlerThrottle = useMemo(() => throttle(25, scrollPreviewHandler), [scrollPreviewHandler]);
 
-  const save: Save = useCallback(async (revisionId, markdown, opts, onConflict) => {
+  const save: Save = useCallback(async(revisionId, markdown, opts, onConflict) => {
     if (pageId == null || selectedGrant == null) {
       logger.error('Some materials to save are invalid', {
         pageId, selectedGrant,
@@ -216,7 +216,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
     }
   }, [pageId, selectedGrant, mutateWaitingSaveProcessing, updatePage, mutateIsGrantNormalized, t]);
 
-  const saveAndReturnToViewHandler = useCallback(async (opts: SaveOptions) => {
+  const saveAndReturnToViewHandler = useCallback(async(opts: SaveOptions) => {
     const markdown = codeMirrorEditor?.getDocString();
     const revisionId = isRevisionIdRequiredForPageUpdate ? currentRevisionId : undefined;
     const page = await save(revisionId, markdown, opts, onConflict);
@@ -228,7 +228,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
     updateStateAfterSave?.();
   }, [codeMirrorEditor, currentRevisionId, isRevisionIdRequiredForPageUpdate, mutateEditorMode, onConflict, save, updateStateAfterSave]);
 
-  const saveWithShortcut = useCallback(async () => {
+  const saveWithShortcut = useCallback(async() => {
     const markdown = codeMirrorEditor?.getDocString();
     const revisionId = isRevisionIdRequiredForPageUpdate ? currentRevisionId : undefined;
     const page = await save(revisionId, markdown, undefined, onConflict);

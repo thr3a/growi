@@ -196,9 +196,9 @@ export const mutateAllPageInfo = (): Promise<void[]> => {
 };
 
 export const useSWRxPageInfo = (
-  pageId: string | null | undefined,
-  shareLinkId?: string | null,
-  initialData?: IPageInfoForEntity,
+    pageId: string | null | undefined,
+    shareLinkId?: string | null,
+    initialData?: IPageInfoForEntity,
 ): SWRResponse<IPageInfo | IPageInfoForOperation> => {
 
   // Cache remains from guest mode when logging in via the Login lead, so add 'isGuestUser' key
@@ -231,8 +231,8 @@ export const useSWRxPageInfo = (
 };
 
 export const useSWRMUTxPageInfo = (
-  pageId: string | null | undefined,
-  shareLinkId?: string | null,
+    pageId: string | null | undefined,
+    shareLinkId?: string | null,
 ): SWRMutationResponse<IPageInfo | IPageInfoForOperation> => {
 
   // Cache remains from guest mode when logging in via the Login lead, so add 'isGuestUser' key
@@ -264,8 +264,8 @@ export const useSWRxPageRevision = (pageId: string, revisionId: Ref<IRevision>):
  */
 
 export const useSWRxInfinitePageRevisions = (
-  pageId: string,
-  limit: number,
+    pageId: string,
+    limit: number,
 ): SWRInfiniteResponse<SWRInfinitePageRevisionsResponse, Error> => {
   return useSWRInfinite(
     (pageIndex, previousRevisionData) => {
@@ -289,7 +289,7 @@ export const useSWRxInfinitePageRevisions = (
  * Grant data fetching hooks
  */
 export const useSWRxCurrentGrantData = (
-  pageId: string | null | undefined,
+    pageId: string | null | undefined,
 ): SWRResponse<IResCurrentGrantData, Error> => {
 
   const { data: isGuestUser } = useIsGuestUser();
@@ -307,7 +307,7 @@ export const useSWRxCurrentGrantData = (
 };
 
 export const useSWRxApplicableGrant = (
-  pageId: string | null | undefined,
+    pageId: string | null | undefined,
 ): SWRResponse<IRecordApplicableGrant, Error> => {
 
   return useSWR(
@@ -366,14 +366,14 @@ export const useIsRevisionOutdated = (): SWRResponse<boolean, Error> => {
 
 
 export const useSWRxPagePathsWithDescendantCount = (
-  paths?: string[], userGroups?: string[], isIncludeEmpty?: boolean, includeAnyoneWithTheLink?: boolean,
+    paths?: string[], userGroups?: string[], isIncludeEmpty?: boolean, includeAnyoneWithTheLink?: boolean,
 ): SWRResponse<IPagePathWithDescendantCount[], Error> => {
   return useSWR(
     (paths != null && paths.length !== 0) ? ['/page/page-paths-with-descendant-count', paths, userGroups, isIncludeEmpty, includeAnyoneWithTheLink] : null,
     ([endpoint, paths, userGroups, isIncludeEmpty, includeAnyoneWithTheLink]) => apiv3Get(
       endpoint, {
-      paths, userGroups, isIncludeEmpty, includeAnyoneWithTheLink,
-    },
+        paths, userGroups, isIncludeEmpty, includeAnyoneWithTheLink,
+      },
     ).then(result => result.data.pagePathsWithDescendantCount),
   );
 };

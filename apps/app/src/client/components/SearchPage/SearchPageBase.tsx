@@ -236,9 +236,9 @@ const SearchPageBaseSubstance: ForwardRefRenderFunction<ISelectableAll & IReturn
 type VoidFunction = () => void;
 
 export const usePageDeleteModalForBulkDeletion = (
-  data: IFormattedSearchResult | undefined,
-  ref: React.MutableRefObject<(ISelectableAll & IReturnSelectedPageIds) | null>,
-  onDeleted?: OnDeletedFunction,
+    data: IFormattedSearchResult | undefined,
+    ref: React.MutableRefObject<(ISelectableAll & IReturnSelectedPageIds) | null>,
+    onDeleted?: OnDeletedFunction,
 ): VoidFunction => {
 
   const { t } = useTranslation();

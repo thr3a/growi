@@ -49,7 +49,7 @@ const SavePageButton = (props: { slackChannels: string, isSlackEnabled?: boolean
 
   const isWaitingSaveProcessing = _isWaitingSaveProcessing === true; // ignore undefined
 
-  const save = useCallback(async (): Promise<void> => {
+  const save = useCallback(async(): Promise<void> => {
     // save
     globalEmitter.emit('saveAndReturnToView', { wip: false, slackChannels, isSlackEnabled });
   }, [isSlackEnabled, slackChannels]);

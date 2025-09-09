@@ -26,7 +26,7 @@ export const useSetupGlobalSocket = (): void => {
       return;
     }
 
-    mutate(async () => {
+    mutate(async() => {
       const { io } = await import('socket.io-client');
       const socket = io(GLOBAL_SOCKET_NS, {
         transports: ['websocket'],
