@@ -8,8 +8,8 @@ describe('GrowiPlugin find methods', () => {
     await GrowiPlugin.insertMany([
       {
         isEnabled: false,
-        installedPath: 'weseek/growi-plugin-unenabled1',
-        organizationName: 'weseek',
+        installedPath: 'growilabs/growi-plugin-unenabled1',
+        organizationName: 'growilabs',
         origin: {
           url: 'https://github.com/growilabs/growi-plugin-unenabled1',
         },
@@ -20,8 +20,8 @@ describe('GrowiPlugin find methods', () => {
       },
       {
         isEnabled: false,
-        installedPath: 'weseek/growi-plugin-unenabled2',
-        organizationName: 'weseek',
+        installedPath: 'growilabs/growi-plugin-unenabled2',
+        organizationName: 'growilabs',
         origin: {
           url: 'https://github.com/growilabs/growi-plugin-unenabled2',
         },
@@ -32,8 +32,8 @@ describe('GrowiPlugin find methods', () => {
       },
       {
         isEnabled: true,
-        installedPath: 'weseek/growi-plugin-example1',
-        organizationName: 'weseek',
+        installedPath: 'growilabs/growi-plugin-example1',
+        organizationName: 'growilabs',
         origin: {
           url: 'https://github.com/growilabs/growi-plugin-example1',
         },
@@ -44,8 +44,8 @@ describe('GrowiPlugin find methods', () => {
       },
       {
         isEnabled: true,
-        installedPath: 'weseek/growi-plugin-example2',
-        organizationName: 'weseek',
+        installedPath: 'growilabs/growi-plugin-example2',
+        organizationName: 'growilabs',
         origin: {
           url: 'https://github.com/growilabs/growi-plugin-example2',
         },
@@ -97,8 +97,8 @@ describe('GrowiPlugin activate/deactivate', () => {
     await GrowiPlugin.insertMany([
       {
         isEnabled: false,
-        installedPath: 'weseek/growi-plugin-example1',
-        organizationName: 'weseek',
+        installedPath: 'growilabs/growi-plugin-example1',
+        organizationName: 'growilabs',
         origin: {
           url: 'https://github.com/growilabs/growi-plugin-example1',
         },

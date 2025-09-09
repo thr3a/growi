@@ -20,7 +20,7 @@ What is GROWI?
 
 GROWI is a team collaboration software and it forked from [crowi](https://github.com/weseek/crowi/crowi)
 
-see: [weseek/growi](https://github.com/growilabs/growi)
+see: [growilabs/growi](https://github.com/growilabs/growi)
 
 
 Requirements
