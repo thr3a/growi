@@ -51,7 +51,7 @@ export const useEditorSettings = (): SWRResponseWithUtils<EditorSettingsOperatio
   );
 
   return withUtils<EditorSettingsOperation, EditorSettings, Error>(swrResult, {
-    update: async (updateData) => {
+    update: async(updateData) => {
       const { data, mutate } = swrResult;
 
       if (data == null) {

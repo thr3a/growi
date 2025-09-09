@@ -12,7 +12,7 @@ export const PluginInstallerForm = (): JSX.Element => {
   const { mutate } = useSWRxAdminPlugins();
   const { t } = useTranslation('admin');
 
-  const submitHandler = useCallback(async (e) => {
+  const submitHandler = useCallback(async(e) => {
     e.preventDefault();
 
     const formData = e.target.elements;
