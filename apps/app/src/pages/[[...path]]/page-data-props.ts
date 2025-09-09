@@ -1,7 +1,7 @@
 import type { IPage, IUser } from '@growi/core/dist/interfaces';
 import { isPermalink as _isPermalink, isCreatablePage, isTopPage } from '@growi/core/dist/utils/page-path-utils';
 import { removeHeadingSlash } from '@growi/core/dist/utils/path-utils';
-import type { model } from 'mongoose';
+import type { model, HydratedDocument } from 'mongoose';
 import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 
 import type { CrowiRequest } from '~/interfaces/crowi-request';
@@ -57,6 +57,34 @@ async function resolvePathAndCheckIdentical(
     isIdenticalPathPage = multiplePagesCount > 1;
   }
   return { resolvedPagePath, isIdenticalPathPage, redirectFrom };
+}
+
+/**
+ * Convert pathname based on page data and permalink status
+ * @returns Final pathname to be used in the URL
+ */
+function resolveFinalizedPathname(
+    pagePath: string,
+    page: HydratedDocument<IPage> | null | undefined,
+    isPermalink: boolean,
+): string {
+  let finalPathname = pagePath;
+
+  if (page != null) {
+    // /62a88db47fed8b2d94f30000 ==> /path/to/page
+    if (isPermalink && page.isEmpty) {
+      finalPathname = page.path;
+    }
+    // /path/to/page ==> /62a88db47fed8b2d94f30000
+    if (!isPermalink && !page.isEmpty) {
+      const isToppage = isTopPage(pagePath);
+      if (!isToppage && page._id) {
+        finalPathname = `/${page._id.toString()}`;
+      }
+    }
+  }
+
+  return finalPathname;
 }
 
 function getPageStatesPropsForIdenticalPathPage(): GeneralPageStatesProps {
@@ -134,6 +162,9 @@ export async function getPageDataForInitial(
   const pageWithMeta = await pageService.findPageAndMetaDataByViewer(pageId, resolvedPagePath, user, true);
   const { data: page, meta } = pageWithMeta ?? {};
 
+  // Handle URL conversion
+  const currentPathname = resolveFinalizedPathname(resolvedPagePath, page, isPermalink);
+
   // Add user to seen users
   if (page != null && user != null) {
     await page.seen(user);
@@ -150,23 +181,9 @@ export async function getPageDataForInitial(
 
     const populatedPage = await page.populateDataToShowRevision(skipSSR);
 
-    // Handle URL conversion
-    let finalPathname = resolvedPagePath;
-    if (page != null && !page.isEmpty) {
-      if (isPermalink) {
-        finalPathname = page.path;
-      }
-      else {
-        const isToppage = isTopPage(resolvedPagePath);
-        if (!isToppage) {
-          finalPathname = `/${page._id}`;
-        }
-      }
-    }
-
     return {
       props: {
-        currentPathname: finalPathname,
+        currentPathname,
         isIdenticalPathPage: false,
         pageWithMeta: { data: populatedPage, meta },
         skipSSR,
@@ -199,11 +216,11 @@ export async function getPageDataForSameRoute(
   const req: CrowiRequest = context.req as CrowiRequest;
   const { user } = req;
 
-  const currentPathname = decodeURIComponent(context.resolvedUrl?.split('?')[0] ?? '/');
-  const pageId = _isPermalink(currentPathname) ? removeHeadingSlash(currentPathname) : null;
-  const isPermalink = _isPermalink(currentPathname);
+  const pathname = decodeURIComponent(context.resolvedUrl?.split('?')[0] ?? '/');
+  const pageId = _isPermalink(pathname) ? removeHeadingSlash(pathname) : null;
+  const isPermalink = _isPermalink(pathname);
 
-  const { resolvedPagePath, isIdenticalPathPage, redirectFrom } = await resolvePathAndCheckIdentical(currentPathname, user);
+  const { resolvedPagePath, isIdenticalPathPage, redirectFrom } = await resolvePathAndCheckIdentical(pathname, user);
 
   if (isIdenticalPathPage) {
     return {
@@ -221,22 +238,11 @@ export async function getPageDataForSameRoute(
     isPermalink ? { _id: pageId } : { path: resolvedPagePath },
   ).exec();
 
-  let finalPathname = resolvedPagePath;
-  if (basicPageInfo != null && !basicPageInfo.isEmpty) {
-    if (isPermalink) {
-      finalPathname = basicPageInfo.path;
-    }
-    else {
-      const isToppage = isTopPage(resolvedPagePath);
-      if (!isToppage) {
-        finalPathname = `/${basicPageInfo._id}`;
-      }
-    }
-  }
+  const currentPathname = resolveFinalizedPathname(resolvedPagePath, basicPageInfo, isPermalink);
 
   return {
     props: {
-      currentPathname: finalPathname,
+      currentPathname,
       isIdenticalPathPage: false,
       redirectFrom,
       ...await getPageStatesProps(basicPageInfo, resolvedPagePath, pageId),
