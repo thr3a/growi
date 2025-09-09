@@ -1,4 +1,7 @@
-import { pagePathUtils } from '@growi/core/dist/utils';
+import {
+  isCreatablePage,
+  isPermalink,
+} from '@growi/core/dist/utils/page-path-utils';
 import { useAtomValue } from 'jotai';
 import { useAtomCallback } from 'jotai/utils';
 import { useCallback, useMemo } from 'react';
@@ -10,11 +13,9 @@ import {
   currentPagePathAtom,
   isForbiddenAtom,
   isIdenticalPathAtom,
-  isNotCreatableAtom,
   isRevisionOutdatedAtom,
   isTrashPageAtom,
   latestRevisionAtom,
-  pageNotCreatableAtom,
   pageNotFoundAtom,
   redirectFromAtom,
   remoteRevisionBodyAtom,
@@ -38,13 +39,9 @@ export const useCurrentPageData = () => useAtomValue(currentPageDataAtom);
 
 export const usePageNotFound = () => useAtomValue(pageNotFoundAtom);
 
-export const usePageNotCreatable = () => useAtomValue(pageNotCreatableAtom);
-
 export const useIsIdenticalPath = () => useAtomValue(isIdenticalPathAtom);
 
 export const useIsForbidden = () => useAtomValue(isForbiddenAtom);
-
-export const useIsNotCreatable = () => useAtomValue(isNotCreatableAtom);
 
 export const useLatestRevision = () => useAtomValue(latestRevisionAtom);
 
@@ -80,7 +77,7 @@ export const useCurrentPagePath = (): string | undefined => {
   if (currentPagePath != null) {
     return currentPagePath;
   }
-  if (currentPathname != null && !pagePathUtils.isPermalink(currentPathname)) {
+  if (currentPathname != null && !isPermalink(currentPathname)) {
     return currentPathname;
   }
   return undefined;
@@ -100,23 +97,36 @@ export const useIsRevisionOutdated = (): boolean =>
   useAtomValue(isRevisionOutdatedAtom);
 
 /**
+ * Computed hook for checking if current page is creatable
+ */
+export const useIsNotCreatable = (): boolean => {
+  const pagePath = useCurrentPagePath();
+  return pagePath == null ? true : !isCreatablePage(pagePath);
+};
+
+/**
  * Computed hook for checking if current page is editable
  */
 export const useIsEditable = () => {
   const isGuestUser = useIsGuestUser();
   const isReadOnlyUser = useIsReadOnlyUser();
+  const isNotCreatable = useIsNotCreatable();
 
   const getCombinedConditions = useAtomCallback(
     useCallback((get) => {
       const isForbidden = get(isForbiddenAtom);
-      const isNotCreatable = get(isNotCreatableAtom);
       const isIdenticalPath = get(isIdenticalPathAtom);
 
-      return !isForbidden && !isIdenticalPath && !isNotCreatable;
+      return !isForbidden && !isIdenticalPath;
     }, []),
   );
 
   return useMemo(() => {
-    return !isGuestUser && !isReadOnlyUser && getCombinedConditions();
-  }, [getCombinedConditions, isGuestUser, isReadOnlyUser]);
+    return (
+      !isGuestUser &&
+      !isReadOnlyUser &&
+      !isNotCreatable &&
+      getCombinedConditions()
+    );
+  }, [getCombinedConditions, isGuestUser, isReadOnlyUser, isNotCreatable]);
 };

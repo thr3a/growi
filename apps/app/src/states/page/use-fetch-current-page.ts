@@ -16,7 +16,6 @@ import {
   currentPageIdAtom,
   pageErrorAtom,
   pageLoadingAtom,
-  pageNotCreatableAtom,
   pageNotFoundAtom,
   shareLinkIdAtom,
 } from './internal-atoms';
@@ -137,7 +136,6 @@ export const useFetchCurrentPage = (): {
           set(currentPageDataAtom, newData);
           set(currentPageIdAtom, newData._id);
           set(pageNotFoundAtom, false);
-          set(pageNotCreatableAtom, false);
 
           return newData;
         } catch (err) {
@@ -146,9 +144,6 @@ export const useFetchCurrentPage = (): {
           const apiError = err as any; // eslint-disable-line @typescript-eslint/no-explicit-any
           if (apiError.response?.status === 404) {
             set(pageNotFoundAtom, true);
-            if (params.path != null) {
-              set(pageNotCreatableAtom, !isCreatablePage(params.path));
-            }
           }
         } finally {
           set(pageLoadingAtom, false);

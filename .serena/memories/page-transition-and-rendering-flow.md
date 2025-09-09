@@ -58,7 +58,6 @@
     - **APIエラー時 (例: 404 Not Found)**:
         - `pageErrorAtom` にエラーオブジェクトを設定します。
         - `pageNotFoundAtom` を `true` に設定します。
-        - パスがユーザー作成可能でない場合 (`/user` など) は `pageNotCreatableAtom` も `true` に設定します。
         - 最後に `pageLoadingAtom` を `false` に設定します。
 5.  **`PageView` の最終レンダリング**:
     - `currentPageDataAtom` の更新がトリガーとなり、`PageView` コンポーネントが新しいデータで再レンダリングされます。

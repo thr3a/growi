@@ -23,7 +23,6 @@ import {
   currentPageIdAtom,
   pageErrorAtom,
   pageLoadingAtom,
-  pageNotCreatableAtom,
   pageNotFoundAtom,
 } from '~/states/page/internal-atoms';
 
@@ -286,7 +285,7 @@ describe('useFetchCurrentPage - Integration Test', () => {
     });
   });
 
-  it('should set pageNotFoundAtom and pageNotCreatableAtom on 404 error for a non-creatable path', async () => {
+  it('should set pageNotFoundAtom on 404 error for a non-creatable path', async () => {
     // Arrange
     const notCreatablePath = '/user';
     const apiError = {
@@ -303,7 +302,6 @@ describe('useFetchCurrentPage - Integration Test', () => {
     // Assert
     await waitFor(() => {
       expect(store.get(pageNotFoundAtom)).toBe(true);
-      expect(store.get(pageNotCreatableAtom)).toBe(true);
       expect(store.get(pageErrorAtom)).toEqual(apiError);
     });
   });
