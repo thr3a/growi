@@ -138,7 +138,11 @@ jobs:
       username: ${{ matrix.username }}
       tag-temporary: latest
     secrets:
-      DOCKER_REGISTRY_PASSWORD: ${{ matrix.image-name == 'weseek/growi' && secrets.DOCKER_REGISTRY_PASSWORD || secrets.DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE }}
+      DOCKER_REGISTRY_PASSWORD: ${{
+        matrix.image-name == 'weseek/growi' && secrets.DOCKER_REGISTRY_PASSWORD ||
+        matrix.image-name == 'growilabs/growi' && secrets.DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE ||
+        'INVALID_SECRET'
+      }}
 
   post-publish:
     needs: [create-github-release, publish-app-image]
@@ -161,7 +165,11 @@ jobs:
       uses: peter-evans/dockerhub-description@v4
       with:
         username: ${{ matrix.username }}
-        password: ${{ matrix.repository == 'weseek/growi' && secrets.DOCKER_REGISTRY_PASSWORD || secrets.DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE }}
+        password: ${{
+          matrix.repository == 'weseek/growi' && secrets.DOCKER_REGISTRY_PASSWORD ||
+          matrix.repository == 'growilabs/growi' && secrets.DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE ||
+          'INVALID_SECRET'
+        }}
         repository: ${{ matrix.repository }}
         readme-filepath: ./apps/app/docker/README.md
 
