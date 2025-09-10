@@ -127,10 +127,8 @@ jobs:
         include:
           - image-name: weseek/growi
             username: wsmoogle
-            password: DOCKER_REGISTRY_PASSWORD
           - image-name: growilabs/growi
             username: growimoogle
-            password: DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE
 
     uses: growilabs/growi/.github/workflows/reusable-app-create-manifests.yml@master
     with:
@@ -140,7 +138,7 @@ jobs:
       username: ${{ matrix.username }}
       tag-temporary: latest
     secrets:
-      DOCKER_REGISTRY_PASSWORD: ${{ secrets[matrix.password] }}
+      DOCKER_REGISTRY_PASSWORD: ${{ matrix.image-name == 'weseek/growi' && secrets.DOCKER_REGISTRY_PASSWORD || secrets.DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE }}
 
   post-publish:
     needs: [create-github-release, publish-app-image]
@@ -151,10 +149,8 @@ jobs:
         include:
           - repository: weseek/growi
             username: wsmoogle
-            password: DOCKER_REGISTRY_PASSWORD
           - repository: growilabs/growi
             username: growimoogle
-            password: DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE
 
     steps:
     - uses: actions/checkout@v4
@@ -165,7 +161,7 @@ jobs:
       uses: peter-evans/dockerhub-description@v4
       with:
         username: ${{ matrix.username }}
-        password: ${{ secrets[matrix.password] }}
+        password: ${{ matrix.repository == 'weseek/growi' && secrets.DOCKER_REGISTRY_PASSWORD || secrets.DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE }}
         repository: ${{ matrix.repository }}
         readme-filepath: ./apps/app/docker/README.md
 
