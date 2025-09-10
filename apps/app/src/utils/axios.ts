@@ -1,5 +1,6 @@
 // eslint-disable-next-line no-restricted-imports
 import axios from 'axios';
+import type { AxiosRequestConfig, AxiosStatic } from 'axios';
 import { formatISO } from 'date-fns';
 import qs from 'qs';
 
@@ -89,26 +90,53 @@ if (baseTransformers == null) {
   baseTransformers = [baseTransformers];
 }
 
-const customAxios = axios.create({
-  headers: {
-    'X-Requested-With': 'XMLHttpRequest',
-    'Content-Type': 'application/json',
-  },
+const create = (config?: AxiosRequestConfig) => {
+  const customAxios = axios.create({
+    ...config,
 
-  transformResponse: baseTransformers.concat((data) => {
-    return convertStringsToDates(data);
-  }),
-});
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/json',
+    },
 
-// serialize Date config: https://github.com/axios/axios/issues/1548#issuecomment-548306666
-customAxios.interceptors.request.use((config) => {
-  config.paramsSerializer = (params) =>
-    qs.stringify(params, {
-      serializeDate: (date: Date) => {
-        return formatISO(date, { representation: 'complete' });
-      },
-    });
-  return config;
-});
+    transformResponse: baseTransformers.concat((data) => {
+      return convertStringsToDates(data);
+    }),
+  });
 
-export default customAxios;
+  // serialize Date config: https://github.com/axios/axios/issues/1548#issuecomment-548306666
+  customAxios.interceptors.request.use((config) => {
+    config.paramsSerializer = (params) =>
+      qs.stringify(params, {
+        serializeDate: (date: Date) => {
+          return formatISO(date, { representation: 'complete' });
+        },
+      });
+    return config;
+  });
+
+  return customAxios;
+}
+
+// Expose Axios class to allow class inheritance
+const customAxiosStatic = Object.assign(create(), {
+  create,
+  Axios: axios.Axios,
+
+  // Expose Cancel & CancelToken
+  Cancel: axios.Cancel,
+
+  CancelToken: axios.CancelToken,
+
+  isCancel: axios.isCancel,
+  VERSION: axios.VERSION,
+
+  // Expose all/spread
+  all: axios.all,
+  spread: axios.spread,
+
+  // Expose isAxiosError
+  isAxiosError: axios.isAxiosError,
+}) satisfies AxiosStatic;
+
+export default customAxiosStatic;
