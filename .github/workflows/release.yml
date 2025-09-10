@@ -81,8 +81,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      TAGS_WESEEK: ${{ steps.meta-weseek.outputs.tags }}
-      TAGS_GROWILABS: ${{ steps.meta-growilabs.outputs.tags }}
+      TAGS: ${{ steps.meta.outputs.tags }}
 
     steps:
     - uses: actions/checkout@v4
@@ -91,11 +90,13 @@ jobs:
       uses: myrotvorets/info-from-package-json-action@v2.0.2
       id: package-json
 
-    - name: Docker meta for weseek/growi
+    - name: Docker meta
       uses: docker/metadata-action@v5
       id: meta-weseek
       with:
-        images: docker.io/weseek/growi
+        images: |
+           docker.io/weseek/growi
+           docker.io/growilabs/growi
         sep-tags: ','
         tags: |
           type=raw,value=latest
@@ -103,19 +104,7 @@ jobs:
           type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}.{{minor}}
           type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}.{{minor}}.{{patch}}
 
-    - name: Docker meta for growilabs/growi
-      uses: docker/metadata-action@v5
-      id: meta-growilabs
-      with:
-        images: docker.io/growilabs/growi
-        sep-tags: ','
-        tags: |
-          type=raw,value=latest
-          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}
-          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}.{{minor}}
-          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}.{{minor}}.{{patch}}
-
-  build-app-image-weseek:
+  build-app-image:
     needs: create-github-release
 
     uses: growilabs/growi/.github/workflows/reusable-app-build-image.yml@master
@@ -126,43 +115,20 @@ jobs:
     secrets:
       AWS_ROLE_TO_ASSUME_FOR_OIDC: ${{ secrets.AWS_ROLE_TO_ASSUME_FOR_OIDC }}
 
-  build-app-image-growilabs:
-    needs: create-github-release
-
-    uses: growilabs/growi/.github/workflows/reusable-app-build-image.yml@master
-    with:
-      source-version: refs/tags/v${{ needs.create-github-release.outputs.RELEASED_VERSION }}
-      image-name: growilabs/growi
-      tag-temporary: latest
-    secrets:
-      AWS_ROLE_TO_ASSUME_FOR_OIDC: ${{ secrets.AWS_ROLE_TO_ASSUME_FOR_OIDC }}
-
-  publish-app-image-weseek:
-    needs: [determine-tags, build-app-image-weseek]
+  publish-app-image:
+    needs: [determine-tags, build-app-image]
 
     uses: growilabs/growi/.github/workflows/reusable-app-create-manifests.yml@master
     with:
-      tags: ${{ needs.determine-tags.outputs.TAGS_WESEEK }}
+      tags: ${{ needs.determine-tags.outputs.TAGS }}
       registry: docker.io
       image-name: weseek/growi
       tag-temporary: latest
     secrets:
       DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
 
-  publish-app-image-growilabs:
-    needs: [determine-tags, build-app-image-growilabs]
-
-    uses: growilabs/growi/.github/workflows/reusable-app-create-manifests.yml@master
-    with:
-      tags: ${{ needs.determine-tags.outputs.TAGS_GROWILABS }}
-      registry: docker.io
-      image-name: growilabs/growi
-      tag-temporary: latest
-    secrets:
-      DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE }}
-
   post-publish:
-    needs: [create-github-release, publish-app-image-weseek, publish-app-image-growilabs]
+    needs: [create-github-release, publish-app-image]
     runs-on: ubuntu-latest
 
     steps:
@@ -170,20 +136,12 @@ jobs:
       with:
         ref: v${{ needs.create-github-release.outputs.RELEASED_VERSION }}
 
-    - name: Update Docker Hub Description for weseek/growi
+    - name: Update Docker Hub Description
       uses: peter-evans/dockerhub-description@v4
       with:
         username: wsmoogle
         password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
         repository: weseek/growi
-        readme-filepath: ./apps/app/docker/README.md
-
-    - name: Update Docker Hub Description for growilabs/growi
-      uses: peter-evans/dockerhub-description@v4
-      with:
-        username: growimoogle
-        password: ${{ secrets.DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE }}
-        repository: growilabs/growi
         readme-filepath: ./apps/app/docker/README.md
 
     - name: Slack Notification
@@ -195,7 +153,7 @@ jobs:
 
 
   create-pr-for-next-rc:
-    needs: [create-github-release, publish-app-image-weseek, publish-app-image-growilabs]
+    needs: [create-github-release, publish-app-image]
     runs-on: ubuntu-latest
 
     steps:
