@@ -2,7 +2,7 @@ import React, { useCallback, useState, type JSX } from 'react';
 
 import nodePath from 'path';
 
-import type { IPageHasId, IPageInfoAll, IPageToDeleteWithMeta } from '@growi/core';
+import type { IPageHasId, IPageInfoExt, IPageToDeleteWithMeta } from '@growi/core';
 import { DevidedPagePath } from '@growi/core/dist/models';
 import { pathUtils } from '@growi/core/dist/utils';
 import { useRouter } from 'next/router';
@@ -117,7 +117,7 @@ export const BookmarkItem = (props: Props): JSX.Element => {
     }
   }, [bookmarkedPage, cancel, bookmarkFolderTreeMutation, mutatePageInfo]);
 
-  const deleteMenuItemClickHandler = useCallback(async(_pageId: string, pageInfo: IPageInfoAll | undefined): Promise<void> => {
+  const deleteMenuItemClickHandler = useCallback(async(_pageId: string, pageInfo: IPageInfoExt | undefined): Promise<void> => {
     if (bookmarkedPage == null) return;
 
     if (bookmarkedPage._id == null || bookmarkedPage.path == null) {

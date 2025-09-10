@@ -1,5 +1,13 @@
-import type { IPage, IUser } from '@growi/core/dist/interfaces';
-import { isPermalink as _isPermalink, isCreatablePage, isTopPage } from '@growi/core/dist/utils/page-path-utils';
+import assert from 'assert';
+
+import type {
+  IDataWithMeta, IPage, IPageNotFoundInfo, IUser,
+} from '@growi/core/dist/interfaces';
+import {
+  isIPageInfo,
+  isIPageNotFoundInfo,
+} from '@growi/core/dist/interfaces';
+import { isPermalink as _isPermalink, isTopPage } from '@growi/core/dist/utils/page-path-utils';
 import { removeHeadingSlash } from '@growi/core/dist/utils/path-utils';
 import type { model, HydratedDocument } from 'mongoose';
 import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
@@ -9,7 +17,7 @@ import type { PageModel } from '~/server/models/page';
 import type { IPageRedirect, PageRedirectModel } from '~/server/models/page-redirect';
 
 import type { CommonEachProps } from '../common-props';
-import type { GeneralPageInitialProps, GeneralPageStatesProps } from '../general-page';
+import type { GeneralPageInitialProps, IPageToShowRevisionWithMeta } from '../general-page';
 
 import type { EachProps } from './types';
 
@@ -87,44 +95,11 @@ function resolveFinalizedPathname(
   return finalPathname;
 }
 
-function getPageStatesPropsForIdenticalPathPage(): GeneralPageStatesProps {
-  return {
-    isNotFound: false,
-    isNotCreatable: true,
-    isForbidden: false,
-  };
-}
-
-async function getPageStatesProps(page: IPage | null, pagePath: string, pageId?: string | null): Promise<GeneralPageStatesProps> {
-  await initModels();
-
-  if (page != null) {
-    // Existing page
-    return {
-      isNotFound: page.isEmpty,
-      isNotCreatable: false,
-      isForbidden: false,
-    };
-  }
-
-  // Handle non-existent page
-  const isPermalink = _isPermalink(pagePath);
-  const count = isPermalink && pageId
-    ? await Page.count({ _id: pageId })
-    : await Page.count({ path: pagePath });
-
-  return {
-    isNotFound: true,
-    isNotCreatable: !isCreatablePage(pagePath),
-    isForbidden: count > 0,
-  };
-}
 
 // Page data retrieval for initial load - returns GetServerSidePropsResult
 export async function getPageDataForInitial(
     context: GetServerSidePropsContext,
 ): Promise<GetServerSidePropsResult<
-  GeneralPageStatesProps &
   Pick<GeneralPageInitialProps, 'pageWithMeta' | 'skipSSR'> &
   Pick<EachProps, 'currentPathname' | 'isIdenticalPathPage' | 'redirectFrom'>
 >> {
@@ -153,25 +128,29 @@ export async function getPageDataForInitial(
         pageWithMeta: null,
         skipSSR: false,
         redirectFrom,
-        ...getPageStatesPropsForIdenticalPathPage(),
       },
     };
   }
 
   // Get full page data
   const pageWithMeta = await pageService.findPageAndMetaDataByViewer(pageId, resolvedPagePath, user, true);
-  const { data: page, meta } = pageWithMeta ?? {};
 
   // Handle URL conversion
-  const currentPathname = resolveFinalizedPathname(resolvedPagePath, page, isPermalink);
+  const currentPathname = resolveFinalizedPathname(resolvedPagePath, pageWithMeta.data, isPermalink);
 
-  // Add user to seen users
-  if (page != null && user != null) {
-    await page.seen(user);
-  }
+  // When the page exists
+  if (pageWithMeta.data != null) {
+    const { data: page, meta } = pageWithMeta;
 
-  if (page != null) {
-    // Handle existing page
+    // type assertion
+    assert(isIPageInfo(meta), 'meta should be IPageInfo when data is not null');
+
+    // Add user to seen users
+    if (user != null) {
+      await page.seen(user);
+    }
+
+    // Handle existing page with valid meta that is not IPageNotFoundInfo
     page.initLatestRevisionField(revisionId);
     const ssrMaxRevisionBodyLength = configManager.getConfig('app:ssrMaxRevisionBodyLength');
 
@@ -185,22 +164,27 @@ export async function getPageDataForInitial(
       props: {
         currentPathname,
         isIdenticalPathPage: false,
-        pageWithMeta: { data: populatedPage, meta },
+        pageWithMeta: {
+          data: populatedPage,
+          meta,
+        } satisfies IPageToShowRevisionWithMeta,
         skipSSR,
         redirectFrom,
-        ...await getPageStatesProps(page, resolvedPagePath, pageId),
       },
     };
   }
 
+  // type assertion
+  assert(isIPageNotFoundInfo(pageWithMeta.meta), 'meta should be IPageNotFoundInfo when data is null');
+
+  // Handle the case where the page does not exist
   return {
     props: {
       currentPathname: resolvedPagePath,
       isIdenticalPathPage: false,
-      pageWithMeta: null,
+      pageWithMeta: pageWithMeta satisfies IDataWithMeta<null, IPageNotFoundInfo>,
       skipSSR: false,
       redirectFrom,
-      ...await getPageStatesProps(null, resolvedPagePath, pageId),
     },
   };
 }
@@ -209,7 +193,6 @@ export async function getPageDataForInitial(
 export async function getPageDataForSameRoute(
     context: GetServerSidePropsContext,
 ): Promise<GetServerSidePropsResult<
-    GeneralPageStatesProps &
     Pick<CommonEachProps, 'currentPathname'> &
     Pick<EachProps, 'currentPathname' | 'isIdenticalPathPage' | 'redirectFrom'>
 >> {
@@ -228,7 +211,6 @@ export async function getPageDataForSameRoute(
         currentPathname: resolvedPagePath,
         isIdenticalPathPage: true,
         redirectFrom,
-        ...getPageStatesPropsForIdenticalPathPage(),
       },
     };
   }
@@ -245,7 +227,6 @@ export async function getPageDataForSameRoute(
       currentPathname,
       isIdenticalPathPage: false,
       redirectFrom,
-      ...await getPageStatesProps(basicPageInfo, resolvedPagePath, pageId),
     },
   };
 }

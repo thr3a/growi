@@ -313,8 +313,10 @@ const routerFactory = (crowi: Crowi): Router => {
         const userRelatedGroups = await pageGrantService.getUserRelatedGroups(req.user);
 
         for (const page of pages) {
-        // construct isIPageInfoForListing
-          const basicPageInfo = pageService.constructBasicPageInfo(page, isGuestUser);
+          const basicPageInfo = {
+            ...pageService.constructBasicPageInfo(page, isGuestUser),
+            bookmarkCount: bookmarkCountMap != null ? bookmarkCountMap[page._id.toString()] ?? 0 : 0,
+          };
 
           // TODO: use pageService.getCreatorIdForCanDelete to get creatorId (https://redmine.weseek.co.jp/issues/140574)
           const canDeleteCompletely = pageService.canDeleteCompletely(
@@ -327,13 +329,11 @@ const routerFactory = (crowi: Crowi): Router => {
 
           const pageInfo = (!isIPageInfoForEntity(basicPageInfo))
             ? basicPageInfo
-          // create IPageInfoForListing
             : {
               ...basicPageInfo,
               isAbleToDeleteCompletely: canDeleteCompletely,
-              bookmarkCount: bookmarkCountMap != null ? bookmarkCountMap[page._id.toString()] : undefined,
               revisionShortBody: shortBodiesMap != null ? shortBodiesMap[page._id.toString()] : undefined,
-            } as IPageInfoForListing;
+            } satisfies IPageInfoForListing;
 
           idToPageInfoMap[page._id.toString()] = pageInfo;
         }

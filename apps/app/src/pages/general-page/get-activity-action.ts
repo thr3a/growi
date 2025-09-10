@@ -1,3 +1,4 @@
+import type { IDataWithMeta, IPageNotFoundInfo } from '@growi/core/dist/interfaces';
 import { pagePathUtils } from '@growi/core/dist/utils';
 
 import { SupportedAction } from '~/interfaces/activity';
@@ -9,7 +10,7 @@ export const getActivityAction = (props: {
   isNotCreatable: boolean;
   isForbidden: boolean;
   isNotFound: boolean;
-  pageWithMeta?: IPageToShowRevisionWithMeta | null;
+  pageWithMeta?: IPageToShowRevisionWithMeta | IDataWithMeta<null, IPageNotFoundInfo> | null;
 }): SupportedActionType => {
   if (props.isNotCreatable) {
     return SupportedAction.ACTION_PAGE_NOT_CREATABLE;
@@ -20,7 +21,10 @@ export const getActivityAction = (props: {
   if (props.isNotFound) {
     return SupportedAction.ACTION_PAGE_NOT_FOUND;
   }
-  if (pagePathUtils.isUsersHomepage(props.pageWithMeta?.data.path ?? '')) {
+
+  // Type-safe access to page data - only access path if data is not null
+  const pagePath = props.pageWithMeta?.data?.path ?? '';
+  if (pagePathUtils.isUsersHomepage(pagePath)) {
     return SupportedAction.ACTION_PAGE_USER_HOME_VIEW;
   }
   return SupportedAction.ACTION_PAGE_VIEW;

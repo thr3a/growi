@@ -1,11 +1,11 @@
 import type {
-  IDataWithMeta, IPageInfo, IPagePopulatedToShowRevision,
+  IDataWithMeta, IPageInfoExt, IPageNotFoundInfo, IPagePopulatedToShowRevision,
 } from '@growi/core';
 
 import type { RendererConfig } from '~/interfaces/services/renderer';
 import type { PageDocument } from '~/server/models/page';
 
-export type IPageToShowRevisionWithMeta = IDataWithMeta<IPagePopulatedToShowRevision & PageDocument, IPageInfo>;
+export type IPageToShowRevisionWithMeta = IDataWithMeta<IPagePopulatedToShowRevision & PageDocument, IPageInfoExt>;
 
 export type RendererConfigProps = {
   rendererConfig: RendererConfig,
@@ -37,17 +37,12 @@ export type ServerConfigurationProps = {
   },
 }
 
-export type GeneralPageStatesProps = {
-  isNotFound: boolean,
-  isForbidden: boolean,
-  isNotCreatable: boolean,
-}
+// Do not include CommonEachProps for multi stage
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type GeneralPageEachProps = {};
 
 // Do not include CommonEachProps for multi stage
-export type GeneralPageEachProps = GeneralPageStatesProps;
-
-// Do not include CommonEachProps for multi stage
-export type GeneralPageInitialProps = GeneralPageStatesProps & RendererConfigProps & ServerConfigurationProps & {
-  pageWithMeta: IPageToShowRevisionWithMeta | null,
+export type GeneralPageInitialProps = RendererConfigProps & ServerConfigurationProps & {
+  pageWithMeta: IPageToShowRevisionWithMeta | IDataWithMeta<null, IPageNotFoundInfo> | null,
   skipSSR?: boolean,
 }

@@ -1,4 +1,10 @@
-import type { IPagePopulatedToShowRevision } from '@growi/core';
+import {
+  type IPageInfo,
+  type IPageNotFoundInfo,
+  type IPagePopulatedToShowRevision,
+  isIPageInfo,
+  isIPageNotFoundInfo,
+} from '@growi/core';
 import { useHydrateAtoms } from 'jotai/utils';
 
 import {
@@ -6,7 +12,6 @@ import {
   currentPageIdAtom,
   isForbiddenAtom,
   latestRevisionAtom,
-  pageNotCreatableAtom,
   pageNotFoundAtom,
   redirectFromAtom,
   remoteRevisionBodyAtom,
@@ -40,25 +45,31 @@ import {
  * });
  */
 export const useHydratePageAtoms = (
-  page: IPagePopulatedToShowRevision | undefined,
+  page: IPagePopulatedToShowRevision | null | undefined,
+  pageMeta: IPageNotFoundInfo | IPageInfo | undefined,
   options?: {
+    // always overwrited
     isLatestRevision?: boolean;
     shareLinkId?: string;
-    isNotFound?: boolean; // always overwrited
-    isNotCreatable?: boolean; // always overwrited
-    isForbidden?: boolean; // always overwrited
-    redirectFrom?: string; // always overwrited
-    templateTags?: string[]; // always overwrited
-    templateBody?: string; // always overwrited
+    redirectFrom?: string;
+    templateTags?: string[];
+    templateBody?: string;
   },
 ): void => {
   useHydrateAtoms([
     // Core page state - automatically extract from page object
     [currentPageIdAtom, page?._id],
-    [currentPageDataAtom, page],
-
-    // ShareLink page state
-    [shareLinkIdAtom, options?.shareLinkId],
+    [currentPageDataAtom, page ?? undefined],
+    [
+      pageNotFoundAtom,
+      isIPageInfo(pageMeta)
+        ? pageMeta.isNotFound
+        : page == null || page.isEmpty,
+    ],
+    [
+      isForbiddenAtom,
+      isIPageNotFoundInfo(pageMeta) ? pageMeta.isForbidden : false,
+    ],
 
     // Remote revision data - auto-extracted from page.revision
     [remoteRevisionIdAtom, page?.revision?._id],
@@ -68,11 +79,13 @@ export const useHydratePageAtoms = (
   // always overwrited
   useHydrateAtoms(
     [
-      [pageNotFoundAtom, options?.isNotFound ?? (page == null || page.isEmpty)],
-      [pageNotCreatableAtom, options?.isNotCreatable ?? false],
-      [isForbiddenAtom, options?.isForbidden ?? false],
       [latestRevisionAtom, options?.isLatestRevision ?? true],
+
+      // ShareLink page state
+      [shareLinkIdAtom, options?.shareLinkId],
+
       [redirectFromAtom, options?.redirectFrom ?? undefined],
+
       // Template data - from options (not auto-extracted from page)
       [templateTagsAtom, options?.templateTags ?? []],
       [templateBodyAtom, options?.templateBody ?? ''],

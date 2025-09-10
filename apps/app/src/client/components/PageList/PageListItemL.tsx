@@ -4,7 +4,7 @@ import React, {
 } from 'react';
 
 import type {
-  IPageInfoAll, IPageWithMeta, IPageInfoForListing,
+  IPageInfoExt, IPageWithMeta, IPageInfoForListing,
 } from '@growi/core';
 import { isIPageInfoForListing, isIPageInfoForEntity } from '@growi/core';
 import { DevidedPagePath } from '@growi/core/dist/models';
@@ -143,13 +143,13 @@ const PageListItemLSubstance: ForwardRefRenderFunction<ISelectable, Props> = (pr
     openDuplicateModal(page, { onDuplicated: onPageDuplicated });
   }, [onPageDuplicated, openDuplicateModal, pageData._id, pageData.path]);
 
-  const renameMenuItemClickHandler = useCallback((_id: string, pageInfo: IPageInfoAll | undefined) => {
+  const renameMenuItemClickHandler = useCallback((_id: string, pageInfo: IPageInfoExt | undefined) => {
     const page = { data: pageData, meta: pageInfo };
     openRenameModal(page, { onRenamed: onPageRenamed });
   }, [pageData, onPageRenamed, openRenameModal]);
 
 
-  const deleteMenuItemClickHandler = useCallback((_id: string, pageInfo: IPageInfoAll | undefined) => {
+  const deleteMenuItemClickHandler = useCallback((_id: string, pageInfo: IPageInfoExt | undefined) => {
     const pageToDelete = { data: pageData, meta: pageInfo };
 
     // open modal

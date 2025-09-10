@@ -84,11 +84,10 @@ const Page: NextPageWithLayout<Props> = (props: Props) => {
 
   // Initialize Jotai atoms with initial data - must be called unconditionally
   const pageData = isInitialProps(props) ? props.pageWithMeta?.data : undefined;
-  useHydratePageAtoms(pageData, {
+  const pageMeta = isInitialProps(props) ? props.pageWithMeta?.meta : undefined;
+
+  useHydratePageAtoms(pageData, pageMeta, {
     redirectFrom: props.redirectFrom ?? undefined,
-    isNotFound: props.isNotFound,
-    isNotCreatable: props.isNotCreatable,
-    isForbidden: props.isForbidden,
     templateTags: props.templateTagData,
     templateBody: props.templateBodyData,
   });

@@ -1,3 +1,5 @@
+import { isIPageInfo } from '@growi/core/dist/interfaces';
+
 import loggerFactory from '~/utils/logger';
 
 import type { GeneralPageInitialProps } from './types';
@@ -23,17 +25,11 @@ export function isValidGeneralPageInitialProps(props: unknown): props is General
   }
 
   // GeneralPageInitialProps specific page state
-  if (typeof p.isNotFound !== 'boolean') {
-    logger.warn('isValidGeneralPageInitialProps: isNotFound is not a boolean', { isNotFound: p.isNotFound });
-    return false;
-  }
-  if (typeof p.isForbidden !== 'boolean') {
-    logger.warn('isValidGeneralPageInitialProps: isForbidden is not a boolean', { isForbidden: p.isForbidden });
-    return false;
-  }
-  if (typeof p.isNotCreatable !== 'boolean') {
-    logger.warn('isValidGeneralPageInitialProps: isNotCreatable is not a boolean', { isNotCreatable: p.isNotCreatable });
-    return false;
+  if (p.meta != null && typeof p.meta === 'object') {
+    if (!isIPageInfo(p.meta)) {
+      logger.warn('isValidGeneralPageInitialProps: meta is not a valid IPageInfo', { meta: p.meta });
+      return false;
+    }
   }
 
   return true;

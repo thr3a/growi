@@ -43,10 +43,12 @@ const isInitialProps = (props: Props): props is InitialProps => {
 const SharedPage: NextPageWithLayout<Props> = (props: Props) => {
 
   // Initialize Jotai atoms with initial data - must be called unconditionally
+  const pageData = isInitialProps(props) ? props.pageWithMeta?.data : undefined;
+  const pageMeta = isInitialProps(props) ? props.pageWithMeta?.meta : undefined;
   const shareLink = isInitialProps(props) ? props.shareLink : undefined;
   const isExpired = isInitialProps(props) ? props.isExpired : undefined;
-  const pageData = isInitialProps(props) ? props.pageWithMeta?.data : undefined;
-  useHydratePageAtoms(pageData, {
+
+  useHydratePageAtoms(pageData, pageMeta, {
     shareLinkId: shareLink?._id,
   });
 

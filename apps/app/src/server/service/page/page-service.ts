@@ -4,7 +4,7 @@ import type {
   HasObjectId,
   IDataWithMeta,
   IGrantedGroup,
-  IPageInfo, IPageInfoAll, IPageInfoForEntity, IUser,
+  IPageInfo, IPageInfoForEntity, IPageNotFoundInfo, IUser, IPageInfoExt,
 } from '@growi/core';
 import type { HydratedDocument, Types } from 'mongoose';
 
@@ -30,7 +30,7 @@ export interface IPageService {
   deleteMultipleCompletely: (pages: ObjectIdLike[], user: IUser | undefined) => Promise<void>,
   findPageAndMetaDataByViewer(
       pageId: string | null, path: string, user?: HydratedDocument<IUser>, includeEmpty?: boolean, isSharedPage?: boolean,
-  ): Promise<IDataWithMeta<HydratedDocument<PageDocument>, IPageInfoAll>|null>
+  ): Promise<IDataWithMeta<HydratedDocument<PageDocument>, IPageInfoExt> | IDataWithMeta<null, IPageNotFoundInfo>>
   findAncestorsChildrenByPathAndViewer(path: string, user, userGroups?): Promise<Record<string, PageDocument[]>>,
   findChildrenByParentPathOrIdAndViewer(
     parentPathOrId: string, user, userGroups?, showPagesRestrictedByOwner?: boolean, showPagesRestrictedByGroup?: boolean,
@@ -43,7 +43,7 @@ export interface IPageService {
     user: IUser,
 ): Promise<void>
   shortBodiesMapByPageIds(pageIds?: Types.ObjectId[], user?): Promise<Record<string, string | null>>,
-  constructBasicPageInfo(page: PageDocument, isGuestUser?: boolean): IPageInfo | Omit<IPageInfoForEntity, 'bookmarkCount'>,
+  constructBasicPageInfo(page: PageDocument, isGuestUser?: boolean): Omit<IPageInfo | IPageInfoForEntity, 'bookmarkCount'>,
   normalizeAllPublicPages(): Promise<void>,
   canDelete(page: PageDocument, creatorId: ObjectIdLike | null, operator: any | null, isRecursively: boolean): boolean,
   canDeleteCompletely(
