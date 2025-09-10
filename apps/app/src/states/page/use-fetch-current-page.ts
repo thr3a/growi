@@ -1,7 +1,7 @@
-import type { IPagePopulatedToShowRevision } from '@growi/core';
+import { isIPageNotFoundInfo, type IPagePopulatedToShowRevision } from '@growi/core';
 import { isClient } from '@growi/core/dist/utils';
+import { isErrorV3 } from '@growi/core/dist/models';
 import {
-  isCreatablePage,
   isPermalink,
 } from '@growi/core/dist/utils/page-path-utils';
 import { removeHeadingSlash } from '@growi/core/dist/utils/path-utils';
@@ -14,11 +14,17 @@ import { apiv3Get } from '~/client/util/apiv3-client';
 import {
   currentPageDataAtom,
   currentPageIdAtom,
+  isForbiddenAtom,
   pageErrorAtom,
   pageLoadingAtom,
   pageNotFoundAtom,
   shareLinkIdAtom,
 } from './internal-atoms';
+import loggerFactory from '~/utils/logger';
+
+
+const logger = loggerFactory('growi:states:page:useFetchCurrentPage');
+
 
 type FetchPageArgs = {
   path?: string;
@@ -139,11 +145,18 @@ export const useFetchCurrentPage = (): {
 
           return newData;
         } catch (err) {
-          set(pageErrorAtom, err as Error);
+          if (Array.isArray(err) && err.length > 0 && isErrorV3(err[0])) {
+            const error = err[0];
+            set(pageErrorAtom, error);
 
-          const apiError = err as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-          if (apiError.response?.status === 404) {
-            set(pageNotFoundAtom, true);
+            if (isIPageNotFoundInfo(error.args)) {
+              set(pageNotFoundAtom, true);
+              set(isForbiddenAtom, error.args.isForbidden ?? false);
+              set(currentPageDataAtom, undefined);
+            }
+          }
+          else {
+            logger.error('Unhandled error when fetching current page:', err);
           }
         } finally {
           set(pageLoadingAtom, false);

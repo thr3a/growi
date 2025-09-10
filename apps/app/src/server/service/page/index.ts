@@ -425,11 +425,13 @@ class PageService implements IPageService {
     }
 
     if (page == null) {
+      const count = pageId != null ? await Page.count({ _id: pageId }) : await Page.count({ path });
+      const isForbidden = count > 0;
       return {
         data: null,
         meta: {
           isNotFound: true,
-          isForbidden: false,
+          isForbidden,
         },
       };
     }
@@ -438,7 +440,7 @@ class PageService implements IPageService {
       return {
         data: page,
         meta: {
-          isNotFound: false,
+          isNotFound: page.isEmpty,
           isV5Compatible: isTopPage(page.path) || page.parent != null,
           isEmpty: page.isEmpty,
           isMovable: false,

@@ -217,9 +217,9 @@ module.exports = (crowi) => {
       // not found or forbidden
       if (page == null && (pages == null || pages.length === 0)) {
         if (isIPageNotFoundInfo(meta) && meta.isForbidden) {
-          return res.apiv3Err('Page is forbidden', 403, meta);
+          return res.apiv3Err(new ErrorV3('Page is forbidden', 'page-not-found', undefined, meta), 403);
         }
-        return res.apiv3Err('Page is not found', 404, meta);
+        return res.apiv3Err(new ErrorV3('Page is not found', 'page-not-found', undefined, meta), 404);
       }
 
       if (page != null) {
@@ -231,7 +231,7 @@ module.exports = (crowi) => {
         }
         catch (err) {
           logger.error('populate-page-failed', err);
-          return res.apiv3Err(err, 500, meta);
+          return res.apiv3Err(new ErrorV3('Failed to populate page', 'populate-page-failed', undefined, { err, meta }), 500);
         }
       }
 
