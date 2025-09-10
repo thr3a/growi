@@ -107,10 +107,14 @@ jobs:
   build-app-image:
     needs: create-github-release
 
+    strategy:
+      matrix:
+        image-name: [weseek/growi, growilabs/growi]
+
     uses: growilabs/growi/.github/workflows/reusable-app-build-image.yml@master
     with:
       source-version: refs/tags/v${{ needs.create-github-release.outputs.RELEASED_VERSION }}
-      image-name: weseek/growi
+      image-name: ${{ matrix.image-name }}
       tag-temporary: latest
     secrets:
       AWS_ROLE_TO_ASSUME_FOR_OIDC: ${{ secrets.AWS_ROLE_TO_ASSUME_FOR_OIDC }}
@@ -118,18 +122,39 @@ jobs:
   publish-app-image:
     needs: [determine-tags, build-app-image]
 
+    strategy:
+      matrix:
+        include:
+          - image-name: weseek/growi
+            username: wsmoogle
+            password: DOCKER_REGISTRY_PASSWORD
+          - image-name: growilabs/growi
+            username: growimoogle
+            password: DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE
+
     uses: growilabs/growi/.github/workflows/reusable-app-create-manifests.yml@master
     with:
       tags: ${{ needs.determine-tags.outputs.TAGS }}
       registry: docker.io
-      image-name: weseek/growi
+      image-name: ${{ matrix.image-name }}
+      username: ${{ matrix.username }}
       tag-temporary: latest
     secrets:
-      DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+      DOCKER_REGISTRY_PASSWORD: ${{ secrets[matrix.password] }}
 
   post-publish:
     needs: [create-github-release, publish-app-image]
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - repository: weseek/growi
+            username: wsmoogle
+            password: DOCKER_REGISTRY_PASSWORD
+          - repository: growilabs/growi
+            username: growimoogle
+            password: DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE
 
     steps:
     - uses: actions/checkout@v4
@@ -139,9 +164,9 @@ jobs:
     - name: Update Docker Hub Description
       uses: peter-evans/dockerhub-description@v4
       with:
-        username: wsmoogle
-        password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
-        repository: weseek/growi
+        username: ${{ matrix.username }}
+        password: ${{ secrets[matrix.password] }}
+        repository: ${{ matrix.repository }}
         readme-filepath: ./apps/app/docker/README.md
 
     - name: Slack Notification
