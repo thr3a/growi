@@ -90,9 +90,9 @@ jobs:
       uses: myrotvorets/info-from-package-json-action@v2.0.2
       id: package-json
 
-    - name: Docker meta
+    - name: Docker meta for docker.io
       uses: docker/metadata-action@v5
-      id: meta-weseek
+      id: meta
       with:
         images: |
            docker.io/weseek/growi
