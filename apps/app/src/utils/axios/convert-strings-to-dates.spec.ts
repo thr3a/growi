@@ -1,5 +1,5 @@
-import type { DateConvertible } from './axios';
-import { convertStringsToDates } from './axios';
+import type { DateConvertible } from './convert-strings-to-dates';
+import { convertStringsToDates } from './convert-strings-to-dates';
 
 describe('convertStringsToDates', () => {
   // Test case 1: Basic conversion in a flat object

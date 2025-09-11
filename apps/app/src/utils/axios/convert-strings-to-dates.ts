@@ -1,12 +1,3 @@
-// eslint-disable-next-line no-restricted-imports
-import axios from 'axios';
-import type { AxiosRequestConfig, AxiosStatic } from 'axios';
-import { formatISO } from 'date-fns';
-import qs from 'qs';
-
-// eslint-disable-next-line no-restricted-imports
-export * from 'axios';
-
 const isoDateRegex =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(Z|[+-]\d{2}:\d{2})$/;
 
@@ -79,64 +70,3 @@ export function convertStringsToDates<
 export function convertStringsToDates(data: DateConvertible): DateConvertible {
   return convertStringsToDatesRecursive(data, new Set());
 }
-
-// Determine the base array of transformers
-let baseTransformers = axios.defaults.transformResponse;
-
-if (baseTransformers == null) {
-  baseTransformers = [];
-} else if (!Array.isArray(baseTransformers)) {
-  // If it's a single transformer function, wrap it in an array
-  baseTransformers = [baseTransformers];
-}
-
-const create = (config?: AxiosRequestConfig) => {
-  const customAxios = axios.create({
-    ...config,
-
-    headers: {
-      'X-Requested-With': 'XMLHttpRequest',
-      'Content-Type': 'application/json',
-    },
-
-    transformResponse: baseTransformers.concat((data) => {
-      return convertStringsToDates(data);
-    }),
-  });
-
-  // serialize Date config: https://github.com/axios/axios/issues/1548#issuecomment-548306666
-  customAxios.interceptors.request.use((config) => {
-    config.paramsSerializer = (params) =>
-      qs.stringify(params, {
-        serializeDate: (date: Date) => {
-          return formatISO(date, { representation: 'complete' });
-        },
-      });
-    return config;
-  });
-
-  return customAxios;
-}
-
-// Expose Axios class to allow class inheritance
-const customAxiosStatic = Object.assign(create(), {
-  create,
-  Axios: axios.Axios,
-
-  // Expose Cancel & CancelToken
-  Cancel: axios.Cancel,
-
-  CancelToken: axios.CancelToken,
-
-  isCancel: axios.isCancel,
-  VERSION: axios.VERSION,
-
-  // Expose all/spread
-  all: axios.all,
-  spread: axios.spread,
-
-  // Expose isAxiosError
-  isAxiosError: axios.isAxiosError,
-}) satisfies AxiosStatic;
-
-export default customAxiosStatic;
