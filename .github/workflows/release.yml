@@ -179,7 +179,7 @@ jobs:
 
 
   create-pr-for-next-rc:
-    needs: [create-github-release, publish-app-image]
+    needs: [create-github-release, publish-app-image-for-growilabs, publish-app-image-for-weseek]
     runs-on: ubuntu-latest
 
     steps:
