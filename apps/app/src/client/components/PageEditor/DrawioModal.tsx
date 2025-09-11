@@ -54,7 +54,7 @@ const drawioConfig: DrawioConfig = {
 };
 
 
-export const DrawioModal = (): JSX.Element => {
+const DrawioModalSubstance = (): JSX.Element => {
   const { drawioUri } = useRendererConfig();
   const { data: personalSettingsInfo } = usePersonalSettings({
     // make immutable
@@ -72,6 +72,8 @@ export const DrawioModal = (): JSX.Element => {
   const editor = codeMirrorEditor?.view;
   const isOpenedInEditor = (drawioModalDataInEditor?.isOpened ?? false) && (editor != null);
   const isOpened = drawioModalData?.isOpened ?? false;
+
+  // Memoize URI with parameters calculation
 
   const drawioUriWithParams = useMemo(() => {
     if (drawioUri === '') {
@@ -97,30 +99,43 @@ export const DrawioModal = (): JSX.Element => {
     return url;
   }, [drawioUri, personalSettingsInfo?.lang]);
 
+  // Memoize communication helper with inline handlers to avoid dependency issues
   const drawioCommunicationHelper = useMemo(() => {
     if (drawioUri === '') {
       return undefined;
     }
 
-    const save = editor != null ? (drawioMxFile: string) => {
-      replaceFocusedDrawioWithEditor(editor, drawioMxFile);
-    } : drawioModalData?.onSave;
+    const saveHandler = editor != null
+      ? (drawioMxFile: string) => replaceFocusedDrawioWithEditor(editor, drawioMxFile)
+      : drawioModalData?.onSave;
+
+    const closeHandler = isOpened ? closeDrawioModal : closeDrawioModalInEditor;
 
     return new DrawioCommunicationHelper(
       drawioUri,
       drawioConfig,
-      { onClose: isOpened ? closeDrawioModal : closeDrawioModalInEditor, onSave: save },
+      { onClose: closeHandler, onSave: saveHandler },
     );
-  }, [closeDrawioModal, closeDrawioModalInEditor, drawioModalData?.onSave, editor, isOpened, drawioUri]);
+  }, [drawioUri, editor, drawioModalData?.onSave, isOpened, closeDrawioModal, closeDrawioModalInEditor]);
 
   const receiveMessageHandler = useCallback((event: MessageEvent) => {
-    if (drawioModalData == null) {
+    if (drawioModalData == null || drawioCommunicationHelper == null) {
       return;
     }
 
     const drawioMxFile = editor != null ? getMarkdownDrawioMxfile(editor) : drawioModalData.drawioMxFile;
-    drawioCommunicationHelper?.onReceiveMessage(event, drawioMxFile ?? null);
+    drawioCommunicationHelper.onReceiveMessage(event, drawioMxFile ?? null);
   }, [drawioCommunicationHelper, drawioModalData, editor]);
+
+  // Memoize toggle handler
+  const toggleHandler = useCallback(() => {
+    if (isOpened) {
+      closeDrawioModal();
+    }
+    else {
+      closeDrawioModalInEditor();
+    }
+  }, [isOpened, closeDrawioModal, closeDrawioModalInEditor]);
 
   useEffect(() => {
     if (isOpened || isOpenedInEditor) {
@@ -139,7 +154,7 @@ export const DrawioModal = (): JSX.Element => {
   return (
     <Modal
       isOpen={isOpened || isOpenedInEditor}
-      toggle={() => (isOpened ? closeDrawioModal() : closeDrawioModalInEditor())}
+      toggle={toggleHandler}
       backdrop="static"
       className="drawio-modal grw-body-only-modal-expanded"
       size="xl"
@@ -167,4 +182,18 @@ export const DrawioModal = (): JSX.Element => {
       </ModalBody>
     </Modal>
   );
+};
+
+export const DrawioModal = (): JSX.Element => {
+  const drawioModalData = useDrawioModalStatus();
+  const drawioModalDataInEditor = useDrawioModalForEditorStatus();
+
+  const isOpened = drawioModalData?.isOpened ?? false;
+  const isOpenedInEditor = drawioModalDataInEditor?.isOpened ?? false;
+
+  if (!isOpened && !isOpenedInEditor) {
+    return <></>;
+  }
+
+  return <DrawioModalSubstance />;
 };
