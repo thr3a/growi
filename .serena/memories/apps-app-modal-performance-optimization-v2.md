@@ -172,6 +172,34 @@ return (
 );
 ```
 
+### 5. JSX.Element依存関係の問題
+
+**❌ 問題のあるパターン**
+```typescript
+const renderContent = useMemo(() => (
+  <div>{processData(data)}</div>
+), [data]);
+
+const bodyContent = useMemo(() => (
+  <ModalBody>
+    {renderContent}  // JSX.Element型をdependencyに使用
+  </ModalBody>
+), [renderContent]); // 毎回新しい参照で無効化される
+```
+
+**✅ 最適化されたパターン**
+```typescript
+const bodyContent = useMemo(() => {
+  // 内部で直接処理を統合
+  const processedContent = processData(data);
+  return (
+    <ModalBody>
+      <div>{processedContent}</div>
+    </ModalBody>
+  );
+}, [data]); // 原始値による正確なメモ化判定
+```
+
 ### **重要** メモ化の判断基準
 
 ただし、過度なメモ化は避ける
@@ -179,8 +207,10 @@ return (
 - ✅ 重い計算処理: useMemoで保護
 - ✅ 複雑なオブジェクト構築: useMemoで保護
 - ✅ 外部依存のあるハンドラ: useCallbackで保護
+- ✅ **JSX.Element型の統合**: 分離せずに内部で直接処理
 - ❌ 単純な条件分岐: メモ化不要
 - ❌ 軽量なsetter関数: useCallback不要
+- ❌ **JSX.Element型のdependency**: 参照型による無効化を避ける
 
 
 
@@ -200,6 +230,7 @@ return (
 - [ ] **計算処理のメモ化**: 配列操作や文字列処理のうち、メモ化すべきと判断したものを `useMemo` でラップ
 - [ ] **イベントハンドラーのメモ化**: イベントハンドラーのうち、メモ化すべきと判断したものを `useCallback` でラップ
 - [ ] **外部依存関数の安定化**: 親から渡される関数の依存関係を明確化
+- [ ] **JSX.Element依存関係の排除**: 参照型dependency回避のため内部統合を実装
 
 #### 推奨対応項目
 - [ ] **レンダリング関数の最適化**: 条件付きレンダリングを事前計算
