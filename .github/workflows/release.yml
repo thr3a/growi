@@ -81,7 +81,8 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      TAGS: ${{ steps.meta.outputs.tags }}
+      TAGS_WESEEK: ${{ steps.meta-weseek.outputs.tags }}
+      TAGS_GROWILABS: ${{ steps.meta-growilabs.outputs.tags }}
 
     steps:
     - uses: actions/checkout@v4
@@ -90,13 +91,23 @@ jobs:
       uses: myrotvorets/info-from-package-json-action@v2.0.2
       id: package-json
 
-    - name: Docker meta for docker.io
+    - name: Docker meta for weseek/growi
       uses: docker/metadata-action@v5
-      id: meta
+      id: meta-weseek
       with:
-        images: |
-           docker.io/weseek/growi
-           docker.io/growilabs/growi
+        images: docker.io/weseek/growi
+        sep-tags: ','
+        tags: |
+          type=raw,value=latest
+          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}
+          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}.{{minor}}
+          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}.{{minor}}.{{patch}}
+
+    - name: Docker meta for growilabs/growi
+      uses: docker/metadata-action@v5
+      id: meta-growilabs
+      with:
+        images: docker.io/growilabs/growi
         sep-tags: ','
         tags: |
           type=raw,value=latest
@@ -120,7 +131,7 @@ jobs:
 
     uses: growilabs/growi/.github/workflows/reusable-app-create-manifests.yml@master
     with:
-      tags: ${{ needs.determine-tags.outputs.TAGS }}
+      tags: ${{ needs.determine-tags.outputs.TAGS_GROWILABS }}
       registry: docker.io
       image-name: 'growilabs/growi'
       docker-registry-username: 'growimoogle'
@@ -133,7 +144,7 @@ jobs:
 
     uses: growilabs/growi/.github/workflows/reusable-app-create-manifests.yml@master
     with:
-      tags: ${{ needs.determine-tags.outputs.TAGS }}
+      tags: ${{ needs.determine-tags.outputs.TAGS_WESEEK }}
       registry: docker.io
       image-name: 'growilabs/growi'
       docker-registry-username: 'wsmoogle'
