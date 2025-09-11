@@ -135,7 +135,7 @@ jobs:
     with:
       tags: ${{ needs.determine-tags.outputs.TAGS }}
       registry: docker.io
-      image-name: 'weseek/growi'
+      image-name: 'growilabs/growi'
       docker-registry-username: 'wsmoogle'
       tag-temporary: latest
     secrets:
