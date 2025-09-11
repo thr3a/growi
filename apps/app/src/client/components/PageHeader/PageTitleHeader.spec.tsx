@@ -14,12 +14,15 @@ import { PageTitleHeader } from './PageTitleHeader';
 
 const mocks = vi.hoisted(() => ({
   useIsUntitledPageMock: vi.fn(),
-  useEditorModeMock: vi.fn(() => ({ data: EditorMode.Editor })),
+  useEditorModeMock: vi.fn(() => ({ editorMode: EditorMode.Editor })),
 }));
 
-vi.mock('~/stores/ui', () => ({
-  useIsUntitledPage: mocks.useIsUntitledPageMock,
-}));
+vi.mock('~/states/page', async (importOriginal) => {
+  return {
+    ...(await importOriginal()),
+    useIsUntitledPage: mocks.useIsUntitledPageMock,
+  };
+});
 vi.mock('~/states/ui/editor', async importOriginal => ({
   ...await importOriginal(),
   useEditorMode: mocks.useEditorModeMock,
@@ -28,10 +31,10 @@ vi.mock('~/states/ui/editor', async importOriginal => ({
 describe('PageTitleHeader Component with untitled page', () => {
 
   beforeAll(() => {
-    mocks.useIsUntitledPageMock.mockImplementation(() => ({ data: true }));
+    mocks.useIsUntitledPageMock.mockImplementation(() => true);
   });
 
-  it('should render the textbox correctly', async() => {
+  it('should render the textbox correctly', async () => {
     // arrange
     const currentPage = mock<IPagePopulatedToShowRevision>({
       _id: faker.database.mongodbObjectId(),
@@ -60,10 +63,10 @@ describe('PageTitleHeader Component with untitled page', () => {
 describe('PageTitleHeader Component', () => {
 
   beforeAll(() => {
-    mocks.useIsUntitledPageMock.mockImplementation(() => ({ data: false }));
+    mocks.useIsUntitledPageMock.mockImplementation(() => false);
   });
 
-  it('should render the title correctly', async() => {
+  it('should render the title correctly', async () => {
     // arrange
     const pageTitle = faker.lorem.slug();
     const currentPage = mock<IPagePopulatedToShowRevision>({
@@ -86,7 +89,7 @@ describe('PageTitleHeader Component', () => {
     expect(inputElement).not.toBeInTheDocument();
   });
 
-  it('should render text input after clicking', async() => {
+  it('should render text input after clicking', async () => {
     // arrange
     const pageTitle = faker.lorem.slug();
     const currentPage = mock<IPagePopulatedToShowRevision>({

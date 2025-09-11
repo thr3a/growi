@@ -5,9 +5,8 @@ import { useTranslation } from 'next-i18next';
 
 import { apiv3Put } from '~/client/util/apiv3-client';
 import { toastSuccess, toastError } from '~/client/util/toastr';
-import { useFetchCurrentPage } from '~/states/page';
+import { useFetchCurrentPage, useSetIsUntitledPage } from '~/states/page';
 import { mutatePageTree, mutatePageList, mutateRecentlyUpdated } from '~/stores/page-listing';
-import { useIsUntitledPage } from '~/stores/ui';
 
 
 type PagePathRenameHandler = (newPagePath: string, onRenameFinish?: () => void, onRenameFailure?: () => void, onRenamedSkipped?: () => void) => Promise<void>
@@ -18,7 +17,7 @@ export const usePagePathRenameHandler = (
 
   const { t } = useTranslation();
   const { fetchCurrentPage } = useFetchCurrentPage();
-  const { mutate: mutateIsUntitledPage } = useIsUntitledPage();
+  const setIsUntitledPage = useSetIsUntitledPage();
 
   const pagePathRenameHandler = useCallback(async(newPagePath, onRenameFinish, onRenameFailure) => {
 
@@ -35,7 +34,7 @@ export const usePagePathRenameHandler = (
       mutatePageTree();
       mutateRecentlyUpdated();
       mutatePageList();
-      mutateIsUntitledPage(false);
+      setIsUntitledPage(false);
 
       if (currentPage.path === fromPath || currentPage.path === toPath) {
         fetchCurrentPage();
@@ -58,7 +57,7 @@ export const usePagePathRenameHandler = (
       onRenameFailure?.();
       toastError(err);
     }
-  }, [currentPage, fetchCurrentPage, mutateIsUntitledPage, t]);
+  }, [currentPage, fetchCurrentPage, setIsUntitledPage, t]);
 
   return pagePathRenameHandler;
 };

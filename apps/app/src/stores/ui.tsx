@@ -1,16 +1,13 @@
 import {
-  type RefObject, useCallback, useEffect,
+  useCallback,
   useLayoutEffect,
 } from 'react';
 
 import { useSWRStatic } from '@growi/core/dist/swr';
-import { pagePathUtils, isClient } from '@growi/core/dist/utils';
-import { Breakpoint } from '@growi/ui/dist/interfaces';
-import { addBreakpointListener, cleanupBreakpointListener } from '@growi/ui/dist/utils';
+import { pagePathUtils } from '@growi/core/dist/utils';
 import { useRouter } from 'next/router';
-import type { HtmlElementNode } from 'rehype-toc';
 import {
-  useSWRConfig, type SWRResponse, type Key,
+  type SWRResponse,
 } from 'swr';
 import useSWRImmutable from 'swr/immutable';
 
@@ -34,114 +31,9 @@ const logger = loggerFactory('growi:stores:ui');
 
 
 /** **********************************************************
- *                     Storing objects to ref
- *********************************************************** */
-
-export const useCurrentPageTocNode = (): SWRResponse<HtmlElementNode, any> => {
-  const currentPagePath = useCurrentPagePath();
-
-  return useStaticSWR(['currentPageTocNode', currentPagePath]);
-};
-
-/** **********************************************************
  *                          SWR Hooks
  *                      for switching UI
  *********************************************************** */
-
-export const useSidebarScrollerRef = (initialData?: RefObject<HTMLDivElement | null>): SWRResponse<RefObject<HTMLDivElement | null>, Error> => {
-  return useSWRStatic<RefObject<HTMLDivElement | null>, Error>('sidebarScrollerRef', initialData);
-};
-
-//
-export const useIsMobile = (): SWRResponse<boolean, Error> => {
-  const key = isClient() ? 'isMobile' : null;
-
-  let configuration = {
-    fallbackData: false,
-  };
-
-  if (isClient()) {
-
-    // Ref: https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
-    let hasTouchScreen = false;
-    hasTouchScreen = ('maxTouchPoints' in navigator) ? navigator?.maxTouchPoints > 0 : false;
-
-    if (!hasTouchScreen) {
-      const mQ = matchMedia?.('(pointer:coarse)');
-      if (mQ?.media === '(pointer:coarse)') {
-        hasTouchScreen = !!mQ.matches;
-      }
-      else {
-      // Only as a last resort, fall back to user agent sniffing
-        const UA = navigator.userAgent;
-        hasTouchScreen = /\b(BlackBerry|webOS|iPhone|IEMobile)\b/i.test(UA)
-      || /\b(Android|Windows Phone|iPad|iPod)\b/i.test(UA);
-      }
-    }
-
-    configuration = {
-      fallbackData: hasTouchScreen,
-    };
-  }
-
-  return useSWRStatic<boolean, Error>(key, undefined, configuration);
-};
-
-export const useIsDeviceLargerThanMd = (): SWRResponse<boolean, Error> => {
-  const key: Key = isClient() ? 'isDeviceLargerThanMd' : null;
-
-  const { cache, mutate } = useSWRConfig();
-
-  useEffect(() => {
-    if (key != null) {
-      const mdOrAvobeHandler = function(this: MediaQueryList): void {
-        // sm -> md: matches will be true
-        // md -> sm: matches will be false
-        mutate(key, this.matches);
-      };
-      const mql = addBreakpointListener(Breakpoint.MD, mdOrAvobeHandler);
-
-      // initialize
-      if (cache.get(key)?.data == null) {
-        cache.set(key, { ...cache.get(key), data: mql.matches });
-      }
-
-      return () => {
-        cleanupBreakpointListener(mql, mdOrAvobeHandler);
-      };
-    }
-  }, [cache, key, mutate]);
-
-  return useSWRStatic(key);
-};
-
-export const useIsDeviceLargerThanLg = (): SWRResponse<boolean, Error> => {
-  const key: Key = isClient() ? 'isDeviceLargerThanLg' : null;
-
-  const { cache, mutate } = useSWRConfig();
-
-  useEffect(() => {
-    if (key != null) {
-      const lgOrAvobeHandler = function(this: MediaQueryList): void {
-        // md -> lg: matches will be true
-        // lg -> md: matches will be false
-        mutate(key, this.matches);
-      };
-      const mql = addBreakpointListener(Breakpoint.LG, lgOrAvobeHandler);
-
-      // initialize
-      if (cache.get(key)?.data == null) {
-        cache.set(key, { ...cache.get(key), data: mql.matches });
-      }
-
-      return () => {
-        cleanupBreakpointListener(mql, lgOrAvobeHandler);
-      };
-    }
-  }, [cache, key, mutate]);
-
-  return useSWRStatic(key);
-};
 
 type PageTreeDescCountMapUtils = {
   update(newData?: UpdateDescCountData): Promise<UpdateDescCountData | undefined>
@@ -173,7 +65,7 @@ export const useCommentEditorDirtyMap = (): SWRResponse<Map<string, boolean>, Er
 
   const { mutate } = swrResponse;
 
-  const evaluate = useCallback(async(key: string, commentBody: string) => {
+  const evaluate = useCallback(async (key: string, commentBody: string) => {
     const newMap = await mutate((map) => {
       if (map == null) return new Map();
 
@@ -188,7 +80,7 @@ export const useCommentEditorDirtyMap = (): SWRResponse<Map<string, boolean>, Er
     });
     return newMap?.size ?? 0;
   }, [mutate]);
-  const clean = useCallback(async(key: string) => {
+  const clean = useCallback(async (key: string) => {
     const newMap = await mutate((map) => {
       if (map == null) return new Map();
       map.delete(key);
@@ -310,17 +202,4 @@ export const useIsAbleToShowPageAuthors = (): SWRResponse<boolean, Error> => {
     includesUndefined ? null : [key, pageId, pagePath, isNotFound],
     () => isPageExist && !isUsersTopPagePath,
   );
-};
-
-export const useIsUntitledPage = (): SWRResponse<boolean> => {
-  const key = 'isUntitledPage';
-
-  const pageId = useCurrentPageId();
-
-  return useSWRStatic(
-    pageId == null ? null : [key, pageId],
-    undefined,
-    { fallbackData: false },
-  );
-
 };

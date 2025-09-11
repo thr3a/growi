@@ -35,6 +35,7 @@ import {
   isLocalAccountRegistrationEnabledAtom,
   isUploadEnabledAtom,
 } from '~/states/server-configurations';
+import { useDeviceLargerThanMd } from '~/states/ui/device';
 import { useEditorMode } from '~/states/ui/editor';
 import { PageAccessoriesModalContents, usePageAccessoriesModalActions } from '~/states/ui/modal/page-accessories';
 import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
@@ -48,7 +49,6 @@ import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
 import {
   useIsAbleToShowPageManagement,
   useIsAbleToChangeEditorMode,
-  useIsDeviceLargerThanMd,
 } from '~/stores/ui';
 
 import { NotAvailable } from '../NotAvailable';
@@ -97,7 +97,7 @@ const PageOperationMenuItems = (props: PageOperationMenuItemsProps): JSX.Element
 
   const [isBulkExportTooltipOpen, setIsBulkExportTooltipOpen] = useState(false);
 
-  const syncLatestRevisionBodyHandler = useCallback(async() => {
+  const syncLatestRevisionBodyHandler = useCallback(async () => {
     // eslint-disable-next-line no-alert
     const answer = window.confirm(t('sync-latest-revision-body.confirm'));
     if (answer) {
@@ -281,7 +281,7 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
 
   const { data: isAbleToShowPageManagement } = useIsAbleToShowPageManagement();
   const { data: isAbleToChangeEditorMode } = useIsAbleToChangeEditorMode();
-  const { data: isDeviceLargerThanMd } = useIsDeviceLargerThanMd();
+  const [isDeviceLargerThanMd] = useDeviceLargerThanMd();
 
   const { open: openDuplicateModal } = usePageDuplicateModalActions();
   const { open: openRenameModal } = usePageRenameModalActions();
@@ -297,14 +297,14 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
 
   const [isPageTemplateModalShown, setIsPageTempleteModalShown] = useState(false);
 
-  const duplicateItemClickedHandler = useCallback(async(page: IPageForPageDuplicateModal) => {
+  const duplicateItemClickedHandler = useCallback(async (page: IPageForPageDuplicateModal) => {
     const duplicatedHandler: OnDuplicatedFunction = (fromPath, toPath) => {
       router.push(toPath);
     };
     openDuplicateModal(page, { onDuplicated: duplicatedHandler });
   }, [openDuplicateModal, router]);
 
-  const renameItemClickedHandler = useCallback(async(page: IPageToRenameWithMeta<IPageInfoForEntity>) => {
+  const renameItemClickedHandler = useCallback(async (page: IPageToRenameWithMeta<IPageInfoForEntity>) => {
     const renamedHandler: OnRenamedFunction = () => {
       fetchCurrentPage();
       mutatePageInfo();
@@ -338,7 +338,7 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
     openDeleteModal([pageWithMeta], { onDeleted: deletedHandler });
   }, [currentPathname, fetchCurrentPage, openDeleteModal, router, mutatePageInfo]);
 
-  const switchContentWidthHandler = useCallback(async(pageId: string, value: boolean) => {
+  const switchContentWidthHandler = useCallback(async (pageId: string, value: boolean) => {
     if (!isSharedPage) {
       await updateContentWidth(pageId, value);
       fetchCurrentPage();
@@ -426,12 +426,12 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
                 editorMode={editorMode}
                 isBtnDisabled={!!isGuestUser || !!isReadOnlyUser}
                 path={path}
-                // grant={grant}
-                // grantUserGroupId={grantUserGroupId}
+              // grant={grant}
+              // grantUserGroupId={grantUserGroupId}
               />
             )}
 
-            { isGuestUser && (
+            {isGuestUser && (
               <div className="mt-2">
                 <span>
                   <span className="d-inline-block" id="sign-up-link">
@@ -454,7 +454,7 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
                   <span className="material-symbols-outlined me-1">login</span>{t('Sign in')}
                 </Link>
               </div>
-            ) }
+            )}
           </nav>
 
         </GroundGlassBar>

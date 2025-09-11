@@ -9,7 +9,7 @@ import { useIsomorphicLayoutEffect } from 'usehooks-ts';
 
 import { SidebarMode } from '~/interfaces/ui';
 import { useIsSearchPage } from '~/states/context';
-import { useDeviceLargerThanXl } from '~/states/ui/device';
+import { useDeviceLargerThanXl, useDeviceLargerThanMd } from '~/states/ui/device';
 import { EditorMode, useEditorMode } from '~/states/ui/editor';
 import {
   useDrawerOpened,
@@ -17,10 +17,9 @@ import {
   useSidebarMode,
   useCollapsedContentsOpened,
   useCurrentProductNavWidth,
+  useSetSidebarScrollerRef,
 } from '~/states/ui/sidebar';
 import {
-  useSidebarScrollerRef,
-  useIsDeviceLargerThanMd,
 } from '~/stores/ui';
 
 import { DrawerToggler } from '../Common/DrawerToggler';
@@ -78,7 +77,7 @@ const ResizableContainer = memo((props: ResizableContainerProps): JSX.Element =>
   const [, setCollapsedContentsOpened] = useCollapsedContentsOpened();
 
   const [isClient, setClient] = useState(false);
-  const [resizableAreaWidth, setResizableAreaWidth] = useState<number|undefined>(
+  const [resizableAreaWidth, setResizableAreaWidth] = useState<number | undefined>(
     getWidthByMode(isDrawerMode(), isCollapsedMode(), currentProductNavWidth),
   );
 
@@ -146,8 +145,12 @@ const CollapsibleContainer = memo((props: CollapsibleContainerProps): JSX.Elemen
   const [isCollapsedContentsOpened, setCollapsedContentsOpened] = useCollapsedContentsOpened();
 
   const sidebarScrollerRef = useRef<HTMLDivElement>(null);
-  const { mutate: mutateSidebarScroller } = useSidebarScrollerRef();
-  mutateSidebarScroller(sidebarScrollerRef);
+  const setSidebarScrollerRef = useSetSidebarScrollerRef();
+
+  // Set the ref once on mount
+  useEffect(() => {
+    setSidebarScrollerRef(sidebarScrollerRef);
+  }, [setSidebarScrollerRef]);
 
 
   // open menu when collapsed mode
@@ -217,9 +220,9 @@ const DrawableContainer = memo((props: DrawableContainerProps): JSX.Element => {
       <div {...divProps} className={`${className} ${openClass}`}>
         {children}
       </div>
-      { isDrawerOpened && (
+      {isDrawerOpened && (
         <div className="modal-backdrop fade show" onClick={() => setIsDrawerOpened(false)} />
-      ) }
+      )}
     </>
   );
 });
@@ -234,7 +237,7 @@ export const Sidebar = (): JSX.Element => {
 
   const isSearchPage = useIsSearchPage();
   const { editorMode } = useEditorMode();
-  const { data: isMdSize } = useIsDeviceLargerThanMd();
+  const [isMdSize] = useDeviceLargerThanMd();
   const [isXlSize] = useDeviceLargerThanXl();
 
   const isEditorMode = editorMode === EditorMode.Editor;
@@ -260,17 +263,17 @@ export const Sidebar = (): JSX.Element => {
 
   return (
     <>
-      { sidebarMode != null && isDrawerMode() && (
+      {sidebarMode != null && isDrawerMode() && (
         <DrawerToggler className="position-fixed d-none d-md-block">
           <span className="material-symbols-outlined">reorder</span>
         </DrawerToggler>
       )}
-      { sidebarMode != null && !isDockMode() && !isSearchPage && !shouldHideSubnavAppTitle && (
+      {sidebarMode != null && !isDockMode() && !isSearchPage && !shouldHideSubnavAppTitle && (
         <AppTitleOnSubnavigation />
       )}
       <DrawableContainer className={`${grwSidebarClass} ${modeClass} border-end flex-expand-vh-100`} divProps={{ 'data-testid': 'grw-sidebar' }}>
         <ResizableContainer>
-          { sidebarMode != null && !isCollapsedMode() && (
+          {sidebarMode != null && !isCollapsedMode() && (
             <AppTitleOnSidebarHead hideAppTitle={shouldHideSiteName} />
           )}
           {shouldShowEditorSidebarHead ? <AppTitleOnEditorSidebarHead /> : <SidebarHead />}

@@ -13,9 +13,9 @@ import {
 } from 'reactstrap';
 
 import { isIndentSizeForcedAtom } from '~/states/server-configurations';
+import { useDeviceLargerThanMd } from '~/states/ui/device';
 import { useEditorSettings, useCurrentIndentSize } from '~/stores/editor';
 import {
-  useIsDeviceLargerThanMd,
 } from '~/stores/ui';
 
 type RadioListItemProps = {
@@ -63,7 +63,7 @@ const Selector = (props: SelectorProps): JSX.Element => {
       </button>
       <hr className="my-1" />
       <ul className="list-group d-flex ms-2">
-        { items }
+        {items}
       </ul>
     </div>
   );
@@ -88,7 +88,7 @@ const EDITORTHEME_LABEL_MAP: EditorThemeToLabel = {
   kimbie: 'Kimbie',
 };
 
-const ThemeSelector = memo(({ onClickBefore }: {onClickBefore: () => void}): JSX.Element => {
+const ThemeSelector = memo(({ onClickBefore }: { onClickBefore: () => void }): JSX.Element => {
 
   const { t } = useTranslation();
   const { data: editorSettings, update } = useEditorSettings();
@@ -96,12 +96,12 @@ const ThemeSelector = memo(({ onClickBefore }: {onClickBefore: () => void}): JSX
 
   const listItems = useMemo(() => (
     <>
-      { (Object.keys(EDITORTHEME_LABEL_MAP) as EditorTheme[]).map((theme) => {
+      {(Object.keys(EDITORTHEME_LABEL_MAP) as EditorTheme[]).map((theme) => {
         const themeLabel = EDITORTHEME_LABEL_MAP[theme];
         return (
           <RadioListItem onClick={() => update({ theme })} text={themeLabel} checked={theme === selectedTheme} />
         );
-      }) }
+      })}
     </>
   ), [update, selectedTheme]);
 
@@ -123,7 +123,7 @@ const KEYMAP_LABEL_MAP: KeyMapModeToLabel = {
   vscode: 'Visual Studio Code',
 };
 
-const KeymapSelector = memo(({ onClickBefore }: {onClickBefore: () => void}): JSX.Element => {
+const KeymapSelector = memo(({ onClickBefore }: { onClickBefore: () => void }): JSX.Element => {
 
   const { t } = useTranslation();
   const { data: editorSettings, update } = useEditorSettings();
@@ -131,7 +131,7 @@ const KeymapSelector = memo(({ onClickBefore }: {onClickBefore: () => void}): JS
 
   const listItems = useMemo(() => (
     <>
-      { (Object.keys(KEYMAP_LABEL_MAP) as KeyMapMode[]).map((keymapMode) => {
+      {(Object.keys(KEYMAP_LABEL_MAP) as KeyMapMode[]).map((keymapMode) => {
         const keymapLabel = KEYMAP_LABEL_MAP[keymapMode];
         const icon = (keymapMode !== 'default')
           ? <Image src={`/images/icons/${keymapMode}.png`} width={16} height={16} className="me-2" alt={keymapMode} />
@@ -139,7 +139,7 @@ const KeymapSelector = memo(({ onClickBefore }: {onClickBefore: () => void}): JS
         return (
           <RadioListItem onClick={() => update({ keymapMode })} icon={icon} text={keymapLabel} checked={keymapMode === selectedKeymapMode} />
         );
-      }) }
+      })}
     </>
   ), [update, selectedKeymapMode]);
 
@@ -153,18 +153,18 @@ KeymapSelector.displayName = 'KeymapSelector';
 
 const TYPICAL_INDENT_SIZE = [2, 4];
 
-const IndentSizeSelector = memo(({ onClickBefore }: {onClickBefore: () => void}): JSX.Element => {
+const IndentSizeSelector = memo(({ onClickBefore }: { onClickBefore: () => void }): JSX.Element => {
 
   const { t } = useTranslation();
   const { data: currentIndentSize, mutate: mutateCurrentIndentSize } = useCurrentIndentSize();
 
   const listItems = useMemo(() => (
     <>
-      { TYPICAL_INDENT_SIZE.map((indent) => {
+      {TYPICAL_INDENT_SIZE.map((indent) => {
         return (
           <RadioListItem onClick={() => mutateCurrentIndentSize(indent)} text={indent.toString()} checked={indent === currentIndentSize} />
         );
-      }) }
+      })}
     </>
   ), [currentIndentSize, mutateCurrentIndentSize]);
 
@@ -175,7 +175,7 @@ const IndentSizeSelector = memo(({ onClickBefore }: {onClickBefore: () => void})
 IndentSizeSelector.displayName = 'IndentSizeSelector';
 
 
-const PasteSelector = memo(({ onClickBefore }: {onClickBefore: () => void}): JSX.Element => {
+const PasteSelector = memo(({ onClickBefore }: { onClickBefore: () => void }): JSX.Element => {
 
   const { t } = useTranslation();
   const { data: editorSettings, update } = useEditorSettings();
@@ -183,11 +183,11 @@ const PasteSelector = memo(({ onClickBefore }: {onClickBefore: () => void}): JSX
 
   const listItems = useMemo(() => (
     <>
-      { (AllPasteMode).map((pasteMode) => {
+      {(AllPasteMode).map((pasteMode) => {
         return (
           <RadioListItem onClick={() => update({ pasteMode })} text={t(`page_edit.paste.${pasteMode}`) ?? ''} checked={pasteMode === selectedPasteMode} />
         );
-      }) }
+      })}
     </>
   ), [update, t, selectedPasteMode]);
 
@@ -307,7 +307,7 @@ export const OptionsSelector = (): JSX.Element => {
   const { data: editorSettings } = useEditorSettings();
   const { data: currentIndentSize } = useCurrentIndentSize();
   const isIndentSizeForced = useAtomValue(isIndentSizeForcedAtom);
-  const { data: isDeviceLargerThanMd } = useIsDeviceLargerThanMd();
+  const [isDeviceLargerThanMd] = useDeviceLargerThanMd();
 
   if (editorSettings == null || currentIndentSize == null || isIndentSizeForced == null) {
     return <></>;
@@ -365,19 +365,19 @@ export const OptionsSelector = (): JSX.Element => {
             </div>
           )
         }
-        { status === OptionsStatus.Theme && (
+        {status === OptionsStatus.Theme && (
           <ThemeSelector onClickBefore={() => setStatus(OptionsStatus.Home)} />
         )
         }
-        { status === OptionsStatus.Keymap && (
+        {status === OptionsStatus.Keymap && (
           <KeymapSelector onClickBefore={() => setStatus(OptionsStatus.Home)} />
         )
         }
-        { status === OptionsStatus.Indent && (
+        {status === OptionsStatus.Indent && (
           <IndentSizeSelector onClickBefore={() => setStatus(OptionsStatus.Home)} />
         )
         }
-        { status === OptionsStatus.Paste && (
+        {status === OptionsStatus.Paste && (
           <PasteSelector onClickBefore={() => setStatus(OptionsStatus.Home)} />
         )}
       </DropdownMenu>

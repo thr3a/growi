@@ -4,7 +4,7 @@ import { pagePathUtils } from '@growi/core/dist/utils';
 import ReactMarkdown from 'react-markdown';
 
 import { useCurrentPagePath } from '~/states/page';
-import { useTocOptions } from '~/stores/renderer';
+import { useTocOptions } from '~/states/ui/toc';
 import loggerFactory from '~/utils/logger';
 
 import { StickyStretchableScroller } from './StickyStretchableScroller';

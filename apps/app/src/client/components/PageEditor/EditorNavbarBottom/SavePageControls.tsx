@@ -19,9 +19,9 @@ import {
   isAclEnabledAtom,
   isSlackConfiguredAtom,
 } from '~/states/server-configurations';
+import { useDeviceLargerThanMd } from '~/states/ui/device';
 import { useEditorMode, useSelectedGrant } from '~/states/ui/editor';
 import { useWaitingSaveProcessing, useSWRxSlackChannels, useIsSlackEnabled } from '~/stores/editor';
-import { useIsDeviceLargerThanMd } from '~/stores/ui';
 import loggerFactory from '~/utils/logger';
 
 import { NotAvailable } from '../../NotAvailable';
@@ -39,7 +39,7 @@ declare global {
 const logger = loggerFactory('growi:SavePageControls');
 
 
-const SavePageButton = (props: {slackChannels: string, isSlackEnabled?: boolean, isDeviceLargerThanMd?: boolean}) => {
+const SavePageButton = (props: { slackChannels: string, isSlackEnabled?: boolean, isDeviceLargerThanMd?: boolean }) => {
 
   const { t } = useTranslation();
   const { data: _isWaitingSaveProcessing } = useWaitingSaveProcessing();
@@ -50,7 +50,7 @@ const SavePageButton = (props: {slackChannels: string, isSlackEnabled?: boolean,
 
   const isWaitingSaveProcessing = _isWaitingSaveProcessing === true; // ignore undefined
 
-  const save = useCallback(async(): Promise<void> => {
+  const save = useCallback(async (): Promise<void> => {
     // save
     globalEmitter.emit('saveAndReturnToView', { wip: false, slackChannels, isSlackEnabled });
   }, [isSlackEnabled, slackChannels]);
@@ -155,7 +155,7 @@ export const SavePageControls = (): JSX.Element | null => {
   const isSlackConfigured = useAtomValue(isSlackConfiguredAtom);
   const { data: isSlackEnabled, mutate: mutateIsSlackEnabled } = useIsSlackEnabled();
   const { data: slackChannelsData } = useSWRxSlackChannels(currentPagePath);
-  const { data: isDeviceLargerThanMd } = useIsDeviceLargerThanMd();
+  const [isDeviceLargerThanMd] = useDeviceLargerThanMd();
 
   const [slackChannels, setSlackChannels] = useState<string>('');
   const [isSavePageControlsModalShown, setIsSavePageControlsModalShown] = useState<boolean>(false);

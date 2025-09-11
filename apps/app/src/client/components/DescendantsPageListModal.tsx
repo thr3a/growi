@@ -11,8 +11,8 @@ import {
 } from 'reactstrap';
 
 import { useIsSharedUser } from '~/states/context';
+import { useDeviceLargerThanLg } from '~/states/ui/device';
 import { useDescendantsPageListModalActions, useDescendantsPageListModalStatus } from '~/states/ui/modal/descendants-page-list';
-import { useIsDeviceLargerThanLg } from '~/stores/ui';
 
 import { CustomNavDropdown, CustomNavTab } from './CustomNavigation/CustomNav';
 import CustomTabContent from './CustomNavigation/CustomTabContent';
@@ -38,7 +38,7 @@ export const DescendantsPageListModal = (): JSX.Element => {
 
   const { events } = useRouter();
 
-  const { data: isDeviceLargerThanLg } = useIsDeviceLargerThanLg();
+  const [isDeviceLargerThanLg] = useDeviceLargerThanLg();
 
   useEffect(() => {
     events.on('routeChangeStart', close);

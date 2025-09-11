@@ -6,10 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { exist, getIsNonUserRelatedGroupsGranted } from '~/client/services/page-operation';
 import { toastWarning } from '~/client/util/toastr';
 import type { IApiv3PageCreateParams } from '~/interfaces/apiv3';
-import { useCurrentPagePath } from '~/states/page';
+import { useCurrentPagePath, useSetIsUntitledPage } from '~/states/page';
 import { useEditorMode, EditorMode } from '~/states/ui/editor';
 import { useGrantedGroupsInheritanceSelectModalActions } from '~/states/ui/modal/granted-groups-inheritance-select';
-import { useIsUntitledPage } from '~/stores/ui';
 
 import { createPage } from './create-page';
 
@@ -52,12 +51,12 @@ export const useCreatePage: UseCreatePage = () => {
 
   const currentPagePath = useCurrentPagePath();
   const { setEditorMode } = useEditorMode();
-  const { mutate: mutateIsUntitledPage } = useIsUntitledPage();
+  const setIsUntitledPage = useSetIsUntitledPage();
   const { open: openGrantedGroupsInheritanceSelectModal, close: closeGrantedGroupsInheritanceSelectModal } = useGrantedGroupsInheritanceSelectModalActions();
 
   const [isCreating, setCreating] = useState(false);
 
-  const create: CreatePage = useCallback(async(params, opts = {}) => {
+  const create: CreatePage = useCallback(async (params, opts = {}) => {
     const {
       onCreationStart, onCreated, onAborted, onTerminated,
     } = opts;
@@ -94,7 +93,7 @@ export const useCreatePage: UseCreatePage = () => {
       }
     }
 
-    const _create = async(onlyInheritUserRelatedGrantedGroups?: boolean) => {
+    const _create = async (onlyInheritUserRelatedGrantedGroups?: boolean) => {
       try {
         setCreating(true);
         onCreationStart?.();
@@ -110,7 +109,7 @@ export const useCreatePage: UseCreatePage = () => {
         }
 
         if (params.path == null) {
-          mutateIsUntitledPage(true);
+          setIsUntitledPage(true);
         }
 
         onCreated?.();
@@ -135,7 +134,7 @@ export const useCreatePage: UseCreatePage = () => {
     }
 
     await _create();
-  }, [currentPagePath, setEditorMode, router, t, closeGrantedGroupsInheritanceSelectModal, mutateIsUntitledPage, openGrantedGroupsInheritanceSelectModal]);
+  }, [currentPagePath, setEditorMode, router, t, closeGrantedGroupsInheritanceSelectModal, setIsUntitledPage, openGrantedGroupsInheritanceSelectModal]);
 
   return {
     isCreating,
