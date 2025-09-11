@@ -305,4 +305,196 @@ describe('useFetchCurrentPage - Integration Test', () => {
       expect(store.get(pageErrorAtom)).toEqual(apiError);
     });
   });
+
+  it('should handle path with permalink and convert to pageId for API call', async () => {
+    // Arrange: A path that looks like a permalink
+    const permalinkPath = '/58a4569921a8424d00a1aa0e';
+    const expectedPageId = '58a4569921a8424d00a1aa0e';
+    const pageData = createPageDataMock(
+      expectedPageId,
+      '/actual/page/path',
+      'permalink content',
+    );
+    mockedApiv3Get.mockResolvedValue(mockApiResponse(pageData));
+
+    // Act
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({ path: permalinkPath });
+
+    // Assert
+    await waitFor(() => {
+      // 1. API should be called with pageId instead of path
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.objectContaining({ pageId: expectedPageId }),
+      );
+      // 2. API should NOT be called with path
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.not.objectContaining({ path: expect.anything() }),
+      );
+
+      // 3. State should be updated correctly
+      expect(store.get(currentPageIdAtom)).toBe(expectedPageId);
+      expect(store.get(currentPageDataAtom)).toEqual(pageData);
+      expect(store.get(pageLoadingAtom)).toBe(false);
+      expect(store.get(pageNotFoundAtom)).toBe(false);
+      expect(store.get(pageErrorAtom)).toBeNull();
+    });
+  });
+
+  it('should prioritize explicit pageId over permalink path', async () => {
+    // Arrange: Both pageId and permalink path are provided, pageId should take priority
+    const explicitPageId = 'explicit123456789012345678901234';
+    const permalinkPath = '/58a4569921a8424d00a1aa0e';
+    const pageData = createPageDataMock(
+      explicitPageId,
+      '/prioritized/page',
+      'explicit pageId content',
+    );
+    mockedApiv3Get.mockResolvedValue(mockApiResponse(pageData));
+
+    // Act
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({
+      path: permalinkPath,
+      pageId: explicitPageId
+    });
+
+    // Assert
+    await waitFor(() => {
+      // 1. API should be called with explicit pageId, not the permalink from path
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.objectContaining({ pageId: explicitPageId }),
+      );
+      // 2. Should NOT use the permalink ID from path
+      expect(mockedApiv3Get).not.toHaveBeenCalledWith(
+        '/page',
+        expect.objectContaining({ pageId: '58a4569921a8424d00a1aa0e' }),
+      );
+
+      // 3. State should be updated with explicit pageId
+      expect(store.get(currentPageIdAtom)).toBe(explicitPageId);
+      expect(store.get(currentPageDataAtom)).toEqual(pageData);
+    });
+  });
+
+  it('should handle regular path (non-permalink) correctly', async () => {
+    // Arrange: Regular path that is NOT a permalink
+    const regularPath = '/regular/page/path';
+    const pageData = createPageDataMock(
+      'regularPageId123',
+      regularPath,
+      'regular page content',
+    );
+    mockedApiv3Get.mockResolvedValue(mockApiResponse(pageData));
+
+    // Act
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({ path: regularPath });
+
+    // Assert
+    await waitFor(() => {
+      // 1. API should be called with path, not pageId
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.objectContaining({ path: regularPath }),
+      );
+      // 2. API should NOT be called with pageId
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.not.objectContaining({ pageId: expect.anything() }),
+      );
+
+      // 3. State should be updated correctly
+      expect(store.get(currentPageIdAtom)).toBe('regularPageId123');
+      expect(store.get(currentPageDataAtom)).toEqual(pageData);
+    });
+  });
+
+  it('should handle permalink path with hash fragment and strip hash for API call', async () => {
+    // Arrange: Permalink path with hash fragment like #edit
+    const permalinkWithHash = '/58a4569921a8424d00a1aa0e#edit';
+    const expectedPageId = '58a4569921a8424d00a1aa0e';
+    const pageData = createPageDataMock(
+      expectedPageId,
+      '/actual/page/path',
+      'permalink with hash content',
+    );
+    mockedApiv3Get.mockResolvedValue(mockApiResponse(pageData));
+
+    // Act
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({ path: permalinkWithHash });
+
+    // Assert
+    await waitFor(() => {
+      // 1. API should be called with pageId (hash stripped), not with path
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.objectContaining({ pageId: expectedPageId }),
+      );
+      // 2. API should NOT be called with path containing hash
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.not.objectContaining({ path: expect.anything() }),
+      );
+
+      // 3. State should be updated correctly
+      expect(store.get(currentPageIdAtom)).toBe(expectedPageId);
+      expect(store.get(currentPageDataAtom)).toEqual(pageData);
+      expect(store.get(pageLoadingAtom)).toBe(false);
+      expect(store.get(pageNotFoundAtom)).toBe(false);
+      expect(store.get(pageErrorAtom)).toBeNull();
+    });
+  });
+
+  it('should handle various hash fragments with permalink', async () => {
+    // Test various hash patterns that commonly occur
+    const testCases = [
+      {
+        input: '/58a4569921a8424d00a1aa0e#edit',
+        expectedPageId: '58a4569921a8424d00a1aa0e',
+        description: 'edit hash'
+      },
+      {
+        input: '/58a4569921a8424d00a1aa0e#section-header',
+        expectedPageId: '58a4569921a8424d00a1aa0e',
+        description: 'section hash'
+      },
+      {
+        input: '/58a4569921a8424d00a1aa0e#',
+        expectedPageId: '58a4569921a8424d00a1aa0e',
+        description: 'empty hash'
+      }
+    ];
+
+    for (const testCase of testCases) {
+      // Clean up for each iteration - ensure fresh state
+      vi.clearAllMocks();
+      store = createStore();
+
+      // Arrange
+      const pageData = createPageDataMock(
+        testCase.expectedPageId,
+        '/any/path',
+        `content for ${testCase.description}`,
+      );
+      mockedApiv3Get.mockResolvedValue(mockApiResponse(pageData));
+
+      // Act
+      const { result } = renderHookWithProvider();
+      await result.current.fetchCurrentPage({ path: testCase.input });
+
+      // Assert
+      await waitFor(() => {
+        expect(mockedApiv3Get).toHaveBeenCalledWith(
+          '/page',
+          expect.objectContaining({ pageId: testCase.expectedPageId }),
+        );
+        expect(store.get(currentPageIdAtom)).toBe(testCase.expectedPageId);
+      });
+    }
+  });
 });

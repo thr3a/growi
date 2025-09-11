@@ -1,16 +1,17 @@
-import { isIPageNotFoundInfo, type IPagePopulatedToShowRevision } from '@growi/core';
-import { isClient } from '@growi/core/dist/utils';
-import { isErrorV3 } from '@growi/core/dist/models';
 import {
-  isPermalink,
-} from '@growi/core/dist/utils/page-path-utils';
+  type IPagePopulatedToShowRevision,
+  isIPageNotFoundInfo,
+} from '@growi/core';
+import { isErrorV3 } from '@growi/core/dist/models';
+import { isClient } from '@growi/core/dist/utils';
+import { isPermalink } from '@growi/core/dist/utils/page-path-utils';
 import { removeHeadingSlash } from '@growi/core/dist/utils/path-utils';
 import { useAtomValue } from 'jotai';
 import { useAtomCallback } from 'jotai/utils';
 import { useCallback } from 'react';
 
 import { apiv3Get } from '~/client/util/apiv3-client';
-
+import loggerFactory from '~/utils/logger';
 import {
   currentPageDataAtom,
   currentPageIdAtom,
@@ -20,11 +21,8 @@ import {
   pageNotFoundAtom,
   shareLinkIdAtom,
 } from './internal-atoms';
-import loggerFactory from '~/utils/logger';
-
 
 const logger = loggerFactory('growi:states:page:useFetchCurrentPage');
-
 
 type FetchPageArgs = {
   path?: string;
@@ -58,7 +56,7 @@ export const useFetchCurrentPage = (): {
         const currentPageId = get(currentPageIdAtom);
         const currentPageData = get(currentPageDataAtom);
 
-        // Process path first to handle permalinks
+        // Process path first to handle permalinks and strip hash fragments
         let decodedPath: string | undefined;
         if (args?.path != null) {
           try {
@@ -68,18 +66,30 @@ export const useFetchCurrentPage = (): {
           }
         }
 
+        // Strip hash fragment from path to properly detect permalinks
+        let pathWithoutHash: string | undefined;
+        if (decodedPath != null) {
+          try {
+            const url = new URL(decodedPath, 'http://example.com');
+            pathWithoutHash = url.pathname;
+          } catch {
+            // Fallback to simple split if URL parsing fails
+            pathWithoutHash = decodedPath.split('#')[0];
+          }
+        }
+
         // Guard clause to prevent unnecessary fetching
         if (args?.pageId != null && args.pageId === currentPageId) {
           return currentPageData ?? null;
         }
-        if (decodedPath != null) {
+        if (pathWithoutHash != null) {
           if (
-            isPermalink(decodedPath) &&
-            removeHeadingSlash(decodedPath) === currentPageId
+            isPermalink(pathWithoutHash) &&
+            removeHeadingSlash(pathWithoutHash) === currentPageId
           ) {
             return currentPageData ?? null;
           }
-          if (decodedPath === currentPageData?.path) {
+          if (pathWithoutHash === currentPageData?.path) {
             return currentPageData ?? null;
           }
         }
@@ -112,8 +122,8 @@ export const useFetchCurrentPage = (): {
         // priority: pageId > permalink > path
         if (pageId != null) {
           params.pageId = pageId;
-        } else if (decodedPath != null && isPermalink(decodedPath)) {
-          params.pageId = removeHeadingSlash(decodedPath);
+        } else if (pathWithoutHash != null && isPermalink(pathWithoutHash)) {
+          params.pageId = removeHeadingSlash(pathWithoutHash);
         } else if (decodedPath != null) {
           params.path = decodedPath;
         }
@@ -154,8 +164,7 @@ export const useFetchCurrentPage = (): {
               set(isForbiddenAtom, error.args.isForbidden ?? false);
               set(currentPageDataAtom, undefined);
             }
-          }
-          else {
+          } else {
             logger.error('Unhandled error when fetching current page:', err);
           }
         } finally {
