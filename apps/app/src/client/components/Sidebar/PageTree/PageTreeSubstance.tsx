@@ -7,10 +7,10 @@ import { debounce } from 'throttle-debounce';
 
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 import { useCurrentPageId, useCurrentPagePath } from '~/states/page';
+import { useSidebarScrollerElem } from '~/states/ui/sidebar';
 import {
   mutatePageTree, mutateRecentlyUpdated, useSWRxRootPage, useSWRxV5MigrationStatus,
 } from '~/stores/page-listing';
-import { useSidebarScrollerRef } from '~/stores/ui';
 import loggerFactory from '~/utils/logger';
 
 import { ItemsTree } from '../../ItemsTree/ItemsTree';
@@ -61,7 +61,7 @@ export const PageTreeHeader = memo(({ isWipPageShown, onWipPageShownChange }: He
                 className="form-check-input pe-none"
                 type="checkbox"
                 checked={isWipPageShown}
-                onChange={() => {}}
+                onChange={() => { }}
               />
               <label className="form-check-label pe-none">
                 {t('sidebar_header.show_wip_page')}
@@ -106,7 +106,7 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
   const path = currentPath || '/';
 
   const { data: rootPageResult } = useSWRxRootPage({ suspense: true });
-  const { data: sidebarScrollerRef } = useSidebarScrollerRef();
+  const sidebarScrollerElem = useSidebarScrollerElem();
   const [isInitialScrollCompleted, setIsInitialScrollCompleted] = useState(false);
 
   const rootElemRef = useRef<HTMLDivElement>(null);
@@ -114,7 +114,7 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
   // ***************************  Scroll on init ***************************
   const scrollOnInit = useCallback(() => {
     const rootElement = rootElemRef.current;
-    const scrollElement = sidebarScrollerRef?.current;
+    const scrollElement = sidebarScrollerElem;
 
     if (rootElement == null || scrollElement == null) {
       return;
@@ -137,7 +137,7 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
     scrollElement.scrollTo({ top: scrollTop });
 
     setIsInitialScrollCompleted(true);
-  }, [sidebarScrollerRef]);
+  }, [sidebarScrollerElem]);
 
   const scrollOnInitDebounced = useMemo(() => debounce(500, scrollOnInit), [scrollOnInit]);
 

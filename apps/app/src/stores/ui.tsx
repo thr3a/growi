@@ -46,10 +46,6 @@ export const useCurrentPageTocNode = (): SWRResponse<HtmlElementNode, any> => {
  *                      for switching UI
  *********************************************************** */
 
-export const useSidebarScrollerRef = (initialData?: RefObject<HTMLDivElement | null>): SWRResponse<RefObject<HTMLDivElement | null>, Error> => {
-  return useSWRStatic<RefObject<HTMLDivElement | null>, Error>('sidebarScrollerRef', initialData);
-};
-
 type PageTreeDescCountMapUtils = {
   update(newData?: UpdateDescCountData): Promise<UpdateDescCountData | undefined>
   getDescCount(pageId?: string): number | null | undefined

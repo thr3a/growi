@@ -1,5 +1,5 @@
-import { atom, useAtom, useSetAtom } from 'jotai';
-import { useCallback, useMemo } from 'react';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useCallback, useMemo, type RefObject } from 'react';
 
 import { scheduleToPut } from '~/client/services/user-ui-settings';
 import { SidebarContentsType, SidebarMode } from '~/interfaces/ui';
@@ -119,4 +119,30 @@ export const useSidebarMode = (): {
     }),
     [sidebarMode, isDrawerMode, isCollapsedMode, isDockMode],
   );
+};
+
+// Sidebar scroller ref atom and hooks
+const sidebarScrollerRefAtom = atom<RefObject<HTMLDivElement | null> | null>(null);
+
+/**
+ * Hook to get the sidebar scroller ref
+ * Returns the HTMLDivElement if available, or null
+ */
+export const useSidebarScrollerElem = (): HTMLDivElement | null => {
+  const refObject = useAtomValue(sidebarScrollerRefAtom);
+  return refObject?.current ?? null;
+};
+
+/**
+ * Hook to set the sidebar scroller ref
+ * Accepts a RefObject and stores it in the atom
+ */
+export const useSetSidebarScrollerRef = () => {
+  const setSidebarScrollerRef = useSetAtom(sidebarScrollerRefAtom);
+
+  const mutate = useCallback((newRef: RefObject<HTMLDivElement | null>) => {
+    setSidebarScrollerRef(newRef);
+  }, [setSidebarScrollerRef]);
+
+  return mutate;
 };

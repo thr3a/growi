@@ -17,9 +17,9 @@ import {
   useSidebarMode,
   useCollapsedContentsOpened,
   useCurrentProductNavWidth,
+  useSetSidebarScrollerRef,
 } from '~/states/ui/sidebar';
 import {
-  useSidebarScrollerRef,
 } from '~/stores/ui';
 
 import { DrawerToggler } from '../Common/DrawerToggler';
@@ -145,8 +145,12 @@ const CollapsibleContainer = memo((props: CollapsibleContainerProps): JSX.Elemen
   const [isCollapsedContentsOpened, setCollapsedContentsOpened] = useCollapsedContentsOpened();
 
   const sidebarScrollerRef = useRef<HTMLDivElement>(null);
-  const { mutate: mutateSidebarScroller } = useSidebarScrollerRef();
-  mutateSidebarScroller(sidebarScrollerRef);
+  const setSidebarScrollerRef = useSetSidebarScrollerRef();
+
+  // Set the ref once on mount
+  useEffect(() => {
+    setSidebarScrollerRef(sidebarScrollerRef);
+  }, [setSidebarScrollerRef]);
 
 
   // open menu when collapsed mode
