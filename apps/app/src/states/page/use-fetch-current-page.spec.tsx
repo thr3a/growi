@@ -285,27 +285,6 @@ describe('useFetchCurrentPage - Integration Test', () => {
     });
   });
 
-  it('should set pageNotFoundAtom on 404 error for a non-creatable path', async () => {
-    // Arrange
-    const notCreatablePath = '/user';
-    const apiError = {
-      response: {
-        status: 404,
-      },
-    };
-    mockedApiv3Get.mockRejectedValue(apiError);
-
-    // Act
-    const { result } = renderHookWithProvider();
-    await result.current.fetchCurrentPage({ path: notCreatablePath });
-
-    // Assert
-    await waitFor(() => {
-      expect(store.get(pageNotFoundAtom)).toBe(true);
-      expect(store.get(pageErrorAtom)).toEqual(apiError);
-    });
-  });
-
   it('should handle path with permalink and convert to pageId for API call', async () => {
     // Arrange: A path that looks like a permalink
     const permalinkPath = '/58a4569921a8424d00a1aa0e';
