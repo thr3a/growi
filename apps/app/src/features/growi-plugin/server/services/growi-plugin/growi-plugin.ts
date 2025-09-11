@@ -425,7 +425,7 @@ export class GrowiPluginService implements IGrowiPluginService {
       return null;
     }
 
-    let themeHref;
+    let themeHref: string;
     try {
       const manifest = retrievePluginManifest(matchedPlugin);
       if (manifest == null) {

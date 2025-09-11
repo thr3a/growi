@@ -56,7 +56,7 @@ export class GitHubUrl {
   }
 
   constructor(url: string, branchName = 'main', tagName = '') {
-    let matched;
+    let matched: RegExpMatchArray | null;
     try {
       const ghUrl = new URL(url);
 

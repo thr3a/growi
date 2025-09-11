@@ -43,9 +43,12 @@ export const PluginInstallerForm = (): JSX.Element => {
   );
 
   return (
-    <form role="form" onSubmit={submitHandler}>
+    <form onSubmit={submitHandler}>
       <div className="row">
-        <label className="text-start text-md-end col-md-3 col-form-label">
+        <label
+          className="text-start text-md-end col-md-3 col-form-label"
+          htmlFor="repoUrl"
+        >
           {t('plugins.form.label_url')}
         </label>
         <div className="col-md-6">
@@ -55,12 +58,16 @@ export const PluginInstallerForm = (): JSX.Element => {
             name="pluginInstallerForm[url]"
             placeholder="https://github.com/weseek/growi-plugins-example"
             required
+            id="repoUrl"
           />
           <p className="form-text text-muted">{t('plugins.form.desc_url')}</p>
         </div>
       </div>
       <div className="row">
-        <label className="text-start text-md-end col-md-3 col-form-label">
+        <label
+          className="text-start text-md-end col-md-3 col-form-label"
+          htmlFor="branchName"
+        >
           {t('plugins.form.label_branch')}
         </label>
         <div className="col-md-6">
@@ -69,6 +76,7 @@ export const PluginInstallerForm = (): JSX.Element => {
             type="text"
             name="pluginInstallerForm[ghBranch]"
             placeholder="main"
+            id="branchName"
           />
           <p className="form-text text-muted">
             {t('plugins.form.desc_branch')}
