@@ -62,7 +62,8 @@ export async function getServerSidePropsForInitial(context: GetServerSidePropsCo
     throw new Error('Invalid merged props structure');
   }
 
-  await addActivity(context, getActivityAction(mergedProps));
+  // -- TODO: persist activity
+  // await addActivity(context, getActivityAction(mergedProps));
   return mergedResult;
 }
 
