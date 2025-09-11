@@ -62,6 +62,7 @@ jobs:
       tags: ${{ needs.determine-tags.outputs.TAGS }}
       registry: docker.io
       image-name: weseek/growi
+      docker-registry-username: wsmoogle
       tag-temporary: latest-rc
     secrets:
       DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
