@@ -1,4 +1,6 @@
-import React, { useMemo, useState, type JSX } from 'react';
+import React, {
+  useMemo, useState, useCallback, type JSX,
+} from 'react';
 
 import { useAtomValue } from 'jotai';
 import { useTranslation } from 'next-i18next';
@@ -25,8 +27,7 @@ const PageAttachment = dynamic(() => import('./PageAttachment'), { ssr: false })
 const PageHistory = dynamic(() => import('./PageHistory').then(mod => mod.PageHistory), { ssr: false });
 const ShareLink = dynamic(() => import('./ShareLink').then(mod => mod.ShareLink), { ssr: false });
 
-
-export const PageAccessoriesModal = (): JSX.Element => {
+const PageAccessoriesModalSubstance = (): JSX.Element => {
 
   const { t } = useTranslation();
 
@@ -43,6 +44,7 @@ export const PageAccessoriesModal = (): JSX.Element => {
 
   useAutoOpenModalByQueryParam();
 
+  // Memoize heavy navTabMapping calculation
   const navTabMapping = useMemo(() => {
     return {
       [PageAccessoriesModalContents.PageHistory]: {
@@ -71,16 +73,20 @@ export const PageAccessoriesModal = (): JSX.Element => {
     };
   }, [t, close, isGuestUser, isReadOnlyUser, isSharedUser, isLinkSharingDisabled]);
 
+  // Memoize expand/contract handlers
+  const expandWindow = useCallback(() => setIsWindowExpanded(true), []);
+  const contractWindow = useCallback(() => setIsWindowExpanded(false), []);
+
   const buttons = useMemo(() => (
     <span className="me-3">
       <ExpandOrContractButton
         isWindowExpanded={isWindowExpanded}
-        expandWindow={() => setIsWindowExpanded(true)}
-        contractWindow={() => setIsWindowExpanded(false)}
+        expandWindow={expandWindow}
+        contractWindow={contractWindow}
       />
       <button type="button" className="btn btn-close ms-2" onClick={close} aria-label="Close"></button>
     </span>
-  ), [close, isWindowExpanded]);
+  ), [close, isWindowExpanded, expandWindow, contractWindow]);
 
   if (status == null || status.activatedContents == null) {
     return <></>;
@@ -123,4 +129,14 @@ export const PageAccessoriesModal = (): JSX.Element => {
       </ModalBody>
     </Modal>
   );
+};
+
+export const PageAccessoriesModal = (): JSX.Element => {
+  const status = usePageAccessoriesModalStatus();
+
+  if (status == null || !status.isOpened) {
+    return <></>;
+  }
+
+  return <PageAccessoriesModalSubstance />;
 };
