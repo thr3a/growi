@@ -104,10 +104,37 @@ export const use[Modal]Actions = (): [Modal]Actions => {
 };
 ```
 
+#### デバイス状態パターン（Jotaiベース）
+```typescript
+// 例: useDeviceLargerThanMd
+export const isDeviceLargerThanMdAtom = atom(false);
+
+export const useDeviceLargerThanMd = () => {
+  const [isLargerThanMd, setIsLargerThanMd] = useAtom(isDeviceLargerThanMdAtom);
+
+  useEffect(() => {
+    if (isClient()) {
+      const mdOrAboveHandler = function (this: MediaQueryList): void {
+        setIsLargerThanMd(this.matches);
+      };
+      const mql = addBreakpointListener(Breakpoint.MD, mdOrAboveHandler);
+      setIsLargerThanMd(mql.matches); // initialize
+      return () => {
+        cleanupBreakpointListener(mql, mdOrAboveHandler);
+      };
+    }
+    return undefined;
+  }, [setIsLargerThanMd]);
+
+  return [isLargerThanMd, setIsLargerThanMd] as const;
+};
+```
+
 #### 使用パターン
 - **ステータスのみ必要**: `use[Modal]Status()`
 - **アクションのみ必要**: `use[Modal]Actions()`
 - **両方必要**: 2つのフックを併用
+- **デバイス状態**: `const [isLargerThanMd] = useDeviceLargerThanMd()`
 
 #### 重要事項
 - **後方互換フックは不要**: 移行完了後は即座に削除
@@ -118,7 +145,7 @@ export const use[Modal]Actions = (): [Modal]Actions => {
 
 ### UI関連状態（完了）
 - ✅ **サイドバー状態**: `useDrawerOpened`, `useSetPreferCollapsedMode`, `useSidebarMode`, `useCurrentSidebarContents`, `useCollapsedContentsOpened`, `useCurrentProductNavWidth`
-- ✅ **デバイス状態**: `useDeviceLargerThanXl`
+- ✅ **デバイス状態**: `useDeviceLargerThanXl`, `useDeviceLargerThanLg`, `useDeviceLargerThanMd`, `useIsMobile` （2025-09-11完了）
 - ✅ **エディター状態**: `useEditorMode`, `useSelectedGrant`
 - ✅ **ページUI状態**: `usePageControlsX`
 
@@ -185,6 +212,33 @@ export const use[Modal]Actions = (): [Modal]Actions => {
 - **品質確認**: 型チェック成功、全使用箇所移行済み
 - **統一された実装**: 全17個のモーダルで一貫したパターン
 
+### 🆕 デバイス状態移行完了（2025-09-11完了）
+
+#### ✅ Phase 1: デバイス幅関連フック3個一括移行完了
+- ✅ **`useIsDeviceLargerThanMd`**: MD以上のデバイス幅判定
+  - 使用箇所：8個のコンポーネント完全移行
+- ✅ **`useIsDeviceLargerThanLg`**: LG以上のデバイス幅判定
+  - 使用箇所：3個のコンポーネント完全移行
+- ✅ **`useIsMobile`**: モバイルデバイス判定
+  - 使用箇所：1個のコンポーネント完全移行
+
+#### 🚀 移行の成果
+- **統一パターン**: 既存の `useDeviceLargerThanXl` パターンに合わせて実装
+- **MediaQuery対応**: ブレークポイント監視による動的な状態更新
+- **モバイル検出**: タッチスクリーン・UserAgent による高精度判定
+- **テスト修正**: モックファイルの更新完了
+- **旧コード削除**: `stores/ui.tsx` から3つのフック削除完了
+
+#### 📊 移行詳細
+**移行されたファイル数**: 11個
+- PageControls.tsx, AccessTokenScopeList.tsx, PageEditorModeManager.tsx
+- GrowiContextualSubNavigation.tsx, SavePageControls.tsx, OptionsSelector.tsx
+- Sidebar.tsx, PageListItemL.tsx, DescendantsPageListModal.tsx
+- PageAccessoriesModal.tsx, PrimaryItem.tsx
+
+**テストファイル修正**: 1個
+- DescendantsPageListModal.spec.tsx: モック戻り値を `{ data: boolean }` → `[boolean]` に変更
+
 ## ✅ プロジェクト完了ステータス
 
 ### 🎯 モーダル移行プロジェクト: **100% 完了** ✅
@@ -195,32 +249,51 @@ export const use[Modal]Actions = (): [Modal]Actions => {
 - 🏆 **保守性**: 統一されたディレクトリ構造と実装パターン
 - 🏆 **互換性**: 全使用箇所の移行完了、旧実装の完全削除
 
+### 🎯 デバイス状態移行: **Phase 1 完了** ✅
+
+**主要デバイス判定フック4個**がJotaiベースに移行完了：
+- 🏆 **統一パターン**: `useAtom` + `useEffect` でのBreakpoint監視
+- 🏆 **動的更新**: MediaQuery変更時の自動状態更新
+- 🏆 **高精度判定**: モバイル検出の複数手法組み合わせ
+- 🏆 **完全移行**: 全使用箇所（11ファイル）の移行完了
+
 ### 🚀 成果とメリット
 1. **パフォーマンス向上**: 不要なリレンダリングの削減
 2. **開発体験向上**: 統一されたAPIパターン
 3. **保守性向上**: 個別ファイル化による責務明確化
 4. **型安全性**: Jotaiによる強固な型システム
+5. **レスポンシブ対応**: 正確なデバイス幅・モバイル判定
 
 ### 📊 最終進捗サマリー
-- **完了**: 主要なUI状態 + ページ関連状態 + SSRハイドレーション + **全17個のモーダル**
+- **完了**: 主要なUI状態 + ページ関連状態 + SSRハイドレーション + **全17個のモーダル** + **デバイス状態4個**
 - **モーダル移行**: **100% 完了** （17/17個）
+- **デバイス状態移行**: **Phase 1完了** （4/4個）
 - **品質保証**: 全型チェック成功、パフォーマンス最適化済み
 - **ドキュメント**: 完全な実装パターンガイド確立
 
 ## 🔮 今後の発展可能性
 
-### 次のフェーズ候補
-1. **AI機能のモーダル**: OpenAI関連のモーダル状態の統合検討
-2. **エディタパッケージ統合**: `@growi/editor`内のモーダル状態の統合
-3. **UI関連フックの最適化**: 残存するSWRベースフックの選択的移行
+### 次のフェーズ候補（Phase 2）
+1. **残存SWRフック**: `stores/ui.tsx` 内の残り4個のフック
+   - `useCurrentPageTocNode` - ページ目次ノード
+   - `useSidebarScrollerRef` - サイドバースクローラー参照  
+   - `usePageTreeDescCountMap` - ページツリー子孫数マップ
+   - `useCommentEditorDirtyMap` - コメントエディター変更状態
+2. **AI機能のモーダル**: OpenAI関連のモーダル状態の統合検討
+3. **エディタパッケージ統合**: `@growi/editor`内のモーダル状態の統合
 
 ### クリーンアップ候補
 - `stores/modal.tsx` 完全削除（既に空ファイル化済み）
-- `stores/ui.tsx` の段階的縮小検討
+- `stores/ui.tsx` の段階的縮小検討（4個のフック残存）
 - 未使用SWRフックの調査・クリーンアップ
 
 ## 🔄 更新履歴
 
+- **2025-09-11**: 🎉 **Phase 1完了 - デバイス状態移行100%完了！**
+  - useIsDeviceLargerThanMd, useIsDeviceLargerThanLg, useIsMobile移行完了
+  - 11個のコンポーネント全使用箇所移行、テストファイル修正
+  - `states/ui/device.ts`に4個のデバイス関連フック統一
+  - 旧コード削除、不要インポート削除完了
 - **2025-09-05**: 🎉 **第5バッチ完了 - モーダル移行プロジェクト100%完了！**
   - PageBulkExportSelect, DrawioForEditor, LinkEdit, Template移行完了
   - 全17個のモーダルがJotaiベースに統一

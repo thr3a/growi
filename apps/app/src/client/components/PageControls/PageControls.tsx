@@ -22,13 +22,13 @@ import OpenDefaultAiAssistantButton from '~/features/openai/client/components/Ai
 import { useIsGuestUser, useIsReadOnlyUser, useIsSearchPage } from '~/states/context';
 import { useCurrentPagePath } from '~/states/page';
 import { isUsersHomepageDeletionEnabledAtom } from '~/states/server-configurations';
+import { useDeviceLargerThanMd } from '~/states/ui/device';
 import {
   EditorMode, useEditorMode,
 } from '~/states/ui/editor';
 import { type IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 import { useTagEditModalActions } from '~/states/ui/modal/tag-edit';
 import { useSetPageControlsX } from '~/states/ui/page';
-import { useIsDeviceLargerThanMd } from '~/stores/ui';
 import loggerFactory from '~/utils/logger';
 
 import { useSWRxPageInfo, useSWRxTagsInfo } from '../../../stores/page';
@@ -92,10 +92,10 @@ const WideViewMenuItem = (props: WideViewMenuItemProps): JSX.Element => {
           className="form-check-input pe-none"
           type="checkbox"
           checked={expandContentWidth}
-          onChange={() => {}}
+          onChange={() => { }}
         />
         <label className="form-check-label pe-none">
-          { t('wide_view') }
+          {t('wide_view')}
         </label>
       </div>
     </DropdownItem>
@@ -136,7 +136,7 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
   const isGuestUser = useIsGuestUser();
   const isReadOnlyUser = useIsReadOnlyUser();
   const { editorMode } = useEditorMode();
-  const { data: isDeviceLargerThanMd } = useIsDeviceLargerThanMd();
+  const [isDeviceLargerThanMd] = useDeviceLargerThanMd();
   const isSearchPage = useIsSearchPage();
   const isUsersHomepageDeletionEnabled = useAtomValue(isUsersHomepageDeletionEnabledAtom);
   const currentPagePath = useCurrentPagePath();
@@ -166,7 +166,7 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
   const likers = usersList != null ? usersList.filter(({ _id }) => likerIds.includes(_id)).slice(0, 15) : [];
   const seenUsers = usersList != null ? usersList.filter(({ _id }) => seenUserIds.includes(_id)).slice(0, 15) : [];
 
-  const subscribeClickhandler = useCallback(async() => {
+  const subscribeClickhandler = useCallback(async () => {
     if (isGuestUser ?? true) {
       return;
     }
@@ -178,7 +178,7 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
     mutatePageInfo();
   }, [isGuestUser, mutatePageInfo, pageId, pageInfo]);
 
-  const likeClickhandler = useCallback(async() => {
+  const likeClickhandler = useCallback(async () => {
     if (isGuestUser ?? true) {
       return;
     }
@@ -190,7 +190,7 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
     mutatePageInfo();
   }, [isGuestUser, mutatePageInfo, pageId, pageInfo]);
 
-  const duplicateMenuItemClickHandler = useCallback(async(): Promise<void> => {
+  const duplicateMenuItemClickHandler = useCallback(async (): Promise<void> => {
     if (onClickDuplicateMenuItem == null || path == null) {
       return;
     }
@@ -199,7 +199,7 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
     onClickDuplicateMenuItem(page);
   }, [onClickDuplicateMenuItem, pageId, path]);
 
-  const renameMenuItemClickHandler = useCallback(async(): Promise<void> => {
+  const renameMenuItemClickHandler = useCallback(async (): Promise<void> => {
     if (onClickRenameMenuItem == null || path == null) {
       return;
     }
@@ -216,7 +216,7 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
     onClickRenameMenuItem(page);
   }, [onClickRenameMenuItem, pageId, pageInfo, path, revisionId]);
 
-  const deleteMenuItemClickHandler = useCallback(async(): Promise<void> => {
+  const deleteMenuItemClickHandler = useCallback(async (): Promise<void> => {
     if (onClickDeleteMenuItem == null || path == null) {
       return;
     }
@@ -306,7 +306,7 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
 
   return (
     <div className={`${styles['grw-page-controls']} hstack gap-2`} ref={pageControlsRef}>
-      { isViewMode && isDeviceLargerThanMd && !isSearchPage && !isSearchPage && (
+      {isViewMode && isDeviceLargerThanMd && !isSearchPage && !isSearchPage && (
         <>
           <SearchButton />
           <OpenDefaultAiAssistantButton />
@@ -319,7 +319,7 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
         />
       )}
 
-      { !hideSubControls && (
+      {!hideSubControls && (
         <div className={`hstack gap-1 ${!isViewMode && 'd-none d-lg-flex'}`}>
           {revisionId != null && _isIPageInfoForOperation && (
             <SubscribeButton
@@ -348,11 +348,11 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
               sumOfSeenUsers={sumOfSeenUsers}
               disabled={disableSeenUserInfoPopover}
             />
-          ) }
+          )}
         </div>
-      ) }
+      )}
 
-      { showPageControlDropdown && _isIPageInfoForOperation && (
+      {showPageControlDropdown && _isIPageInfoForOperation && (
         <PageItemControl
           pageId={pageId}
           pageInfo={pageInfo}

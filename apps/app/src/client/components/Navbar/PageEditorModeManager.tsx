@@ -9,8 +9,8 @@ import { useTranslation } from 'next-i18next';
 import { useCreatePage } from '~/client/services/create-page';
 import { toastError } from '~/client/util/toastr';
 import { usePageNotFound } from '~/states/page';
+import { useDeviceLargerThanMd } from '~/states/ui/device';
 import { useEditorMode, EditorMode } from '~/states/ui/editor';
-import { useIsDeviceLargerThanMd } from '~/stores/ui';
 import { useCurrentPageYjsData } from '~/stores/yjs';
 
 import { shouldCreateWipPage } from '../../../utils/should-create-wip-page';
@@ -68,12 +68,12 @@ export const PageEditorModeManager = (props: Props): JSX.Element => {
 
   const isNotFound = usePageNotFound();
   const { setEditorMode } = useEditorMode();
-  const { data: isDeviceLargerThanMd } = useIsDeviceLargerThanMd();
+  const [isDeviceLargerThanMd] = useDeviceLargerThanMd();
   const { data: currentPageYjsData } = useCurrentPageYjsData();
 
   const { isCreating, create } = useCreatePage();
 
-  const editButtonClickedHandler = useCallback(async() => {
+  const editButtonClickedHandler = useCallback(async () => {
     if (isNotFound == null || isNotFound === false) {
       setEditorMode(EditorMode.Editor);
       return;
@@ -131,7 +131,7 @@ export const PageEditorModeManager = (props: Props): JSX.Element => {
             onClick={editButtonClickedHandler}
           >
             <span className="material-symbols-outlined me-1 fs-5">edit_square</span>{t('Edit')}
-            { circleColor != null && <span className={`position-absolute top-0 start-100 translate-middle p-1 rounded-circle ${circleColor}`} />}
+            {circleColor != null && <span className={`position-absolute top-0 start-100 translate-middle p-1 rounded-circle ${circleColor}`} />}
           </PageEditorModeButton>
         )}
       </div>
