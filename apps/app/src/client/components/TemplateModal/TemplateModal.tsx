@@ -1,5 +1,5 @@
 import React, {
-  useCallback, useEffect, useState, type JSX,
+  useCallback, useEffect, useState, useMemo, type JSX,
 } from 'react';
 
 import assert from 'assert';
@@ -132,8 +132,15 @@ const TemplateModalSubstance = (props: TemplateModalSubstanceProps): JSX.Element
   const { format } = useFormatter();
 
   const usersDefaultLang = personalSettingsInfo?.lang;
-  const selectedLocalizedTemplate = getLocalizedTemplate(selectedTemplateSummary, usersDefaultLang);
-  const selectedTemplateLocales = extractSupportedLocales(selectedTemplateSummary);
+
+  // Memoize heavy calculations
+  const selectedLocalizedTemplate = useMemo(() => (
+    getLocalizedTemplate(selectedTemplateSummary, usersDefaultLang)
+  ), [selectedTemplateSummary, usersDefaultLang]);
+
+  const selectedTemplateLocales = useMemo(() => (
+    extractSupportedLocales(selectedTemplateSummary)
+  ), [selectedTemplateSummary]);
 
   const submitHandler = useCallback((markdown?: string) => {
     if (markdown == null) {
@@ -168,6 +175,16 @@ const TemplateModalSubstance = (props: TemplateModalSubstanceProps): JSX.Element
     setSelectedTemplateSummary(templateSummary);
   }, [selectedTemplateLocale, usersDefaultLang]);
 
+  // Memoize handler creator to avoid recreating onClick functions in map
+  const createOnClickHandler = useCallback((templateSummary: TemplateSummary) => () => {
+    onClickHandler(templateSummary);
+  }, [onClickHandler]);
+
+  // Memoize locale handler creator
+  const createLocaleHandler = useCallback((locale: string) => () => {
+    setSelectedTemplateLocale(locale);
+  }, []);
+
   useEffect(() => {
     if (!templateModalStatus.isOpened) {
       setSelectedTemplateSummary(undefined);
@@ -200,7 +217,7 @@ const TemplateModalSubstance = (props: TemplateModalSubstanceProps): JSX.Element
                   <TemplateListGroupItem
                     key={templateId}
                     templateSummary={templateSummary}
-                    onClick={() => onClickHandler(templateSummary)}
+                    onClick={createOnClickHandler(templateSummary)}
                     isSelected={isSelected}
                     usersDefaultLang={usersDefaultLang}
                   />
@@ -232,7 +249,7 @@ const TemplateModalSubstance = (props: TemplateModalSubstanceProps): JSX.Element
                     <TemplateDropdownItem
                       key={templateId}
                       templateSummary={templateSummary}
-                      onClick={() => onClickHandler(templateSummary)}
+                      onClick={createOnClickHandler(templateSummary)}
                       usersDefaultLang={usersDefaultLang}
                     />
                   );
@@ -263,7 +280,7 @@ const TemplateModalSubstance = (props: TemplateModalSubstanceProps): JSX.Element
                         <DropdownItem
                           data-testid="select-locale-dropdown-item"
                           key={locale}
-                          onClick={() => setSelectedTemplateLocale(locale)}
+                          onClick={createLocaleHandler(locale)}
                         >
                           <span>{locale}</span>
                         </DropdownItem>
