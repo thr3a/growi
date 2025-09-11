@@ -1,12 +1,10 @@
 import type { FC } from 'react';
 import React, {
-  useState, useMemo, useEffect,
+  useState, useMemo, useEffect, useCallback,
 } from 'react';
 
-import type {
-  HasObjectId,
-  IPageInfoForEntity, IPageToDeleteWithMeta, IDataWithMeta,
-} from '@growi/core';
+import type { IPageInfoForEntity, IPageToDeleteWithMeta } from '@growi/core';
+import { isIPageInfoForEntity } from '@growi/core';
 import { pagePathUtils } from '@growi/core/dist/utils';
 import { useTranslation } from 'next-i18next';
 import {
@@ -52,17 +50,29 @@ const PageDeleteModal: FC = () => {
   const { isOpened, pages, opts } = usePageDeleteModalStatus() ?? {};
   const { close: closeDeleteModal } = usePageDeleteModalActions();
 
-  const notOperatablePages: IPageToDeleteWithMeta[] = (pages ?? [])
-    .filter(p => !isIPageInfoForEntityForDeleteModal(p.meta));
-  const notOperatablePageIds = notOperatablePages.map(p => p.data._id);
+  // Optimize deps: use page IDs and length instead of pages array reference
+  const pageIds = useMemo(() => pages?.map(p => p.data._id) ?? [], [pages]);
+  const pagesLength = pages?.length ?? 0;
+
+  const notOperatablePages: IPageToDeleteWithMeta[] = useMemo(() => (pages ?? []).filter(p => !isIPageInfoForEntityForDeleteModal(p.meta)),
+    // Optimization: Use pageIds and pagesLength instead of pages array reference to avoid unnecessary re-computation
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pageIds, pagesLength]);
+
+  const notOperatablePageIds = useMemo(() => notOperatablePages.map(p => p.data._id), [notOperatablePages]);
 
   const { injectTo } = useSWRxPageInfoForList(notOperatablePageIds);
 
   // inject IPageInfo to operate
-  let injectedPages: IDataWithMeta<HasObjectId & { path: string }, IPageInfoForEntity>[] | null = null;
-  if (pages != null) {
-    injectedPages = injectTo(pages);
-  }
+  const injectedPages = useMemo(() => {
+    if (pages != null) {
+      return injectTo(pages);
+    }
+    return null;
+  },
+  // Optimization: Use pageIds and pagesLength instead of pages array reference to avoid unnecessary re-computation
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [pageIds, pagesLength, injectTo]);
 
   // calculate conditions to delete
   const [isDeletable, isAbleToDeleteCompletely] = useMemo(() => {
@@ -74,13 +84,19 @@ const PageDeleteModal: FC = () => {
     return [true, true];
   }, [injectedPages]);
 
+  // Optimize deps: use page paths for trash detection
+  const pagePaths = useMemo(() => pages?.map(p => p.data?.path ?? '') ?? [],
+    // Optimization: Use pageIds and pagesLength instead of pages array reference to avoid unnecessary re-computation
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pageIds, pagesLength]);
+
   // calculate condition to determine modal status
   const forceDeleteCompletelyMode = useMemo(() => {
-    if (pages != null && pages.length > 0) {
-      return pages.every(pageWithMeta => isTrashPage(pageWithMeta.data?.path ?? ''));
+    if (pagesLength > 0) {
+      return pagePaths.every(path => isTrashPage(path));
     }
     return false;
-  }, [pages]);
+  }, [pagePaths, pagesLength]);
 
   const [isDeleteRecursively, setIsDeleteRecursively] = useState(true);
   const [isDeleteCompletely, setIsDeleteCompletely] = useState(forceDeleteCompletelyMode);
@@ -101,18 +117,18 @@ const PageDeleteModal: FC = () => {
     setIsDeleteCompletely(forceDeleteCompletelyMode);
   }, [forceDeleteCompletelyMode]);
 
-  function changeIsDeleteRecursivelyHandler() {
+  const changeIsDeleteRecursivelyHandler = useCallback(() => {
     setIsDeleteRecursively(!isDeleteRecursively);
-  }
+  }, [isDeleteRecursively]);
 
-  function changeIsDeleteCompletelyHandler() {
+  const changeIsDeleteCompletelyHandler = useCallback(() => {
     if (forceDeleteCompletelyMode) {
       return;
     }
     setIsDeleteCompletely(!isDeleteCompletely);
-  }
+  }, [forceDeleteCompletelyMode, isDeleteCompletely]);
 
-  async function deletePage() {
+  const deletePage = useCallback(async() => {
     if (pages == null) {
       return;
     }
@@ -177,11 +193,14 @@ const PageDeleteModal: FC = () => {
         setErrs([err]);
       }
     }
-  }
+  },
+  // Optimization: Use pageIds and pagesLength instead of pages array reference to avoid unnecessary re-computation
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [pageIds, pagesLength, isDeletable, isDeleteRecursively, isDeleteCompletely, forceDeleteCompletelyMode, opts?.onDeleted, closeDeleteModal]);
 
-  async function deleteButtonHandler() {
+  const deleteButtonHandler = useCallback(async() => {
     await deletePage();
-  }
+  }, [deletePage]);
 
   function renderDeleteRecursivelyForm() {
     return (
@@ -235,7 +254,9 @@ const PageDeleteModal: FC = () => {
       return renderingPages.map(page => (
         <p key={page.data._id} className="mb-1">
           <code>{ page.data.path }</code>
-          { page.meta?.isDeletable != null && !page.meta.isDeletable && <span className="ms-3 text-danger"><strong>(CAN NOT TO DELETE)</strong></span> }
+          { isIPageInfoForEntity(page.meta)
+            && !page.meta.isDeletable
+            && <span className="ms-3 text-danger"><strong>(CAN NOT TO DELETE)</strong></span> }
         </p>
       ));
     }
