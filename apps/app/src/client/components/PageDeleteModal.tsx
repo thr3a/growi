@@ -202,7 +202,7 @@ const PageDeleteModal: FC = () => {
     await deletePage();
   }, [deletePage]);
 
-  function renderDeleteRecursivelyForm() {
+  const renderDeleteRecursivelyForm = useCallback(() => {
     return (
       <div className="form-check form-check-warning">
         <input
@@ -219,9 +219,9 @@ const PageDeleteModal: FC = () => {
         </label>
       </div>
     );
-  }
+  }, [isDeleteRecursively, changeIsDeleteRecursivelyHandler, t]);
 
-  function renderDeleteCompletelyForm() {
+  const renderDeleteCompletelyForm = useCallback(() => {
     return (
       <div className="form-check form-check-danger">
         <input
@@ -245,25 +245,9 @@ const PageDeleteModal: FC = () => {
         )}
       </div>
     );
-  }
+  }, [isAbleToDeleteCompletely, isDeleteCompletely, changeIsDeleteCompletelyHandler, t]);
 
-  const renderPagePathsToDelete = () => {
-    const renderingPages = injectedPages != null && injectedPages.length > 0 ? injectedPages : pages;
-
-    if (renderingPages != null) {
-      return renderingPages.map(page => (
-        <p key={page.data._id} className="mb-1">
-          <code>{ page.data.path }</code>
-          { isIPageInfoForEntity(page.meta)
-            && !page.meta.isDeletable
-            && <span className="ms-3 text-danger"><strong>(CAN NOT TO DELETE)</strong></span> }
-        </p>
-      ));
-    }
-    return <></>;
-  };
-
-  const headerContent = () => {
+  const headerContent = useMemo(() => {
     if (!isOpened) {
       return <></>;
     }
@@ -274,27 +258,40 @@ const PageDeleteModal: FC = () => {
         <b>{ t(`modal_delete.delete_${deleteIconAndKey[deleteMode].translationKey}`) }</b>
       </span>
     );
-  };
+  }, [isOpened, deleteMode, t]);
 
-  const bodyContent = () => {
+  const bodyContent = useMemo(() => {
     if (!isOpened) {
       return <></>;
     }
+
+    // Render page paths to delete inline for better performance
+    const renderingPages = injectedPages != null && injectedPages.length > 0 ? injectedPages : pages;
+    const pagePathsElements = renderingPages != null ? renderingPages.map(page => (
+      <p key={page.data._id} className="mb-1">
+        <code>{ page.data.path }</code>
+        { isIPageInfoForEntity(page.meta)
+          && !page.meta.isDeletable
+          && <span className="ms-3 text-danger"><strong>(CAN NOT TO DELETE)</strong></span> }
+      </p>
+    )) : <></>;
 
     return (
       <>
         <div className="grw-scrollable-modal-body pb-1">
           <label className="form-label">{ t('modal_delete.deleting_page') }:</label><br />
           {/* Todo: change the way to show path on modal when too many pages are selected */}
-          {renderPagePathsToDelete()}
+          {pagePathsElements}
         </div>
         { isDeletable && renderDeleteRecursivelyForm()}
         { isDeletable && !forceDeleteCompletelyMode && renderDeleteCompletelyForm() }
       </>
     );
-  };
+    // Optimization: Use direct dependencies instead of JSX.Element reference for better performance
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpened, t, pageIds, pagesLength, injectedPages, isDeletable, renderDeleteRecursivelyForm, forceDeleteCompletelyMode, renderDeleteCompletelyForm]);
 
-  const footerContent = () => {
+  const footerContent = useMemo(() => {
     if (!isOpened) {
       return <></>;
     }
@@ -314,18 +311,18 @@ const PageDeleteModal: FC = () => {
         </button>
       </>
     );
-  };
+  }, [isOpened, errs, deleteMode, isDeletable, deleteButtonHandler, t]);
 
   return (
     <Modal size="lg" isOpen={isOpened} toggle={closeDeleteModal} data-testid="page-delete-modal">
       <ModalHeader toggle={closeDeleteModal}>
-        {headerContent()}
+        {headerContent}
       </ModalHeader>
       <ModalBody>
-        {bodyContent()}
+        {bodyContent}
       </ModalBody>
       <ModalFooter>
-        {footerContent()}
+        {footerContent}
       </ModalFooter>
     </Modal>
 
