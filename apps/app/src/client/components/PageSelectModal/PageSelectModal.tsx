@@ -1,6 +1,6 @@
 import type { FC, JSX } from 'react';
 import {
-  Suspense, useState, useCallback,
+  Suspense, useState, useCallback, useMemo,
 } from 'react';
 
 import nodePath from 'path';
@@ -61,11 +61,20 @@ const PageSelectModalSubstance: FC = () => {
     closeModal();
   }, [clickedParentPage, closeModal, isIncludeSubPage, onSelected]);
 
-  const parentPagePath = pathUtils.addTrailingSlash(nodePath.dirname(currentPage?.path ?? ''));
+  // Memoize heavy calculation
+  const parentPagePath = useMemo(() => (
+    pathUtils.addTrailingSlash(nodePath.dirname(currentPage?.path ?? ''))
+  ), [currentPage?.path]);
 
-  const targetPathOrId = clickedParentPage?.path || parentPagePath;
+  // Memoize target path calculation (avoid duplication)
+  const targetPath = useMemo(() => (
+    clickedParentPage?.path || parentPagePath
+  ), [clickedParentPage?.path, parentPagePath]);
 
-  const targetPath = clickedParentPage?.path || parentPagePath;
+  // Memoize checkbox handler
+  const handleIncludeSubPageChange = useCallback(() => {
+    setIsIncludeSubPage(!isIncludeSubPage);
+  }, [isIncludeSubPage]);
 
   if (isGuestUser == null) {
     return <></>;
@@ -83,7 +92,7 @@ const PageSelectModalSubstance: FC = () => {
                 isEnableActions={!isGuestUser}
                 isReadOnlyUser={!!isReadOnlyUser}
                 targetPath={targetPath}
-                targetPathOrId={targetPathOrId}
+                targetPathOrId={targetPath}
                 onClickTreeItem={onClickTreeItem}
               />
             </div>
@@ -99,7 +108,7 @@ const PageSelectModalSubstance: FC = () => {
               className="form-check-input"
               name="fileUpload"
               checked={isIncludeSubPage}
-              onChange={() => setIsIncludeSubPage(!isIncludeSubPage)}
+              onChange={handleIncludeSubPageChange}
             />
             <label
               className="form-label form-check-label"
