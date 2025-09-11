@@ -37,7 +37,7 @@ const getPageApiErrorHandler = (errs: AxiosResponse[]) => {
   throw Error('failed to get page');
 };
 
-export const useSWRxPageByPath = (path?: string, config?: SWRConfiguration): SWRResponse<IPagePopulatedToShowRevision|null, Error> => {
+export const useSWRxPageByPath = (path?: string, config?: SWRConfiguration): SWRResponse<IPagePopulatedToShowRevision | null, Error> => {
   return useSWR(
     path != null ? ['/page', path] : null,
     ([endpoint, path]) => apiv3Get<{ page: IPagePopulatedToShowRevision }>(endpoint, { path })
@@ -94,7 +94,7 @@ export const useSWRxPageInfo = (
 
   const swrResult = useSWRImmutable(
     key,
-    ([endpoint, pageId, shareLinkId]: [string, string, string|null]) => apiv3Get(endpoint, { pageId, shareLinkId }).then(response => response.data),
+    ([endpoint, pageId, shareLinkId]: [string, string, string | null]) => apiv3Get(endpoint, { pageId, shareLinkId }).then(response => response.data),
     { fallbackData: initialData },
   );
 
@@ -128,7 +128,7 @@ export const useSWRMUTxPageInfo = (
 
   return useSWRMutation(
     key,
-    ([endpoint, pageId, shareLinkId]: [string, string, string|null]) => apiv3Get(endpoint, { pageId, shareLinkId }).then(response => response.data),
+    ([endpoint, pageId, shareLinkId]: [string, string, string | null]) => apiv3Get(endpoint, { pageId, shareLinkId }).then(response => response.data),
   );
 };
 
