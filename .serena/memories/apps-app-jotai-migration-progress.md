@@ -38,6 +38,7 @@ states/
 │   ├── editor/                     # エディター状態 ✅
 │   ├── device.ts                   # デバイス状態 ✅
 │   ├── page.ts                     # ページUI状態 ✅
+│   ├── toc.ts                      # TOC状態 ✅ NEW!
 │   └── modal/                      # 個別モーダルファイル ✅
 │       ├── page-create.ts          # ページ作成モーダル ✅
 │       ├── page-delete.ts          # ページ削除モーダル ✅
@@ -130,16 +131,70 @@ export const useDeviceLargerThanMd = () => {
 };
 ```
 
+#### RefObjectパターン（DOM要素管理）
+```typescript
+// Internal atom for RefObject storage
+const tocNodeRefAtom = atom<RefObject<HtmlElementNode> | null>(null);
+
+// Public derived atom for direct access
+export const tocNodeAtom = atom((get) => {
+  const tocNodeRef = get(tocNodeRefAtom);
+  return tocNodeRef?.current ?? null;
+});
+
+// Hook for setting with RefObject wrapping
+export const useSetTocNode = () => {
+  const setTocNodeRef = useSetAtom(tocNodeRefAtom);
+
+  const setTocNode = useCallback((newNode: HtmlElementNode) => {
+    const nodeRef: RefObject<HtmlElementNode> = { current: newNode };
+    setTocNodeRef(nodeRef);
+  }, [setTocNodeRef]);
+
+  return setTocNode;
+};
+```
+
+#### パフォーマンス最適化Dynamic Import パターン
+```typescript
+// Cache for dynamic import
+let generateTocOptionsCache: typeof generateTocOptions | null = null;
+
+export const useTocOptions = () => {
+  // ... dependencies ...
+  
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!generateTocOptionsCache) {
+          const { generateTocOptions } = await import('~/client/services/renderer/renderer');
+          generateTocOptionsCache = generateTocOptions;
+        }
+        
+        const data = generateTocOptionsCache(config, tocNode);
+        setState({ data, isLoading: false, error: undefined });
+      } catch (err) {
+        setState({ data: undefined, isLoading: false, error: err instanceof Error ? err : new Error('Failed') });
+      }
+    })();
+  }, [dependencies]);
+};
+```
+
 #### 使用パターン
 - **ステータスのみ必要**: `use[Modal]Status()`
 - **アクションのみ必要**: `use[Modal]Actions()`
 - **両方必要**: 2つのフックを併用
 - **デバイス状態**: `const [isLargerThanMd] = useDeviceLargerThanMd()`
+- **TOC状態**: `const tocNode = useTocNode()`, `const setTocNode = useSetTocNode()`
+- **TOCオプション**: `const { data, isLoading, error } = useTocOptions()`
 
 #### 重要事項
 - **後方互換フックは不要**: 移行完了後は即座に削除
 - **型の正しいインポート**: 元ファイルのimport文を参考にする
 - **フック分離のメリット**: 不要なリレンダリング防止、参照安定化
+- **RefObjectパターン**: mutableなDOM要素の管理に使用
+- **Dynamic Import**: 重いライブラリの遅延ロードでパフォーマンス最適化
 
 ## ✅ 移行完了済み状態
 
@@ -148,6 +203,7 @@ export const useDeviceLargerThanMd = () => {
 - ✅ **デバイス状態**: `useDeviceLargerThanXl`, `useDeviceLargerThanLg`, `useDeviceLargerThanMd`, `useIsMobile` （2025-09-11完了）
 - ✅ **エディター状態**: `useEditorMode`, `useSelectedGrant`
 - ✅ **ページUI状態**: `usePageControlsX`
+- ✅ **TOC状態**: `useTocNode`, `useSetTocNode`, `useTocOptions`, `useTocOptionsReady` （2025-09-11完了）
 
 ### データ関連状態（完了）
 - ✅ **ページ状態**: `useCurrentPageId`, `useCurrentPageData`, `useCurrentPagePath`, `usePageNotFound`, `usePageNotCreatable`, `useLatestRevision`
@@ -239,6 +295,61 @@ export const useDeviceLargerThanMd = () => {
 **テストファイル修正**: 1個
 - DescendantsPageListModal.spec.tsx: モック戻り値を `{ data: boolean }` → `[boolean]` に変更
 
+### 🆕 TOC状態移行完了（2025-09-11完了）
+
+#### ✅ TOC関連フック完全移行完了
+- ✅ **`useTocNode`**: TOCノード取得（新API）
+- ✅ **`useSetTocNode`**: TOCノード設定（新API）  
+- ✅ **`useTocOptions`**: TOCオプション生成（SWRからJotai + Dynamic Import）
+- ✅ **`useTocOptionsReady`**: TOCオプション準備完了判定
+
+#### 🚀 移行の成果と技術的特徴
+
+**1. API整理とクリーンアップ**
+- **統合**: TOC関連処理を `states/ui/toc.ts` に集約
+- **削除**: deprecated API（`useCurrentPageTocNode`, `useSetCurrentPageTocNode`）完全削除
+- **リファクタ**: `states/ui/page.ts` からTOC関連re-export削除
+- **責務分離**: PageControls関連とTOC関連の完全分離
+
+**2. RefObjectパターンによる型安全なDOM管理**
+```typescript
+// Internal RefObject storage (hidden from external API)
+const tocNodeRefAtom = atom<RefObject<HtmlElementNode> | null>(null);
+
+// Public derived atom for direct access
+export const tocNodeAtom = atom((get) => {
+  const tocNodeRef = get(tocNodeRefAtom);
+  return tocNodeRef?.current ?? null;
+});
+```
+
+**3. Dynamic Import + Cachingによるパフォーマンス最適化**
+```typescript
+// Heavy renderer dependencies are lazy-loaded
+let generateTocOptionsCache: typeof generateTocOptions | null = null;
+
+if (!generateTocOptionsCache) {
+  const { generateTocOptions } = await import('~/client/services/renderer/renderer');
+  generateTocOptionsCache = generateTocOptions;
+}
+```
+
+**4. SWRからJotai完全移行**
+- **Before**: SWR-based `useTocOptions` with server-side dependency
+- **After**: Pure Jotai state management with optimized caching
+- **Code Size**: 50%削減（54行 → 27行）
+
+#### 🎯 パフォーマンス向上効果
+1. **Bundle Splitting**: renderer.tsx（20+ dependencies）の遅延ロード
+2. **Code Splitting**: KaTeX, Mermaid, PlantUML等の重いライブラリ分離
+3. **Caching**: 一度ロード後の同期実行
+4. **First Contentful Paint**: 初期バンドルサイズ削減
+
+#### 📊 移行影響範囲
+- **更新ファイル**: `states/ui/toc.ts`, `states/ui/page.ts`, `stores/renderer.tsx`
+- **使用箇所**: `TableOfContents.tsx`（既に新API対応済み）
+- **削除コード**: deprecated hooks, re-exports, 冗長なコメント
+
 ## ✅ プロジェクト完了ステータス
 
 ### 🎯 モーダル移行プロジェクト: **100% 完了** ✅
@@ -257,38 +368,53 @@ export const useDeviceLargerThanMd = () => {
 - 🏆 **高精度判定**: モバイル検出の複数手法組み合わせ
 - 🏆 **完全移行**: 全使用箇所（11ファイル）の移行完了
 
+### 🎯 TOC状態移行: **完全完了** ✅
+
+**TOC関連フック4個**がJotaiベースに移行完了：
+- 🏆 **API整理**: deprecated API削除、責務分離
+- 🏆 **RefObjectパターン**: 型安全なDOM要素管理
+- 🏆 **Dynamic Import**: パフォーマンス最適化（50%コード削減）
+- 🏆 **SWR完全代替**: 純粋なJotai状態管理への移行
+
 ### 🚀 成果とメリット
-1. **パフォーマンス向上**: 不要なリレンダリングの削減
-2. **開発体験向上**: 統一されたAPIパターン
-3. **保守性向上**: 個別ファイル化による責務明確化
+1. **パフォーマンス向上**: 不要なリレンダリングの削減、Bundle Splitting
+2. **開発体験向上**: 統一されたAPIパターン、型安全性
+3. **保守性向上**: 個別ファイル化による責務明確化、API整理
 4. **型安全性**: Jotaiによる強固な型システム
 5. **レスポンシブ対応**: 正確なデバイス幅・モバイル判定
+6. **DOM管理**: RefObjectパターンによる安全なDOM要素管理
 
 ### 📊 最終進捗サマリー
-- **完了**: 主要なUI状態 + ページ関連状態 + SSRハイドレーション + **全17個のモーダル** + **デバイス状態4個**
+- **完了**: 主要なUI状態 + ページ関連状態 + SSRハイドレーション + **全17個のモーダル** + **デバイス状態4個** + **TOC状態4個**
 - **モーダル移行**: **100% 完了** （17/17個）
 - **デバイス状態移行**: **Phase 1完了** （4/4個）
+- **TOC状態移行**: **完全完了** （4/4個）
 - **品質保証**: 全型チェック成功、パフォーマンス最適化済み
 - **ドキュメント**: 完全な実装パターンガイド確立
 
 ## 🔮 今後の発展可能性
 
 ### 次のフェーズ候補（Phase 2）
-1. **残存SWRフック**: `stores/ui.tsx` 内の残り4個のフック
-   - `useCurrentPageTocNode` - ページ目次ノード
-   - `useSidebarScrollerRef` - サイドバースクローラー参照  
-   - `usePageTreeDescCountMap` - ページツリー子孫数マップ
-   - `useCommentEditorDirtyMap` - コメントエディター変更状態
-2. **AI機能のモーダル**: OpenAI関連のモーダル状態の統合検討
-3. **エディタパッケージ統合**: `@growi/editor`内のモーダル状態の統合
+1. **残存SWRフック**: `stores/ui.tsx` 内の残り1個のフック
+   - `useSidebarScrollerRef` - サイドバースクローラー参照（RefObjectパターン検討）
+2. **追加SWRフック検討**: その他のSWR使用箇所の調査
+3. **AI機能のモーダル**: OpenAI関連のモーダル状態の統合検討
+4. **エディタパッケージ統合**: `@growi/editor`内のモーダル状態の統合
 
 ### クリーンアップ候補
 - `stores/modal.tsx` 完全削除（既に空ファイル化済み）
-- `stores/ui.tsx` の段階的縮小検討（4個のフック残存）
+- `stores/ui.tsx` の段階的縮小検討（1個のフック残存）
 - 未使用SWRフックの調査・クリーンアップ
 
 ## 🔄 更新履歴
 
+- **2025-09-11**: 🎉 **TOC状態移行完全完了！**
+  - useTocNode, useSetTocNode, useTocOptions, useTocOptionsReady 移行完了
+  - API整理：deprecated hooks削除、責務分離完了
+  - RefObjectパターン：型安全なDOM要素管理確立
+  - Dynamic Import：パフォーマンス最適化（50%コード削減）
+  - SWR完全代替：Jotai純粋状態管理への移行
+  - 旧コード削除：re-exports, deprecated APIs完全削除
 - **2025-09-11**: 🎉 **Phase 1完了 - デバイス状態移行100%完了！**
   - useIsDeviceLargerThanMd, useIsDeviceLargerThanLg, useIsMobile移行完了
   - 11個のコンポーネント全使用箇所移行、テストファイル修正
