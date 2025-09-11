@@ -38,7 +38,8 @@ states/
 │   ├── editor/                     # エディター状態 ✅
 │   ├── device.ts                   # デバイス状態 ✅
 │   ├── page.ts                     # ページUI状態 ✅
-│   ├── toc.ts                      # TOC状態 ✅ NEW!
+│   ├── toc.ts                      # TOC状態 ✅
+│   ├── untitled-page.ts            # 無題ページ状態 ✅ NEW!
 │   └── modal/                      # 個別モーダルファイル ✅
 │       ├── page-create.ts          # ページ作成モーダル ✅
 │       ├── page-delete.ts          # ページ削除モーダル ✅
@@ -181,6 +182,22 @@ export const useTocOptions = () => {
 };
 ```
 
+#### シンプルなBoolean状態パターン（NEW! 2025-09-11追加）
+```typescript
+// Atom定義
+const isUntitledPageAtom = atom<boolean>(false);
+
+// 読み取り専用フック
+export const useIsUntitledPage = (): boolean => {
+  return useAtomValue(isUntitledPageAtom);
+};
+
+// セッター専用フック（シンプル）
+export const useSetIsUntitledPage = () => {
+  return useSetAtom(isUntitledPageAtom);
+};
+```
+
 #### 使用パターン
 - **ステータスのみ必要**: `use[Modal]Status()`
 - **アクションのみ必要**: `use[Modal]Actions()`
@@ -188,6 +205,7 @@ export const useTocOptions = () => {
 - **デバイス状態**: `const [isLargerThanMd] = useDeviceLargerThanMd()`
 - **TOC状態**: `const tocNode = useTocNode()`, `const setTocNode = useSetTocNode()`
 - **TOCオプション**: `const { data, isLoading, error } = useTocOptions()`
+- **無題ページ状態**: `const isUntitled = useIsUntitledPage()`, `const setIsUntitled = useSetIsUntitledPage()`
 
 #### 重要事項
 - **後方互換フックは不要**: 移行完了後は即座に削除
@@ -195,6 +213,7 @@ export const useTocOptions = () => {
 - **フック分離のメリット**: 不要なリレンダリング防止、参照安定化
 - **RefObjectパターン**: mutableなDOM要素の管理に使用
 - **Dynamic Import**: 重いライブラリの遅延ロードでパフォーマンス最適化
+- **シンプルパターン**: SWR後方互換性が不要な場合のシンプルな実装
 
 ## ✅ 移行完了済み状態
 
@@ -204,6 +223,7 @@ export const useTocOptions = () => {
 - ✅ **エディター状態**: `useEditorMode`, `useSelectedGrant`
 - ✅ **ページUI状態**: `usePageControlsX`
 - ✅ **TOC状態**: `useTocNode`, `useSetTocNode`, `useTocOptions`, `useTocOptionsReady` （2025-09-11完了）
+- ✅ **無題ページ状態**: `useIsUntitledPage`, `useSetIsUntitledPage` （2025-09-11完了）
 
 ### データ関連状態（完了）
 - ✅ **ページ状態**: `useCurrentPageId`, `useCurrentPageData`, `useCurrentPagePath`, `usePageNotFound`, `usePageNotCreatable`, `useLatestRevision`
@@ -270,7 +290,7 @@ export const useTocOptions = () => {
 
 ### 🆕 デバイス状態移行完了（2025-09-11完了）
 
-#### ✅ Phase 1: デバイス幅関連フック3個一括移行完了
+#### ✅ Phase 1: デバイス幅関連フック4個一括移行完了
 - ✅ **`useIsDeviceLargerThanMd`**: MD以上のデバイス幅判定
   - 使用箇所：8個のコンポーネント完全移行
 - ✅ **`useIsDeviceLargerThanLg`**: LG以上のデバイス幅判定
@@ -350,6 +370,52 @@ if (!generateTocOptionsCache) {
 - **使用箇所**: `TableOfContents.tsx`（既に新API対応済み）
 - **削除コード**: deprecated hooks, re-exports, 冗長なコメント
 
+### 🆕 無題ページ状態移行完了（2025-09-11完了）
+
+#### ✅ 無題ページ関連フック完全移行完了
+- ✅ **`useIsUntitledPage`**: 無題ページ状態取得（シンプルなboolean）
+- ✅ **`useSetIsUntitledPage`**: 無題ページ状態設定（直接的なsetter）
+
+#### 🚀 移行の成果と技術的特徴
+
+**1. シンプルなBoolean状態パターン確立**
+```typescript
+// Atom定義（シンプル）
+const isUntitledPageAtom = atom<boolean>(false);
+
+// 読み取り専用フック
+export const useIsUntitledPage = (): boolean => {
+  return useAtomValue(isUntitledPageAtom);
+};
+
+// セッター専用フック（useSetAtom直接使用）
+export const useSetIsUntitledPage = () => {
+  return useSetAtom(isUntitledPageAtom);
+};
+```
+
+**2. SWR後方互換性の完全排除**
+- **Before**: SWR response形式（`{ data: boolean, mutate: function }`）
+- **After**: 直接的なboolean値とsetter関数
+- **メリット**: シンプルで理解しやすい、不要な複雑性の排除
+
+**3. 使用箇所の完全移行**
+- **読み取り**: `const { data: isUntitled } = useIsUntitledPage()` → `const isUntitled = useIsUntitledPage()`
+- **変更**: `const { mutate } = useIsUntitledPage()` → `const setIsUntitled = useSetIsUntitledPage()`
+- **直接呼び出し**: `mutate(value)` → `setIsUntitled(value)`
+
+#### 📊 移行影響範囲
+- **新ファイル**: `states/ui/untitled-page.ts`（シンプルな実装）
+- **移行箇所**: 5個のファイル（PageTitleHeader.tsx, PageEditor.tsx, page-path-rename-utils.ts, use-create-page.tsx, use-update-page.tsx）
+- **テスト修正**: PageTitleHeader.spec.tsx（モック戻り値を `{ data: boolean }` → `boolean` に変更）
+- **旧コード削除**: `stores/ui.tsx` からの `useIsUntitledPage` 削除完了
+
+#### 🎯 設計原則の明確化
+- **SWR後方互換性不要時**: 直接的なgetter/setterパターンを採用
+- **パフォーマンス優先**: `useAtomValue` + `useSetAtom` の分離により最適化
+- **複雑性排除**: 不要なwrapper関数やcallback不要
+- **型安全性**: TypeScriptによる完全な型チェック
+
 ## ✅ プロジェクト完了ステータス
 
 ### 🎯 モーダル移行プロジェクト: **100% 完了** ✅
@@ -376,6 +442,14 @@ if (!generateTocOptionsCache) {
 - 🏆 **Dynamic Import**: パフォーマンス最適化（50%コード削減）
 - 🏆 **SWR完全代替**: 純粋なJotai状態管理への移行
 
+### 🎯 無題ページ状態移行: **完全完了** ✅
+
+**無題ページ関連フック2個**がJotaiベースに移行完了：
+- 🏆 **シンプルパターン確立**: SWR後方互換性を排除したシンプル実装
+- 🏆 **直接的API**: boolean値の直接取得とsetter関数
+- 🏆 **完全移行**: 5個のファイル + テストファイル修正完了
+- 🏆 **旧コード削除**: `stores/ui.tsx` からの完全削除
+
 ### 🚀 成果とメリット
 1. **パフォーマンス向上**: 不要なリレンダリングの削減、Bundle Splitting
 2. **開発体験向上**: 統一されたAPIパターン、型安全性
@@ -383,31 +457,43 @@ if (!generateTocOptionsCache) {
 4. **型安全性**: Jotaiによる強固な型システム
 5. **レスポンシブ対応**: 正確なデバイス幅・モバイル判定
 6. **DOM管理**: RefObjectパターンによる安全なDOM要素管理
+7. **シンプル性**: 不要な複雑性の排除、直接的なAPI設計
 
 ### 📊 最終進捗サマリー
-- **完了**: 主要なUI状態 + ページ関連状態 + SSRハイドレーション + **全17個のモーダル** + **デバイス状態4個** + **TOC状態4個**
+- **完了**: 主要なUI状態 + ページ関連状態 + SSRハイドレーション + **全17個のモーダル** + **デバイス状態4個** + **TOC状態4個** + **無題ページ状態2個**
 - **モーダル移行**: **100% 完了** （17/17個）
 - **デバイス状態移行**: **Phase 1完了** （4/4個）
 - **TOC状態移行**: **完全完了** （4/4個）
+- **無題ページ状態移行**: **完全完了** （2/2個）
 - **品質保証**: 全型チェック成功、パフォーマンス最適化済み
 - **ドキュメント**: 完全な実装パターンガイド確立
 
 ## 🔮 今後の発展可能性
 
 ### 次のフェーズ候補（Phase 2）
-1. **残存SWRフック**: `stores/ui.tsx` 内の残り1個のフック
-   - `useSidebarScrollerRef` - サイドバースクローラー参照（RefObjectパターン検討）
+1. **残存SWRフック**: `stores/ui.tsx` 内の残り5個のフック
+   - `usePageTreeDescCountMap` - ページツリーの子孫数管理（4ファイル使用、Map操作）
+   - `useCommentEditorDirtyMap` - コメントエディタのダーティ状態管理（1ファイル使用、Map操作）
+   - `useIsAbleToShowTrashPageManagementButtons` - ゴミ箱管理ボタン表示判定（1ファイル使用、boolean計算）
+   - `useIsAbleToShowTagLabel` - タグラベル表示判定（1ファイル使用、boolean計算）
+   - その他のable系フック - 各種UI表示判定
 2. **追加SWRフック検討**: その他のSWR使用箇所の調査
 3. **AI機能のモーダル**: OpenAI関連のモーダル状態の統合検討
 4. **エディタパッケージ統合**: `@growi/editor`内のモーダル状態の統合
 
 ### クリーンアップ候補
 - `stores/modal.tsx` 完全削除（既に空ファイル化済み）
-- `stores/ui.tsx` の段階的縮小検討（1個のフック残存）
+- `stores/ui.tsx` の段階的縮小検討（5個のフック残存）
 - 未使用SWRフックの調査・クリーンアップ
 
 ## 🔄 更新履歴
 
+- **2025-09-11**: 🎉 **無題ページ状態移行完全完了！**
+  - useIsUntitledPage, useSetIsUntitledPage 移行完了
+  - シンプルBoolean状態パターン確立（SWR後方互換性排除）
+  - 5個のファイル + テストファイル完全移行
+  - 旧コード削除：stores/ui.tsx から useIsUntitledPage 削除完了
+  - 設計原則明確化：直接的なgetter/setterパターン確立
 - **2025-09-11**: 🎉 **TOC状態移行完全完了！**
   - useTocNode, useSetTocNode, useTocOptions, useTocOptionsReady 移行完了
   - API整理：deprecated hooks削除、責務分離完了

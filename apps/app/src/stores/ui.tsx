@@ -203,16 +203,3 @@ export const useIsAbleToShowPageAuthors = (): SWRResponse<boolean, Error> => {
     () => isPageExist && !isUsersTopPagePath,
   );
 };
-
-export const useIsUntitledPage = (): SWRResponse<boolean> => {
-  const key = 'isUntitledPage';
-
-  const pageId = useCurrentPageId();
-
-  return useSWRStatic(
-    pageId == null ? null : [key, pageId],
-    undefined,
-    { fallbackData: false },
-  );
-
-};

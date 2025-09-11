@@ -2,7 +2,7 @@ import {
   isCreatablePage,
   isPermalink,
 } from '@growi/core/dist/utils/page-path-utils';
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useAtomCallback } from 'jotai/utils';
 import { useCallback, useMemo } from 'react';
 import { useIsGuestUser, useIsReadOnlyUser } from '../context';
@@ -15,6 +15,7 @@ import {
   isIdenticalPathAtom,
   isRevisionOutdatedAtom,
   isTrashPageAtom,
+  isUntitledPageAtom,
   latestRevisionAtom,
   pageNotFoundAtom,
   redirectFromAtom,
@@ -130,3 +131,16 @@ export const useIsEditable = () => {
     );
   }, [getCombinedConditions, isGuestUser, isReadOnlyUser, isNotCreatable]);
 };
+
+/**
+ * Hook to get untitled page status
+ * Returns true if current page is in untitled state, false otherwise
+ * Returns false if no page is currently loaded (currentPageId is null)
+ */
+export const useIsUntitledPage = () => useAtomValue(isUntitledPageAtom);
+
+/**
+ * Hook to set untitled page status
+ * Only updates state when a page is currently loaded (currentPageId exists)
+ */
+export const useSetIsUntitledPage = () => useSetAtom(isUntitledPageAtom);

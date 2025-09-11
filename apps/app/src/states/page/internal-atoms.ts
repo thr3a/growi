@@ -38,6 +38,29 @@ export const currentRevisionIdAtom = atom((get) => {
   return currentPage?.revision?._id;
 });
 
+// Base atom for untitled page state management
+const untitledPageStateAtom = atom<boolean>(false);
+
+// Derived atom for untitled page state with currentPageId dependency
+export const isUntitledPageAtom = atom(
+  (get) => {
+    const currentPageId = get(currentPageIdAtom);
+    // If no current page ID exists, return false (no page loaded)
+    if (currentPageId == null) {
+      return false;
+    }
+    // Return the current untitled state when page ID exists
+    return get(untitledPageStateAtom);
+  },
+  (get, set, newValue: boolean) => {
+    const currentPageId = get(currentPageIdAtom);
+    // Only update state if current page ID exists
+    if (currentPageId != null) {
+      set(untitledPageStateAtom, newValue);
+    }
+  }
+);
+
 // Remote revision data atoms (migrated from useSWRStatic)
 export const remoteRevisionIdAtom = atom<string>();
 export const remoteRevisionBodyAtom = atom<string>();

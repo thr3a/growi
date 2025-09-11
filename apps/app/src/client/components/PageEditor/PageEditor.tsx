@@ -31,6 +31,7 @@ import {
   useCurrentPageData,
   useCurrentPageId,
   usePageNotFound,
+  useIsUntitledPage,
 } from '~/states/page';
 import { useTemplateBody } from '~/states/page/hooks';
 import {
@@ -56,7 +57,6 @@ import {
 } from '~/stores/page';
 import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
 import { usePreviewOptions } from '~/stores/renderer';
-import { useIsUntitledPage } from '~/stores/ui';
 import { useEditingClients } from '~/stores/use-editing-clients';
 import loggerFactory from '~/utils/logger';
 
@@ -112,7 +112,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   const isEditable = useIsEditable();
   const { mutate: mutateWaitingSaveProcessing } = useWaitingSaveProcessing();
   const { editorMode, setEditorMode } = useEditorMode();
-  const { data: isUntitledPage } = useIsUntitledPage();
+  const isUntitledPage = useIsUntitledPage();
   const isIndentSizeForced = useAtomValue(isIndentSizeForcedAtom);
   const { data: currentIndentSize, mutate: mutateCurrentIndentSize } = useCurrentIndentSize();
   const defaultIndentSize = useAtomValue(defaultIndentSizeAtom);
@@ -179,7 +179,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   const scrollEditorHandlerThrottle = useMemo(() => throttle(25, scrollEditorHandler), [scrollEditorHandler]);
   const scrollPreviewHandlerThrottle = useMemo(() => throttle(25, scrollPreviewHandler), [scrollPreviewHandler]);
 
-  const save: Save = useCallback(async(revisionId, markdown, opts, onConflict) => {
+  const save: Save = useCallback(async (revisionId, markdown, opts, onConflict) => {
     if (pageId == null || selectedGrant == null) {
       logger.error('Some materials to save are invalid', {
         pageId, selectedGrant,
@@ -228,7 +228,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
     }
   }, [pageId, selectedGrant, mutateWaitingSaveProcessing, updatePage, mutateIsGrantNormalized, t]);
 
-  const saveAndReturnToViewHandler = useCallback(async(opts: SaveOptions) => {
+  const saveAndReturnToViewHandler = useCallback(async (opts: SaveOptions) => {
     const markdown = codeMirrorEditor?.getDocString();
     const revisionId = isRevisionIdRequiredForPageUpdate ? currentRevisionId : undefined;
     const page = await save(revisionId, markdown, opts, onConflict);
@@ -240,7 +240,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
     updateStateAfterSave?.();
   }, [codeMirrorEditor, currentRevisionId, isRevisionIdRequiredForPageUpdate, setEditorMode, onConflict, save, updateStateAfterSave]);
 
-  const saveWithShortcut = useCallback(async() => {
+  const saveWithShortcut = useCallback(async () => {
     const markdown = codeMirrorEditor?.getDocString();
     const revisionId = isRevisionIdRequiredForPageUpdate ? currentRevisionId : undefined;
     const page = await save(revisionId, markdown, undefined, onConflict);
