@@ -1,8 +1,56 @@
 # Changelog
 
-## [Unreleased](https://github.com/growilabs/compare/v7.2.10...HEAD)
+## [Unreleased](https://github.com/growilabs/compare/v7.3.0...HEAD)
 
 *Please do not manually update this file. We've automated the process.*
+
+## [v7.3.0](https://github.com/growilabs/compare/v7.2.10...v7.3.0) - 2025-09-11
+
+### 💎 Features
+
+* feat: Eenhanced access token (#9824) @miya
+* feat: Add shortcuts when editing (#9512) @WNomunomu
+
+### 🚀 Improvement
+
+* imprv(ai): Threads history (#10098) @miya
+* imprv: New keyboard shortcut display modal (#10158) @satof3
+* imprv: Set a longer value for the export interval of OpenTelemetry metrics (#10189) @yuki-takei
+* imprv: Change pdf bulk export shared html path (#10174) @arafubeatbox
+* imprv: Adjust pagetitle spacing (#10171) @satof3
+* imprv: Add dark mode support to PlantUML rendering (#10147) @yuki-takei
+* imprv: Add dark mode support to DrawioViewer component (#10141) @yuki-takei
+* imprv: Add dark mode support to MermaidViewer component (#10139) @yuki-takei
+
+### 🐛 Bug Fixes
+
+* fix: Auto-scroll to anchor for page view (#10181) @Naoki427
+* fix: Mermaid diagrams are not displayed when svg ids are duplicated (#10167) @miya
+* fix: Page list preview is not displayed in guest mode (#10176) @miya
+* fix: Tag <code> result in inline code blocks (#10165) @arvid-e
+* fix: Put render error message on PagePresentationModal and console (#10152) @Naoki427
+* fix: Remove appId from GROWI.cloud export path (#10213) @arafubeatbox
+* fix: remove srcdoc from whitelist (#10200) @Naoki427
+* fix: Add checking attachment file name and file size for g2g transformation (#10166) @Naoki427
+* fix: Bug causing export zip file to display twice (#10128) @arvid-e
+* fix(pdf-converter): Puppeteer not launching in pdf-converter (#10192) @arafubeatbox
+* fix(admin): Validate invalid key in qiita importer (#10170) @Naoki427
+* fix(admin): Cannot change file upload destination to "MongoDB (GridFS)" or "local" (#10118) @miya
+
+### 🧰 Maintenance
+
+* support: Remove questionnaire (#10185) @yuki-takei
+* support: Node.JS 22 (#10140, #10149) @miya
+* support: Elasticsearch v9 (#10127) @miya
+* support: Bump mermaid to v11.9.0 (#10194) @yuki-takei
+* support: Update biome to ver2 (#10142) @arafubeatbox
+* support: Configure biome for slackbot-proxy services (#10206) @arafubeatbox
+* support: Configure biome for slackbot-proxy (excluding services) (#10126) @arafubeatbox
+* support: Configure biome for pdf-converter (#10125) @arafubeatbox
+* ci(deps): bump form-data from 4.0.0 to 4.0.4 (#10177) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps): bump myrotvorets/info-from-package-json-action from 2.0.1 to 2.0.2 (#9823) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps): bump docker/metadata-action from 4 to 5 (#9821) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps): bump peter-evans/dockerhub-description from 3 to 4 (#9822) @[dependabot[bot]](https://github.com/apps/dependabot)
 
 ## [v7.2.10](https://github.com/weseek/growi/compare/v7.2.9...v7.2.10) - 2025-08-20
 
