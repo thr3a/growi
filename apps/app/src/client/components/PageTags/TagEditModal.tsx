@@ -1,5 +1,5 @@
 import React, {
-  useState, useCallback, useEffect,
+  useState, useCallback, useEffect, useMemo,
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -36,10 +36,16 @@ const TagEditModalSubstance: React.FC<TagEditModalSubstanceProps> = (props: TagE
     setTags(initTags);
   }, [initTags]);
 
-  const handleSubmit = useCallback(async() => {
+  // Memoized API request data
+  const updateTagsData = useMemo(() => ({
+    pageId,
+    revisionId,
+    tags,
+  }), [pageId, revisionId, tags]);
 
+  const handleSubmit = useCallback(async() => {
     try {
-      await apiPost('/tags.update', { pageId, revisionId, tags });
+      await apiPost('/tags.update', updateTagsData);
       updateStateAfterSave?.();
 
       toastSuccess('updated tags successfully');
@@ -48,7 +54,12 @@ const TagEditModalSubstance: React.FC<TagEditModalSubstanceProps> = (props: TagE
     catch (err) {
       toastError(err);
     }
-  }, [closeTagEditModal, tags, pageId, revisionId, updateStateAfterSave]);
+  }, [closeTagEditModal, updateTagsData, updateStateAfterSave]);
+
+  // Memoized tags update handler
+  const handleTagsUpdate = useCallback((newTags: string[]) => {
+    setTags(newTags);
+  }, []);
 
   return (
     <Modal isOpen={isOpen} toggle={closeTagEditModal} id="edit-tag-modal" autoFocus={false}>
@@ -56,7 +67,7 @@ const TagEditModalSubstance: React.FC<TagEditModalSubstanceProps> = (props: TagE
         {t('tag_edit_modal.edit_tags')}
       </ModalHeader>
       <ModalBody>
-        <TagsInput tags={initTags} onTagsUpdated={tags => setTags(tags)} autoFocus />
+        <TagsInput tags={initTags} onTagsUpdated={handleTagsUpdate} autoFocus />
       </ModalBody>
       <ModalFooter>
         <button type="button" data-testid="tag-edit-done-btn" className="btn btn-primary" onClick={handleSubmit}>
