@@ -107,45 +107,42 @@ jobs:
   build-app-image:
     needs: create-github-release
 
-    strategy:
-      matrix:
-        image-name: [weseek/growi, growilabs/growi]
-
     uses: growilabs/growi/.github/workflows/reusable-app-build-image.yml@master
     with:
       source-version: refs/tags/v${{ needs.create-github-release.outputs.RELEASED_VERSION }}
-      image-name: ${{ matrix.image-name }}
+      image-name: growilabs/growi
       tag-temporary: latest
     secrets:
       AWS_ROLE_TO_ASSUME_FOR_OIDC: ${{ secrets.AWS_ROLE_TO_ASSUME_FOR_OIDC }}
 
-  publish-app-image:
+  publish-app-image-for-growilabs:
     needs: [determine-tags, build-app-image]
-
-    strategy:
-      matrix:
-        include:
-          - image-name: weseek/growi
-            username: wsmoogle
-          - image-name: growilabs/growi
-            username: growimoogle
 
     uses: growilabs/growi/.github/workflows/reusable-app-create-manifests.yml@master
     with:
       tags: ${{ needs.determine-tags.outputs.TAGS }}
       registry: docker.io
-      image-name: ${{ matrix.image-name }}
-      username: ${{ matrix.username }}
+      image-name: 'growilabs/growi'
+      docker-registry-username: 'growimoogle'
       tag-temporary: latest
     secrets:
-      DOCKER_REGISTRY_PASSWORD: ${{
-        matrix.image-name == 'weseek/growi' && secrets.DOCKER_REGISTRY_PASSWORD ||
-        matrix.image-name == 'growilabs/growi' && secrets.DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE ||
-        'INVALID_SECRET'
-      }}
+      DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE }}
+
+  publish-app-image-for-weseek:
+    needs: [determine-tags, build-app-image]
+
+    uses: growilabs/growi/.github/workflows/reusable-app-create-manifests.yml@master
+    with:
+      tags: ${{ needs.determine-tags.outputs.TAGS }}
+      registry: docker.io
+      image-name: 'weseek/growi'
+      docker-registry-username: 'wsmoogle'
+      tag-temporary: latest
+    secrets:
+      DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
 
   post-publish:
-    needs: [create-github-release, publish-app-image]
+    needs: [create-github-release, publish-app-image-for-growilabs, publish-app-image-for-weseek]
     runs-on: ubuntu-latest
 
     strategy:
