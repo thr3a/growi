@@ -21,9 +21,12 @@ import { useFetchCurrentPage } from '~/states/page';
 import {
   currentPageDataAtom,
   currentPageIdAtom,
+  isForbiddenAtom,
   pageErrorAtom,
   pageLoadingAtom,
   pageNotFoundAtom,
+  remoteRevisionBodyAtom,
+  remoteRevisionIdAtom,
 } from '~/states/page/internal-atoms';
 
 // Mock Next.js router
@@ -117,7 +120,9 @@ describe('useFetchCurrentPage - Integration Test', () => {
       status: 200,
       statusText: 'OK',
       headers: {},
-      config: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+      // Cast to satisfy AxiosResponse without resorting to explicit any
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      config: {} as AxiosResponse['config'],
     };
   };
 
@@ -337,7 +342,7 @@ describe('useFetchCurrentPage - Integration Test', () => {
     const { result } = renderHookWithProvider();
     await result.current.fetchCurrentPage({
       path: permalinkPath,
-      pageId: explicitPageId
+      pageId: explicitPageId,
     });
 
     // Assert
@@ -435,18 +440,18 @@ describe('useFetchCurrentPage - Integration Test', () => {
       {
         input: '/58a4569921a8424d00a1aa0e#edit',
         expectedPageId: '58a4569921a8424d00a1aa0e',
-        description: 'edit hash'
+        description: 'edit hash',
       },
       {
         input: '/58a4569921a8424d00a1aa0e#section-header',
         expectedPageId: '58a4569921a8424d00a1aa0e',
-        description: 'section hash'
+        description: 'section hash',
       },
       {
         input: '/58a4569921a8424d00a1aa0e#',
         expectedPageId: '58a4569921a8424d00a1aa0e',
-        description: 'empty hash'
-      }
+        description: 'empty hash',
+      },
     ];
 
     for (const testCase of testCases) {
@@ -475,5 +480,106 @@ describe('useFetchCurrentPage - Integration Test', () => {
         expect(store.get(currentPageIdAtom)).toBe(testCase.expectedPageId);
       });
     }
+  });
+
+  it('should handle not found error (ErrorV3 with IPageNotFoundInfo args) in catch block', async () => {
+    // Arrange: set initial page and remote revision atoms so we can verify they are cleared
+    const existingPage = createPageDataMock(
+      'someExistingId',
+      '/some/existing',
+      'existing body',
+    );
+    store.set(currentPageIdAtom, existingPage._id);
+    store.set(currentPageDataAtom, existingPage);
+    store.set(remoteRevisionIdAtom, 'rev_xxx');
+    store.set(remoteRevisionBodyAtom, 'remote body');
+
+    // Mock API rejection with ErrorV3 like object
+    const notFoundError = {
+      code: 'not_found',
+      message: 'Page not found',
+      args: { isNotFound: true, isForbidden: true },
+    } as const; // shape satisfying isErrorV3 predicate
+    mockedApiv3Get.mockRejectedValueOnce([notFoundError]);
+
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({ path: '/will/not/found' });
+
+    // Assert
+    await waitFor(() => {
+      expect(store.get(pageLoadingAtom)).toBe(false);
+      expect(store.get(pageNotFoundAtom)).toBe(true);
+      expect(store.get(isForbiddenAtom)).toBe(true);
+      expect(store.get(pageErrorAtom)).toMatchObject({
+        message: 'Page not found',
+      });
+      expect(store.get(currentPageDataAtom)).toBeUndefined();
+      expect(store.get(currentPageIdAtom)).toBeUndefined();
+      expect(store.get(remoteRevisionIdAtom)).toBeUndefined();
+      expect(store.get(remoteRevisionBodyAtom)).toBeUndefined();
+    });
+  });
+
+  it('should handle unknown error shape by setting generic error', async () => {
+    // Arrange: ensure atoms start clean
+    vi.clearAllMocks();
+    const unknownError = new Error('network down');
+    // The code checks first for an array; pass non-array to trigger generic branch
+    mockedApiv3Get.mockRejectedValueOnce(unknownError);
+
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({ path: '/any/path' });
+
+    await waitFor(() => {
+      const err = store.get(pageErrorAtom);
+      expect(err).not.toBeNull();
+      expect(err?.message).toBe('Unknown error');
+      expect(store.get(pageLoadingAtom)).toBe(false);
+      // pageNotFoundAtom should NOT be set to true for unknown errors
+      expect(store.get(pageNotFoundAtom)).toBe(false);
+    });
+  });
+
+  it('should handle empty error array by setting generic error', async () => {
+    // Arrange: ensure atoms start clean
+    vi.clearAllMocks();
+    // The code checks for array length; pass empty array to trigger generic branch
+    mockedApiv3Get.mockRejectedValueOnce([]);
+
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({ path: '/any/path' });
+
+    await waitFor(() => {
+      const err = store.get(pageErrorAtom);
+      expect(err).not.toBeNull();
+      expect(err?.message).toBe('Unknown error');
+      expect(store.get(pageLoadingAtom)).toBe(false);
+      // pageNotFoundAtom should NOT be set to true for empty error arrays
+      expect(store.get(pageNotFoundAtom)).toBe(false);
+    });
+  });
+
+  it('should handle non-ErrorV3 error in array by not processing as page not found', async () => {
+    // Arrange: ensure atoms start clean
+    vi.clearAllMocks();
+    // Pass array with non-ErrorV3 object (missing code/message properties)
+    const nonErrorV3 = {
+      someOtherProperty: 'value',
+      args: { isNotFound: true, isForbidden: true },
+    };
+    mockedApiv3Get.mockRejectedValueOnce([nonErrorV3]);
+
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({ path: '/any/path' });
+
+    await waitFor(() => {
+      expect(store.get(pageLoadingAtom)).toBe(false);
+      // Since isErrorV3 returns false, pageErrorAtom should NOT be set
+      expect(store.get(pageErrorAtom)).toBeNull();
+      // pageNotFoundAtom should NOT be set to true for non-ErrorV3 errors
+      expect(store.get(pageNotFoundAtom)).toBe(false);
+      // isForbiddenAtom should remain at default state
+      expect(store.get(isForbiddenAtom)).toBe(false);
+    });
   });
 });
