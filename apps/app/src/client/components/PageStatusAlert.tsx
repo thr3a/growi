@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 import { useCurrentPageData, useRemoteRevisionId, useRemoteRevisionLastUpdateUser } from '~/states/page';
 import { useEditorMode } from '~/states/ui/editor';
-import { usePageStatusAlert } from '~/stores/alert';
+import { usePageStatusAlertStatus } from '~/states/ui/modal/page-status-alert';
 
 import { Username } from '../../components/User/Username';
 
@@ -17,7 +17,7 @@ export const PageStatusAlert = (): JSX.Element => {
   const { editorMode } = useEditorMode();
   const isGuestUser = useIsGuestUser();
   const isReadOnlyUser = useIsReadOnlyUser();
-  const { data: pageStatusAlertData } = usePageStatusAlert();
+  const pageStatusAlertData = usePageStatusAlertStatus();
   const remoteRevisionId = useRemoteRevisionId();
   const remoteRevisionLastUpdateUser = useRemoteRevisionLastUpdateUser();
   const pageData = useCurrentPageData();
@@ -48,7 +48,7 @@ export const PageStatusAlert = (): JSX.Element => {
     <div className={`${styles['grw-page-status-alert']} card fixed-bottom animated fadeInUp faster text-bg-warning`}>
       <div className="card-body">
         <p className="card-text grw-card-label-container">
-          { hasResolveConflictHandler
+          {hasResolveConflictHandler
             ? <>{t('modal_resolve_conflict.file_conflicting_with_newer_remote')}</>
             : <><Username user={remoteRevisionLastUpdateUser} /> {t('edited this page')}</>
           }
