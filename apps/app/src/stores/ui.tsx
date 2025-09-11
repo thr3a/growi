@@ -1,12 +1,11 @@
 import {
-  type RefObject, useCallback,
+  useCallback,
   useLayoutEffect,
 } from 'react';
 
 import { useSWRStatic } from '@growi/core/dist/swr';
 import { pagePathUtils } from '@growi/core/dist/utils';
 import { useRouter } from 'next/router';
-import type { HtmlElementNode } from 'rehype-toc';
 import {
   type SWRResponse,
 } from 'swr';
@@ -30,16 +29,6 @@ const { isTrashTopPage, isUsersTopPage } = pagePathUtils;
 
 const logger = loggerFactory('growi:stores:ui');
 
-
-/** **********************************************************
- *                     Storing objects to ref
- *********************************************************** */
-
-export const useCurrentPageTocNode = (): SWRResponse<HtmlElementNode, any> => {
-  const currentPagePath = useCurrentPagePath();
-
-  return useStaticSWR(['currentPageTocNode', currentPagePath]);
-};
 
 /** **********************************************************
  *                          SWR Hooks
