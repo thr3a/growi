@@ -14,7 +14,7 @@ on:
         default: growilabs/growi
       docker-registry-username:
         type: string
-        default: wsmoogle
+        default: growimoogle
       tag-temporary:
         type: string
         default: latest
