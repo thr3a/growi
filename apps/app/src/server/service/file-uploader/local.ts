@@ -166,7 +166,28 @@ module.exports = function(crowi: Crowi) {
 
     const writeStream: Writable = fs.createWriteStream(filePath);
 
-    return pipeline(fileStream, writeStream);
+    try {
+      const uploadTimeout = configManager.getConfig('app:fileUploadTimeout');
+      await pipeline(
+        fileStream,
+        writeStream,
+        { signal: AbortSignal.timeout(uploadTimeout) },
+      );
+
+      logger.debug(`File upload completed successfully: fileName=${attachment.fileName}`);
+    }
+    catch (error) {
+      // Handle timeout error specifically
+      if (error.name === 'AbortError') {
+        logger.warn(`Upload timeout: fileName=${attachment.fileName}`, error);
+      }
+      else {
+        logger.error(`File upload failed: fileName=${attachment.fileName}`, error);
+      }
+      // Re-throw the error to be handled by the caller.
+      // The pipeline automatically handles stream cleanup on error.
+      throw error;
+    }
   };
 
   lib.saveFile = async function({ filePath, contentType, data }) {

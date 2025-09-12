@@ -179,15 +179,36 @@ class AwsFileUploader extends AbstractFileUploader {
     const filePath = getFilePathOnStorage(attachment);
     const contentHeaders = createContentHeaders(attachment);
 
-    await s3.send(new PutObjectCommand({
-      Bucket: getS3Bucket(),
-      Key: filePath,
-      Body: readable,
-      ACL: getS3PutObjectCannedAcl(),
-      // put type and the file name for reference information when uploading
-      ContentType: getContentHeaderValue(contentHeaders, 'Content-Type'),
-      ContentDisposition: getContentHeaderValue(contentHeaders, 'Content-Disposition'),
-    }));
+    try {
+      const uploadTimeout = configManager.getConfig('app:fileUploadTimeout');
+
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: getS3Bucket(),
+          Key: filePath,
+          Body: readable,
+          ACL: getS3PutObjectCannedAcl(),
+          // put type and the file name for reference information when uploading
+          ContentType: getContentHeaderValue(contentHeaders, 'Content-Type'),
+          ContentDisposition: getContentHeaderValue(contentHeaders, 'Content-Disposition'),
+        }),
+        { abortSignal: AbortSignal.timeout(uploadTimeout) },
+      );
+
+      logger.debug(`File upload completed successfully: fileName=${attachment.fileName}`);
+    }
+    catch (error) {
+      // Handle timeout error specifically
+      if (error.name === 'AbortError') {
+        logger.warn(`Upload timeout: fileName=${attachment.fileName}`, error);
+      }
+      else {
+        logger.error(`File upload failed: fileName=${attachment.fileName}`, error);
+      }
+      // Re-throw the error to be handled by the caller.
+      // The pipeline automatically handles stream cleanup on error.
+      throw error;
+    }
   }
 
   /**
