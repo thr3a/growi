@@ -134,11 +134,35 @@ class GcsFileUploader extends AbstractFileUploader {
     const contentHeaders = new ContentHeaders(attachment);
 
     const file = myBucket.file(filePath);
-
-    await pipeline(readable, file.createWriteStream({
+    const writeStream = file.createWriteStream({
       // put type and the file name for reference information when uploading
       contentType: contentHeaders.contentType?.value.toString(),
-    }));
+    });
+
+    try {
+      const uploadTimeout = configManager.getConfig('app:fileUploadTimeout');
+
+      // Use AbortSignal.timeout() for robust timeout handling (Node.js 16+)
+      await pipeline(
+        readable,
+        writeStream,
+        { signal: AbortSignal.timeout(uploadTimeout) },
+      );
+
+      logger.debug(`File upload completed successfully: fileName=${attachment.fileName}`);
+    }
+    catch (error) {
+      // Handle timeout error specifically
+      if (error.name === 'AbortError') {
+        logger.warn(`Upload timeout: fileName=${attachment.fileName}`, error);
+      }
+      else {
+        logger.error(`File upload failed: fileName=${attachment.fileName}`, error);
+      }
+      // Re-throw the error to be handled by the caller.
+      // The pipeline automatically handles stream cleanup on error.
+      throw error;
+    }
   }
 
   /**
@@ -172,7 +196,7 @@ class GcsFileUploader extends AbstractFileUploader {
     }
     catch (err) {
       logger.error(err);
-      throw new Error(`Coudn't get file from AWS for the Attachment (${attachment._id.toString()})`);
+      throw new Error(`Coudn't get file from GCS for the Attachment (${attachment._id.toString()})`);
     }
   }
 

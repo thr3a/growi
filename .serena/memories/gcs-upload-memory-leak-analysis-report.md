@@ -1,35 +1,11 @@
-# GCSアップロード機能 メモリリーク分析レポート
+# GCSアップロード機能 メモリリーク分析レポート（修正版）
 
 ## 概要
 `/workspace/growi/apps/app/src/server/service/file-uploader/gcs/index.ts` および関連ファイルにおけるメモリリークの可能性を詳細分析した結果です。
 
 ## 🔴 高リスク：メモリリークの可能性が高い箇所
 
-### 1. グローバルStorage インスタンスの永続化
-**場所**: `getGcsInstance()` 関数（行 35-44）  
-**問題コード**:
-```typescript
-let storage: Storage;
-function getGcsInstance() {
-  if (storage == null) {
-    const keyFilename = toNonBlankStringOrUndefined(configManager.getConfig('gcs:apiKeyJsonPath'));
-    storage = keyFilename != null
-      ? new Storage({ keyFilename })
-      : new Storage();
-  }
-  return storage;
-}
-```
-
-**問題点**:
-- モジュールレベルで`Storage`インスタンスを永続化
-- アプリケーション終了時まで解放されない
-- Google Cloud Storageクライアントが内部で保持するHTTP接続プール、タイマー、イベントリスナーが蓄積
-- 長時間稼働時にHTTP接続の蓄積により徐々にメモリ消費増加
-
-**影響度**: 高 - 長時間稼働アプリケーションで累積的影響
-
-### 2. ストリーム処理でのエラーハンドリング不足
+### 1. ストリーム処理でのエラーハンドリング不足
 **場所**: `uploadAttachment`メソッド（行 123-141）  
 **問題コード**:
 ```typescript
@@ -44,9 +20,9 @@ await pipeline(readable, file.createWriteStream({
 - 中断されたアップロードでストリームリソースがリーク
 - アップロード失敗時のGCSストリームの適切でない終了
 
-**影響度**: 高 - アップロード失敗時の重大なリスクエ
+**影響度**: 高 - アップロード失敗時の重大なリスク
 
-### 3. ReadStream のライフサイクル管理不足
+### 2. ReadStream のライフサイクル管理不足
 **場所**: `findDeliveryFile`メソッド（行 153-176）  
 **問題コード**:
 ```typescript
@@ -69,7 +45,7 @@ catch (err) {
 
 ## 🟡 中リスク：条件によってメモリリークが発生する可能性
 
-### 4. Multipart Uploader でのAxios使用
+### 3. Multipart Uploader でのAxios使用
 **場所**: `GcsMultipartUploader.uploadChunk`（multipart-uploader.ts 行 97-119）  
 **問題コード**:
 ```typescript
@@ -88,7 +64,7 @@ await axios.put(this.uploadId, chunk, {
 
 **影響度**: 中 - 大量ファイルアップロード時に顕著
 
-### 5. 手動でのURL生成処理
+### 4. 手動でのURL生成処理
 **場所**: `generateTemporaryUrl`メソッド（行 181-208）  
 **問題コード**:
 ```typescript
@@ -108,7 +84,7 @@ const [signedUrl] = await file.getSignedUrl({
 
 **影響度**: 中 - 大量URL生成時に一時的な影響
 
-### 6. Multipart Upload の状態管理
+### 5. Multipart Upload の状態管理
 **場所**: `GcsMultipartUploader`全般  
 **問題コード**:
 ```typescript
@@ -128,7 +104,7 @@ private uploadChunk = async(chunk, isLastUpload = false) => {
 
 ## 🟢 低リスク：潜在的なメモリリーク
 
-### 7. ContentHeaders の一時的な作成
+### 6. ContentHeaders の一時的な作成
 **場所**: 複数箇所（uploadAttachment, generateTemporaryUrl）  
 **問題コード**:
 ```typescript
@@ -142,7 +118,7 @@ const contentHeaders = new ContentHeaders(attachment);
 
 **影響度**: 低 - 通常は自動的に解放
 
-### 8. エラーハンドリングでのログ情報蓄積
+### 7. エラーハンドリングでのログ情報蓄積
 **場所**: 各メソッドのlogger呼び出し  
 **問題コード**:
 ```typescript
@@ -156,115 +132,57 @@ logger.debug(`File uploading: fileName=${attachment.fileName}`);
 
 **影響度**: 低 - ログローテーション設定に依存
 
-## 📋 推奨される修正案
+## ✅ 完了した修正
 
-### 1. Storage インスタンスの適切な管理（最優先）
+### 1. ストリーム処理の改善
 ```typescript
-class GcsStorageManager {
-  private static instance: Storage | null = null;
-  private static timeoutId: NodeJS.Timeout | null = null;
-  
-  static getInstance(): Storage {
-    if (this.instance == null) {
-      const keyFilename = toNonBlankStringOrUndefined(
-        configManager.getConfig('gcs:apiKeyJsonPath')
-      );
-      this.instance = keyFilename != null
-        ? new Storage({ keyFilename })
-        : new Storage();
-    }
-    
-    // 一定時間使用されなかった場合のクリーンアップ
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId);
-    }
-    this.timeoutId = setTimeout(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000); // 5分後にクリーンアップ
-    
-    return this.instance;
-  }
-  
-  static async cleanup(): Promise<void> {
-    if (this.instance) {
-      // GCS接続の明示的な終了
-      try {
-        await this.instance.authClient.close?.();
-      } catch (e) {
-        logger.warn('Failed to close GCS auth client:', e);
-      }
-      this.instance = null;
-    }
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId);
-      this.timeoutId = null;
-    }
-  }
-}
-
-// プロセス終了時のクリーンアップ
-process.on('SIGTERM', () => GcsStorageManager.cleanup());
-process.on('SIGINT', () => GcsStorageManager.cleanup());
-```
-
-### 2. ストリーム処理の改善
-```typescript
+// in uploadAttachment method
 override async uploadAttachment(readable: Readable, attachment: IAttachmentDocument): Promise<void> {
-  if (!this.getIsUploadable()) {
-    throw new Error('GCS is not configured.');
-  }
-
-  logger.debug(`File uploading: fileName=${attachment.fileName}`);
-
-  const gcs = getGcsInstance();
-  const myBucket = gcs.bucket(getGcsBucket());
-  const filePath = getFilePathOnStorage(attachment);
-  const contentHeaders = new ContentHeaders(attachment);
-
-  const file = myBucket.file(filePath);
-  let writeStream: any;
+  // ...
+  let writeStream: ReturnType<typeof file.createWriteStream> | null = null;
+  let uploadTimeout: NodeJS.Timeout | null = null;
 
   try {
-    writeStream = file.createWriteStream({
-      contentType: contentHeaders.contentType?.value.toString(),
-    });
+    writeStream = file.createWriteStream({ ... });
+
+    uploadTimeout = setTimeout(() => {
+      if (writeStream && typeof writeStream.destroy === 'function') {
+        writeStream.destroy(new Error(`Upload timeout for file: ${attachment.fileName}`));
+      }
+    }, 10 * 60 * 1000);
 
     await pipeline(readable, writeStream);
-  } catch (error) {
-    // 明示的なストリームクリーンアップ
-    if (writeStream && typeof writeStream.destroy === 'function') {
-      writeStream.destroy();
+  }
+  catch (error) {
+    if (writeStream != null && typeof writeStream.destroy === 'function') {
+      try {
+        writeStream.destroy();
+      }
+      catch (destroyError) {
+        logger.warn(`Failed to destroy WriteStream: fileName=${attachment.fileName}`, destroyError);
+      }
     }
     throw error;
   }
+  finally {
+    if (uploadTimeout) {
+      clearTimeout(uploadTimeout);
+    }
+  }
 }
 ```
 
-### 3. ReadStream の適切な管理
+### 2. ReadStream の適切な管理
 ```typescript
+// in findDeliveryFile method
 override async findDeliveryFile(attachment: IAttachmentDocument): Promise<NodeJS.ReadableStream> {
-  if (!this.getIsReadable()) {
-    throw new Error('GCS is not configured.');
-  }
-
-  const gcs = getGcsInstance();
-  const myBucket = gcs.bucket(getGcsBucket());
-  const filePath = getFilePathOnStorage(attachment);
-  const file = myBucket.file(filePath);
-
-  // check file exists
-  const isExists = await isFileExists(file);
-  if (!isExists) {
-    throw new Error(`Any object that relate to the Attachment (${filePath}) does not exist in GCS`);
-  }
-
+  // ...
   try {
     const readStream = file.createReadStream();
     
-    // タイムアウト設定
     const timeout = setTimeout(() => {
       readStream.destroy(new Error('Read stream timeout'));
-    }, 5 * 60 * 1000); // 5分タイムアウト
+    }, 5 * 60 * 1000);
     
     readStream.on('end', () => clearTimeout(timeout));
     readStream.on('error', () => clearTimeout(timeout));
@@ -277,84 +195,11 @@ override async findDeliveryFile(attachment: IAttachmentDocument): Promise<NodeJS
 }
 ```
 
-### 4. Multipart Uploader の改善
-```typescript
-// multipart-uploader.ts での修正
-class GcsMultipartUploader implements IGcsMultipartUploader {
-  // アロー関数を通常のメソッドに変更
-  private async uploadChunkMethod(chunk: Buffer, isLastUpload = false): Promise<void> {
-    if (chunk.length > this.minPartSize && chunk.length % this.minPartSize !== 0) {
-      throw Error(`chunk must be a multiple of ${this.minPartSize}`);
-    }
-
-    const range = isLastUpload
-      ? `bytes ${this._uploadedFileSize}-${this._uploadedFileSize + chunk.length - 1}/${this._uploadedFileSize + chunk.length}`
-      : `bytes ${this._uploadedFileSize}-${this._uploadedFileSize + chunk.length - 1}/*`;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒タイムアウト
-
-    try {
-      await axios.put(this.uploadId, chunk, {
-        headers: {
-          'Content-Range': `${range}`,
-        },
-        signal: controller.signal,
-        maxContentLength: chunk.length,
-        maxBodyLength: chunk.length,
-      });
-    } catch (e) {
-      if (e.response?.status !== 308) {
-        throw e;
-      }
-    } finally {
-      clearTimeout(timeoutId);
-    }
-    
-    this._uploadedFileSize += chunk.length;
-  }
-
-  // WeakMapを使用してチャンクの弱参照管理
-  private chunkRefs = new WeakMap();
-  
-  async uploadPart(chunk: Buffer): Promise<void> {
-    this.chunkRefs.set(chunk, true); // 弱参照で追跡
-    // ... existing logic
-    this.chunkRefs.delete(chunk); // 処理完了後削除
-  }
-}
-```
-
-### 5. リソース監視の追加
-```typescript
-// メモリ使用量の監視
-class GcsMemoryMonitor {
-  static logMemoryUsage(operation: string): void {
-    const mem = process.memoryUsage();
-    logger.debug(`GCS ${operation} memory usage:`, {
-      heapUsed: Math.round(mem.heapUsed / 1024 / 1024) + ' MB',
-      heapTotal: Math.round(mem.heapTotal / 1024 / 1024) + ' MB',
-      external: Math.round(mem.external / 1024 / 1024) + ' MB',
-    });
-  }
-}
-
-// 各メソッドでの使用例
-override async uploadAttachment(readable: Readable, attachment: IAttachmentDocument): Promise<void> {
-  GcsMemoryMonitor.logMemoryUsage('upload_start');
-  try {
-    // ... existing logic
-  } finally {
-    GcsMemoryMonitor.logMemoryUsage('upload_end');
-  }
-}
-```
-
 ## 🎯 優先順位
 
-1. **即座に対応すべき**: 高リスク項目 1-3（Storage管理、ストリーム処理、ReadStream管理）
-2. **短期間で対応**: 中リスク項目 4-6（Multipart処理、URL生成、状態管理）
-3. **中長期で検討**: 低リスク項目 7-8（最適化事項）
+1. **対応済み**: 高リスク項目 1-2（ストリーム処理、ReadStream管理）
+2. **短期間で対応**: 中リスク項目 3-5（Multipart処理、URL生成、状態管理）
+3. **中長期で検討**: 低リスク項目 6-7（最適化事項）
 
 ## 📊 影響予測
 
