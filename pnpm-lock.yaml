@@ -875,6 +875,9 @@ importers:
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       babel-loader:
         specifier: ^8.2.5
         version: 8.3.0(@babel/core@7.24.6)(webpack@5.92.1(@swc/core@1.10.7(@swc/helpers@0.5.17)))
@@ -5808,6 +5811,9 @@ packages:
 
   '@types/whatwg-url@8.2.1':
     resolution: {integrity: sha512-2YubE1sjj5ifxievI5Ge1sckb9k/Er66HyR2c+3+I6VDUUg1TLPdYYTEbQ+DjRkS4nTxMJhgWfSfMRD2sl2EYQ==}
+
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -21194,6 +21200,10 @@ snapshots:
     dependencies:
       '@types/node': 22.15.21
       '@types/webidl-conversions': 6.1.1
+
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 22.15.21
 
   '@types/yargs-parser@21.0.3': {}
 
