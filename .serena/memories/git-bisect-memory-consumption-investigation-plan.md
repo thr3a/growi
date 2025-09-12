@@ -26,11 +26,18 @@
    ```bash
    NODE_ENV=production node --inspect -r dotenv-flow/config dist/server/app.js
    ```
-4. メモリ消費量計測
+   サーバーはバックグラウンドで起動し、プロセスIDを /tmp/growi_server.pid に記録
+4. 10秒 sleep してからメモリ消費量計測
    ```bash
-   node --experimental-strip-types --experimental-transform-types --experimental-detect-module --no-warnings=ExperimentalWarning /home/vscode/print-memory-consumption.ts
+   sleep 10
+   cp /home/vscode/print-memory-consumption.ts tmp/
+   node --experimental-strip-types --experimental-transform-types --experimental-detect-module --no-warnings=ExperimentalWarning tmp/print-memory-consumption.ts
    ```
-5. Heap Total値でGood/Bad判定
+5. サーバー停止
+  ```bash
+  kill $(cat /tmp/growi_server.pid) && rm /tmp/growi_server.pid
+  ```
+6. Heap Total値でGood/Bad判定
 
 ## 注意事項
 - サーバー起動直後の値で判定する（アクセスによるメモリリークの可能性もあるため、なるべくアクセス前に計測）。
