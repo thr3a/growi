@@ -17,7 +17,7 @@ import { configManager } from '../../config-manager';
 import {
   AbstractFileUploader, type TemporaryUrl, type SaveFileParam,
 } from '../file-uploader';
-import { ContentHeaders } from '../utils';
+import { createContentHeaders, getContentHeaderValue } from '../utils';
 
 import { GcsMultipartUploader } from './multipart-uploader';
 
@@ -131,12 +131,12 @@ class GcsFileUploader extends AbstractFileUploader {
     const gcs = getGcsInstance();
     const myBucket = gcs.bucket(getGcsBucket());
     const filePath = getFilePathOnStorage(attachment);
-    const contentHeaders = new ContentHeaders(attachment);
+    const contentHeaders = createContentHeaders(attachment);
 
     const file = myBucket.file(filePath);
     const writeStream = file.createWriteStream({
       // put type and the file name for reference information when uploading
-      contentType: contentHeaders.contentType?.value.toString(),
+      contentType: getContentHeaderValue(contentHeaders, 'Content-Type'),
     });
 
     try {
@@ -217,12 +217,12 @@ class GcsFileUploader extends AbstractFileUploader {
     // issue signed url (default: expires 120 seconds)
     // https://cloud.google.com/storage/docs/access-control/signed-urls
     const isDownload = opts?.download ?? false;
-    const contentHeaders = new ContentHeaders(attachment, { inline: !isDownload });
+    const contentHeaders = createContentHeaders(attachment, { inline: !isDownload });
     const [signedUrl] = await file.getSignedUrl({
       action: 'read',
       expires: Date.now() + lifetimeSecForTemporaryUrl * 1000,
-      responseType: contentHeaders.contentType?.value.toString(),
-      responseDisposition: contentHeaders.contentDisposition?.value.toString(),
+      responseType: getContentHeaderValue(contentHeaders, 'Content-Type'),
+      responseDisposition: getContentHeaderValue(contentHeaders, 'Content-Disposition'),
     });
 
     return {

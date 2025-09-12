@@ -28,7 +28,7 @@ import { configManager } from '../../config-manager';
 import {
   AbstractFileUploader, type TemporaryUrl, type SaveFileParam,
 } from '../file-uploader';
-import { ContentHeaders } from '../utils';
+import { createContentHeaders, getContentHeaderValue } from '../utils';
 
 import { AwsMultipartUploader } from './multipart-uploader';
 
@@ -177,7 +177,7 @@ class AwsFileUploader extends AbstractFileUploader {
     const s3 = S3Factory();
 
     const filePath = getFilePathOnStorage(attachment);
-    const contentHeaders = new ContentHeaders(attachment);
+    const contentHeaders = createContentHeaders(attachment);
 
     await s3.send(new PutObjectCommand({
       Bucket: getS3Bucket(),
@@ -185,8 +185,8 @@ class AwsFileUploader extends AbstractFileUploader {
       Body: readable,
       ACL: getS3PutObjectCannedAcl(),
       // put type and the file name for reference information when uploading
-      ContentType: contentHeaders.contentType?.value.toString(),
-      ContentDisposition: contentHeaders.contentDisposition?.value.toString(),
+      ContentType: getContentHeaderValue(contentHeaders, 'Content-Type'),
+      ContentDisposition: getContentHeaderValue(contentHeaders, 'Content-Disposition'),
     }));
   }
 
@@ -252,12 +252,12 @@ class AwsFileUploader extends AbstractFileUploader {
     // issue signed url (default: expires 120 seconds)
     // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#getSignedUrl-property
     const isDownload = opts?.download ?? false;
-    const contentHeaders = new ContentHeaders(attachment, { inline: !isDownload });
+    const contentHeaders = createContentHeaders(attachment, { inline: !isDownload });
     const params: GetObjectCommandInput = {
       Bucket: getS3Bucket(),
       Key: filePath,
-      ResponseContentType: contentHeaders.contentType?.value.toString(),
-      ResponseContentDisposition: contentHeaders.contentDisposition?.value.toString(),
+      ResponseContentType: getContentHeaderValue(contentHeaders, 'Content-Type'),
+      ResponseContentDisposition: getContentHeaderValue(contentHeaders, 'Content-Disposition'),
     };
     const signedUrl = await getSignedUrl(s3, new GetObjectCommand(params), {
       expiresIn: lifetimeSecForTemporaryUrl,

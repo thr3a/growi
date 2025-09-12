@@ -29,7 +29,7 @@ import { configManager } from '../config-manager';
 import {
   AbstractFileUploader, type TemporaryUrl, type SaveFileParam,
 } from './file-uploader';
-import { ContentHeaders } from './utils';
+import { createContentHeaders, getContentHeaderValue } from './utils';
 
 const urljoin = require('url-join');
 
@@ -132,13 +132,13 @@ class AzureFileUploader extends AbstractFileUploader {
     const filePath = getFilePathOnStorage(attachment);
     const containerClient = await getContainerClient();
     const blockBlobClient: BlockBlobClient = containerClient.getBlockBlobClient(filePath);
-    const contentHeaders = new ContentHeaders(attachment);
+    const contentHeaders = createContentHeaders(attachment);
 
     await blockBlobClient.uploadStream(readable, undefined, undefined, {
       blobHTTPHeaders: {
         // put type and the file name for reference information when uploading
-        blobContentType: contentHeaders.contentType?.value.toString(),
-        blobContentDisposition: contentHeaders.contentDisposition?.value.toString(),
+        blobContentType: getContentHeaderValue(contentHeaders, 'Content-Type'),
+        blobContentDisposition: getContentHeaderValue(contentHeaders, 'Content-Disposition'),
       },
     });
   }
@@ -210,7 +210,7 @@ class AzureFileUploader extends AbstractFileUploader {
       const userDelegationKey = await blobServiceClient.getUserDelegationKey(startsOn, expiresOn);
 
       const isDownload = opts?.download ?? false;
-      const contentHeaders = new ContentHeaders(attachment, { inline: !isDownload });
+      const contentHeaders = createContentHeaders(attachment, { inline: !isDownload });
 
       // https://github.com/Azure/azure-sdk-for-js/blob/d4d55f73/sdk/storage/storage-blob/src/ContainerSASPermissions.ts#L24
       // r:read, a:add, c:create, w:write, d:delete, l:list
@@ -221,8 +221,8 @@ class AzureFileUploader extends AbstractFileUploader {
         protocol: SASProtocol.HttpsAndHttp,
         startsOn,
         expiresOn,
-        contentType: contentHeaders.contentType?.value.toString(),
-        contentDisposition: contentHeaders.contentDisposition?.value.toString(),
+        contentType: getContentHeaderValue(contentHeaders, 'Content-Type'),
+        contentDisposition: getContentHeaderValue(contentHeaders, 'Content-Disposition'),
       };
 
       return generateBlobSASQueryParameters(sasOptions, userDelegationKey, accountName).toString();

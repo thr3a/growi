@@ -12,7 +12,7 @@ import loggerFactory from '~/utils/logger';
 import { configManager } from '../config-manager';
 
 import { AbstractFileUploader, type TemporaryUrl, type SaveFileParam } from './file-uploader';
-import { ContentHeaders } from './utils';
+import { createContentHeaders, getContentHeaderValue } from './utils';
 
 const logger = loggerFactory('growi:service:fileUploaderGridfs');
 
@@ -65,13 +65,13 @@ class GridfsFileUploader extends AbstractFileUploader {
   override async uploadAttachment(readable: Readable, attachment: IAttachmentDocument): Promise<void> {
     logger.debug(`File uploading: fileName=${attachment.fileName}`);
 
-    const contentHeaders = new ContentHeaders(attachment);
+    const contentHeaders = createContentHeaders(attachment);
 
     return AttachmentFile.promisifiedWrite(
       {
         // put type and the file name for reference information when uploading
         filename: attachment.fileName,
-        contentType: contentHeaders.contentType?.value.toString(),
+        contentType: getContentHeaderValue(contentHeaders, 'Content-Type'),
       },
       readable,
     );

@@ -15,7 +15,7 @@ import {
   AbstractFileUploader, type TemporaryUrl, type SaveFileParam,
 } from './file-uploader';
 import {
-  ContentHeaders, applyHeaders,
+  applyHeaders, createContentHeaders, toExpressHttpHeaders,
 } from './utils';
 
 
@@ -229,9 +229,9 @@ module.exports = function(crowi: Crowi) {
     const internalPath = urljoin(internalPathRoot, relativePath);
 
     const isDownload = opts?.download ?? false;
-    const contentHeaders = new ContentHeaders(attachment, { inline: !isDownload });
+    const contentHeaders = createContentHeaders(attachment, { inline: !isDownload });
     applyHeaders(res, [
-      ...contentHeaders.toExpressHttpHeaders(),
+      ...toExpressHttpHeaders(contentHeaders),
       { field: 'X-Accel-Redirect', value: internalPath },
       { field: 'X-Sendfile', value: storagePath },
     ]);
