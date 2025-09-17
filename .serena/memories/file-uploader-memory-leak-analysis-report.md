@@ -58,32 +58,7 @@ const S3Factory = (): S3Client => {
 
 ### 🟡 中リスク：条件によってメモリリークが発生する可能性
 
-#### 3. Stream処理でのエラーハンドリング不足
-**場所**: 行 203-219  
-**問題コード**:
-```typescript
-override async findDeliveryFile(attachment: IAttachmentDocument): Promise<NodeJS.ReadableStream> {
-  try {
-    const body = (await s3.send(new GetObjectCommand(params))).Body;
-    return 'stream' in body
-      ? body.stream() as unknown as NodeJS.ReadableStream
-      : body as unknown as NodeJS.ReadableStream;
-  }
-  catch (err) {
-    logger.error(err);
-    throw new Error(/*...*/);
-  }
-}
-```
-
-**問題点**:
-- 返されたストリームが適切に閉じられない可能性
-- エラー時のリソースクリーンアップが不十分
-- ストリーム参照の長期保持リスク
-
-**影響度**: 中 - ファイルダウンロード頻度に依存
-
-#### 4. マルチパートアップロード処理
+#### 3. マルチパートアップロード処理
 **場所**: 行 248-260  
 **問題コード**:
 ```typescript
