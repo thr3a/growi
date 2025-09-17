@@ -61,7 +61,7 @@ jobs:
       AWS_ROLE_TO_ASSUME_FOR_OIDC: ${{ secrets.AWS_ROLE_TO_ASSUME_FOR_OIDC }}
 
 
-  publish-app-image-for-growilabs:
+  publish-rc-image-for-growilabs:
     needs: [determine-tags, build-image-rc]
 
     uses: growilabs/growi/.github/workflows/reusable-app-create-manifests.yml@master
@@ -74,7 +74,7 @@ jobs:
     secrets:
       DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD_GROWIMOOGLE }}
 
-  publish-app-image-for-weseek:
+  publish-rc-image-for-weseek:
     needs: [determine-tags, build-image-rc]
 
     uses: growilabs/growi/.github/workflows/reusable-app-create-manifests.yml@master
