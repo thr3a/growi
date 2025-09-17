@@ -6,6 +6,7 @@ import { configManager } from '~/server/service/config-manager';
 import isSimpleRequest from '~/server/util/is-simple-request';
 import loggerFactory from '~/utils/logger';
 
+
 const logger = loggerFactory('growi:middleware:certify-origin');
 
 type Apiv3ErrFunction = (error: ErrorV3) => void;
