@@ -1,7 +1,7 @@
 import type { Request } from 'express';
 import { mock } from 'vitest-mock-extended';
 
-import isSimpleRequest from '~/server/util/is-simple-request';
+import isSimpleRequest from './is-simple-request';
 
 describe('isSimpleRequest', () => {
 

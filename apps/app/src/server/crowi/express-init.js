@@ -2,11 +2,10 @@ import { themesRootPath as presetThemesRootPath } from '@growi/preset-themes';
 import csrf from 'csurf';
 import qs from 'qs';
 
-import { PLUGIN_EXPRESS_STATIC_DIR, PLUGIN_STORING_PATH } from '~/features/growi-plugin/server/consts';
-import CertifyOrigin from '~/server/middlewares/certify-origin';
-import loggerFactory from '~/utils/logger';
-import { resolveFromRoot } from '~/utils/project-dir-utils';
-
+import { PLUGIN_EXPRESS_STATIC_DIR, PLUGIN_STORING_PATH } from '../../features/growi-plugin/server/consts';
+import loggerFactory from '../../utils/logger';
+import { resolveFromRoot } from '../../utils/project-dir-utils';
+import CertifyOrigin from '../middlewares/certify-origin';
 import registerSafeRedirectFactory from '../middlewares/safe-redirect';
 
 const logger = loggerFactory('growi:crowi:express-init');

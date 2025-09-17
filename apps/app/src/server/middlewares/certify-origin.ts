@@ -1,10 +1,11 @@
 import { ErrorV3 } from '@growi/core/dist/models';
 import type { NextFunction, Response } from 'express';
 
-import type { AccessTokenParserReq } from '~/server/middlewares/access-token-parser/interfaces';
-import { configManager } from '~/server/service/config-manager';
-import isSimpleRequest from '~/server/util/is-simple-request';
-import loggerFactory from '~/utils/logger';
+import loggerFactory from '../../utils/logger';
+import { configManager } from '../service/config-manager';
+import isSimpleRequest from '../util/is-simple-request';
+
+import type { AccessTokenParserReq } from './access-token-parser/interfaces';
 
 
 const logger = loggerFactory('growi:middleware:certify-origin');
