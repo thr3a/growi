@@ -34,10 +34,8 @@ jobs:
         images: docker.io/weseek/growi
         sep-tags: ','
         tags: |
-          type=raw,value=latest
-          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}
-          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}.{{minor}}
-          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}.{{minor}}.{{patch}}
+          type=raw,value=${{ steps.package-json.outputs.packageVersion }}
+          type=raw,value=${{ steps.package-json.outputs.packageVersion }}.{{sha}}
 
     - name: Docker meta for growilabs/growi
       uses: docker/metadata-action@v5
@@ -46,11 +44,8 @@ jobs:
         images: docker.io/growilabs/growi
         sep-tags: ','
         tags: |
-          type=raw,value=latest
-          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}
-          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}.{{minor}}
-          type=semver,value=${{ needs.create-github-release.outputs.RELEASED_VERSION }},pattern={{major}}.{{minor}}.{{patch}}
-
+          type=raw,value=${{ steps.package-json.outputs.packageVersion }}
+          type=raw,value=${{ steps.package-json.outputs.packageVersion }}.{{sha}}
 
   build-image-rc:
     uses: growilabs/growi/.github/workflows/reusable-app-build-image.yml@master
