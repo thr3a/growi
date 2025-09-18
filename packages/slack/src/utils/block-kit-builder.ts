@@ -9,7 +9,6 @@ import type {
   InputBlock,
   MultiSelect,
   Option,
-  Overflow,
   PlainTextInput,
   RadioButtons,
   SectionBlock,

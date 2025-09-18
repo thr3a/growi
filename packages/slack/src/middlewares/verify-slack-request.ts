@@ -40,7 +40,7 @@ export const verifySlackRequest = (
   }
 
   // protect against replay attacks
-  const time = Math.floor(new Date().getTime() / 1000);
+  const time = Math.floor(Date.now() / 1000);
   if (Math.abs(time - timestamp) > 300) {
     const message = 'Verification failed.';
     logger.warn(message, { body: req.body });
