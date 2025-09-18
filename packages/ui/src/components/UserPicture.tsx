@@ -1,7 +1,6 @@
 import type { IUser, Ref } from '@growi/core';
 import { pagePathUtils } from '@growi/core/dist/utils';
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
 import { useRouter } from 'next/router';
 import {
   forwardRef,
@@ -182,9 +181,8 @@ export const UserPicture = memo((userProps: Props): JSX.Element => {
     .filter(Boolean)
     .join(' ');
 
-  const imgElement = (
-    <Image src={src} alt={displayName} className={className} />
-  );
+  // biome-ignore lint/performance/noImgElement: ignore
+  const imgElement = <img src={src} alt={displayName} className={className} />;
   const baseProps = { displayName, size, children: imgElement };
 
   if (username == null || noLink) {
