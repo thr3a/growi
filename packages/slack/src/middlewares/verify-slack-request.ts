@@ -16,7 +16,7 @@ const logger = loggerFactory('@growi/slack:middlewares:verify-slack-request');
 export const verifySlackRequest = (
   // biome-ignore lint/suspicious/noExplicitAny: ignore
   req: RequestFromSlack & { rawBody: any },
-  res: Response,
+  _res: Response,
   next: NextFunction,
 ): void => {
   const signingSecret = req.slackSigningSecret;

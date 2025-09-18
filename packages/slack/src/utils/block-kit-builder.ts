@@ -1,5 +1,4 @@
 import type {
-  Action,
   ActionsBlock,
   ActionsBlockElement,
   Button,
