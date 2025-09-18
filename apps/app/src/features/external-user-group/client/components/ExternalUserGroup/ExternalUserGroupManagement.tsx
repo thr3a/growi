@@ -38,8 +38,8 @@ export const ExternalGroupManagement: FC = () => {
   const userGroupsForDeleteModal: IGrantedGroup[] =
     userGroupList != null
       ? userGroupList.map((group) => {
-        return { item: group, type: GroupType.userGroup };
-      })
+          return { item: group, type: GroupType.userGroup };
+        })
       : [];
   const externalUserGroupIds = externalUserGroups.map((group) => group._id);
 
