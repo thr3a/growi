@@ -105,22 +105,43 @@ export default class ImportCollectionItem extends React.Component {
     } = this.props;
 
     const attrMap = MODE_ATTR_MAP[option.mode];
-    const btnColor = `btn-${attrMap.color}`;
-
     const modes = MODE_RESTRICTED_COLLECTION[collectionName] || Object.keys(MODE_ATTR_MAP);
+
+    // btn-primaryを保持してBootstrapの動作を維持し、色はinline styleで変更
+    let backgroundColor = '#0d6efd'; // default primary
+    let borderColor = '#0d6efd';
+
+    if (attrMap.color === 'info') {
+      backgroundColor = '#0dcaf0';
+      borderColor = '#0dcaf0';
+    }
+    else if (attrMap.color === 'success') {
+      backgroundColor = '#198754';
+      borderColor = '#198754';
+    }
+    else if (attrMap.color === 'danger') {
+      backgroundColor = '#dc3545';
+      borderColor = '#dc3545';
+    }
+
+    const buttonStyle = {
+      backgroundColor,
+      borderColor,
+    };
 
     return (
       <span className="d-inline-flex align-items-center">
         Mode:&nbsp;
         <div className="dropdown d-inline-block">
           <button
-            className={`btn ${btnColor} btn-sm dropdown-toggle`}
+            className="btn btn-primary btn-sm dropdown-toggle"
+            style={buttonStyle}
             type="button"
             id="ddmMode"
             disabled={isImporting}
             data-bs-toggle="dropdown"
             aria-haspopup="true"
-            aria-expanded="true"
+            aria-expanded="false"
           >
             {this.renderModeLabel(option.mode)}
             <span className="caret ms-2"></span>
@@ -129,7 +150,12 @@ export default class ImportCollectionItem extends React.Component {
             { modes.map((mode) => {
               return (
                 <li key={`buttonMode_${mode}`}>
-                  <button type="button" className="dropdown-item" role="button" onClick={() => this.modeSelectedHandler(mode)}>
+                  <button
+                    type="button"
+                    className="dropdown-item"
+                    data-bs-dismiss="dropdown"
+                    onClick={() => this.modeSelectedHandler(mode)}
+                  >
                     {this.renderModeLabel(mode, true)}
                   </button>
                 </li>
@@ -190,7 +216,6 @@ export default class ImportCollectionItem extends React.Component {
         }
       </div>
     );
-
   }
 
   render() {
