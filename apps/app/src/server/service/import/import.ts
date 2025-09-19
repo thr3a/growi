@@ -348,7 +348,8 @@ export class ImportService {
   async unzip(zipFile: string): Promise<string[]> {
     const readStream = fs.createReadStream(zipFile);
     const parseStream = unzipStream.Parse();
-    const files: string[] = [];
+    const entryPromises: Promise<string | null>[] = [];
+
     parseStream.on('entry', (/** @type {Entry} */ entry) => {
       const fileName = entry.path;
       // https://regex101.com/r/mD4eZs/6
@@ -357,6 +358,7 @@ export class ImportService {
       // ../../src/server/example.html
       if (fileName.match(/(\.\.\/|\.\.\\)/)) {
         logger.error('File path is not appropriate.', fileName);
+        entry.autodrain();
         return;
       }
 
@@ -365,15 +367,28 @@ export class ImportService {
         entry.autodrain();
       }
       else {
-        const jsonFile = path.join(this.baseDir, fileName);
-        const writeStream = fs.createWriteStream(jsonFile, { encoding: this.growiBridgeService.getEncoding() });
-        pipeline(entry, writeStream)
-          .then(() => files.push(jsonFile))
-          .catch(err => logger.error('Failed to extract entry:', err));
+        const entryPromise = new Promise<string | null>((resolve) => {
+          const jsonFile = path.join(this.baseDir, fileName);
+          const writeStream = fs.createWriteStream(jsonFile, { encoding: this.growiBridgeService.getEncoding() });
+
+          pipeline(entry, writeStream)
+            .then(() => resolve(jsonFile))
+            .catch((err) => {
+              logger.error('Failed to extract entry:', err);
+              resolve(null); // Continue processing other entries
+            });
+        });
+
+        entryPromises.push(entryPromise);
       }
     });
+
     await pipeline(readStream, parseStream);
-    return files;
+    const results = await Promise.allSettled(entryPromises);
+
+    return results
+      .filter((result): result is PromiseFulfilledResult<string> => result.status === 'fulfilled' && result.value !== null)
+      .map(result => result.value);
   }
 
   /**
