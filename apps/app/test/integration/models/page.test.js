@@ -9,8 +9,6 @@ let testGroup0;
 let parentPage;
 
 describe('Page', () => {
-  // eslint-disable-next-line no-unused-vars
-  let crowi;
   let Page;
   let PageQueryBuilder;
   let User;

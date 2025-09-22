@@ -3,8 +3,6 @@ const mongoose = require('mongoose');
 const { getInstance } = require('../setup-crowi');
 
 describe('User', () => {
-  // eslint-disable-next-line no-unused-vars
-  let crowi;
   let User;
 
   let adminusertestToBeRemovedId;
