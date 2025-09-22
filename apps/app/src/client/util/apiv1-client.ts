@@ -21,8 +21,8 @@ class Apiv1ErrorHandler extends Error {
 
 }
 
-export async function apiRequest<T>(method: string, path: string, params: unknown): Promise<T> {
-  const res = await axios[method](urljoin(apiv1Root, path), params);
+export async function apiRequest<T>(method: string, path: string, params: unknown, options = {}): Promise<T> {
+  const res = await axios[method](urljoin(apiv1Root, path), params, options);
 
   if (res.data.ok) {
     return res.data;
@@ -41,12 +41,14 @@ export async function apiGet<T>(path: string, params: unknown = {}): Promise<T> 
   return apiRequest<T>('get', path, { params });
 }
 
-export async function apiPost<T>(path: string, params: unknown = {}): Promise<T> {
-  return apiRequest<T>('post', path, params);
+export async function apiPost<T>(path: string, params: unknown = {}, options = {}): Promise<T> {
+  return apiRequest<T>('post', path, params, options);
 }
 
 export async function apiPostForm<T>(path: string, formData: FormData): Promise<T> {
-  return apiPost<T>(path, formData);
+  return apiPost<T>(path, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 }
 
 export async function apiDelete<T>(path: string, params: unknown = {}): Promise<T> {
