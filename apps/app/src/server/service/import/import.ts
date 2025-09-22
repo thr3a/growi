@@ -141,7 +141,7 @@ export class ImportService {
    * @param collections MongoDB collection name
    * @param importSettingsMap
    */
-  async import(collections: string[], importSettingsMap: { [collectionName: string]: ImportSettings }): Promise<void> {
+  async import(collections: string[], importSettingsMap: Map<string, ImportSettings>): Promise<void> {
     await this.preImport();
 
     // init status object
@@ -149,7 +149,7 @@ export class ImportService {
 
     // process serially so as not to waste memory
     const promises = collections.map((collectionName) => {
-      const importSettings = importSettingsMap[collectionName];
+      const importSettings = importSettingsMap.get(collectionName);
       return this.importCollection(collectionName, importSettings);
     });
     for await (const promise of promises) {

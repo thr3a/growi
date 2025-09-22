@@ -351,7 +351,7 @@ export default function route(crowi: Crowi) {
     }
 
     // generate maps of ImportSettings to import
-    const importSettingsMap = {};
+    const importSettingsMap = new Map();
     fileStatsToImport.forEach(({ fileName, collectionName }) => {
       // instanciate GrowiArchiveImportOption
       /** @type {import('~/models/admin/growi-archive-import-option').GrowiArchiveImportOption} */
@@ -365,7 +365,7 @@ export default function route(crowi: Crowi) {
         overwriteParams: generateOverwriteParams(collectionName, req.user._id, option),
       };
 
-      importSettingsMap[collectionName] = importSettings;
+      importSettingsMap.set(collectionName, importSettings);
     });
 
     /*
