@@ -2,8 +2,10 @@ import { SCOPE } from '@growi/core/dist/interfaces';
 import { ErrorV3 } from '@growi/core/dist/models';
 
 import { SupportedAction } from '~/interfaces/activity';
+import type { GrowiArchiveImportOption } from '~/models/admin/growi-archive-import-option';
 import type Crowi from '~/server/crowi';
 import { accessTokenParser } from '~/server/middlewares/access-token-parser';
+import type { ImportSettings } from '~/server/service/import';
 import { getImportService } from '~/server/service/import';
 import { generateOverwriteParams } from '~/server/service/import/overwrite-params';
 import loggerFactory from '~/utils/logger';
@@ -124,7 +126,7 @@ const router = express.Router();
  *                  type: integer
  *                  nullable: true
  */
-export default function route(crowi: Crowi) {
+export default function route(crowi: Crowi): void {
   const { growiBridgeService, socketIoService } = crowi;
   const importService = getImportService();
 
@@ -351,19 +353,18 @@ export default function route(crowi: Crowi) {
     }
 
     // generate maps of ImportSettings to import
-    const importSettingsMap = new Map();
+    // Use the Map for a potential fix for the code scanning alert no. 895: Prototype-polluting assignment
+    const importSettingsMap = new Map<string, ImportSettings>();
     fileStatsToImport.forEach(({ fileName, collectionName }) => {
       // instanciate GrowiArchiveImportOption
-      /** @type {import('~/models/admin/growi-archive-import-option').GrowiArchiveImportOption} */
-      const option = options.find(opt => opt.collectionName === collectionName);
+      const option: GrowiArchiveImportOption = options.find(opt => opt.collectionName === collectionName);
 
       // generate options
-      /** @type {import('~/server/service/import').ImportSettings} */
       const importSettings = {
         mode: option.mode,
         jsonFileName: fileName,
         overwriteParams: generateOverwriteParams(collectionName, req.user._id, option),
-      };
+      } satisfies ImportSettings;
 
       importSettingsMap.set(collectionName, importSettings);
     });
