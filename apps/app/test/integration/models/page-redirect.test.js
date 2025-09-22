@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 import { getInstance } from '../setup-crowi';
 
 describe('PageRedirect', () => {
+  // biome-ignore lint/correctness/noUnusedVariables: ignore
+  let crowi;
   let PageRedirect;
 
   beforeAll(async () => {

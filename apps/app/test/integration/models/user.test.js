@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const { getInstance } = require('../setup-crowi');
 
 describe('User', () => {
+  // biome-ignore lint/correctness/noUnusedVariables: ignore
+  let crowi;
   let User;
 
   let adminusertestToBeRemovedId;
