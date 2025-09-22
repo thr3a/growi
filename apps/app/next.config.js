@@ -5,7 +5,7 @@
  * See: https://github.com/vercel/next.js/discussions/35969#discussioncomment-2522954
  */
 
-const path = require('path');
+const path = require('node:path');
 
 const { withSuperjson } = require('next-superjson');
 const {
