@@ -469,23 +469,14 @@ export class ImportService {
 
     // Use shallow copy instead of structuredClone() when sufficient
     const _document: D = (typeof document === 'object' && document !== null && !Array.isArray(document)) ? { ...document } : structuredClone(document);
+
     Object.entries(document).forEach(([propertyName, value]) => {
-      _document[propertyName] = keepOriginal(value, { document, propertyName });
+      // Check if there's a custom convert function for this property, otherwise use keepOriginal
+      const convertedValue = convertMap?.[propertyName];
+      const convertFunc = (convertedValue != null && typeof convertedValue === 'function') ? convertedValue : keepOriginal;
+
+      _document[propertyName] = convertFunc(value, { document, propertyName, schema });
     });
-    if (convertMap != null) {
-      // assign value from documents being imported
-      Object.entries(convertMap).forEach(([propertyName, convertedValue]) => {
-        const value = document[propertyName];
-
-        // distinguish between null and undefined
-        if (value === undefined) {
-          return; // next entry
-        }
-
-        const convertFunc = (typeof convertedValue === 'function') ? convertedValue : null;
-        _document[propertyName] = (convertFunc != null) ? convertFunc(value, { document, propertyName, schema }) : convertedValue;
-      });
-    }
 
     // overwrite documents with custom values
     Object.entries(overwriteParams).forEach(([propertyName, overwriteValue]) => {
