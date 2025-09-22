@@ -21,7 +21,9 @@ const CHUNK_COLLECTION_NAME = `${COLLECTION_NAME}.chunks`;
 
 type PromisifiedUtils = {
   read: (options?: object) => Readable;
+  // eslint-disable-next-line @typescript-eslint/ban-types
   write: (file: object, stream: Readable, done?: Function) => void;
+  // eslint-disable-next-line @typescript-eslint/ban-types
   unlink: (file: object, done?: Function) => void;
   promisifiedWrite: (file: object, readable: Readable) => Promise<any>;
   promisifiedUnlink: (file: object) => Promise<any>;
@@ -50,7 +52,7 @@ function initializeGridFSModels(): { attachmentFileModel: AttachmentFileModel, c
   }
 
   // Create new model instances
-  const attachmentFileModel = createModel({
+  const attachmentFileModel: AttachmentFileModel = createModel({
     modelName: COLLECTION_NAME,
     bucketName: COLLECTION_NAME,
     connection: mongoose.connection,

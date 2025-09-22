@@ -150,6 +150,9 @@ export class ImportService {
     // process serially so as not to waste memory
     const promises = collections.map((collectionName) => {
       const importSettings = importSettingsMap.get(collectionName);
+      if (importSettings == null) {
+        throw new Error(`ImportSettings for ${collectionName} is not found`);
+      }
       return this.importCollection(collectionName, importSettings);
     });
     for await (const promise of promises) {
