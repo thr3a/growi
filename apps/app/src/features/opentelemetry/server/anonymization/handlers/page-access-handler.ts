@@ -132,7 +132,10 @@ export const pageAccessModule: AnonymizationModule = {
   /**
    * Handle anonymization for page access requests
    */
-  handle(request: IncomingMessage, url: string): Record<string, string> | null {
+  handle(
+    _request: IncomingMessage,
+    url: string,
+  ): Record<string, string> | null {
     try {
       const parsedUrl = new URL(url, 'http://localhost');
       const originalPath = parsedUrl.pathname;

@@ -28,7 +28,10 @@ export const pageApiModule: AnonymizationModule = {
   /**
    * Handle anonymization for page API endpoints
    */
-  handle(request: IncomingMessage, url: string): Record<string, string> | null {
+  handle(
+    _request: IncomingMessage,
+    url: string,
+  ): Record<string, string> | null {
     const attributes: Record<string, string> = {};
     let hasAnonymization = false;
 

@@ -93,7 +93,7 @@ const optimizePackageImports = [
   '@growi/ui',
 ];
 
-module.exports = async (phase, { defaultConfig }) => {
+module.exports = async (phase) => {
   const { i18n, localePath } = require('./config/next-i18next.config');
 
   /** @type {import('next').NextConfig} */
