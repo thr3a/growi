@@ -30,9 +30,9 @@ const apiv3ErrorHandler = (_err: any): any[] => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function apiv3Request<T = any>(method: string, path: string, params: unknown, options = {}): Promise<AxiosResponse<T>> {
+export async function apiv3Request<T = any>(method: string, path: string, params: unknown): Promise<AxiosResponse<T>> {
   try {
-    const res = await axios[method](urljoin(apiv3Root, path), params, options);
+    const res = await axios[method](urljoin(apiv3Root, path), params);
     return res;
   }
   catch (err) {
@@ -45,14 +45,12 @@ export async function apiv3Get<T = any>(path: string, params: unknown = {}): Pro
   return apiv3Request('get', path, { params });
 }
 
-export async function apiv3Post<T = any>(path: string, params: unknown = {}, options = {}): Promise<AxiosResponse<T>> {
-  return apiv3Request('post', path, params, options);
+export async function apiv3Post<T = any>(path: string, params: unknown = {}): Promise<AxiosResponse<T>> {
+  return apiv3Request('post', path, params);
 }
 
 export async function apiv3PostForm<T = any>(path: string, formData: FormData): Promise<AxiosResponse<T>> {
-  return apiv3Post<T>(path, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  return apiv3Request('postForm', path, formData);
 }
 
 export async function apiv3Put<T = any>(path: string, params: unknown = {}): Promise<AxiosResponse<T>> {
