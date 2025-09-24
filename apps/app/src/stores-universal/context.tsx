@@ -1,6 +1,6 @@
+import type EventEmitter from 'node:events';
 import { AcceptedUploadFileType } from '@growi/core';
 import { useSWRStatic } from '@growi/core/dist/swr';
-import type EventEmitter from 'events';
 import { useAtomValue } from 'jotai';
 import type { SWRResponse } from 'swr';
 import useSWRImmutable from 'swr/immutable';

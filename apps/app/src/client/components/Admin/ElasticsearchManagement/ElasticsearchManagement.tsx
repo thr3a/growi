@@ -14,7 +14,7 @@ import RebuildIndexControls from './RebuildIndexControls';
 import ReconnectControls from './ReconnectControls';
 import StatusTable from './StatusTable';
 
-const ElasticsearchManagement: React.FC = () => {
+const ElasticsearchManagement = (): JSX.Element => {
   const { t } = useTranslation('admin');
   // Get search service reachable flag from atom
   const isSearchServiceReachable = useAtomValue(isSearchServiceReachableAtom);
@@ -44,6 +44,8 @@ const ElasticsearchManagement: React.FC = () => {
       setIndicesData(info.indices);
       setAliasesData(info.aliases);
       setIsNormalized(info.isNormalized);
+
+      return info.isNormalized;
     }
     catch (errors: unknown) {
       setIsConnected(false);
@@ -61,6 +63,7 @@ const ElasticsearchManagement: React.FC = () => {
         toastError(errors as Error);
       }
 
+      return false;
     }
     finally {
       setIsInitialized(true);
@@ -68,12 +71,8 @@ const ElasticsearchManagement: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const fetchIndicesStatusData = async() => {
-      await retrieveIndicesStatus();
-    };
-    fetchIndicesStatusData();
+    retrieveIndicesStatus();
   }, [retrieveIndicesStatus]);
-
 
   useEffect(() => {
     if (socket == null) {
@@ -83,7 +82,7 @@ const ElasticsearchManagement: React.FC = () => {
       setIsRebuildingProcessing(true);
     });
 
-    socket.on(SocketEventName.FinishAddPage, async() => {
+    socket.on(SocketEventName.FinishAddPage, async(data) => {
       await retrieveIndicesStatus();
       setIsRebuildingProcessing(false);
       setIsRebuildingCompleted(true);
@@ -99,7 +98,6 @@ const ElasticsearchManagement: React.FC = () => {
       socket.off(SocketEventName.RebuildingFailed);
     };
   }, [retrieveIndicesStatus, socket]);
-
 
   const reconnect = async() => {
     setIsReconnectingProcessing(true);

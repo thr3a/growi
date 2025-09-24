@@ -5,7 +5,7 @@
  * See: https://github.com/vercel/next.js/discussions/35969#discussioncomment-2522954
  */
 
-const path = require('path');
+const path = require('node:path');
 
 const { withSuperjson } = require('next-superjson');
 const {
@@ -94,7 +94,7 @@ const optimizePackageImports = [
   '@growi/ui',
 ];
 
-module.exports = async (phase, { defaultConfig }) => {
+module.exports = async (phase) => {
   const { i18n, localePath } = require('./config/next-i18next.config');
 
   /** @type {import('next').NextConfig} */
