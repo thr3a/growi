@@ -1,7 +1,6 @@
-import { useCallback, useLayoutEffect } from 'react';
-import { useRouter } from 'next/router';
-
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { useRouter } from 'next/router';
+import { useCallback, useLayoutEffect } from 'react';
 
 // Type definitions
 type CommentEditorDirtyMapData = Map<string, boolean>;
@@ -39,25 +38,31 @@ export const useUnsavedWarning = () => {
 export const useCommentEditorsDirtyMap = () => {
   const setDirtyMap = useSetAtom(commentEditorDirtyMapAtom);
 
-  const markDirty = useCallback((editorKey: string, content: string) => {
-    setDirtyMap((current) => {
-      const newMap = new Map(current);
-      if (content.length === 0) {
-        newMap.delete(editorKey);
-      } else {
-        newMap.set(editorKey, true);
-      }
-      return newMap;
-    });
-  }, [setDirtyMap]);
+  const markDirty = useCallback(
+    (editorKey: string, content: string) => {
+      setDirtyMap((current) => {
+        const newMap = new Map(current);
+        if (content.length === 0) {
+          newMap.delete(editorKey);
+        } else {
+          newMap.set(editorKey, true);
+        }
+        return newMap;
+      });
+    },
+    [setDirtyMap],
+  );
 
-  const markClean = useCallback((editorKey: string) => {
-    setDirtyMap((current) => {
-      const newMap = new Map(current);
-      newMap.delete(editorKey);
-      return newMap;
-    });
-  }, [setDirtyMap]);
+  const markClean = useCallback(
+    (editorKey: string) => {
+      setDirtyMap((current) => {
+        const newMap = new Map(current);
+        newMap.delete(editorKey);
+        return newMap;
+      });
+    },
+    [setDirtyMap],
+  );
 
   return { markDirty, markClean };
 };

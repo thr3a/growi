@@ -1,14 +1,12 @@
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { useCallback, useEffect, useState, type RefObject } from 'react';
+import { type RefObject, useCallback, useEffect, useState } from 'react';
 import type { HtmlElementNode } from 'rehype-toc';
-
+import type { generateTocOptions } from '~/client/services/renderer/renderer';
 import type { RendererOptions } from '~/interfaces/renderer-options';
 import type { RendererConfigExt } from '~/interfaces/services/renderer';
 import { useCurrentPagePath } from '~/states/page';
 import { useRendererConfig } from '~/states/server-configurations';
 import { useNextThemes } from '~/stores-universal/use-next-themes';
-
-import type { generateTocOptions } from '~/client/services/renderer/renderer';
 
 // ============================================================================
 // INTERNAL ATOMS (Implementation details, not exported)
@@ -69,11 +67,14 @@ export const useTocNode = (): HtmlElementNode | null => {
 export const useSetTocNode = () => {
   const setTocNodeRef = useSetAtom(tocNodeRefAtom);
 
-  const setTocNode = useCallback((newNode: HtmlElementNode) => {
-    // Create a RefObject wrapper for the HtmlElementNode
-    const nodeRef: RefObject<HtmlElementNode> = { current: newNode };
-    setTocNodeRef(nodeRef);
-  }, [setTocNodeRef]);
+  const setTocNode = useCallback(
+    (newNode: HtmlElementNode) => {
+      // Create a RefObject wrapper for the HtmlElementNode
+      const nodeRef: RefObject<HtmlElementNode> = { current: newNode };
+      setTocNodeRef(nodeRef);
+    },
+    [setTocNodeRef],
+  );
 
   return setTocNode;
 };
@@ -88,8 +89,14 @@ export const useTocOptions = () => {
   const { isDarkMode } = useNextThemes();
   const tocNode = useAtomValue(tocNodeAtom);
 
-  const [state, setState] = useState<{ data?: RendererOptions; isLoading: boolean; error?: Error }>({
-    data: undefined, isLoading: false, error: undefined
+  const [state, setState] = useState<{
+    data?: RendererOptions;
+    isLoading: boolean;
+    error?: Error;
+  }>({
+    data: undefined,
+    isLoading: false,
+    error: undefined,
   });
 
   useEffect(() => {
@@ -103,19 +110,31 @@ export const useTocOptions = () => {
       return;
     }
 
-    setState(prev => ({ ...prev, isLoading: true, error: undefined }));
+    setState((prev) => ({ ...prev, isLoading: true, error: undefined }));
 
     (async () => {
       try {
         if (!generateTocOptionsCache) {
-          const { generateTocOptions } = await import('~/client/services/renderer/renderer');
+          const { generateTocOptions } = await import(
+            '~/client/services/renderer/renderer'
+          );
           generateTocOptionsCache = generateTocOptions;
         }
 
-        const data = generateTocOptionsCache({ ...rendererConfig, isDarkMode }, tocNode);
+        const data = generateTocOptionsCache(
+          { ...rendererConfig, isDarkMode },
+          tocNode,
+        );
         setState({ data, isLoading: false, error: undefined });
       } catch (err) {
-        setState({ data: undefined, isLoading: false, error: err instanceof Error ? err : new Error('TOC options generation failed') });
+        setState({
+          data: undefined,
+          isLoading: false,
+          error:
+            err instanceof Error
+              ? err
+              : new Error('TOC options generation failed'),
+        });
       }
     })();
   }, [currentPagePath, rendererConfig, isDarkMode, tocNode]);

@@ -58,7 +58,7 @@ export const isUntitledPageAtom = atom(
     if (currentPageId != null) {
       set(untitledPageStateAtom, newValue);
     }
-  }
+  },
 );
 
 // Remote revision data atoms (migrated from useSWRStatic)

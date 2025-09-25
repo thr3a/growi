@@ -84,18 +84,19 @@ export const useIsMobile = () => {
   useEffect(() => {
     // Ref: https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
     let hasTouchScreen = false;
-    hasTouchScreen = ('maxTouchPoints' in navigator) ? navigator?.maxTouchPoints > 0 : false;
+    hasTouchScreen =
+      'maxTouchPoints' in navigator ? navigator?.maxTouchPoints > 0 : false;
 
     if (!hasTouchScreen) {
       const mQ = matchMedia?.('(pointer:coarse)');
       if (mQ?.media === '(pointer:coarse)') {
         hasTouchScreen = !!mQ.matches;
-      }
-      else {
+      } else {
         // Only as a last resort, fall back to user agent sniffing
         const UA = navigator.userAgent;
-        hasTouchScreen = /\b(BlackBerry|webOS|iPhone|IEMobile)\b/i.test(UA)
-          || /\b(Android|Windows Phone|iPad|iPod)\b/i.test(UA);
+        hasTouchScreen =
+          /\b(BlackBerry|webOS|iPhone|IEMobile)\b/i.test(UA) ||
+          /\b(Android|Windows Phone|iPad|iPod)\b/i.test(UA);
       }
     }
 

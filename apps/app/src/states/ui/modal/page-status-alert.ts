@@ -1,12 +1,11 @@
-import { useCallback } from 'react';
-
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { useCallback } from 'react';
 
 import type { EditorMode } from '../editor';
 
 /*
-* PageStatusAlert
-*/
+ * PageStatusAlert
+ */
 type OpenPageStatusAlertOptions = {
   hideEditorMode?: EditorMode;
   onRefleshPage?: () => void;
@@ -39,9 +38,12 @@ export const usePageStatusAlertStatus = (): PageStatusAlertStatus => {
 export const usePageStatusAlertActions = (): PageStatusAlertActions => {
   const setStatus = useSetAtom(pageStatusAlertAtom);
 
-  const open = useCallback((options: OpenPageStatusAlertOptions) => {
-    setStatus({ isOpen: true, ...options });
-  }, [setStatus]);
+  const open = useCallback(
+    (options: OpenPageStatusAlertOptions) => {
+      setStatus({ isOpen: true, ...options });
+    },
+    [setStatus],
+  );
 
   const close = useCallback(() => {
     setStatus({ isOpen: false });

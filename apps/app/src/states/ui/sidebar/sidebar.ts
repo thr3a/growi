@@ -1,5 +1,5 @@
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { useCallback, useMemo, type RefObject } from 'react';
+import { type RefObject, useCallback, useMemo } from 'react';
 
 import { scheduleToPut } from '~/client/services/user-ui-settings';
 import { SidebarContentsType, SidebarMode } from '~/interfaces/ui';
@@ -122,7 +122,9 @@ export const useSidebarMode = (): {
 };
 
 // Sidebar scroller ref atom and hooks
-const sidebarScrollerRefAtom = atom<RefObject<HTMLDivElement | null> | null>(null);
+const sidebarScrollerRefAtom = atom<RefObject<HTMLDivElement | null> | null>(
+  null,
+);
 
 /**
  * Hook to get the sidebar scroller ref
@@ -140,9 +142,12 @@ export const useSidebarScrollerElem = (): HTMLDivElement | null => {
 export const useSetSidebarScrollerRef = () => {
   const setSidebarScrollerRef = useSetAtom(sidebarScrollerRefAtom);
 
-  const mutate = useCallback((newRef: RefObject<HTMLDivElement | null>) => {
-    setSidebarScrollerRef(newRef);
-  }, [setSidebarScrollerRef]);
+  const mutate = useCallback(
+    (newRef: RefObject<HTMLDivElement | null>) => {
+      setSidebarScrollerRef(newRef);
+    },
+    [setSidebarScrollerRef],
+  );
 
   return mutate;
 };

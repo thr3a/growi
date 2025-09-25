@@ -76,21 +76,22 @@ const SearchModalSubstance = (): JSX.Element => {
   }, [searchKeyword]);
 
   // Memoize AI mention removal to prevent recalculation on every render
-  const searchKeywordWithoutAi = useMemo(() =>
-    removeAiMenthion(searchKeyword),
-    [searchKeyword]
+  const searchKeywordWithoutAi = useMemo(
+    () => removeAiMenthion(searchKeyword),
+    [searchKeyword],
   );
 
   // Memoize icon selection to prevent recalculation
-  const searchIcon = useMemo(() =>
-    isMenthionedToAi ? 'psychology' : 'search',
-    [isMenthionedToAi]
+  const searchIcon = useMemo(
+    () => (isMenthionedToAi ? 'psychology' : 'search'),
+    [isMenthionedToAi],
   );
 
   // Memoize icon class to prevent string concatenation on every render
-  const iconClassName = useMemo(() =>
-    `material-symbols-outlined fs-4 me-3 ${isMenthionedToAi ? 'text-primary' : ''}`,
-    [isMenthionedToAi]
+  const iconClassName = useMemo(
+    () =>
+      `material-symbols-outlined fs-4 me-3 ${isMenthionedToAi ? 'text-primary' : ''}`,
+    [isMenthionedToAi],
   );
 
   return (
@@ -109,9 +110,7 @@ const SearchModalSubstance = (): JSX.Element => {
         }) => (
           <div {...getRootProps({}, { suppressRefError: true })}>
             <div className="text-muted d-flex justify-content-center align-items-center p-1">
-              <span className={iconClassName}>
-                {searchIcon}
-              </span>
+              <span className={iconClassName}>{searchIcon}</span>
               <SearchForm
                 searchKeyword={searchKeyword}
                 onChange={changeSearchTextHandler}

@@ -27,22 +27,25 @@ const PageBulkExportSelectModalSubstance = (): JSX.Element => {
     { createdAt: string } | undefined
   >(undefined);
 
-  const startBulkExport = useCallback(async (format: PageBulkExportFormat) => {
-    try {
-      setFormatMemoForRestart(format);
-      await apiv3Post('/page-bulk-export', { path: currentPagePath, format });
-      toastSuccess(t('page_export.bulk_export_started'));
-    } catch (e) {
-      const errorCode = e?.[0].code ?? 'page_export.failed_to_export';
-      if (errorCode === 'page_export.duplicate_bulk_export_job_error') {
-        setDuplicateJobInfo(e[0].args.duplicateJob);
-        setIsRestartModalOpened(true);
-      } else {
-        toastError(t(errorCode));
+  const startBulkExport = useCallback(
+    async (format: PageBulkExportFormat) => {
+      try {
+        setFormatMemoForRestart(format);
+        await apiv3Post('/page-bulk-export', { path: currentPagePath, format });
+        toastSuccess(t('page_export.bulk_export_started'));
+      } catch (e) {
+        const errorCode = e?.[0].code ?? 'page_export.failed_to_export';
+        if (errorCode === 'page_export.duplicate_bulk_export_job_error') {
+          setDuplicateJobInfo(e[0].args.duplicateJob);
+          setIsRestartModalOpened(true);
+        } else {
+          toastError(t(errorCode));
+        }
       }
-    }
-    close();
-  }, [close, currentPagePath, t]);
+      close();
+    },
+    [close, currentPagePath, t],
+  );
 
   const restartBulkExport = useCallback(async () => {
     if (formatMemoForRestart != null) {
@@ -116,10 +119,7 @@ const PageBulkExportSelectModalSubstance = (): JSX.Element => {
         </div>
       </ModalBody>
 
-      <Modal
-        isOpen={isRestartModalOpened}
-        toggle={handleCloseRestartModal}
-      >
+      <Modal isOpen={isRestartModalOpened} toggle={handleCloseRestartModal}>
         <ModalHeader tag="h4" toggle={handleCloseRestartModal}>
           {t('page_export.export_in_progress')}
         </ModalHeader>
