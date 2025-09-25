@@ -10,9 +10,9 @@ import {
 } from '~/states/page';
 import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
 import { usePutBackPageModalActions } from '~/states/ui/modal/put-back-page';
+import { useIsAbleToShowTrashPageManagementButtons } from '~/states/ui/page-abilities';
 import { useSWRxPageInfo } from '~/stores/page';
 import { mutateRecentlyUpdated } from '~/stores/page-listing';
-import { useIsAbleToShowTrashPageManagementButtons } from '~/stores/ui';
 
 
 const onDeletedHandler = (pathOrPathsToDelete) => {
@@ -27,7 +27,7 @@ export const TrashPageAlert = (): JSX.Element => {
   const { t } = useTranslation();
   const router = useRouter();
 
-  const { data: isAbleToShowTrashPageManagementButtons } = useIsAbleToShowTrashPageManagementButtons();
+  const isAbleToShowTrashPageManagementButtons = useIsAbleToShowTrashPageManagementButtons();
   const pageData = useCurrentPageData();
   const isTrashPage = useIsTrashPage();
   const pageId = pageData?._id;
@@ -50,7 +50,7 @@ export const TrashPageAlert = (): JSX.Element => {
     if (isEmptyPage) {
       return;
     }
-    const putBackedHandler = async() => {
+    const putBackedHandler = async () => {
       if (currentPagePath == null) {
         return;
       }

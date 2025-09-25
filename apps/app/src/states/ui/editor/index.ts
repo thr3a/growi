@@ -1,6 +1,6 @@
 // Export only the essential public API
 
-export { editingMarkdownAtom, selectedGrantAtom } from './atoms';
+export { editingMarkdownAtom, selectedGrantAtom, _atomsForDerivedAbilities } from './atoms';
 export {
   useEditingMarkdown,
   useEditorMode,

@@ -19,8 +19,6 @@ import {
   useCurrentProductNavWidth,
   useSetSidebarScrollerRef,
 } from '~/states/ui/sidebar';
-import {
-} from '~/stores/ui';
 
 import { DrawerToggler } from '../Common/DrawerToggler';
 

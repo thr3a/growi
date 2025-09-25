@@ -50,3 +50,11 @@ export const editingMarkdownAtom = atom<string>('');
 export const selectedGrantAtom = atom<IPageSelectedGrant | null>({
   grant: PageGrant.GRANT_PUBLIC,
 });
+
+/**
+ * Internal atoms for derived atom usage (special naming convention)
+ * These atoms are exposed only for creating derived atoms in other modules
+ */
+export const _atomsForDerivedAbilities = {
+  editorModeAtom,
+} as const;

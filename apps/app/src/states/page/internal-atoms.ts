@@ -140,3 +140,16 @@ export const setRemoteRevisionDataAtom = atom(
  * Atom for redirect from path
  */
 export const redirectFromAtom = atom<string | undefined>(undefined);
+
+/**
+ * Internal atoms for derived atom usage (special naming convention)
+ * These atoms are exposed only for creating derived atoms in other modules
+ */
+export const _atomsForDerivedAbilities = {
+  pageNotFoundAtom,
+  currentPagePathAtom,
+  isIdenticalPathAtom,
+  shareLinkIdAtom,
+  currentPageIdAtom,
+  isTrashPageAtom,
+} as const;

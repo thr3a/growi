@@ -162,3 +162,11 @@ export const _atomsForAdminPagesHydration = {
   growiCloudUriAtom,
   growiAppIdForGrowiCloudAtom,
 };
+
+/**
+ * Internal atoms for derived atom usage (special naming convention)
+ * These atoms are exposed only for creating derived atoms in other modules
+ */
+export const _atomsForDerivedAbilities = {
+  currentUserAtom,
+} as const;

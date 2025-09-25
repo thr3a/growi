@@ -15,8 +15,6 @@ import {
 import { isIndentSizeForcedAtom } from '~/states/server-configurations';
 import { useDeviceLargerThanMd } from '~/states/ui/device';
 import { useEditorSettings, useCurrentIndentSize } from '~/stores/editor';
-import {
-} from '~/stores/ui';
 
 type RadioListItemProps = {
   onClick: () => void,

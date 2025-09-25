@@ -43,13 +43,13 @@ import { usePageDuplicateModalActions, type IPageForPageDuplicateModal } from '~
 import { usePresentationModalActions } from '~/states/ui/modal/page-presentation';
 import { usePageRenameModalActions } from '~/states/ui/modal/page-rename';
 import {
+  useIsAbleToShowPageManagement,
+  useIsAbleToChangeEditorMode,
+} from '~/states/ui/page-abilities';
+import {
   useSWRxPageInfo,
 } from '~/stores/page';
 import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
-import {
-  useIsAbleToShowPageManagement,
-  useIsAbleToChangeEditorMode,
-} from '~/stores/ui';
 
 import { NotAvailable } from '../NotAvailable';
 import { Skeleton } from '../Skeleton';
@@ -279,8 +279,8 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
 
   const shouldExpandContent = useShouldExpandContent(currentPage);
 
-  const { data: isAbleToShowPageManagement } = useIsAbleToShowPageManagement();
-  const { data: isAbleToChangeEditorMode } = useIsAbleToChangeEditorMode();
+  const isAbleToShowPageManagement = useIsAbleToShowPageManagement();
+  const isAbleToChangeEditorMode = useIsAbleToChangeEditorMode();
   const [isDeviceLargerThanMd] = useDeviceLargerThanMd();
 
   const { open: openDuplicateModal } = usePageDuplicateModalActions();

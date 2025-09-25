@@ -5,6 +5,7 @@
  * hiding internal implementation details while exposing only the necessary hooks.
  */
 
+export { _atomsForDerivedAbilities } from './internal-atoms';
 export * from './hooks';
 export { useCurrentPageLoading } from './use-current-page-loading';
 // Data fetching hooks

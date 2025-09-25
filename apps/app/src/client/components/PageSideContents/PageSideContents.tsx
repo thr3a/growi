@@ -16,8 +16,8 @@ import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 import { showPageSideAuthorsAtom } from '~/states/server-configurations';
 import { useDescendantsPageListModalActions } from '~/states/ui/modal/descendants-page-list';
 import { useTagEditModalActions } from '~/states/ui/modal/tag-edit';
+import { useIsAbleToShowTagLabel } from '~/states/ui/page-abilities';
 import { useSWRxPageInfo, useSWRxTagsInfo } from '~/stores/page';
-import { useIsAbleToShowTagLabel } from '~/stores/ui';
 
 import { ContentLinkButtons } from '../ContentLinkButtons';
 import { PageTagsSkeleton } from '../PageTags';
@@ -48,7 +48,7 @@ const Tags = (props: TagsProps): JSX.Element => {
 
   const { data: tagsInfoData } = useSWRxTagsInfo(pageId, { suspense: true });
 
-  const { data: showTagLabel } = useIsAbleToShowTagLabel();
+  const showTagLabel = useIsAbleToShowTagLabel();
   const isGuestUser = useIsGuestUser();
   const isReadOnlyUser = useIsReadOnlyUser();
   const { open: openTagEditModal } = useTagEditModalActions();
