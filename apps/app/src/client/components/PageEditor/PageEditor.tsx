@@ -40,15 +40,15 @@ import {
   isIndentSizeForcedAtom,
 } from '~/states/server-configurations';
 import {
+  useCurrentIndentSize, useCurrentIndentSizeActions,
   useEditorMode, EditorMode, useEditingMarkdown, useSelectedGrant,
+  useWaitingSaveProcessingActions,
 } from '~/states/ui/editor';
 import { useAcceptedUploadFileType } from '~/stores-universal/context';
 import { useNextThemes } from '~/stores-universal/use-next-themes';
 import {
   useReservedNextCaretLine,
   useEditorSettings,
-  useCurrentIndentSize,
-  useWaitingSaveProcessing,
 } from '~/stores/editor';
 import {
   useSWRxCurrentGrantData,
@@ -108,11 +108,12 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   const isEnabledAttachTitleHeader = useAtomValue(isEnabledAttachTitleHeaderAtom);
   const templateBody = useTemplateBody();
   const isEditable = useIsEditable();
-  const { mutate: mutateWaitingSaveProcessing } = useWaitingSaveProcessing();
+  const { mutate: mutateWaitingSaveProcessing } = useWaitingSaveProcessingActions();
   const { editorMode, setEditorMode } = useEditorMode();
   const isUntitledPage = useIsUntitledPage();
   const isIndentSizeForced = useAtomValue(isIndentSizeForcedAtom);
-  const { data: currentIndentSize, mutate: mutateCurrentIndentSize } = useCurrentIndentSize();
+  const currentIndentSize = useCurrentIndentSize();
+  const { mutate: mutateCurrentIndentSize } = useCurrentIndentSizeActions();
   const defaultIndentSize = useAtomValue(defaultIndentSizeAtom);
   const { data: acceptedUploadFileType } = useAcceptedUploadFileType();
   const { data: editorSettings } = useEditorSettings();

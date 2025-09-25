@@ -14,7 +14,8 @@ import {
 
 import { isIndentSizeForcedAtom } from '~/states/server-configurations';
 import { useDeviceLargerThanMd } from '~/states/ui/device';
-import { useEditorSettings, useCurrentIndentSize } from '~/stores/editor';
+import { useCurrentIndentSize, useCurrentIndentSizeActions } from '~/states/ui/editor';
+import { useEditorSettings } from '~/stores/editor';
 
 type RadioListItemProps = {
   onClick: () => void,
@@ -154,7 +155,8 @@ const TYPICAL_INDENT_SIZE = [2, 4];
 const IndentSizeSelector = memo(({ onClickBefore }: { onClickBefore: () => void }): JSX.Element => {
 
   const { t } = useTranslation();
-  const { data: currentIndentSize, mutate: mutateCurrentIndentSize } = useCurrentIndentSize();
+  const currentIndentSize = useCurrentIndentSize();
+  const { mutate: mutateCurrentIndentSize } = useCurrentIndentSizeActions();
 
   const listItems = useMemo(() => (
     <>
@@ -303,7 +305,7 @@ export const OptionsSelector = (): JSX.Element => {
 
   const [status, setStatus] = useState<OptionStatus>(OptionsStatus.Home);
   const { data: editorSettings } = useEditorSettings();
-  const { data: currentIndentSize } = useCurrentIndentSize();
+  const currentIndentSize = useCurrentIndentSize();
   const isIndentSizeForced = useAtomValue(isIndentSizeForcedAtom);
   const [isDeviceLargerThanMd] = useDeviceLargerThanMd();
 

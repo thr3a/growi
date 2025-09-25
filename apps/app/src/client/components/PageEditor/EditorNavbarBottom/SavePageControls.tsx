@@ -20,8 +20,8 @@ import {
   isSlackConfiguredAtom,
 } from '~/states/server-configurations';
 import { useDeviceLargerThanMd } from '~/states/ui/device';
-import { useEditorMode, useSelectedGrant } from '~/states/ui/editor';
-import { useWaitingSaveProcessing, useSWRxSlackChannels, useIsSlackEnabled } from '~/stores/editor';
+import { useEditorMode, useSelectedGrant, useWaitingSaveProcessing } from '~/states/ui/editor';
+import { useSWRxSlackChannels, useIsSlackEnabled } from '~/stores/editor';
 import loggerFactory from '~/utils/logger';
 
 import { NotAvailable } from '../../NotAvailable';
@@ -42,7 +42,7 @@ const logger = loggerFactory('growi:SavePageControls');
 const SavePageButton = (props: { slackChannels: string, isSlackEnabled?: boolean, isDeviceLargerThanMd?: boolean }) => {
 
   const { t } = useTranslation();
-  const { data: _isWaitingSaveProcessing } = useWaitingSaveProcessing();
+  const _isWaitingSaveProcessing = useWaitingSaveProcessing();
   const [isSavePageModalShown, setIsSavePageModalShown] = useState<boolean>(false);
   const [selectedGrant] = useSelectedGrant();
 

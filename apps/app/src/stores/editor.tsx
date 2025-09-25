@@ -1,9 +1,8 @@
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { type Nullable } from '@growi/core';
 import { withUtils, type SWRResponseWithUtils, useSWRStatic } from '@growi/core/dist/swr';
 import type { EditorSettings } from '@growi/editor';
-import { useAtomValue } from 'jotai';
 import useSWR, { type SWRResponse } from 'swr';
 import useSWRImmutable from 'swr/immutable';
 
@@ -12,14 +11,6 @@ import { apiv3Get, apiv3Put } from '~/client/util/apiv3-client';
 import type { SlackChannels } from '~/interfaces/user-trigger-notification';
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 import { useCurrentUser } from '~/states/global';
-import { defaultIndentSizeAtom } from '~/states/server-configurations';
-
-import { useSWRxTagsInfo } from './page';
-
-
-export const useWaitingSaveProcessing = (): SWRResponse<boolean, Error> => {
-  return useSWRStatic('waitingSaveProcessing', undefined, { fallbackData: false });
-};
 
 
 type EditorSettingsOperation = {
@@ -61,14 +52,6 @@ export const useEditorSettings = (): SWRResponseWithUtils<EditorSettingsOperatio
   });
 };
 
-export const useCurrentIndentSize = (): SWRResponse<number, Error> => {
-  const defaultIndentSize = useAtomValue(defaultIndentSizeAtom);
-  return useSWRStatic<number, Error>(
-    defaultIndentSize == null ? null : 'currentIndentSize',
-    undefined,
-    { fallbackData: defaultIndentSize },
-  );
-};
 
 /*
 * Slack Notification
@@ -96,20 +79,6 @@ export const useIsSlackEnabled = (): SWRResponse<boolean, Error> => {
 export type IPageTagsForEditorsOption = {
   sync: (tags?: string[]) => void;
 }
-
-export const usePageTagsForEditors = (pageId: Nullable<string>): SWRResponse<string[], Error> & IPageTagsForEditorsOption => {
-  const { data: tagsInfoData } = useSWRxTagsInfo(pageId);
-  const swrResult = useSWRStatic<string[], Error>('pageTags', undefined);
-  const { mutate } = swrResult;
-  const sync = useCallback((): void => {
-    mutate(tagsInfoData?.tags || [], false);
-  }, [mutate, tagsInfoData?.tags]);
-
-  return {
-    ...swrResult,
-    sync,
-  };
-};
 
 
 export const useReservedNextCaretLine = (initialData?: number): SWRResponse<number> => {
