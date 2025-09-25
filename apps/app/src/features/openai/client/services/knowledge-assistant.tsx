@@ -73,7 +73,7 @@ type UseKnowledgeAssistant = () => {
 export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
   // Hooks
   const { data: aiAssistantSidebarData } = useAiAssistantSidebar();
-  const { aiAssistantData, threadData } = aiAssistantSidebarData ?? {};
+  const { aiAssistantData } = aiAssistantSidebarData ?? {};
   const { mutate: mutateRecentThreads } = useSWRINFxRecentThreads();
   const { trigger: mutateThreadData } = useSWRMUTxThreads(aiAssistantData?._id);
   const { t } = useTranslation();
@@ -141,8 +141,8 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
   }, []);
 
   const headerText = useMemo(() => {
-    return <>{threadData?.title ?? aiAssistantData?.name}</>;
-  }, [aiAssistantData?.name, threadData?.title]);
+    return <>{aiAssistantData?.name}</>;
+  }, [aiAssistantData?.name]);
 
   const placeHolder = useMemo(() => { return 'sidebar_ai_assistant.knowledge_assistant_placeholder' }, []);
 
