@@ -51,6 +51,7 @@ module.exports = {
     },
   },
   rules: {
+    'space-before-function-paren': 'off',
     'no-restricted-imports': ['error', {
       name: 'axios',
       message: 'Please use src/utils/axios instead.',
