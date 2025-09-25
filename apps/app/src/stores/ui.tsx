@@ -11,7 +11,6 @@ import {
 } from 'swr';
 import useSWRImmutable from 'swr/immutable';
 
-import type { UpdateDescCountData } from '~/interfaces/websocket';
 import {
   useIsReadOnlyUser, useIsSharedUser,
 } from '~/states/context';
@@ -34,23 +33,6 @@ const logger = loggerFactory('growi:stores:ui');
  *                          SWR Hooks
  *                      for switching UI
  *********************************************************** */
-
-type PageTreeDescCountMapUtils = {
-  update(newData?: UpdateDescCountData): Promise<UpdateDescCountData | undefined>
-  getDescCount(pageId?: string): number | null | undefined
-}
-
-export const usePageTreeDescCountMap = (initialData?: UpdateDescCountData): SWRResponse<UpdateDescCountData, Error> & PageTreeDescCountMapUtils => {
-  const key = 'pageTreeDescCountMap';
-
-  const swrResponse = useStaticSWR<UpdateDescCountData, Error>(key, initialData, { fallbackData: new Map() });
-
-  return {
-    ...swrResponse,
-    getDescCount: (pageId?: string) => (pageId != null ? swrResponse.data?.get(pageId) : null),
-    update: (newData: UpdateDescCountData) => swrResponse.mutate(new Map([...(swrResponse.data || new Map()), ...newData])),
-  };
-};
 
 
 type UseCommentEditorDirtyMapOperation = {

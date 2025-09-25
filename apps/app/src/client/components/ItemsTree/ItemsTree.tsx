@@ -16,12 +16,12 @@ import { useCurrentPagePath, useFetchCurrentPage } from '~/states/page';
 import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
 import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 import { usePageDuplicateModalActions } from '~/states/ui/modal/page-duplicate';
+import { usePageTreeDescCountMapAction } from '~/states/ui/page-tree-desc-count-map';
 import { mutateAllPageInfo } from '~/stores/page';
 import {
   useSWRxRootPage, mutatePageTree, mutatePageList,
 } from '~/stores/page-listing';
 import { mutateSearching } from '~/stores/search';
-import { usePageTreeDescCountMap } from '~/stores/ui';
 import loggerFactory from '~/utils/logger';
 
 import { ItemNode, type TreeItemProps } from '../TreeItem';
@@ -61,7 +61,7 @@ export const ItemsTree = (props: ItemsTreeProps): JSX.Element => {
   const { open: openDeleteModal } = usePageDeleteModalActions();
 
   const { data: socket } = useGlobalSocket();
-  const { data: ptDescCountMap, update: updatePtDescCountMap } = usePageTreeDescCountMap();
+  const { update: updatePtDescCountMap } = usePageTreeDescCountMapAction();
 
   // for mutation
   const { fetchCurrentPage } = useFetchCurrentPage();
@@ -80,7 +80,7 @@ export const ItemsTree = (props: ItemsTreeProps): JSX.Element => {
 
     return () => { socket.off(SocketEventName.UpdateDescCount) };
 
-  }, [socket, ptDescCountMap, updatePtDescCountMap]);
+  }, [socket, updatePtDescCountMap]);
 
   const onRenamed = useCallback((fromPath: string | undefined, toPath: string) => {
     mutatePageTree();
