@@ -1,13 +1,9 @@
 // Export only the essential public API
 
-export { _atomsForDerivedAbilities } from './atoms';
 export * from './current-indent-size';
-export {
-  useEditingMarkdown,
-  useEditorMode,
-  useSelectedGrant,
-  useSetEditingMarkdown,
-} from './hooks';
+export * from './editing-markdown';
+export * from './editor-mode';
+export * from './selected-grant';
 export type { EditorMode as EditorModeType } from './types';
 export { EditorMode } from './types';
 // Export utility functions that might be needed elsewhere
