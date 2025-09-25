@@ -432,42 +432,53 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
             className="h-100"
             autoHide
           >
-            <div className="p-4 d-flex flex-column gap-4 flex-grow-1">
-              { threadData != null
-                ? (
-                  <div className="vstack gap-4 pb-2">
-                    { messageLogs.map(message => (
-                      <>
-                        <MessageCard
-                          role={message.isUserMessage ? 'user' : 'assistant'}
-                          additionalItem={messageCardAdditionalItemForGeneratedMessage(message.id)}
-                        >
-                          {message.content}
-                        </MessageCard>
-                      </>
-                    )) }
-                    { generatingAnswerMessage != null && (
-                      <MessageCard
-                        role="assistant"
-                        additionalItem={messageCardAdditionalItemForGeneratingMessage}
-                      >
-                        {generatingAnswerMessage.content}
-                      </MessageCard>
-                    )}
-                    { isEditorAssistant && partialContentWarnLabel }
-                    { messageLogs.length > 0 && (
-                      <div className="d-flex justify-content-center">
-                        <span className="bg-body-tertiary text-body-secondary rounded-pill px-3 py-1" style={{ fontSize: 'smaller' }}>
-                          {t('sidebar_ai_assistant.caution_against_hallucination')}
-                        </span>
-                      </div>
-                    )}
+            <div className="p-4">
+              {!isEditorAssistant && threadData?.title && (
+                <div className="thread-title-sticky">
+                  <div className="d-flex align-items-center gap-2">
+                    <span className="material-symbols-outlined fs-6 text-muted">chat</span>
+                    <span className="text-truncate small text-muted">{threadData.title}</span>
                   </div>
-                )
-                : (
-                  <>{ initialView }</>
-                )
-              }
+                </div>
+              )}
+
+              <div className="d-flex flex-column gap-4 flex-grow-1">
+                { threadData != null
+                  ? (
+                    <div className="vstack gap-4 pb-2">
+                      { messageLogs.map(message => (
+                        <>
+                          <MessageCard
+                            role={message.isUserMessage ? 'user' : 'assistant'}
+                            additionalItem={messageCardAdditionalItemForGeneratedMessage(message.id)}
+                          >
+                            {message.content}
+                          </MessageCard>
+                        </>
+                      )) }
+                      { generatingAnswerMessage != null && (
+                        <MessageCard
+                          role="assistant"
+                          additionalItem={messageCardAdditionalItemForGeneratingMessage}
+                        >
+                          {generatingAnswerMessage.content}
+                        </MessageCard>
+                      )}
+                      { isEditorAssistant && partialContentWarnLabel }
+                      { messageLogs.length > 0 && (
+                        <div className="d-flex justify-content-center">
+                          <span className="bg-body-tertiary text-body-secondary rounded-pill px-3 py-1" style={{ fontSize: 'smaller' }}>
+                            {t('sidebar_ai_assistant.caution_against_hallucination')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                  : (
+                    <>{ initialView }</>
+                  )
+                }
+              </div>
             </div>
           </SimpleBar>
         </div>
