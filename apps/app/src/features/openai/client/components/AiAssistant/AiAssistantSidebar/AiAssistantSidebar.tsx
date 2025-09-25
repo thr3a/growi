@@ -10,7 +10,6 @@ import SimpleBar from 'simplebar-react';
 
 import { toastError } from '~/client/util/toastr';
 import { useGrowiCloudUri } from '~/states/global';
-import { useIsEnableUnifiedMergeView } from '~/stores-universal/context';
 import loggerFactory from '~/utils/logger';
 
 import type { AiAssistantHasId } from '../../../../interfaces/ai-assistant';
@@ -27,6 +26,7 @@ import {
   useFetchAndSetMessageDataEffect,
   type FormData as FormDataForKnowledgeAssistant,
 } from '../../../services/knowledge-assistant';
+import { useUnifiedMergeViewActions } from '../../../states';
 import { useAiAssistantSidebar } from '../../../stores/ai-assistant';
 import { useSWRxThreads } from '../../../stores/thread';
 
@@ -117,7 +117,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
     resetFormForKnowledgeAssistant();
   }, [isEditorAssistant, resetFormEditorAssistant, resetFormForKnowledgeAssistant]);
 
-  const createThread = useCallback(async(initialUserMessage: string) => {
+  const createThread = useCallback(async (initialUserMessage: string) => {
     if (isEditorAssistant) {
       const thread = await createThreadForEditorAssistant();
       return thread;
@@ -130,7 +130,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
     return thread;
   }, [aiAssistantData, createThreadForEditorAssistant, createThreadForKnowledgeAssistant, isEditorAssistant]);
 
-  const postMessage = useCallback(async(threadId: string, formData: FormData) => {
+  const postMessage = useCallback(async (threadId: string, formData: FormData) => {
     if (threadId == null) {
       throw new Error('threadId is not set');
     }
@@ -156,7 +156,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
   }, [aiAssistantData?._id, isEditorAssistant, postMessageForEditorAssistant, postMessageForKnowledgeAssistant]);
 
   const isGenerating = generatingAnswerMessage != null;
-  const submitSubstance = useCallback(async(data: FormData) => {
+  const submitSubstance = useCallback(async (data: FormData) => {
     // do nothing when the assistant is generating an answer
     if (isGenerating) {
       return;
@@ -230,7 +230,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder('utf-8');
 
-      const read = async() => {
+      const read = async () => {
         if (reader == null) return;
 
         const { done, value } = await reader.read();
@@ -330,7 +330,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
       form.setError('input', { type: 'manual', message: err.toString() });
     }
 
-  // eslint-disable-next-line max-len
+    // eslint-disable-next-line max-len
   }, [isGenerating, messageLogs, resetForm, threadData?.threadId, createThread, onNewThreadCreated, t, postMessage, form, onMessageReceived, processMessageForKnowledgeAssistant, processMessageForEditorAssistant, growiCloudUri]);
 
   const submit = useCallback((data: FormData) => {
@@ -434,10 +434,10 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
             autoHide
           >
             <div className="p-4 d-flex flex-column gap-4 flex-grow-1">
-              { threadData != null
+              {threadData != null
                 ? (
                   <div className="vstack gap-4 pb-2">
-                    { messageLogs.map(message => (
+                    {messageLogs.map(message => (
                       <>
                         <MessageCard
                           role={message.isUserMessage ? 'user' : 'assistant'}
@@ -446,8 +446,8 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
                           {message.content}
                         </MessageCard>
                       </>
-                    )) }
-                    { generatingAnswerMessage != null && (
+                    ))}
+                    {generatingAnswerMessage != null && (
                       <MessageCard
                         role="assistant"
                         additionalItem={messageCardAdditionalItemForGeneratingMessage}
@@ -455,8 +455,8 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
                         {generatingAnswerMessage.content}
                       </MessageCard>
                     )}
-                    { isEditorAssistant && partialContentWarnLabel }
-                    { messageLogs.length > 0 && (
+                    {isEditorAssistant && partialContentWarnLabel}
+                    {messageLogs.length > 0 && (
                       <div className="d-flex justify-content-center">
                         <span className="bg-body-tertiary text-body-secondary rounded-pill px-3 py-1" style={{ fontSize: 'smaller' }}>
                           {t('sidebar_ai_assistant.caution_against_hallucination')}
@@ -466,7 +466,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
                   </div>
                 )
                 : (
-                  <>{ initialView }</>
+                  <>{initialView}</>
                 )
               }
             </div>
@@ -492,8 +492,8 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
               )}
             />
             <div className="flex-fill hstack gap-2 justify-content-between m-0">
-              { !isEditorAssistant && generateModeSwitchesDropdownForKnowledgeAssistant(isGenerating) }
-              { isEditorAssistant && <div /> }
+              {!isEditorAssistant && generateModeSwitchesDropdownForKnowledgeAssistant(isGenerating)}
+              {isEditorAssistant && <div />}
               <button
                 type="submit"
                 className="btn btn-submit no-border"
@@ -508,7 +508,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
             <div className="mt-4 bg-danger bg-opacity-10 rounded-3 p-2 w-100">
               <div>
                 <span className="material-symbols-outlined text-danger me-2">error</span>
-                <span className="text-danger">{ errorMessage != null ? t(errorMessage) : t('sidebar_ai_assistant.error_message') }</span>
+                <span className="text-danger">{errorMessage != null ? t(errorMessage) : t('sidebar_ai_assistant.error_message')}</span>
               </div>
 
               <button
@@ -543,7 +543,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
 
 export const AiAssistantSidebar: FC = memo((): JSX.Element => {
   const { data: aiAssistantSidebarData, close: closeAiAssistantSidebar, refreshThreadData } = useAiAssistantSidebar();
-  const { mutate: mutateIsEnableUnifiedMergeView } = useIsEnableUnifiedMergeView();
+  const { disable: disableUnifiedMergeView } = useUnifiedMergeViewActions();
 
   const aiAssistantData = aiAssistantSidebarData?.aiAssistantData;
   const threadData = aiAssistantSidebarData?.threadData;
@@ -558,9 +558,9 @@ export const AiAssistantSidebar: FC = memo((): JSX.Element => {
 
   useEffect(() => {
     if (!aiAssistantSidebarData?.isOpened) {
-      mutateIsEnableUnifiedMergeView(false);
+      disableUnifiedMergeView();
     }
-  }, [aiAssistantSidebarData?.isOpened, mutateIsEnableUnifiedMergeView]);
+  }, [aiAssistantSidebarData?.isOpened, disableUnifiedMergeView]);
 
   // refresh thread data when the data is changed
   useEffect(() => {

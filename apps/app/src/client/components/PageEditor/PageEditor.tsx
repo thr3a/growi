@@ -23,6 +23,7 @@ import { useUpdateStateAfterSave } from '~/client/services/page-operation';
 import { useUpdatePage, extractRemoteRevisionDataFromErrorObj } from '~/client/services/update-page';
 import { uploadAttachments } from '~/client/services/upload-attachments';
 import { toastError, toastSuccess, toastWarning } from '~/client/util/toastr';
+import { useIsEnableUnifiedMergeView } from '~/features/openai/client/states';
 import { useShouldExpandContent } from '~/services/layout/use-should-expand-content';
 import { useCurrentPathname, useCurrentUser } from '~/states/global';
 import {
@@ -42,9 +43,7 @@ import {
 import {
   useEditorMode, EditorMode, useEditingMarkdown, useSelectedGrant,
 } from '~/states/ui/editor';
-import {
-  useAcceptedUploadFileType, useIsEnableUnifiedMergeView,
-} from '~/stores-universal/context';
+import { useAcceptedUploadFileType } from '~/stores-universal/context';
 import { useNextThemes } from '~/stores-universal/use-next-themes';
 import {
   useReservedNextCaretLine,
@@ -123,7 +122,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   const { mutate: mutateEditingUsers } = useEditingClients();
   const onConflict = useConflictResolver();
   const { data: reservedNextCaretLine, mutate: mutateReservedNextCaretLine } = useReservedNextCaretLine();
-  const { data: isEnableUnifiedMergeView } = useIsEnableUnifiedMergeView();
+  const isEnableUnifiedMergeView = useIsEnableUnifiedMergeView();
 
   const { data: rendererOptions } = usePreviewOptions();
 
