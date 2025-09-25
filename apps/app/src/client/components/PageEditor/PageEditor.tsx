@@ -9,10 +9,9 @@ import nodePath from 'path';
 import { Origin } from '@growi/core';
 import type { IPageHasId } from '@growi/core/dist/interfaces';
 import { pathUtils } from '@growi/core/dist/utils';
-import { GlobalCodeMirrorEditorKey } from '@growi/editor';
+import { GlobalCodeMirrorEditorKey, useResolvedThemeActions } from '@growi/editor';
 import { CodeMirrorEditorMain } from '@growi/editor/dist/client/components/CodeMirrorEditorMain';
 import { useCodeMirrorEditorIsolated } from '@growi/editor/dist/client/stores/codemirror-editor';
-import { useResolvedThemeForEditor } from '@growi/editor/dist/client/stores/use-resolved-theme';
 import { useRect } from '@growi/ui/dist/utils';
 import detectIndent from 'detect-indent';
 import { useAtomValue } from 'jotai';
@@ -126,7 +125,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
 
   const { data: rendererOptions } = usePreviewOptions();
 
-  const { mutate: mutateResolvedTheme } = useResolvedThemeForEditor();
+  const { mutateResolvedTheme } = useResolvedThemeActions();
 
   const shouldExpandContent = useShouldExpandContent(currentPage);
 
@@ -136,7 +135,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   useConflictEffect();
 
   const { resolvedTheme } = useNextThemes();
-  mutateResolvedTheme({ themeData: resolvedTheme });
+  mutateResolvedTheme(resolvedTheme);
 
   const currentRevisionId = currentPage?.revision?._id;
   const isRevisionIdRequiredForPageUpdate = currentPage?.revision?.origin === undefined;

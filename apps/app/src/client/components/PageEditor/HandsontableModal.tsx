@@ -2,8 +2,7 @@ import React, {
   useState, useCallback, useMemo, type JSX,
 } from 'react';
 
-import { MarkdownTable } from '@growi/editor';
-import { useHandsontableModalForEditor } from '@growi/editor/dist/client/stores/use-handsontable';
+import { MarkdownTable, useHandsontableModalForEditorStatus } from '@growi/editor';
 import { HotTable } from '@handsontable/react';
 import type Handsontable from 'handsontable';
 import { useTranslation } from 'next-i18next';
@@ -37,7 +36,7 @@ export const HandsontableModalSubstance = (): JSX.Element => {
   const { t } = useTranslation('commons');
   const handsontableModalData = useHandsontableModalStatus();
   const { close: closeHandsontableModal } = useHandsontableModalActions();
-  const { data: handsontableModalForEditorData } = useHandsontableModalForEditor();
+  const handsontableModalForEditorData = useHandsontableModalForEditorStatus();
 
   const isOpened = handsontableModalData?.isOpened ?? false;
   const isOpendInEditor = handsontableModalForEditorData?.isOpened ?? false;

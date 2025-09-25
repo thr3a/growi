@@ -18,6 +18,7 @@
     "lint": "npm-run-all -p lint:*"
   },
   "dependencies": {
+    "jotai": "^2.12.3",
     "lib0": "^0.2.94",
     "markdown-table": "^3.0.3",
     "react": "^18.2.0",

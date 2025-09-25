@@ -1278,6 +1278,9 @@ importers:
 
   packages/editor:
     dependencies:
+      jotai:
+        specifier: ^2.12.3
+        version: 2.12.3(@types/react@18.3.3)(react@18.2.0)
       lib0:
         specifier: ^0.2.94
         version: 0.2.94

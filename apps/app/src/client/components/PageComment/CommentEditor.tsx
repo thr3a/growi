@@ -4,10 +4,9 @@ import React, {
   useMemo,
 } from 'react';
 
-import { GlobalCodeMirrorEditorKey } from '@growi/editor';
+import { GlobalCodeMirrorEditorKey, useResolvedThemeActions } from '@growi/editor';
 import { CodeMirrorEditorComment } from '@growi/editor/dist/client/components/CodeMirrorEditorComment';
 import { useCodeMirrorEditorIsolated } from '@growi/editor/dist/client/stores/codemirror-editor';
-import { useResolvedThemeForEditor } from '@growi/editor/dist/client/stores/use-resolved-theme';
 import { UserPicture } from '@growi/ui/dist/components';
 import { useAtomValue } from 'jotai';
 import { useTranslation } from 'next-i18next';
@@ -87,9 +86,9 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
   const isSlackConfigured = useAtomValue(isSlackConfiguredAtom);
   const { data: editorSettings } = useEditorSettings();
   const { markDirty, markClean } = useCommentEditorsDirtyMap();
-  const { mutate: mutateResolvedTheme } = useResolvedThemeForEditor();
+  const { mutateResolvedTheme } = useResolvedThemeActions();
   const { resolvedTheme } = useNextThemes();
-  mutateResolvedTheme({ themeData: resolvedTheme });
+  mutateResolvedTheme(resolvedTheme);
 
   const editorKey = useMemo(() => {
     if (replyTo != null) {
@@ -317,9 +316,9 @@ export const CommentEditorPre = (props: CommentEditorProps): JSX.Element => {
   const { onCommented, onCanceled, ...rest } = props;
 
   const currentUser = useCurrentUser();
-  const { mutate: mutateResolvedTheme } = useResolvedThemeForEditor();
+  const { mutateResolvedTheme } = useResolvedThemeActions();
   const { resolvedTheme } = useNextThemes();
-  mutateResolvedTheme({ themeData: resolvedTheme });
+  mutateResolvedTheme(resolvedTheme);
 
   const [isReadyToUse, setIsReadyToUse] = useState(false);
 

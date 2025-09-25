@@ -5,7 +5,7 @@ import React, {
 import assert from 'assert';
 
 import type { Lang } from '@growi/core';
-import { useTemplateModal, type TemplateModalStatus } from '@growi/editor/dist/client/stores/use-template-modal';
+import { useTemplateModalStatus, useTemplateModalActions, type TemplateModalState } from '@growi/editor';
 import {
   extractSupportedLocales, getLocalizedTemplate, type TemplateSummary,
 } from '@growi/pluginkit/dist/v4';
@@ -111,7 +111,7 @@ const TemplateDropdownItem: React.FC<TemplateSummaryItemProps> = ({
 };
 
 type TemplateModalSubstanceProps = {
-  templateModalStatus: TemplateModalStatus,
+  templateModalStatus: TemplateModalState,
   close: () => void,
 }
 
@@ -319,7 +319,8 @@ const TemplateModalSubstance = (props: TemplateModalSubstanceProps): JSX.Element
 
 
 export const TemplateModal = (): JSX.Element => {
-  const { data: templateModalStatus, close } = useTemplateModal();
+  const templateModalStatus = useTemplateModalStatus();
+  const { close } = useTemplateModalActions();
 
   if (templateModalStatus == null) {
     return <></>;
