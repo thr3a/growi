@@ -22,13 +22,13 @@ import { toastError } from '~/client/util/toastr';
 import { useCurrentUser } from '~/states/global';
 import { useCurrentPagePath } from '~/states/page';
 import { isSlackConfiguredAtom } from '~/states/server-configurations';
+import { useCommentEditorsDirtyMap } from '~/states/ui/unsaved-warning';
 import { useAcceptedUploadFileType } from '~/stores-universal/context';
 import { useNextThemes } from '~/stores-universal/use-next-themes';
 import { useSWRxPageComment } from '~/stores/comment';
 import {
-  useSWRxSlackChannels, useIsSlackEnabled, useIsEnabledUnsavedWarning, useEditorSettings,
+  useSWRxSlackChannels, useIsSlackEnabled, useEditorSettings,
 } from '~/stores/editor';
-import { useCommentEditorDirtyMap } from '~/stores/ui';
 import loggerFactory from '~/utils/logger';
 
 import { NotAvailableForGuest } from '../NotAvailableForGuest';
@@ -86,11 +86,7 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
   const { data: slackChannelsData } = useSWRxSlackChannels(currentPagePath);
   const isSlackConfigured = useAtomValue(isSlackConfiguredAtom);
   const { data: editorSettings } = useEditorSettings();
-  const { mutate: mutateIsEnabledUnsavedWarning } = useIsEnabledUnsavedWarning();
-  const {
-    evaluate: evaluateEditorDirtyMap,
-    clean: cleanEditorDirtyMap,
-  } = useCommentEditorDirtyMap();
+  const { markDirty, markClean } = useCommentEditorsDirtyMap();
   const { mutate: mutateResolvedTheme } = useResolvedThemeForEditor();
   const { resolvedTheme } = useNextThemes();
   mutateResolvedTheme({ themeData: resolvedTheme });
@@ -136,23 +132,22 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
     setSlackChannels(slackChannels);
   }, []);
 
-  const initializeEditor = useCallback(async() => {
-    const dirtyNum = await cleanEditorDirtyMap(editorKey);
-    mutateIsEnabledUnsavedWarning(dirtyNum > 0);
+  const initializeEditor = useCallback(() => {
+    markClean(editorKey);
 
     setShowPreview(false);
     setError(undefined);
 
     initializeSlackEnabled();
 
-  }, [editorKey, cleanEditorDirtyMap, mutateIsEnabledUnsavedWarning, initializeSlackEnabled]);
+  }, [editorKey, markClean, initializeSlackEnabled]);
 
   const cancelButtonClickedHandler = useCallback(() => {
     initializeEditor();
     onCanceled?.();
   }, [onCanceled, initializeEditor]);
 
-  const postCommentHandler = useCallback(async() => {
+  const postCommentHandler = useCallback(async () => {
     const commentBodyToPost = codeMirrorEditor?.getDocString() ?? '';
 
     try {
@@ -210,11 +205,10 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
   }, [codeMirrorEditor, pageId]);
 
   const cmProps = useMemo(() => ({
-    onChange: async(value: string) => {
-      const dirtyNum = await evaluateEditorDirtyMap(editorKey, value);
-      mutateIsEnabledUnsavedWarning(dirtyNum > 0);
+    onChange: (value: string) => {
+      markDirty(editorKey, value);
     },
-  }), [editorKey, evaluateEditorDirtyMap, mutateIsEnabledUnsavedWarning]);
+  }), [editorKey, markDirty]);
 
 
   // initialize CodeMirrorEditor

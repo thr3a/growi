@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useLayoutEffect,
-} from 'react';
-
-import { useSWRStatic } from '@growi/core/dist/swr';
 import { pagePathUtils } from '@growi/core/dist/utils';
-import { useRouter } from 'next/router';
 import {
   type SWRResponse,
 } from 'swr';
@@ -22,70 +15,9 @@ import { useShareLinkId } from '~/states/page/hooks';
 import { EditorMode, useEditorMode } from '~/states/ui/editor';
 import loggerFactory from '~/utils/logger';
 
-import { useStaticSWR } from './use-static-swr';
-
 const { isTrashTopPage, isUsersTopPage } = pagePathUtils;
 
 const logger = loggerFactory('growi:stores:ui');
-
-
-/** **********************************************************
- *                          SWR Hooks
- *                      for switching UI
- *********************************************************** */
-
-
-type UseCommentEditorDirtyMapOperation = {
-  evaluate(key: string, commentBody: string): Promise<number>,
-  clean(key: string): Promise<number>,
-}
-
-export const useCommentEditorDirtyMap = (): SWRResponse<Map<string, boolean>, Error> & UseCommentEditorDirtyMapOperation => {
-  const router = useRouter();
-
-  const swrResponse = useSWRStatic<Map<string, boolean>, Error>('editingCommentsNum', undefined, { fallbackData: new Map() });
-
-  const { mutate } = swrResponse;
-
-  const evaluate = useCallback(async (key: string, commentBody: string) => {
-    const newMap = await mutate((map) => {
-      if (map == null) return new Map();
-
-      if (commentBody.length === 0) {
-        map.delete(key);
-      }
-      else {
-        map.set(key, true);
-      }
-
-      return map;
-    });
-    return newMap?.size ?? 0;
-  }, [mutate]);
-  const clean = useCallback(async (key: string) => {
-    const newMap = await mutate((map) => {
-      if (map == null) return new Map();
-      map.delete(key);
-      return map;
-    });
-    return newMap?.size ?? 0;
-  }, [mutate]);
-
-  const reset = useCallback(() => mutate(new Map()), [mutate]);
-
-  useLayoutEffect(() => {
-    router.events.on('routeChangeComplete', reset);
-    return () => {
-      router.events.off('routeChangeComplete', reset);
-    };
-  }, [reset, router.events]);
-
-  return {
-    ...swrResponse,
-    evaluate,
-    clean,
-  };
-};
 
 
 /** **********************************************************

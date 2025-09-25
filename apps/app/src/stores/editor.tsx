@@ -46,7 +46,7 @@ export const useEditorSettings = (): SWRResponseWithUtils<EditorSettingsOperatio
   );
 
   return withUtils<EditorSettingsOperation, EditorSettings, Error>(swrResult, {
-    update: async(updateData) => {
+    update: async (updateData) => {
       const { data, mutate } = swrResult;
 
       if (data == null) {
@@ -109,10 +109,6 @@ export const usePageTagsForEditors = (pageId: Nullable<string>): SWRResponse<str
     ...swrResult,
     sync,
   };
-};
-
-export const useIsEnabledUnsavedWarning = (): SWRResponse<boolean, Error> => {
-  return useSWRStatic<boolean, Error>('isEnabledUnsavedWarning');
 };
 
 
