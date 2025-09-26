@@ -494,7 +494,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
           </SimpleBar>
         </div>
 
-        <div className="position-sticky bottom-0 bg-body z-2 p-3">
+        <div className="input-form-area position-sticky bg-body z-2 p-3">
           <form onSubmit={form.handleSubmit(submit)} className="flex-fill vstack gap-1">
             <Controller
               name="input"
