@@ -6,7 +6,7 @@ import { apiv3Post } from '~/client/util/apiv3-client';
 import { toastSuccess, toastError } from '~/client/util/toastr';
 
 import type { IGrowiPluginOrigin } from '../../../../interfaces';
-import { useSWRxAdminPlugins } from '../../../stores/admin-plugins';
+import { useSWRxAdminPlugins } from '../../stores/admin-plugins';
 
 export const PluginInstallerForm = (): JSX.Element => {
   const { mutate } = useSWRxAdminPlugins();

@@ -7,7 +7,7 @@ import type { AdminCommonProps } from './_shared';
 import { createAdminPageLayout, getServerSideAdminCommonProps } from './_shared';
 
 const PluginsExtensionPageContents = dynamic(
-  () => import('~/features/growi-plugin/client/components/Admin').then(mod => mod.PluginsExtensionPageContents),
+  () => import('~/features/growi-plugin/client/Admin/components').then(mod => mod.PluginsExtensionPageContents),
   { ssr: false },
 );
 

@@ -9,17 +9,19 @@ import {
 import { apiv3Delete } from '~/client/util/apiv3-client';
 import { toastSuccess, toastError } from '~/client/util/toastr';
 
-import { useSWRxAdminPlugins, usePluginDeleteModal } from '../../../stores/admin-plugins';
+import { usePluginDeleteModalStatus, usePluginDeleteModalActions } from '../../states/modal/plugin-delete';
+import { useSWRxAdminPlugins } from '../../stores/admin-plugins';
 
 export const PluginDeleteModal: React.FC = () => {
 
   const { t } = useTranslation('admin');
   const { mutate } = useSWRxAdminPlugins();
-  const { data: pluginDeleteModalData, close: closePluginDeleteModal } = usePluginDeleteModal();
-  const isOpen = pluginDeleteModalData?.isOpen;
-  const id = pluginDeleteModalData?.id;
-  const name = pluginDeleteModalData?.name;
-  const url = pluginDeleteModalData?.url;
+  const pluginDeleteModalData = usePluginDeleteModalStatus();
+  const { close: closePluginDeleteModal } = usePluginDeleteModalActions();
+  const isOpen = pluginDeleteModalData.isOpened;
+  const id = pluginDeleteModalData.id;
+  const name = pluginDeleteModalData.name;
+  const url = pluginDeleteModalData.url;
 
   const toggleHandler = useCallback(() => {
     closePluginDeleteModal();
