@@ -21,11 +21,11 @@ import type { SelectablePage } from '../../../../interfaces/selectable-page';
 import { removeGlobPath } from '../../../../utils/remove-glob-path';
 import { createAiAssistant, updateAiAssistant } from '../../../services/ai-assistant';
 import {
-  useSWRxAiAssistants,
-  useAiAssistantSidebar,
-  useAiAssistantManagementModal,
+  useAiAssistantManagementModalStatus,
+  useAiAssistantManagementModalActions,
   AiAssistantManagementModalPageMode,
-} from '../../../stores/ai-assistant';
+} from '../../../states/modal/ai-assistant-management';
+import { useSWRxAiAssistants, useAiAssistantSidebar } from '../../../stores/ai-assistant';
 
 import { AiAssistantManagementEditInstruction } from './AiAssistantManagementEditInstruction';
 import { AiAssistantManagementEditPages } from './AiAssistantManagementEditPages';
@@ -74,7 +74,8 @@ const AiAssistantManagementModalSubstance = (): JSX.Element => {
   // Hooks
   const { t } = useTranslation();
   const { mutate: mutateAiAssistants } = useSWRxAiAssistants();
-  const { data: aiAssistantManagementModalData, close: closeAiAssistantManagementModal } = useAiAssistantManagementModal();
+  const aiAssistantManagementModalData = useAiAssistantManagementModalStatus();
+  const { close: closeAiAssistantManagementModal } = useAiAssistantManagementModalActions();
   const { data: aiAssistantSidebarData, refreshAiAssistantData } = useAiAssistantSidebar();
   const { data: pagePathsWithDescendantCount } = useSWRxPagePathsWithDescendantCount(
     removeGlobPath(aiAssistantManagementModalData?.aiAssistantData?.pagePathPatterns) ?? null,
@@ -348,7 +349,8 @@ const AiAssistantManagementModalSubstance = (): JSX.Element => {
 
 
 export const AiAssistantManagementModal = (): JSX.Element => {
-  const { data: aiAssistantManagementModalData, close: closeAiAssistantManagementModal } = useAiAssistantManagementModal();
+  const aiAssistantManagementModalData = useAiAssistantManagementModalStatus();
+  const { close: closeAiAssistantManagementModal } = useAiAssistantManagementModalActions();
 
   const isOpened = aiAssistantManagementModalData?.isOpened ?? false;
 

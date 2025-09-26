@@ -15,7 +15,7 @@ import { limitLearnablePageCountPerAssistantAtom } from '~/states/server-configu
 
 import type { SelectablePage } from '../../../../interfaces/selectable-page';
 import { determineShareScope } from '../../../../utils/determine-share-scope';
-import { useAiAssistantManagementModal, AiAssistantManagementModalPageMode } from '../../../stores/ai-assistant';
+import { useAiAssistantManagementModalActions, AiAssistantManagementModalPageMode } from '../../../states/modal/ai-assistant-management';
 
 import { AiAssistantManagementHeader } from './AiAssistantManagementHeader';
 import { ShareScopeWarningModal } from './ShareScopeWarningModal';
@@ -56,7 +56,7 @@ export const AiAssistantManagementHome = (props: Props): JSX.Element => {
   const { t } = useTranslation();
   const currentUser = useCurrentUser();
   const limitLearnablePageCountPerAssistant = useAtomValue(limitLearnablePageCountPerAssistantAtom);
-  const { close: closeAiAssistantManagementModal, changePageMode } = useAiAssistantManagementModal();
+  const { close: closeAiAssistantManagementModal, changePageMode } = useAiAssistantManagementModalActions();
 
   const [isShareScopeWarningModalOpen, setIsShareScopeWarningModalOpen] = useState(false);
 

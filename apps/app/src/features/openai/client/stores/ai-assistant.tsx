@@ -7,60 +7,7 @@ import useSWRImmutable from 'swr/immutable';
 import { apiv3Get } from '~/client/util/apiv3-client';
 
 import { type AccessibleAiAssistantsHasId, type AiAssistantHasId } from '../../interfaces/ai-assistant';
-import type { IThreadRelationHasId } from '../../interfaces/thread-relation'; // IThreadHasId を削除
-
-
-/*
-*  useAiAssistantManagementModal
-*/
-export const AiAssistantManagementModalPageMode = {
-  HOME: 'home',
-  SHARE: 'share',
-  PAGES: 'pages',
-  INSTRUCTION: 'instruction',
-  PAGE_SELECTION_METHOD: 'page-selection-method',
-  KEYWORD_SEARCH: 'keyword-search',
-  PAGE_TREE_SELECTION: 'page-tree-selection',
-} as const;
-
-export type AiAssistantManagementModalPageMode = typeof AiAssistantManagementModalPageMode[keyof typeof AiAssistantManagementModalPageMode];
-
-type AiAssistantManagementModalStatus = {
-  isOpened: boolean,
-  pageMode?: AiAssistantManagementModalPageMode,
-  aiAssistantData?: AiAssistantHasId;
-}
-
-type AiAssistantManagementModalUtils = {
-  open(aiAssistantData?: AiAssistantHasId): void
-  close(): void
-  changePageMode(pageType: AiAssistantManagementModalPageMode): void
-}
-
-export const useAiAssistantManagementModal = (
-    status?: AiAssistantManagementModalStatus,
-): SWRResponse<AiAssistantManagementModalStatus, Error> & AiAssistantManagementModalUtils => {
-  const initialStatus = { isOpened: false, pageType: AiAssistantManagementModalPageMode.HOME };
-  const swrResponse = useSWRStatic<AiAssistantManagementModalStatus, Error>('AiAssistantManagementModal', status, { fallbackData: initialStatus });
-
-  return {
-    ...swrResponse,
-    open: useCallback((aiAssistantData) => {
-      swrResponse.mutate({
-        isOpened: true,
-        aiAssistantData,
-        pageMode: aiAssistantData != null
-          ? AiAssistantManagementModalPageMode.HOME
-          : AiAssistantManagementModalPageMode.PAGE_SELECTION_METHOD,
-      });
-    }, [swrResponse]),
-    close: useCallback(() => swrResponse.mutate({ isOpened: false, aiAssistantData: undefined }), [swrResponse]),
-    changePageMode: useCallback((pageMode: AiAssistantManagementModalPageMode) => {
-      swrResponse.mutate({ isOpened: swrResponse.data?.isOpened ?? false, pageMode, aiAssistantData: swrResponse.data?.aiAssistantData });
-    }, [swrResponse]),
-  };
-};
-
+import type { IThreadRelationHasId } from '../../interfaces/thread-relation';
 
 export const useSWRxAiAssistants = (): SWRResponse<AccessibleAiAssistantsHasId, Error> => {
   return useSWRImmutable<AccessibleAiAssistantsHasId>(
@@ -68,7 +15,6 @@ export const useSWRxAiAssistants = (): SWRResponse<AccessibleAiAssistantsHasId, 
     ([endpoint]) => apiv3Get(endpoint).then(response => response.data.accessibleAiAssistants),
   );
 };
-
 
 /*
 *  useAiAssistantSidebar

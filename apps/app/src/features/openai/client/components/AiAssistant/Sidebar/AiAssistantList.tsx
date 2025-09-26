@@ -12,7 +12,8 @@ import loggerFactory from '~/utils/logger';
 import { AiAssistantShareScope, type AiAssistantHasId } from '../../../../interfaces/ai-assistant';
 import { determineShareScope } from '../../../../utils/determine-share-scope';
 import { deleteAiAssistant, setDefaultAiAssistant } from '../../../services/ai-assistant';
-import { useAiAssistantSidebar, useAiAssistantManagementModal } from '../../../stores/ai-assistant';
+import { useAiAssistantManagementModalActions } from '../../../states/modal/ai-assistant-management';
+import { useAiAssistantSidebar } from '../../../stores/ai-assistant';
 import { getShareScopeIcon } from '../../../utils/get-share-scope-Icon';
 
 import { DeleteAiAssistantModal } from './DeleteAiAssistantModal';
@@ -146,7 +147,7 @@ export const AiAssistantList: React.FC<AiAssistantListProps> = ({
   const { t } = useTranslation();
   const { openChat } = useAiAssistantSidebar();
   const currentUser = useCurrentUser();
-  const { open: openAiAssistantManagementModal } = useAiAssistantManagementModal();
+  const { open: openAiAssistantManagementModal } = useAiAssistantManagementModalActions();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
 

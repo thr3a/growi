@@ -17,7 +17,10 @@ import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 
 import { type SelectablePage, isSelectablePage } from '../../../../interfaces/selectable-page';
 import { useSelectedPages } from '../../../services/use-selected-pages';
-import { AiAssistantManagementModalPageMode, useAiAssistantManagementModal } from '../../../stores/ai-assistant';
+import {
+  AiAssistantManagementModalPageMode,
+  useAiAssistantManagementModalStatus, useAiAssistantManagementModalActions,
+} from '../../../states/modal/ai-assistant-management';
 
 import { AiAssistantManagementHeader } from './AiAssistantManagementHeader';
 import { SelectablePageList } from './SelectablePageList';
@@ -90,7 +93,8 @@ export const AiAssistantManagementPageTreeSelection = (props: Props): JSX.Elemen
   const { baseSelectedPages, updateBaseSelectedPages } = props;
 
   const { t } = useTranslation();
-  const { data: aiAssistantManagementModalData, changePageMode } = useAiAssistantManagementModal();
+  const aiAssistantManagementModalData = useAiAssistantManagementModalStatus();
+  const { changePageMode } = useAiAssistantManagementModalActions();
   const isNewAiAssistant = aiAssistantManagementModalData?.aiAssistantData == null;
 
   const {
