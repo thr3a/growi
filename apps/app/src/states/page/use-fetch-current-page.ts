@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import {
   type IPagePopulatedToShowRevision,
   isIPageNotFoundInfo,
@@ -8,10 +9,10 @@ import { isPermalink } from '@growi/core/dist/utils/page-path-utils';
 import { removeHeadingSlash } from '@growi/core/dist/utils/path-utils';
 import { useAtomValue } from 'jotai';
 import { useAtomCallback } from 'jotai/utils';
-import { useCallback } from 'react';
 
 import { apiv3Get } from '~/client/util/apiv3-client';
 import loggerFactory from '~/utils/logger';
+
 import {
   currentPageDataAtom,
   currentPageIdAtom,

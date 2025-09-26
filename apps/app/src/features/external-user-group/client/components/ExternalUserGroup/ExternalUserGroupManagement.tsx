@@ -1,10 +1,11 @@
+import type { FC } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { IGrantedGroup } from '@growi/core';
 import { GroupType, getIdForRef } from '@growi/core';
 import { useAtomValue } from 'jotai';
-import type { FC } from 'react';
-import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TabContent, TabPane } from 'reactstrap';
+
 import { UserGroupDeleteModal } from '~/client/components/Admin/UserGroup/UserGroupDeleteModal';
 import { UserGroupModal } from '~/client/components/Admin/UserGroup/UserGroupModal';
 import { UserGroupTable } from '~/client/components/Admin/UserGroup/UserGroupTable';
@@ -21,7 +22,6 @@ import {
   useSWRxExternalUserGroupList,
   useSWRxExternalUserGroupRelationList,
 } from '../../stores/external-user-group';
-
 import { KeycloakGroupManagement } from './KeycloakGroupManagement';
 import { LdapGroupManagement } from './LdapGroupManagement';
 

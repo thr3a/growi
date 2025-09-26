@@ -11,7 +11,6 @@ import {
 } from '../../interfaces/page-bulk-export';
 import type { PageBulkExportJobDocument } from '../models/page-bulk-export-job';
 import PageBulkExportJob from '../models/page-bulk-export-job';
-
 import { pageBulkExportJobCronService } from './page-bulk-export-job-cron';
 
 const logger = loggerFactory(

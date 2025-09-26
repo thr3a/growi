@@ -1,9 +1,9 @@
-import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { type RefObject, useCallback, useEffect, useState } from 'react';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
 import type { HtmlElementNode } from 'rehype-toc';
+
 import type { generateTocOptions } from '~/client/services/renderer/renderer';
 import type { RendererOptions } from '~/interfaces/renderer-options';
-import type { RendererConfigExt } from '~/interfaces/services/renderer';
 import { useCurrentPagePath } from '~/states/page';
 import { useRendererConfig } from '~/states/server-configurations';
 import { useNextThemes } from '~/stores-universal/use-next-themes';

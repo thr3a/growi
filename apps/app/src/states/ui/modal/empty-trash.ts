@@ -1,6 +1,6 @@
+import { useCallback } from 'react';
 import type { IPageToDeleteWithMeta } from '@growi/core';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { useCallback } from 'react';
 
 type IEmptyTrashModalOption = {
   onEmptiedTrash?: () => void;

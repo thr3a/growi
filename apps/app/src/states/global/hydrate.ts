@@ -1,5 +1,7 @@
 import { useHydrateAtoms } from 'jotai/utils';
+
 import type { CommonEachProps, CommonInitialProps } from '~/pages/common-props';
+
 import { _atomsForHydration } from './global';
 
 const {

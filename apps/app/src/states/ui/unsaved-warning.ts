@@ -1,6 +1,6 @@
-import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { useRouter } from 'next/router';
 import { useCallback, useLayoutEffect } from 'react';
+import { useRouter } from 'next/router';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
 
 // Type definitions
 type CommentEditorDirtyMapData = Map<string, boolean>;

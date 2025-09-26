@@ -1,5 +1,6 @@
 import { PageGrant } from '@growi/core/dist/interfaces';
 import { atom, useAtom } from 'jotai';
+
 import type { IPageSelectedGrant } from '~/interfaces/page';
 
 /**

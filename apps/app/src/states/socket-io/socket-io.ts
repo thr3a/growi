@@ -1,6 +1,6 @@
+import { useCallback, useEffect } from 'react';
 import { GLOBAL_SOCKET_NS } from '@growi/core/dist/swr';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { useCallback, useEffect } from 'react';
 import type { Socket } from 'socket.io-client';
 
 import { SocketEventName } from '~/interfaces/websocket';

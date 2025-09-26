@@ -21,7 +21,11 @@ export const SearchModalTriggerinput: React.FC<Props> = (props: Props) => {
       <span className="text-secondary material-symbols-outlined fs-4 me-2">
         search
       </span>
-      <form className="w-100 position-relative" onClick={inputClickHandler}>
+      <form
+        className="w-100 position-relative"
+        onClick={inputClickHandler}
+        onKeyDown={inputClickHandler}
+      >
         <input
           className="form-control"
           type="input"

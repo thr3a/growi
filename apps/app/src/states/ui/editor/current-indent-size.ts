@@ -1,4 +1,5 @@
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+
 import { defaultIndentSizeAtom } from '~/states/server-configurations';
 
 // Current indent size state - can be undefined to use default

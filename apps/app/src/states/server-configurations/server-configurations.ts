@@ -1,6 +1,6 @@
 import { atom, useAtomValue } from 'jotai';
-import type { SupportedActionType } from '~/interfaces/activity';
 
+import type { SupportedActionType } from '~/interfaces/activity';
 import type { RendererConfig } from '~/interfaces/services/renderer';
 
 /**
