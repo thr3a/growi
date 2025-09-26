@@ -439,7 +439,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
             autoHide
           >
             {!isEditorAssistant && threadData?.title && (
-              <div className="thread-title-sticky pt-2 px-3">
+              <div className="thread-title-sticky position-sticky top-0 py-2 px-3">
                 <div className="d-flex align-items-center gap-2">
                   <button
                     type="button"
@@ -494,7 +494,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
           </SimpleBar>
         </div>
 
-        <div className="position-sticky bottom-0 bg-body z-2 p-3 border-top">
+        <div className="position-sticky bottom-0 bg-body z-2 p-3">
           <form onSubmit={form.handleSubmit(submit)} className="flex-fill vstack gap-1">
             <Controller
               name="input"
