@@ -38,13 +38,13 @@ import {
   defaultIndentSizeAtom,
   isEnabledAttachTitleHeaderAtom,
   isIndentSizeForcedAtom,
+  useAcceptedUploadFileType,
 } from '~/states/server-configurations';
 import {
   useCurrentIndentSize, useCurrentIndentSizeActions,
   useEditorMode, EditorMode, useEditingMarkdown, useSelectedGrant,
   useWaitingSaveProcessingActions,
 } from '~/states/ui/editor';
-import { useAcceptedUploadFileType } from '~/stores-universal/context';
 import { useNextThemes } from '~/stores-universal/use-next-themes';
 import {
   useReservedNextCaretLine,
@@ -115,7 +115,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   const currentIndentSize = useCurrentIndentSize();
   const { mutate: mutateCurrentIndentSize } = useCurrentIndentSizeActions();
   const defaultIndentSize = useAtomValue(defaultIndentSizeAtom);
-  const { data: acceptedUploadFileType } = useAcceptedUploadFileType();
+  const acceptedUploadFileType = useAcceptedUploadFileType();
   const { data: editorSettings } = useEditorSettings();
   const { mutate: mutateIsGrantNormalized } = useSWRxCurrentGrantData(currentPage?._id);
   const user = useCurrentUser();

@@ -20,9 +20,8 @@ import { uploadAttachments } from '~/client/services/upload-attachments';
 import { toastError } from '~/client/util/toastr';
 import { useCurrentUser } from '~/states/global';
 import { useCurrentPagePath } from '~/states/page';
-import { isSlackConfiguredAtom } from '~/states/server-configurations';
+import { isSlackConfiguredAtom, useAcceptedUploadFileType } from '~/states/server-configurations';
 import { useCommentEditorsDirtyMap } from '~/states/ui/unsaved-warning';
-import { useAcceptedUploadFileType } from '~/stores-universal/context';
 import { useNextThemes } from '~/stores-universal/use-next-themes';
 import { useSWRxPageComment } from '~/stores/comment';
 import {
@@ -81,7 +80,7 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
   const currentPagePath = useCurrentPagePath();
   const { update: updateComment, post: postComment } = useSWRxPageComment(pageId);
   const { data: isSlackEnabled, mutate: mutateIsSlackEnabled } = useIsSlackEnabled();
-  const { data: acceptedUploadFileType } = useAcceptedUploadFileType();
+  const acceptedUploadFileType = useAcceptedUploadFileType();
   const { data: slackChannelsData } = useSWRxSlackChannels(currentPagePath);
   const isSlackConfigured = useAtomValue(isSlackConfiguredAtom);
   const { data: editorSettings } = useEditorSettings();
