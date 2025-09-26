@@ -55,7 +55,7 @@ import {
 } from '~/stores/page';
 import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
 import { usePreviewOptions } from '~/stores/renderer';
-import { useEditingClients } from '~/stores/use-editing-clients';
+import { useEditingClientsActions } from '~/states/ui/editor/editing-clients';
 import loggerFactory from '~/utils/logger';
 
 import { EditorNavbar } from './EditorNavbar';
@@ -119,7 +119,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   const { data: editorSettings } = useEditorSettings();
   const { mutate: mutateIsGrantNormalized } = useSWRxCurrentGrantData(currentPage?._id);
   const user = useCurrentUser();
-  const { mutate: mutateEditingUsers } = useEditingClients();
+  const { mutate: mutateEditingUsers } = useEditingClientsActions();
   const onConflict = useConflictResolver();
   const { data: reservedNextCaretLine, mutate: mutateReservedNextCaretLine } = useReservedNextCaretLine();
   const isEnableUnifiedMergeView = useIsEnableUnifiedMergeView();
