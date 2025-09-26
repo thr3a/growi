@@ -28,7 +28,7 @@ const PrivateLegacyPage: NextPage<Props> = (props: Props) => {
   const router = useRouter();
   const { t } = useTranslation();
 
-  const PrivateLegacyPages = dynamic(() => import('~/client/components/PrivateLegacyPages'), { ssr: false });
+  const PrivateLegacyPages = dynamic(() => import('~/features/search/client/components/PrivateLegacyPages'), { ssr: false });
 
   // clear the cache for the current page
   //  in order to fix https://redmine.weseek.co.jp/issues/135811

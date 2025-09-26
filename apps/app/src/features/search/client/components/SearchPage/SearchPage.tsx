@@ -1,67 +1,83 @@
-import React, {
-  useCallback, useMemo, useRef, useState, type JSX,
-} from 'react';
-
+import React, { type JSX, useCallback, useMemo, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { useTranslation } from 'next-i18next';
 
-import type { ISelectableAll, ISelectableAndIndeterminatable } from '~/client/interfaces/selectable-all';
+import { NotAvailableForGuest } from '~/client/components/NotAvailableForGuest';
+import { NotAvailableForReadOnlyUser } from '~/client/components/NotAvailableForReadOnlyUser';
+import PaginationWrapper from '~/client/components/PaginationWrapper';
+import type {
+  ISelectableAll,
+  ISelectableAndIndeterminatable,
+} from '~/client/interfaces/selectable-all';
 import { useKeywordManager } from '~/client/services/search-operation';
 import type { IFormattedSearchResult } from '~/interfaces/search';
 import { showPageLimitationLAtom } from '~/states/server-configurations';
-import { type ISearchConditions, type ISearchConfigurations, useSWRxSearch } from '~/stores/search';
+import {
+  type ISearchConditions,
+  type ISearchConfigurations,
+  useSWRxSearch,
+} from '~/stores/search';
 
-import { NotAvailableForGuest } from './NotAvailableForGuest';
-import { NotAvailableForReadOnlyUser } from './NotAvailableForReadOnlyUser';
-import PaginationWrapper from './PaginationWrapper';
-import { OperateAllControl } from './SearchPage/OperateAllControl';
-import SearchControl from './SearchPage/SearchControl';
-import { type IReturnSelectedPageIds, SearchPageBase, usePageDeleteModalForBulkDeletion } from './SearchPage/SearchPageBase';
+import { OperateAllControl } from './OperateAllControl';
+import SearchControl from './SearchControl';
+import type { IReturnSelectedPageIds } from './SearchPageBase';
+import {
+  SearchPageBase,
+  usePageDeleteModalForBulkDeletion,
+} from './SearchPageBase';
 
 import styles from './SearchPage.module.scss';
 
 // TODO: replace with "customize:showPageLimitationS"
 const INITIAL_PAGIONG_SIZE = 20;
 
-
 /**
  * SearchResultListHead
  */
 
 type SearchResultListHeadProps = {
-  searchResult: IFormattedSearchResult,
-  pagingSize: number,
-  onPagingSizeChanged: (size: number) => void,
-}
+  searchResult: IFormattedSearchResult;
+  pagingSize: number;
+  onPagingSizeChanged: (size: number) => void;
+};
 
-const SearchResultListHead = React.memo((props: SearchResultListHeadProps): JSX.Element => {
-  const { t } = useTranslation();
+const SearchResultListHead = React.memo(
+  (props: SearchResultListHeadProps): JSX.Element => {
+    const { t } = useTranslation();
 
-  const {
-    searchResult, // pagingSize, onPagingSizeChanged,
-  } = props;
+    const {
+      searchResult, // pagingSize, onPagingSizeChanged,
+    } = props;
 
-  const { took, total } = searchResult.meta;
+    const { took, total } = searchResult.meta;
 
-  if (total === 0) {
+    if (total === 0) {
+      return (
+        <div className="d-flex justify-content-center h2 text-muted my-5">
+          0 {t('search_result.page_number_unit')}
+        </div>
+      );
+    }
+
     return (
-      <div className="d-flex justify-content-center h2 text-muted my-5">
-        0 {t('search_result.page_number_unit')}
-      </div>
-    );
-  }
-
-  return (
-    <div className="d-flex align-items-center justify-content-between">
-      <div className="text-nowrap">
-        <span className="ms-3 fw-bold">{total} {t('search_result.hit_number_unit', 'hit')}</span>
-        { took != null && (
-          // blackout 70px rectangle in VRT
-          (<span data-vrt-blackout className="ms-3 text-muted d-inline-block" style={{ minWidth: '70px' }}>({took}ms)</span>)
-        ) }
-      </div>
-      {/* TODO: infinite scroll for search result */}
-      {/* <div className="input-group flex-nowrap search-result-select-group ms-auto d-md-flex d-none">
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="text-nowrap">
+          <span className="ms-3 fw-bold">
+            {total} {t('search_result.hit_number_unit', 'hit')}
+          </span>
+          {took != null && (
+            // blackout 70px rectangle in VRT
+            <span
+              data-vrt-blackout
+              className="ms-3 text-muted d-inline-block"
+              style={{ minWidth: '70px' }}
+            >
+              ({took}ms)
+            </span>
+          )}
+        </div>
+        {/* TODO: infinite scroll for search result */}
+        {/* <div className="input-group flex-nowrap search-result-select-group ms-auto d-md-flex d-none">
         <div>
           <label className="form-label input-group-text text-muted" htmlFor="inputGroupSelect01">{t('search_result.number_of_list_to_display')}</label>
         </div>
@@ -76,12 +92,12 @@ const SearchResultListHead = React.memo((props: SearchResultListHeadProps): JSX.
           })}
         </select>
       </div> */}
-    </div>
-  );
-});
+      </div>
+    );
+  },
+);
 
 SearchResultListHead.displayName = 'SearchResultListHead';
-
 
 export const SearchPage = (): JSX.Element => {
   const { t } = useTranslation();
@@ -90,13 +106,21 @@ export const SearchPage = (): JSX.Element => {
   const { data: keyword, pushState } = useKeywordManager();
 
   const [offset, setOffset] = useState<number>(0);
-  const [limit, setLimit] = useState<number>(showPageLimitationL ?? INITIAL_PAGIONG_SIZE);
-  const [configurationsByControl, setConfigurationsByControl] = useState<Partial<ISearchConfigurations>>({});
+  const [limit, setLimit] = useState<number>(
+    showPageLimitationL ?? INITIAL_PAGIONG_SIZE,
+  );
+  const [configurationsByControl, setConfigurationsByControl] = useState<
+    Partial<ISearchConfigurations>
+  >({});
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [selectedCount, setSelectedCount] = useState(0);
 
-  const selectAllControlRef = useRef<ISelectableAndIndeterminatable|null>(null);
-  const searchPageBaseRef = useRef<ISelectableAll & IReturnSelectedPageIds|null>(null);
+  const selectAllControlRef = useRef<ISelectableAndIndeterminatable | null>(
+    null,
+  );
+  const searchPageBaseRef = useRef<
+    (ISelectableAll & IReturnSelectedPageIds) | null
+  >(null);
 
   const { data, conditions, mutate } = useSWRxSearch(keyword ?? '', null, {
     ...configurationsByControl,
@@ -104,14 +128,17 @@ export const SearchPage = (): JSX.Element => {
     limit,
   });
 
-  const searchInvokedHandler = useCallback((newKeyword: string, newConfigurations: Partial<ISearchConfigurations>) => {
-    setOffset(0);
-    setConfigurationsByControl(newConfigurations);
+  const searchInvokedHandler = useCallback(
+    (newKeyword: string, newConfigurations: Partial<ISearchConfigurations>) => {
+      setOffset(0);
+      setConfigurationsByControl(newConfigurations);
 
-    pushState(newKeyword);
+      pushState(newKeyword);
 
-    mutate();
-  }, [mutate, pushState]);
+      mutate();
+    },
+    [mutate, pushState],
+  );
 
   const selectAllCheckboxChangedHandler = useCallback((isChecked: boolean) => {
     const instance = searchPageBaseRef.current;
@@ -122,8 +149,7 @@ export const SearchPage = (): JSX.Element => {
 
     if (isChecked) {
       instance.selectAll();
-    }
-    else {
+    } else {
       instance.deselectAll();
     }
 
@@ -131,38 +157,45 @@ export const SearchPage = (): JSX.Element => {
     setSelectedCount(instance.getSelectedPageIds?.().size ?? 0);
   }, []);
 
-  const selectedPagesByCheckboxesChangedHandler = useCallback((selectedCount: number, totalCount: number) => {
-    const instance = selectAllControlRef.current;
+  const selectedPagesByCheckboxesChangedHandler = useCallback(
+    (selectedCount: number, totalCount: number) => {
+      const instance = selectAllControlRef.current;
 
-    if (instance == null) {
-      return;
-    }
+      if (instance == null) {
+        return;
+      }
 
-    if (selectedCount === 0) {
-      instance.deselect();
-    }
-    else if (selectedCount === totalCount) {
-      instance.select();
-    }
-    else {
-      setIsCollapsed(true);
-      instance.setIndeterminate();
-    }
+      if (selectedCount === 0) {
+        instance.deselect();
+      } else if (selectedCount === totalCount) {
+        instance.select();
+      } else {
+        setIsCollapsed(true);
+        instance.setIndeterminate();
+      }
 
-    // update selected count
-    setSelectedCount(selectedCount);
-  }, []);
+      // update selected count
+      setSelectedCount(selectedCount);
+    },
+    [],
+  );
 
-  const pagingSizeChangedHandler = useCallback((pagingSize: number) => {
-    setOffset(0);
-    setLimit(pagingSize);
-    mutate();
-  }, [mutate]);
+  const pagingSizeChangedHandler = useCallback(
+    (pagingSize: number) => {
+      setOffset(0);
+      setLimit(pagingSize);
+      mutate();
+    },
+    [mutate],
+  );
 
-  const pagingNumberChangedHandler = useCallback((activePage: number) => {
-    setOffset((activePage - 1) * limit);
-    mutate();
-  }, [limit, mutate]);
+  const pagingNumberChangedHandler = useCallback(
+    (activePage: number) => {
+      setOffset((activePage - 1) * limit);
+      mutate();
+    },
+    [limit, mutate],
+  );
 
   const initialSearchConditions: Partial<ISearchConditions> = useMemo(() => {
     return {
@@ -172,7 +205,11 @@ export const SearchPage = (): JSX.Element => {
   }, [keyword]);
 
   // for bulk deletion
-  const deleteAllButtonClickedHandler = usePageDeleteModalForBulkDeletion(data, searchPageBaseRef, () => mutate());
+  const deleteAllButtonClickedHandler = usePageDeleteModalForBulkDeletion(
+    data,
+    searchPageBaseRef,
+    () => mutate(),
+  );
 
   const hitsCount = data?.meta.hitsCount;
 
@@ -184,10 +221,16 @@ export const SearchPage = (): JSX.Element => {
             type="button"
             className={`${isCollapsed ? 'active' : ''} btn btn-muted-danger d-flex align-items-center ms-2`}
             aria-expanded="false"
-            onClick={() => { setIsCollapsed(!isCollapsed) }}
+            onClick={() => {
+              setIsCollapsed(!isCollapsed);
+            }}
           >
             <span className="material-symbols-outlined fs-5">delete</span>
-            <span className={`material-symbols-outlined me-1 ${isCollapsed ? 'rotate-180' : ''}`}>keyboard_arrow_down</span>
+            <span
+              className={`material-symbols-outlined me-1 ${isCollapsed ? 'rotate-180' : ''}`}
+            >
+              keyboard_arrow_down
+            </span>
           </button>
         </NotAvailableForReadOnlyUser>
       </NotAvailableForGuest>
@@ -222,14 +265,20 @@ export const SearchPage = (): JSX.Element => {
               disabled={selectedCount === 0}
               onClick={deleteAllButtonClickedHandler}
             >
-              <span className="material-symbols-outlined fs-5">delete</span>{t('search_result.delete_selected_pages')}
+              <span className="material-symbols-outlined fs-5">delete</span>
+              {t('search_result.delete_selected_pages')}
             </button>
           </div>
         </NotAvailableForReadOnlyUser>
       </NotAvailableForGuest>
     );
-  }, [deleteAllButtonClickedHandler, hitsCount, selectAllCheckboxChangedHandler, selectedCount, t]);
-
+  }, [
+    deleteAllButtonClickedHandler,
+    hitsCount,
+    selectAllCheckboxChangedHandler,
+    selectedCount,
+    t,
+  ]);
 
   const searchControl = useMemo(() => {
     return (
@@ -243,7 +292,13 @@ export const SearchPage = (): JSX.Element => {
         isCollapsed={isCollapsed}
       />
     );
-  }, [extraControls, collapseContents, initialSearchConditions, isCollapsed, searchInvokedHandler]);
+  }, [
+    extraControls,
+    collapseContents,
+    initialSearchConditions,
+    isCollapsed,
+    searchInvokedHandler,
+  ]);
 
   const searchResultListHead = useMemo(() => {
     if (data == null) {
@@ -283,7 +338,9 @@ export const SearchPage = (): JSX.Element => {
       ref={searchPageBaseRef}
       pages={data?.data}
       searchingKeyword={keyword}
-      onSelectedPagesByCheckboxesChanged={selectedPagesByCheckboxesChangedHandler}
+      onSelectedPagesByCheckboxesChanged={
+        selectedPagesByCheckboxesChangedHandler
+      }
       // Components
       searchControl={searchControl}
       searchResultListHead={searchResultListHead}

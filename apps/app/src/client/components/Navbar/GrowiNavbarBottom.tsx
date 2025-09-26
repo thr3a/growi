@@ -1,7 +1,7 @@
 import React, { useCallback, type JSX } from 'react';
 
 import { GroundGlassBar } from '~/components/Navbar/GroundGlassBar';
-import { useSearchModal } from '~/features/search/client/stores/search';
+import { useSearchModalActions } from '~/features/search/client/states/modal/search';
 import { useIsSearchPage } from '~/states/context';
 import { useCurrentPagePath } from '~/states/page';
 import { usePageCreateModalActions } from '~/states/ui/modal/page-create';
@@ -16,7 +16,7 @@ export const GrowiNavbarBottom = (): JSX.Element => {
   const { open: openCreateModal } = usePageCreateModalActions();
   const currentPagePath = useCurrentPagePath();
   const isSearchPage = useIsSearchPage();
-  const { open: openSearchModal } = useSearchModal();
+  const { open: openSearchModal } = useSearchModalActions();
 
   const searchButtonClickHandler = useCallback(() => {
     openSearchModal();

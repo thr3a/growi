@@ -1,51 +1,74 @@
 import type { FC, JSX } from 'react';
-import React, {
-  useCallback, useEffect, useRef,
-} from 'react';
-
-import { getIdStringForRef } from '@growi/core';
-import type { IPageToDeleteWithMeta, IPageToRenameWithMeta } from '@growi/core';
-import { useTranslation } from 'next-i18next';
+import { useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import type { IPageToDeleteWithMeta, IPageToRenameWithMeta } from '@growi/core';
+import { getIdStringForRef } from '@growi/core';
+import { useTranslation } from 'next-i18next';
 import { animateScroll } from 'react-scroll';
 import { DropdownItem } from 'reactstrap';
 import { debounce } from 'throttle-debounce';
 
+import type {
+  AdditionalMenuItemsRendererProps,
+  ForceHideMenuItems,
+} from '~/client/components/Common/Dropdown/PageItemControl';
+import type { RevisionLoaderProps } from '~/client/components/Page/RevisionLoader';
 import { exportAsMarkdown } from '~/client/services/page-operation';
 import { toastSuccess } from '~/client/util/toastr';
 import { PagePathNav } from '~/components/Common/PagePathNav';
 import type { IPageWithSearchMeta } from '~/interfaces/search';
-import type { OnDuplicatedFunction, OnRenamedFunction, OnDeletedFunction } from '~/interfaces/ui';
+import type {
+  OnDeletedFunction,
+  OnDuplicatedFunction,
+  OnRenamedFunction,
+} from '~/interfaces/ui';
 import { useShouldExpandContent } from '~/services/layout/use-should-expand-content';
 import { useCurrentUser } from '~/states/global';
 import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
 import { usePageDuplicateModalActions } from '~/states/ui/modal/page-duplicate';
 import { usePageRenameModalActions } from '~/states/ui/modal/page-rename';
-import { mutatePageList, mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
+import {
+  mutatePageList,
+  mutatePageTree,
+  mutateRecentlyUpdated,
+} from '~/stores/page-listing';
 import { useSearchResultOptions } from '~/stores/renderer';
 import { mutateSearching } from '~/stores/search';
-
-import type { AdditionalMenuItemsRendererProps, ForceHideMenuItems } from '../Common/Dropdown/PageItemControl';
-import type { RevisionLoaderProps } from '../Page/RevisionLoader';
 
 import styles from './SearchResultContent.module.scss';
 
 const moduleClass = styles['search-result-content'];
 const _fluidLayoutClass = styles['fluid-layout'];
 
-
-const PageControls = dynamic(() => import('../PageControls').then(mod => mod.PageControls), { ssr: false });
-const RevisionLoader = dynamic<RevisionLoaderProps>(() => import('../Page/RevisionLoader').then(mod => mod.RevisionLoader), { ssr: false });
-const PageComment = dynamic(() => import('../PageComment').then(mod => mod.PageComment), { ssr: false });
+const PageControls = dynamic(
+  () =>
+    import('~/client/components/PageControls').then((mod) => mod.PageControls),
+  { ssr: false },
+);
+const RevisionLoader = dynamic<RevisionLoaderProps>(
+  () =>
+    import('~/client/components/Page/RevisionLoader').then(
+      (mod) => mod.RevisionLoader,
+    ),
+  { ssr: false },
+);
+const PageComment = dynamic(
+  () =>
+    import('~/client/components/PageComment').then((mod) => mod.PageComment),
+  { ssr: false },
+);
 const PageContentFooter = dynamic(
-  () => import('~/components/PageView/PageContentFooter').then(mod => mod.PageContentFooter),
+  () =>
+    import('~/components/PageView/PageContentFooter').then(
+      (mod) => mod.PageContentFooter,
+    ),
   { ssr: false },
 );
 
 type AdditionalMenuItemsProps = AdditionalMenuItemsRendererProps & {
-  pageId: string,
-  revisionId: string,
-}
+  pageId: string;
+  revisionId: string;
+};
 
 const AdditionalMenuItems = (props: AdditionalMenuItemsProps): JSX.Element => {
   const { t } = useTranslation();
@@ -58,7 +81,9 @@ const AdditionalMenuItems = (props: AdditionalMenuItemsProps): JSX.Element => {
       onClick={() => exportAsMarkdown(pageId, revisionId, 'md')}
       className="grw-page-control-dropdown-item"
     >
-      <span className="material-symbols-outlined me-1 grw-page-control-dropdown-icon">cloud_download</span>
+      <span className="material-symbols-outlined me-1 grw-page-control-dropdown-icon">
+        cloud_download
+      </span>
       {t('page_export.export_page_markdown')}
     </DropdownItem>
   );
@@ -67,31 +92,38 @@ const AdditionalMenuItems = (props: AdditionalMenuItemsProps): JSX.Element => {
 const SCROLL_OFFSET_TOP = 30;
 const MUTATION_OBSERVER_CONFIG = { childList: true, subtree: true }; // omit 'subtree: true'
 
-type Props ={
-  pageWithMeta : IPageWithSearchMeta,
-  highlightKeywords?: string[],
-  showPageControlDropdown?: boolean,
-  forceHideMenuItems?: ForceHideMenuItems,
-}
+type Props = {
+  pageWithMeta: IPageWithSearchMeta;
+  highlightKeywords?: string[];
+  showPageControlDropdown?: boolean;
+  forceHideMenuItems?: ForceHideMenuItems;
+};
 
 const scrollToFirstHighlightedKeyword = (scrollElement: HTMLElement): void => {
   // use querySelector to intentionally get the first element found
-  const toElem = scrollElement.querySelector('.highlighted-keyword') as HTMLElement | null;
+  const toElem = scrollElement.querySelector(
+    '.highlighted-keyword',
+  ) as HTMLElement | null;
   if (toElem == null) {
     return;
   }
 
-  const distance = toElem.getBoundingClientRect().top - scrollElement.getBoundingClientRect().top - SCROLL_OFFSET_TOP;
+  const distance =
+    toElem.getBoundingClientRect().top -
+    scrollElement.getBoundingClientRect().top -
+    SCROLL_OFFSET_TOP;
   animateScroll.scrollMore(distance, {
     containerId: scrollElement.id,
     duration: 200,
   });
 };
-const scrollToFirstHighlightedKeywordDebounced = debounce(500, scrollToFirstHighlightedKeyword);
+const scrollToFirstHighlightedKeywordDebounced = debounce(
+  500,
+  scrollToFirstHighlightedKeyword,
+);
 
 export const SearchResultContent: FC<Props> = (props: Props) => {
-
-  const scrollElementRef = useRef<HTMLDivElement|null>(null);
+  const scrollElementRef = useRef<HTMLDivElement | null>(null);
 
   // ***************************  Auto Scroll  ***************************
   useEffect(() => {
@@ -124,67 +156,89 @@ export const SearchResultContent: FC<Props> = (props: Props) => {
   const { open: openDuplicateModal } = usePageDuplicateModalActions();
   const { open: openRenameModal } = usePageRenameModalActions();
   const { open: openDeleteModal } = usePageDeleteModalActions();
-  const { data: rendererOptions } = useSearchResultOptions(pageWithMeta.data.path, highlightKeywords);
+  const { data: rendererOptions } = useSearchResultOptions(
+    pageWithMeta.data.path,
+    highlightKeywords,
+  );
   const currentUser = useCurrentUser();
 
   const shouldExpandContent = useShouldExpandContent(page);
 
-  const duplicateItemClickedHandler = useCallback(async(pageToDuplicate) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const duplicatedHandler: OnDuplicatedFunction = (fromPath, toPath) => {
-      toastSuccess(t('duplicated_pages', { fromPath }));
+  const duplicateItemClickedHandler = useCallback(
+    async (pageToDuplicate) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const duplicatedHandler: OnDuplicatedFunction = (fromPath, toPath) => {
+        toastSuccess(t('duplicated_pages', { fromPath }));
 
+        mutatePageTree();
+        mutateRecentlyUpdated();
+        mutateSearching();
+        mutatePageList();
+      };
+      openDuplicateModal(pageToDuplicate, { onDuplicated: duplicatedHandler });
+    },
+    [openDuplicateModal, t],
+  );
+
+  const renameItemClickedHandler = useCallback(
+    (pageToRename: IPageToRenameWithMeta) => {
+      const renamedHandler: OnRenamedFunction = (path) => {
+        toastSuccess(t('renamed_pages', { path }));
+
+        mutatePageTree();
+        mutateRecentlyUpdated();
+        mutateSearching();
+        mutatePageList();
+      };
+      openRenameModal(pageToRename, { onRenamed: renamedHandler });
+    },
+    [openRenameModal, t],
+  );
+
+  const onDeletedHandler: OnDeletedFunction = useCallback(
+    (pathOrPathsToDelete, isRecursively, isCompletely) => {
+      if (typeof pathOrPathsToDelete !== 'string') {
+        return;
+      }
+      const path = pathOrPathsToDelete;
+
+      if (isCompletely) {
+        toastSuccess(t('deleted_pages_completely', { path }));
+      } else {
+        toastSuccess(t('deleted_pages', { path }));
+      }
       mutatePageTree();
       mutateRecentlyUpdated();
       mutateSearching();
       mutatePageList();
-    };
-    openDuplicateModal(pageToDuplicate, { onDuplicated: duplicatedHandler });
-  }, [openDuplicateModal, t]);
+    },
+    [t],
+  );
 
-  const renameItemClickedHandler = useCallback((pageToRename: IPageToRenameWithMeta) => {
-    const renamedHandler: OnRenamedFunction = (path) => {
-      toastSuccess(t('renamed_pages', { path }));
-
-      mutatePageTree();
-      mutateRecentlyUpdated();
-      mutateSearching();
-      mutatePageList();
-    };
-    openRenameModal(pageToRename, { onRenamed: renamedHandler });
-  }, [openRenameModal, t]);
-
-  const onDeletedHandler: OnDeletedFunction = useCallback((pathOrPathsToDelete, isRecursively, isCompletely) => {
-    if (typeof pathOrPathsToDelete !== 'string') {
-      return;
-    }
-    const path = pathOrPathsToDelete;
-
-    if (isCompletely) {
-      toastSuccess(t('deleted_pages_completely', { path }));
-    }
-    else {
-      toastSuccess(t('deleted_pages', { path }));
-    }
-    mutatePageTree();
-    mutateRecentlyUpdated();
-    mutateSearching();
-    mutatePageList();
-  }, [t]);
-
-  const deleteItemClickedHandler = useCallback((pageToDelete: IPageToDeleteWithMeta) => {
-    openDeleteModal([pageToDelete], { onDeleted: onDeletedHandler });
-  }, [onDeletedHandler, openDeleteModal]);
+  const deleteItemClickedHandler = useCallback(
+    (pageToDelete: IPageToDeleteWithMeta) => {
+      openDeleteModal([pageToDelete], { onDeleted: onDeletedHandler });
+    },
+    [onDeletedHandler, openDeleteModal],
+  );
 
   const RightComponent = useCallback(() => {
     if (page == null) {
       return <></>;
     }
 
-    const revisionId = page.revision != null ? getIdStringForRef(page.revision) : null;
-    const additionalMenuItemRenderer = revisionId != null
-      ? props => <AdditionalMenuItems {...props} pageId={page._id} revisionId={revisionId} />
-      : undefined;
+    const revisionId =
+      page.revision != null ? getIdStringForRef(page.revision) : null;
+    const additionalMenuItemRenderer =
+      revisionId != null
+        ? (props) => (
+            <AdditionalMenuItems
+              {...props}
+              pageId={page._id}
+              revisionId={revisionId}
+            />
+          )
+        : undefined;
 
     return (
       <div className="d-flex flex-column flex-row-reverse flex px-2 py-1">
@@ -202,8 +256,15 @@ export const SearchResultContent: FC<Props> = (props: Props) => {
         />
       </div>
     );
-  }, [page, shouldExpandContent, showPageControlDropdown, forceHideMenuItems,
-      duplicateItemClickedHandler, renameItemClickedHandler, deleteItemClickedHandler]);
+  }, [
+    page,
+    shouldExpandContent,
+    showPageControlDropdown,
+    forceHideMenuItems,
+    duplicateItemClickedHandler,
+    renameItemClickedHandler,
+    deleteItemClickedHandler,
+  ]);
 
   const fluidLayoutClass = shouldExpandContent ? _fluidLayoutClass : '';
 
@@ -216,7 +277,13 @@ export const SearchResultContent: FC<Props> = (props: Props) => {
       <RightComponent />
 
       <div className="container-lg grw-container-convertible pt-2 pb-2">
-        <PagePathNav pageId={page._id} pagePath={page.path} isWipPage={page.wip} formerLinkClassName="small" latterLinkClassName="fs-3 text-truncate" />
+        <PagePathNav
+          pageId={page._id}
+          pagePath={page.path}
+          isWipPage={page.wip}
+          formerLinkClassName="small"
+          latterLinkClassName="fs-3 text-truncate"
+        />
       </div>
 
       <div
@@ -224,14 +291,14 @@ export const SearchResultContent: FC<Props> = (props: Props) => {
         ref={scrollElementRef}
         className="search-result-content-body-container container-lg grw-container-convertible overflow-y-scroll"
       >
-        { page.revision != null && rendererOptions != null && (
+        {page.revision != null && rendererOptions != null && (
           <RevisionLoader
             rendererOptions={rendererOptions}
             pageId={page._id}
             revisionId={page.revision}
           />
         )}
-        { page.revision != null && (
+        {page.revision != null && (
           <PageComment
             rendererOptions={rendererOptions}
             pageId={page._id}
@@ -242,9 +309,7 @@ export const SearchResultContent: FC<Props> = (props: Props) => {
           />
         )}
 
-        <PageContentFooter
-          page={page}
-        />
+        <PageContentFooter page={page} />
       </div>
     </div>
   );

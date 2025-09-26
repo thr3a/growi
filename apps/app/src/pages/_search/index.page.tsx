@@ -21,7 +21,7 @@ import { useHydrateServerConfigurationAtoms } from './use-hydrate-server-configu
 
 
 const SearchResultLayout = dynamic(() => import('~/components/Layout/SearchResultLayout'), { ssr: false });
-const SearchPage = dynamic(() => import('~/client/components/SearchPage').then(mod => mod.SearchPage), { ssr: false });
+const SearchPage = dynamic(() => import('~/features/search/client/components/SearchPage').then(mod => mod.SearchPage), { ssr: false });
 
 type Props = CommonInitialProps & CommonEachProps & BasicLayoutConfigurationProps & ServerConfigurationProps & RendererConfigProps;
 

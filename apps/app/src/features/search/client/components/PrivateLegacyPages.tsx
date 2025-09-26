@@ -1,17 +1,31 @@
 import React, {
-  useCallback, useMemo, useRef, useState, useEffect, type JSX,
+  type JSX,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react';
-
 import { useGlobalSocket } from '@growi/core/dist/swr';
 import { LoadingSpinner } from '@growi/ui/dist/components';
 import { useTranslation } from 'next-i18next';
 import {
-  UncontrolledButtonDropdown, DropdownToggle, DropdownMenu, DropdownItem, Modal, ModalHeader, ModalBody, ModalFooter,
+  DropdownItem,
+  DropdownMenu,
+  DropdownToggle,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  UncontrolledButtonDropdown,
 } from 'reactstrap';
 
+import { MenuItemType } from '~/client/components/Common/Dropdown/PageItemControl';
+import PaginationWrapper from '~/client/components/PaginationWrapper';
+import { PrivateLegacyPagesMigrationModal } from '~/client/components/PrivateLegacyPagesMigrationModal';
 import type { ISelectableAll, ISelectableAndIndeterminatable } from '~/client/interfaces/selectable-all';
 import { apiv3Post } from '~/client/util/apiv3-client';
-import { toastSuccess, toastError } from '~/client/util/toastr';
+import { toastError, toastSuccess } from '~/client/util/toastr';
 import { V5ConversionErrCode } from '~/interfaces/errors/v5-conversion-error';
 import type { V5MigrationStatus } from '~/interfaces/page-listing-results';
 import type { IFormattedSearchResult } from '~/interfaces/search';
@@ -20,25 +34,21 @@ import { SocketEventName } from '~/interfaces/websocket';
 import { useIsAdmin } from '~/states/context';
 import type { ILegacyPrivatePage } from '~/states/ui/modal/private-legacy-pages-migration';
 import { usePrivateLegacyPagesMigrationModalActions } from '~/states/ui/modal/private-legacy-pages-migration';
-import { mutatePageTree, useSWRxV5MigrationStatus } from '~/stores/page-listing';
 import {
-  useSWRxSearch,
-} from '~/stores/search';
+  mutatePageTree,
+  useSWRxV5MigrationStatus,
+} from '~/stores/page-listing';
+import { useSWRxSearch } from '~/stores/search';
 
-import { MenuItemType } from './Common/Dropdown/PageItemControl';
-import PaginationWrapper from './PaginationWrapper';
-import { PrivateLegacyPagesMigrationModal } from './PrivateLegacyPagesMigrationModal';
 import { OperateAllControl } from './SearchPage/OperateAllControl';
 import SearchControl from './SearchPage/SearchControl';
-import type { IReturnSelectedPageIds } from './SearchPage/SearchPageBase';
-import { SearchPageBase, usePageDeleteModalForBulkDeletion } from './SearchPage/SearchPageBase';
+import { IReturnSelectedPageIds, SearchPageBase, usePageDeleteModalForBulkDeletion } from './SearchPage/SearchPageBase';
 
 
 // TODO: replace with "customize:showPageLimitationS"
 const INITIAL_PAGING_SIZE = 20;
 
 const initQ = '/';
-
 
 /**
  * SearchResultListHead
@@ -81,7 +91,7 @@ const SearchResultListHead = React.memo((props: SearchResultListHeadProps): JSX.
           <h2 className="card-title text-success">{t('private_legacy_pages.nopages_title')}</h2>
           <p className="card-text">
             {t('private_legacy_pages.nopages_desc1')}<br />
-            {/* eslint-disable-next-line react/no-danger */}
+            {/** biome-ignore lint/security/noDangerouslySetInnerHtml: ignore */}
             <span dangerouslySetInnerHTML={{ __html: t('private_legacy_pages.detail_info') }}></span>
           </p>
         </div>
@@ -120,7 +130,7 @@ const SearchResultListHead = React.memo((props: SearchResultListHeadProps): JSX.
           <h2 className="card-title text-warning">{t('private_legacy_pages.alert_title')}</h2>
           <p className="card-text">
             {t('private_legacy_pages.alert_desc1', { delete_all_selected_page: t('search_result.delete_all_selected_page') })}<br />
-            {/* eslint-disable-next-line react/no-danger */}
+            {/** biome-ignore lint/security/noDangerouslySetInnerHtml: ignore */}
             <span dangerouslySetInnerHTML={{ __html: t('private_legacy_pages.detail_info') }}></span>
           </p>
         </div>
@@ -147,7 +157,7 @@ const ConvertByPathModal = React.memo((props: ConvertByPathModalProps): JSX.Elem
 
   useEffect(() => {
     setChecked(false);
-  }, [props.isOpen]);
+  }, []);
 
   return (
     <Modal size="lg" isOpen={props.isOpen} toggle={props.close}>
@@ -399,6 +409,7 @@ const PrivateLegacyPages = (): JSX.Element => {
 
   const searchResultListHead = useMemo(() => {
     if (data == null) {
+      // biome-ignore lint/complexity/noUselessFragments: ignore
       return <></>;
     }
     return (
@@ -415,6 +426,7 @@ const PrivateLegacyPages = (): JSX.Element => {
   const searchPager = useMemo(() => {
     // when pager is not needed
     if (data == null || data.meta.hitsCount === data.meta.total) {
+      // biome-ignore lint/complexity/noUselessFragments: ignore
       return <></>;
     }
 

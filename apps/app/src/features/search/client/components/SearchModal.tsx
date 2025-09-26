@@ -1,15 +1,17 @@
+import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 import Downshift, {
   type DownshiftState,
   type StateChangeOptions,
 } from 'downshift';
-import { useRouter } from 'next/router';
-import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, ModalBody } from 'reactstrap';
 
 import { isIncludeAiMenthion, removeAiMenthion } from '../../utils/ai';
 import type { DownshiftItem } from '../interfaces/downshift';
-import { useSearchModal } from '../stores/search';
-
+import {
+  useSearchModalActions,
+  useSearchModalStatus,
+} from '../states/modal/search';
 import { SearchForm } from './SearchForm';
 import { SearchHelp } from './SearchHelp';
 import { SearchMethodMenuItem } from './SearchMethodMenuItem';
@@ -19,7 +21,8 @@ const SearchModalSubstance = (): JSX.Element => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isMenthionedToAi, setMenthionedToAi] = useState(false);
 
-  const { data: searchModalData, close: closeSearchModal } = useSearchModal();
+  const searchModalData = useSearchModalStatus();
+  const { close: closeSearchModal } = useSearchModalActions();
   const router = useRouter();
 
   const changeSearchTextHandler = useCallback((searchText: string) => {
@@ -151,7 +154,8 @@ const SearchModalSubstance = (): JSX.Element => {
 };
 
 const SearchModal = (): JSX.Element => {
-  const { data: searchModalData, close: closeSearchModal } = useSearchModal();
+  const searchModalData = useSearchModalStatus();
+  const { close: closeSearchModal } = useSearchModalActions();
 
   // Early return for performance optimization
   if (!searchModalData?.isOpened) {

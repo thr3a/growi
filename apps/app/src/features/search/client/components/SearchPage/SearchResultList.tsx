@@ -1,22 +1,27 @@
 import type { ForwardRefRenderFunction } from 'react';
-import React, {
-  forwardRef, useCallback, useImperativeHandle, useRef,
-} from 'react';
-
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 import {
-  type IPageInfoForListing, type IPageWithMeta, isIPageInfoForListing,
+  type IPageInfoForListing,
+  type IPageWithMeta,
+  isIPageInfoForListing,
 } from '@growi/core/dist/interfaces';
 import { useTranslation } from 'next-i18next';
 
-import type { ISelectable, ISelectableAll } from '~/client/interfaces/selectable-all';
+import type { ForceHideMenuItems } from '~/client/components/Common/Dropdown/PageItemControl';
+import { PageListItemL } from '~/client/components/PageList/PageListItemL';
+import type {
+  ISelectable,
+  ISelectableAll,
+} from '~/client/interfaces/selectable-all';
 import { toastSuccess } from '~/client/util/toastr';
 import type { IPageSearchMeta, IPageWithSearchMeta } from '~/interfaces/search';
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
-import { mutatePageTree, useSWRxPageInfoForList, mutateRecentlyUpdated } from '~/stores/page-listing';
+import {
+  mutatePageTree,
+  mutateRecentlyUpdated,
+  useSWRxPageInfoForList,
+} from '~/stores/page-listing';
 import { mutateSearching } from '~/stores/search';
-
-import type { ForceHideMenuItems } from '../Common/Dropdown/PageItemControl';
-import { PageListItemL } from '../PageList/PageListItemL';
 
 type Props = {
   pages: IPageWithSearchMeta[],

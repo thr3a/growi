@@ -1,20 +1,22 @@
 import type { ChangeEvent, ForwardRefRenderFunction, JSX } from 'react';
 import React, { forwardRef, useImperativeHandle, useRef } from 'react';
-
 import { Input } from 'reactstrap';
 
 import type { ISelectableAndIndeterminatable } from '~/client/interfaces/selectable-all';
 import type { IndeterminateInputElement } from '~/interfaces/indeterminate-input-elm';
 
 type Props = {
-  inputId?: string,
-  inputClassName?: string,
-  isCheckboxDisabled?: boolean,
-  onCheckboxChanged?: (isChecked: boolean) => void,
-  children?: React.ReactNode,
-}
+  inputId?: string;
+  inputClassName?: string;
+  isCheckboxDisabled?: boolean;
+  onCheckboxChanged?: (isChecked: boolean) => void;
+  children?: React.ReactNode;
+};
 
-const OperateAllControlSubstance: ForwardRefRenderFunction<ISelectableAndIndeterminatable, Props> = (props: Props, ref): JSX.Element => {
+const OperateAllControlSubstance: ForwardRefRenderFunction<
+  ISelectableAndIndeterminatable,
+  Props
+> = (props: Props, ref): JSX.Element => {
   const {
     inputId,
     inputClassName = '',
@@ -71,4 +73,6 @@ const OperateAllControlSubstance: ForwardRefRenderFunction<ISelectableAndIndeter
   );
 };
 
-export const OperateAllControl = React.memo(forwardRef(OperateAllControlSubstance));
+export const OperateAllControl = React.memo(
+  forwardRef(OperateAllControlSubstance),
+);

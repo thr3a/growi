@@ -1,27 +1,23 @@
 import type { FC } from 'react';
-import React from 'react';
-
 import { useTranslation } from 'next-i18next';
-import {
-  Modal, ModalHeader, ModalBody,
-} from 'reactstrap';
-
+import { Modal, ModalBody, ModalHeader } from 'reactstrap';
 
 type Props = {
-  isOpen: boolean,
-  includeUserPages: boolean,
-  includeTrashPages: boolean,
-  onClose?: () => void,
-  onIncludeUserPagesSwitched?: (isChecked: boolean) => void,
-  onIncludeTrashPagesSwitched?: (isChecked: boolean) => void,
-}
+  isOpen: boolean;
+  includeUserPages: boolean;
+  includeTrashPages: boolean;
+  onClose?: () => void;
+  onIncludeUserPagesSwitched?: (isChecked: boolean) => void;
+  onIncludeTrashPagesSwitched?: (isChecked: boolean) => void;
+};
 
 const SearchOptionModal: FC<Props> = (props: Props) => {
-
   const { t } = useTranslation('');
 
   const {
-    isOpen, includeUserPages, includeTrashPages,
+    isOpen,
+    includeUserPages,
+    includeTrashPages,
     onClose,
     onIncludeUserPagesSwitched,
     onIncludeTrashPagesSwitched,
@@ -57,7 +53,9 @@ const SearchOptionModal: FC<Props> = (props: Props) => {
               <input
                 className="me-2"
                 type="checkbox"
-                onChange={e => includeUserPagesChangeHandler(e.target.checked)}
+                onChange={(e) =>
+                  includeUserPagesChangeHandler(e.target.checked)
+                }
                 checked={includeUserPages}
               />
               {t('Include Subordinated Target Page', { target: '/user' })}
@@ -68,7 +66,9 @@ const SearchOptionModal: FC<Props> = (props: Props) => {
               <input
                 className="me-2"
                 type="checkbox"
-                onChange={e => includeTrashPagesChangeHandler(e.target.checked)}
+                onChange={(e) =>
+                  includeTrashPagesChangeHandler(e.target.checked)
+                }
                 checked={includeTrashPages}
               />
               {t('Include Subordinated Target Page', { target: '/trash' })}
