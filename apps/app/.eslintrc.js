@@ -30,6 +30,18 @@ module.exports = {
     'config/**',
     'src/linter-checker/**',
     'src/migrations/**',
+    'src/features/callout/**',
+    'src/features/comment/**',
+    'src/features/templates/**',
+    'src/features/mermaid/**',
+    'src/features/search/**',
+    'src/features/plantuml/**',
+    'src/features/external-user-group/**',
+    'src/features/page-bulk-export/**',
+    'src/features/opentelemetry/**',
+    'src/stores-universal/**',
+    'src/interfaces/**',
+    'src/utils/**',
   ],
   settings: {
     // resolve path aliases by eslint-import-resolver-typescript
