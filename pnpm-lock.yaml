@@ -22218,9 +22218,15 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
+  axios@0.24.0:
+    dependencies:
+      follow-redirects: 1.15.11
+    transitivePeerDependencies:
+      - debug
+
   axios@0.26.1:
     dependencies:
-      follow-redirects: 1.15.9(debug@4.4.1)
+      follow-redirects: 1.15.11
     transitivePeerDependencies:
       - debug
 
