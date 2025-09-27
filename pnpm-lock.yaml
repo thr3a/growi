@@ -1418,7 +1418,7 @@ importers:
   packages/pdf-converter-client:
     dependencies:
       axios:
-        specifier: ^1.10.0
+        specifier: ^1.11.0
         version: 1.11.0
       tslib:
         specifier: ^2.8.0
@@ -1551,7 +1551,7 @@ importers:
         specifier: workspace:^
         version: link:../ui
       axios:
-        specifier: ^1.10.0
+        specifier: ^1.11.0
         version: 1.11.0
       bunyan:
         specifier: ^1.8.15
@@ -1777,7 +1777,7 @@ importers:
         specifier: ^3.0.4
         version: 3.0.4
       axios:
-        specifier: ^1.10.0
+        specifier: ^1.11.0
         version: 1.11.0
       hast-util-sanitize:
         specifier: ^5.0.1
@@ -22213,12 +22213,6 @@ snapshots:
       - supports-color
 
   axios@0.21.4:
-    dependencies:
-      follow-redirects: 1.15.11
-    transitivePeerDependencies:
-      - debug
-
-  axios@0.24.0:
     dependencies:
       follow-redirects: 1.15.11
     transitivePeerDependencies:
