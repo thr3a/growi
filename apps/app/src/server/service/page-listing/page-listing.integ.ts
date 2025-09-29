@@ -3,7 +3,8 @@ import mongoose from 'mongoose';
 import type { HydratedDocument, Model } from 'mongoose';
 
 import type { PageModel } from '~/server/models/page';
-import { pageListingService } from '~/server/service/page-listing';
+
+import { pageListingService } from './page-listing';
 
 describe('page-listing store integration tests', () => {
   let Page: PageModel;
