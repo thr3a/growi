@@ -1,159 +1,186 @@
-# PageTree パフォーマンス改善リファクタ計画
+# PageTree パフォーマンス改善リファクタ計画 - 現実的戦略
 
 ## 🎯 目標
 現在のパフォーマンス問題を解決：
 - **問題**: 5000件の兄弟ページで初期レンダリングが重い
 - **目標**: 表示速度を10-20倍改善、UX維持
 
-## 🚀 実装戦略: 2本立て
+## ✅ 戦略2: API軽量化 - **完了済み**
 
-### 戦略1: レンダリング最適化（react-window + SpeedTree）
+### 実装済み内容
+- **ファイル**: `apps/app/src/server/service/page-listing/page-listing.ts:77`
+- **変更内容**: `.select('_id path parent descendantCount grant isEmpty createdAt updatedAt wip')` を追加
+- **型定義**: `apps/app/src/interfaces/page.ts` の `IPageForTreeItem` 型も対応済み
+- **追加改善**: 計画にはなかった `wip` フィールドも最適化対象に含める
 
-#### 現状分析
-- **ファイル**: `src/client/components/TreeItem/TreeItemLayout.tsx`
-- **問題**: 階層すべてを一度にレンダリング（5000項目 × DOM要素）
-- **影響**: メモリ/CPU消費が深刻
+### 実現できた効果
+- **データサイズ**: 推定 500バイト → 約100バイト（5倍軽量化）
+- **ネットワーク転送**: 5000ページ時 2.5MB → 500KB程度に削減
+- **状況**: **実装完了・効果発現中**
 
-#### 実装計画 - 既存ファイル活用方式
-**新規ファイル乱造を避け、既存構造を最大限活用**
+---
 
-##### 主要変更ファイル:
+## 🚀 戦略1: 既存アーキテクチャ活用 + headless-tree部分導入 - **現実的戦略**
 
-1. **ItemsTree.tsx** - react-window統合
-   ```typescript
-   // Before: 再帰的レンダリング
-   const renderTreeItems = () => currentNodes.map(...);
-   
-   // After: react-window統合
-   import { FixedSizeList } from 'react-window';
-   import { flattenTree } from './utils/flatten-tree';
-   
-   const flattenedItems = useMemo(() => 
-     flattenTree(rootNodes, expandedStates), [rootNodes, expandedStates]
-   );
-   
-   return (
-     <FixedSizeList
-       itemCount={flattenedItems.length}
-       itemSize={40}
-       itemData={{ items: flattenedItems, ...otherProps }}
-     >
-       {renderTreeItem}
-     </FixedSizeList>
-   );
-   ```
+### 前回のreact-window失敗原因
+1. **動的itemCount**: ツリー展開時にアイテム数が変化→react-windowの前提と衝突
+2. **非同期ローディング**: APIレスポンス待ちでフラット化不可
+3. **複雑な状態管理**: SWRとreact-windowの状態同期が困難
 
-2. **TreeItemLayout.tsx** - 子要素レンダリング部分修正
-   ```typescript
-   // Before: 再帰的な子要素レンダリング
-   { isOpen && (
-     <div className="tree-item-layout-children">
-       { hasChildren() && currentChildren.map((node) => {
-         return <ItemClassFixed key={node.page._id} {...itemProps} />; // ← 削除
-       })}
-     </div>
-   )}
-   
-   // After: 子要素は上位で管理（react-windowが担当）
-   { isOpen && hasChildren() && (
-     <div className="tree-item-layout-children">
-       {children} {/* ← react-windowから渡される */}
-     </div>
-   )}
-   ```
+### 現実的制約の認識
+**ItemsTree/TreeItemLayoutは廃止困難**:
+- **CustomTreeItemの出し分け**: `PageTreeItem` vs `TreeItemForModal`  
+- **共通副作用処理**: rename/duplicate/delete時のmutation処理
+- **多箇所からの利用**: PageTree, PageSelectModal, AiAssistant等
 
-3. **utils/flatten-tree.ts** - 新規作成（唯一の新規ファイル）
-   ```typescript
-   export const flattenTree = (nodes: ItemNode[], expandedStates: Record<string, boolean>) => {
-     const result = [];
-     // SpeedTreeのロジック適用 (参考: https://codesandbox.io/p/sandbox/8psp0)
-     return result;
-   };
-   ```
+## 📋 修正された実装戦略: **ハイブリッドアプローチ**
 
-##### TreeItemRenderer実装
-**既存コンポーネントをそのまま活用**:
+### **核心アプローチ**: ItemsTreeを**dataProvider**として活用
+
+**既存の責務は保持しつつ、内部実装のみheadless-tree化**:
+
+1. **ItemsTree**: UIロジック・副作用処理はそのまま
+2. **TreeItemLayout**: 個別アイテムレンダリングはそのまま  
+3. **データ管理**: 内部でheadless-treeを使用（SWR → headless-tree）
+4. **Virtualization**: ItemsTree内部にreact-virtualを導入
+
+### **実装計画: 段階的移行**
+
+#### **Phase 1: データ層のheadless-tree化**
+
+**ファイル**: `ItemsTree.tsx`
 ```typescript
-// react-windowのitemRenderer
-const renderTreeItem = ({ index, style, data }) => {
-  const { items, ...props } = data;
-  const item = items[index];
-  
-  return (
-    <div style={style}>
-      <PageTreeItem  // ← 既存コンポーネントをそのまま使用
-        {...props}
-        itemNode={item.node}
-        itemLevel={item.level}
+// Before: 複雑なSWR + 子コンポーネント管理
+const tree = useTree<IPageForTreeItem>({
+  rootItemId: initialItemNode.page._id,
+  dataLoader: {
+    getItem: async (itemId) => {
+      const response = await apiv3Get('/page-listing/item', { id: itemId });
+      return response.data;
+    },
+    getChildren: async (itemId) => {
+      const response = await apiv3Get('/page-listing/children', { id: itemId });
+      return response.data.children.map(child => child._id);
+    },
+  },
+  features: [asyncDataLoaderFeature],
+});
+
+// 既存のCustomTreeItemに渡すためのアダプター
+const adaptedNodes = tree.getItems().map(item => 
+  new ItemNode(item.getItemData())
+);
+
+return (
+  <ul className={`${moduleClass} list-group`}>
+    {adaptedNodes.map(node => (
+      <CustomTreeItem
+        key={node.page._id}
+        itemNode={node}
+        // ... 既存のpropsをそのまま渡す
+        onRenamed={onRenamed}
+        onClickDuplicateMenuItem={onClickDuplicateMenuItem}
+        onClickDeleteMenuItem={onClickDeleteMenuItem}
       />
-    </div>
-  );
-};
+    ))}
+  </ul>
+);
 ```
 
-##### 期待効果
-- **レンダリング項目**: 5000 → 表示される10-20項目のみ
-- **初期表示速度**: 10-20倍改善
-- **メモリ使用量**: 99%削減
+#### **Phase 2: Virtualization導入**
 
----
+**ファイル**: `ItemsTree.tsx` (Phase1をベースに拡張)
+```typescript
+const virtualizer = useVirtualizer({
+  count: adaptedNodes.length,
+  getScrollElement: () => containerRef.current,
+  estimateSize: () => 40,
+});
 
-### 戦略2: API軽量化
+return (
+  <div ref={containerRef} className="tree-container">
+    <div style={{ height: virtualizer.getTotalSize() }}>
+      {virtualizer.getVirtualItems().map(virtualItem => {
+        const node = adaptedNodes[virtualItem.index];
+        return (
+          <div
+            key={node.page._id}
+            style={{
+              position: 'absolute',
+              top: virtualItem.start,
+              height: virtualItem.size,
+              width: '100%',
+            }}
+          >
+            <CustomTreeItem
+              itemNode={node}
+              // ... 既存props
+            />
+          </div>
+        );
+      })}
+    </div>
+  </div>
+);
+```
 
-#### 現状分析
-- **ファイル**: `src/server/service/page/index.ts:findChildrenByParentPathOrIdAndViewer`
-- **問題**: PageDocument全フィールドを返送（~500バイト/ページ）
-- **影響**: 5000ページ × 500バイト = 2.5MB転送
+#### **Phase 3 (将来): 完全なheadless-tree移行**
 
-#### 実装計画
+最終的にはdrag&drop、selection等のUI機能もheadless-treeに移行可能ですが、**今回のスコープ外**。
 
-1. **必要最小限フィールドの特定**
-   ```typescript
-   // 現在: 全フィールド返送
-   // 変更後: ツリー表示に必要な最小限のみ
-   .select('_id path parent descendantCount grant isEmpty createdAt updatedAt')
-   ```
+## 📁 現実的なファイル変更まとめ
 
-2. **対象ファイル**
-   - `src/server/service/page/index.ts` - selectクエリ追加
-   - `src/interfaces/page-listing-results.ts` - 型定義更新
+| アクション | ファイル | 内容 | スコープ |
+|---------|---------|------|------|
+| ✅ **完了** | **apps/app/src/server/service/page-listing/page-listing.ts** | selectクエリ追加 | API軽量化 |
+| ✅ **完了** | **apps/app/src/interfaces/page.ts** | IPageForTreeItem型定義 | API軽量化 |
+| 🔄 **修正** | **src/client/components/ItemsTree/ItemsTree.tsx** | headless-tree + virtualization導入 | **今回の核心** |
+| 🆕 **新規** | **src/client/components/ItemsTree/usePageTreeDataLoader.ts** | データローダー分離 | 保守性向上 |
+| ⚠️ **保持** | **src/client/components/TreeItem/TreeItemLayout.tsx** | 既存のまま（後方互換） | 既存責務保持 |
+| ⚠️ **部分削除** | **src/stores/page-listing.tsx** | useSWRxPageChildren削除 | 重複排除 |
 
-#### 期待効果
-- **データサイズ**: 500バイト → 100バイト（5倍軽量化）
-- **ネットワーク転送**: 2.5MB → 500KB
-
----
-
-## 📁 最終的なファイル変更まとめ
-
-| ファイル | 変更内容 | 理由 |
-|---------|---------|------|
-| **ItemsTree.tsx** | react-window統合 | ツリー全体の管理箇所 |
-| **TreeItemLayout.tsx** | 子要素レンダリング部分修正 | 既存ロジック活用 |
-| **utils/flatten-tree.ts** | 新規作成 | フラット化ロジック分離 |
-| **src/server/service/page/index.ts** | selectクエリ追加 | API軽量化 |
-| **src/interfaces/page-listing-results.ts** | 型定義更新 | API軽量化対応 |
-
-**新規ファイル**: 1個のみ（ユーティリティ関数）  
-**既存ファイル活用**: 最大限活用
+**新規ファイル**: 1個（データローダー分離のみ）  
+**変更ファイル**: 2個（ItemsTree改修 + store整理）  
+**削除ファイル**: 0個（既存アーキテクチャ尊重）
 
 ---
 
 ## 🎯 実装優先順位
 
-**Phase 1**: API軽量化（低リスク・即効性）
-- **工数**: 1-2日
-- **リスク**: 低（表示に影響なし）
+**✅ Phase 1**: API軽量化（低リスク・即効性） - **完了**
 
-**Phase 2**: react-window実装（高効果）  
-- **工数**: 3-5日
-- **リスク**: 中（UI構造の大幅変更）
+**📋 Phase 2-A**: ItemsTree内部のheadless-tree化
+- **工数**: 2-3日
+- **リスク**: 低（外部IF変更なし）
+- **効果**: 非同期ローディング最適化、キャッシュ改善
 
-**合計効果**: 初期表示速度 50-100倍改善予想
+**📋 Phase 2-B**: Virtualization導入  
+- **工数**: 2-3日
+- **リスク**: 低（内部実装のみ）
+- **効果**: レンダリング性能10-20倍改善
+
+**現在の効果**: API軽量化により 5倍のデータ転送量削減済み  
+**Phase 2完了時の予想効果**: 初期表示速度 20-50倍改善
+
+---
+
+## 🏗️ 実装方針: **既存アーキテクチャ尊重**
+
+**基本方針**:
+- **既存のCustomTreeItem責務**は保持（rename/duplicate/delete等）
+- **データ管理層のみ**をheadless-tree化  
+- **外部インターフェース**は変更せず、内部最適化に集中
+- **段階的移行**で低リスク実装
+
+**今回のスコープ**:
+- ✅ 非同期データローディング最適化
+- ✅ Virtualizationによる大量要素対応  
+- ❌ drag&drop/selection（将来フェーズ）
+- ❌ 既存アーキテクチャの破壊的変更
 
 ---
 
 ## 技術的参考資料
-- **SpeedTree参考実装**: https://codesandbox.io/p/sandbox/8psp0
-- **react-window**: FixedSizeListを使用
-- **フラット化アプローチ**: 展開状態に応じて動的配列変換
+- **headless-tree**: https://headless-tree.lukasbach.com/ (データ管理層のみ利用)
+- **react-virtual**: @tanstack/react-virtualを使用  
+- **アプローチ**: 既存ItemsTree内部でheadless-tree + virtualizationをハイブリッド活用
