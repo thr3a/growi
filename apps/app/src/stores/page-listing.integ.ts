@@ -1,31 +1,26 @@
-import type { HydratedDocument } from 'mongoose';
+import type { IPage, IUser } from '@growi/core/dist/interfaces';
 import mongoose from 'mongoose';
+import type { HydratedDocument, Model } from 'mongoose';
 
-import { getPageSchema } from '~/server/models/obsolete-page';
-import pageModel from '~/server/models/page';
+import type { PageModel } from '~/server/models/page';
 import { pageListingService } from '~/server/service/page-listing';
 
-// TODO: use actual user model after ~/server/models/user.js becomes importable in vitest
-// ref: https://github.com/vitest-dev/vitest/issues/846
-const userSchema = new mongoose.Schema({
-  name: { type: String },
-  username: { type: String, required: true, unique: true },
-  email: { type: String, unique: true, sparse: true },
-}, {
-  timestamps: true,
-});
-const User = mongoose.model('User', userSchema);
-
 describe('page-listing store integration tests', () => {
-  let Page: any;
-  let testUser: HydratedDocument<any>;
-  let rootPage: HydratedDocument<any>;
+  let Page: PageModel;
+  let User: Model<IUser>;
+  let testUser: HydratedDocument<IUser>;
+  let rootPage: HydratedDocument<IPage>;
 
   beforeAll(async() => {
-    // setup page model
-    getPageSchema(null);
-    pageModel(null);
-    Page = mongoose.model('Page');
+    // setup models
+    const setupPage = (await import('~/server/models/page')).default;
+    setupPage(null);
+    const setupUser = (await import('~/server/models/user')).default;
+    setupUser(null);
+
+    // get models
+    Page = mongoose.model<IPage, PageModel>('Page');
+    User = mongoose.model<IUser>('User');
   });
 
   beforeEach(async() => {
