@@ -13,7 +13,7 @@ import mongoose from 'mongoose';
 
 import { IExternalAuthProviderType } from '~/interfaces/external-auth-provider';
 import { Config } from '~/server/models/config';
-import createPageModel from '~/server/models/page';
+import type { PageDocument, PageModel } from '~/server/models/page';
 import { aclService } from '~/server/service/acl';
 import { configManager } from '~/server/service/config-manager';
 import { getGrowiVersion } from '~/utils/growi-version';
@@ -118,7 +118,7 @@ export class GrowiInfoService {
 
   private async getAdditionalInfoByOptions<T extends GrowiInfoOptions>(options: T): Promise<IGrowiAdditionalInfoResult<T>> {
     const User = mongoose.model<IUser, Model<IUser>>('User');
-    const Page = createPageModel(null);
+    const Page = mongoose.model<PageDocument, PageModel>('Page');
     // Check if any option is enabled to determine if we should return additional info
     const hasAnyOption = options.includeAttachmentInfo || options.includeInstalledInfo || options.includeUserCountInfo || options.includePageCountInfo;
 
