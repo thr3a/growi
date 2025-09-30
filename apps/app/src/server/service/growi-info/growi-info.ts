@@ -118,7 +118,6 @@ export class GrowiInfoService {
 
   private async getAdditionalInfoByOptions<T extends GrowiInfoOptions>(options: T): Promise<IGrowiAdditionalInfoResult<T>> {
     const User = mongoose.model<IUser, Model<IUser>>('User');
-    const Page = mongoose.model<PageDocument, PageModel>('Page');
     // Check if any option is enabled to determine if we should return additional info
     const hasAnyOption = options.includeAttachmentInfo || options.includeInstalledInfo || options.includeUserCountInfo || options.includePageCountInfo;
 
@@ -167,6 +166,7 @@ export class GrowiInfoService {
     }
 
     if (options.includePageCountInfo) {
+      const Page = mongoose.model<PageDocument, PageModel>('Page');
       const currentPagesCount = await Page.countDocuments();
       partialResult.currentPagesCount = currentPagesCount;
     }
