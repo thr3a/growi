@@ -15,8 +15,14 @@ type Apiv3ErrFunction = (error: ErrorV3) => void;
 const certifyOrigin = (req: AccessTokenParserReq, res: Response & { apiv3Err: Apiv3ErrFunction }, next: NextFunction): void => {
 
   const appSiteUrl = configManager.getConfig('app:siteUrl');
+  const configuredOrigin = appSiteUrl ? new URL(appSiteUrl).origin : null;
+  const requestOrigin = req.headers.origin;
+  const runtimeOrigin = `${req.protocol}://${req.get('host')}`;
 
-  const isSameOriginReq = req.headers.origin == null || req.headers.origin === appSiteUrl;
+  const isSameOriginReq = requestOrigin == null
+  || requestOrigin === configuredOrigin
+  || requestOrigin === runtimeOrigin;
+
   const accessToken = req.query.access_token ?? req.body.access_token;
 
   if (!isSameOriginReq && req.headers.origin != null && isSimpleRequest(req)) {
