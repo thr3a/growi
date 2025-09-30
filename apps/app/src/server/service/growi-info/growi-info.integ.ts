@@ -1,12 +1,15 @@
+import mongoose from 'mongoose';
 import { mock } from 'vitest-mock-extended';
 
 import pkg from '^/package.json';
 
 import type UserEvent from '~/server/events/user';
 import { Config } from '~/server/models/config';
+import { getPageSchema } from '~/server/models/obsolete-page';
 import { configManager } from '~/server/service/config-manager';
 
 import type Crowi from '../../crowi';
+import pageModel from '../../models/page';
 
 import { growiInfoService } from './growi-info';
 
@@ -14,11 +17,17 @@ describe('GrowiInfoService', () => {
   const appVersion = pkg.version;
 
   let User;
+  let Page;
 
   beforeAll(async() => {
     process.env.APP_SITE_URL = 'http://growi.test.jp';
     process.env.DEPLOYMENT_TYPE = 'growi-docker-compose';
     process.env.SAML_ENABLED = 'true';
+
+    // setup page model before loading configs
+    getPageSchema(null);
+    pageModel(null);
+    Page = mongoose.model('Page');
 
     await configManager.loadConfigs();
     await configManager.updateConfigs({
@@ -47,6 +56,7 @@ describe('GrowiInfoService', () => {
     User = userModelFactory(crowiMock);
 
     await User.deleteMany({}); // clear users
+    await Page.deleteMany({}); // clear pages
   });
 
   describe('getGrowiInfo', () => {
