@@ -2,11 +2,31 @@ import type { IPage, IUser } from '@growi/core/dist/interfaces';
 import mongoose from 'mongoose';
 import type { HydratedDocument, Model } from 'mongoose';
 
-import { PageActionType } from '~/interfaces/page-operation';
+import { PageActionType, PageActionStage } from '~/interfaces/page-operation';
 import type { PageModel } from '~/server/models/page';
 import type { IPageOperation } from '~/server/models/page-operation';
 
 import { pageListingService } from './page-listing';
+
+// Mock the page-operation service
+vi.mock('~/server/service/page-operation', () => ({
+  pageOperationService: {
+    generateProcessInfo: vi.fn((pageOperations: IPageOperation[]) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const processInfo: Record<string, any> = {};
+      pageOperations.forEach((pageOp) => {
+        const pageId = pageOp.page._id.toString();
+        processInfo[pageId] = {
+          [pageOp.actionType]: {
+            [PageActionStage.Main]: { isProcessable: true },
+            [PageActionStage.Sub]: undefined,
+          },
+        };
+      });
+      return processInfo;
+    }),
+  },
+}));
 
 describe('page-listing store integration tests', () => {
   let Page: PageModel;
@@ -16,6 +36,7 @@ describe('page-listing store integration tests', () => {
   let rootPage: HydratedDocument<IPage>;
 
   // Helper function to validate IPageForTreeItem type structure
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const validatePageForTreeItem = (page: any): void => {
     expect(page).toBeDefined();
     expect(page._id).toBeDefined();
@@ -239,12 +260,21 @@ describe('page-listing store integration tests', () => {
       // Create a PageOperation for this page
       await PageOperation.create({
         actionType: PageActionType.Rename,
-        page: operatingPage._id,
-        user: testUser._id,
+        actionStage: PageActionStage.Main,
+        page: {
+          _id: operatingPage._id,
+          path: operatingPage.path,
+          isEmpty: operatingPage.isEmpty,
+          grant: operatingPage.grant,
+          grantedGroups: [],
+          descendantCount: operatingPage.descendantCount,
+        },
+        user: {
+          _id: testUser._id,
+        },
         fromPath: '/operating-page',
         toPath: '/renamed-operating-page',
         options: {},
-        actionsOnFinishingProcess: [],
       });
     });
 
