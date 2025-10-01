@@ -4,8 +4,8 @@ export class BulkExportJobExpiredError extends Error {
   }
 }
 
-export class BulkExportJobRestartedError extends Error {
+export class BulkExportJobStreamDestroyedByCleanupError extends Error {
   constructor() {
-    super('Bulk export job has restarted');
+    super('Bulk export job stream was destroyed by cleanup');
   }
 }

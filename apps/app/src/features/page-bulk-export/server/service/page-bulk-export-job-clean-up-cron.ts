@@ -1,5 +1,5 @@
 import type { HydratedDocument } from 'mongoose';
-
+import { SupportedAction } from '~/interfaces/activity';
 import type Crowi from '~/server/crowi';
 import { configManager } from '~/server/service/config-manager';
 import CronService from '~/server/service/cron';
@@ -57,13 +57,15 @@ class PageBulkExportJobCleanUpCronService extends CronService {
       },
     });
 
-    if (pageBulkExportJobCronService != null) {
-      await this.cleanUpAndDeleteBulkExportJobs(
-        expiredExportJobs,
-        pageBulkExportJobCronService.cleanUpExportJobResources.bind(
-          pageBulkExportJobCronService,
-        ),
+    const cleanUp = async (job: PageBulkExportJobDocument) => {
+      await pageBulkExportJobCronService?.notifyExportResultAndCleanUp(
+        SupportedAction.ACTION_PAGE_BULK_EXPORT_JOB_EXPIRED,
+        job,
       );
+    };
+
+    if (pageBulkExportJobCronService != null) {
+      await this.cleanUpAndDeleteBulkExportJobs(expiredExportJobs, cleanUp);
     }
   }
 
