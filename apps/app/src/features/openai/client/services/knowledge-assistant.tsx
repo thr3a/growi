@@ -61,6 +61,8 @@ type UseKnowledgeAssistant = () => {
   processMessage: ProcessMessage
   form: UseFormReturn<FormData>
   resetForm: () => void
+  handleBackToInitialView: () => void;
+  threadTitleView: JSX.Element | null;
 
   // Views
   initialView: JSX.Element
@@ -72,7 +74,7 @@ type UseKnowledgeAssistant = () => {
 
 export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
   // Hooks
-  const { data: aiAssistantSidebarData } = useAiAssistantSidebar();
+  const { data: aiAssistantSidebarData, refreshThreadData } = useAiAssistantSidebar();
   const { aiAssistantData } = aiAssistantSidebarData ?? {};
   const { mutate: mutateRecentThreads } = useSWRINFxRecentThreads();
   const { trigger: mutateThreadData } = useSWRMUTxThreads(aiAssistantData?._id);
@@ -85,6 +87,9 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
       extendedThinkingMode: false,
     },
   });
+  const handleBackToInitialView = useCallback(() => {
+    refreshThreadData(undefined);
+  }, [refreshThreadData]);
 
   // Functions
   const resetForm = useCallback(() => {
@@ -231,12 +236,37 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
     );
   }, [dropdownOpen, toggleDropdown, form, t]);
 
+  const threadTitleView = useMemo(() => {
+    const { threadData } = aiAssistantSidebarData ?? {};
+
+    if (threadData?.title == null) {
+      return null;
+    }
+
+    return (
+      <div className="thread-title-sticky position-sticky top-0 py-2 px-3">
+        <div className="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            className="btn btn-sm btn-link p-0 text-secondary"
+            onClick={handleBackToInitialView}
+          >
+            <span className="material-symbols-outlined">chevron_left</span>
+          </button>
+          <span className="text-truncate small">{threadData.title}</span>
+        </div>
+      </div>
+    );
+  }, [aiAssistantSidebarData, handleBackToInitialView]);
+
   return {
     createThread,
     postMessage,
     processMessage,
     form,
     resetForm,
+    handleBackToInitialView,
+    threadTitleView,
 
     // Views
     initialView,

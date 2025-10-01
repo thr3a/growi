@@ -68,7 +68,6 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
   // Hooks
   const { t } = useTranslation();
   const { data: growiCloudUri } = useGrowiCloudUri();
-  const { refreshThreadData } = useAiAssistantSidebar();
 
   const {
     createThread: createThreadForKnowledgeAssistant,
@@ -76,6 +75,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
     processMessage: processMessageForKnowledgeAssistant,
     form: formForKnowledgeAssistant,
     resetForm: resetFormForKnowledgeAssistant,
+    threadTitleView: threadTitleViewForKnowledgeAssistant,
 
     // Views
     initialView: initialViewForKnowledgeAssistant,
@@ -104,11 +104,6 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
   } = useEditorAssistant();
 
   const form = isEditorAssistant ? formForEditorAssistant : formForKnowledgeAssistant;
-
-  const handleBackToInitialView = useCallback(() => {
-    refreshThreadData(undefined);
-    setMessageLogs([]);
-  }, [refreshThreadData]);
 
   // Effects
   useFetchAndSetMessageDataEffect(setMessageLogs, threadData?.threadId);
@@ -438,20 +433,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
             className="h-100"
             autoHide
           >
-            {!isEditorAssistant && threadData?.title && (
-              <div className="thread-title-sticky position-sticky top-0 py-2 px-3">
-                <div className="d-flex align-items-center gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-link p-0 text-secondary"
-                    onClick={handleBackToInitialView}
-                  >
-                    <span className="material-symbols-outlined">chevron_left</span>
-                  </button>
-                  <span className="text-truncate small">{threadData.title}</span>
-                </div>
-              </div>
-            )}
+            {!isEditorAssistant && threadTitleViewForKnowledgeAssistant}
             <div className="p-4">
               <div className="d-flex flex-column gap-4 flex-grow-1">
                 { threadData != null
