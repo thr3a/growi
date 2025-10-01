@@ -1,3 +1,4 @@
+import type { IPage } from '^/../../packages/core/dist';
 import mongoose from 'mongoose';
 import { mock } from 'vitest-mock-extended';
 
@@ -8,6 +9,7 @@ import { Config } from '~/server/models/config';
 import { configManager } from '~/server/service/config-manager';
 
 import type Crowi from '../../crowi';
+import type { PageModel } from '../../models/page';
 import pageModel from '../../models/page';
 
 import { growiInfoService } from './growi-info';
@@ -25,7 +27,7 @@ describe('GrowiInfoService', () => {
 
     // setup page model before loading configs
     pageModel(null);
-    Page = mongoose.model('Page');
+    Page = mongoose.model<IPage, PageModel>('Page');
 
     await configManager.loadConfigs();
     await configManager.updateConfigs({
