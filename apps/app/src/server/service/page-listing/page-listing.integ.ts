@@ -1,4 +1,5 @@
 import type { IPage, IUser } from '@growi/core/dist/interfaces';
+import { isValidObjectId } from '@growi/core/dist/utils/objectid-utils';
 import mongoose from 'mongoose';
 import type { HydratedDocument, Model } from 'mongoose';
 
@@ -44,8 +45,11 @@ describe('page-listing store integration tests', () => {
     expect(page.grant).toBeDefined();
     expect(typeof page.isEmpty).toBe('boolean');
     expect(typeof page.descendantCount).toBe('number');
-    expect(page.createdAt).toBeDefined();
-    expect(page.updatedAt).toBeDefined();
+    // revision is required when isEmpty is false
+    if (page.isEmpty === false) {
+      expect(page.revision).toBeDefined();
+      expect(isValidObjectId(page.revision)).toBe(true);
+    }
     // processData is optional
     if (page.processData !== undefined) {
       expect(page.processData).toBeInstanceOf(Object);
@@ -399,22 +403,5 @@ describe('page-listing store integration tests', () => {
       });
     });
 
-    test('should validate all required IPageForTreeItem fields are present and correctly typed', async() => {
-      const result = await pageListingService.findRootByViewer(testUser);
-
-      // These tests ensure that the 'any' return from exec() contains expected structure
-      const requiredFields = ['_id', 'path', 'grant', 'isEmpty', 'descendantCount', 'createdAt', 'updatedAt'];
-
-      requiredFields.forEach((field) => {
-        expect(result[field]).toBeDefined();
-      });
-
-      // Type-specific validations
-      expect(typeof result.path).toBe('string');
-      expect(typeof result.isEmpty).toBe('boolean');
-      expect(typeof result.descendantCount).toBe('number');
-      expect(result.createdAt instanceof Date || typeof result.createdAt === 'string').toBe(true);
-      expect(result.updatedAt instanceof Date || typeof result.updatedAt === 'string').toBe(true);
-    });
   });
 });

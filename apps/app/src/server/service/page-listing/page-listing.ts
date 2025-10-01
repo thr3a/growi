@@ -40,7 +40,7 @@ class PageListingService implements IPageListingService {
     await builder.addViewerCondition(user);
 
     return builder.query
-      .select('_id path parent descendantCount grant isEmpty createdAt updatedAt wip')
+      .select('_id path parent revision descendantCount grant isEmpty wip')
       .lean()
       .exec();
   }
@@ -68,7 +68,7 @@ class PageListingService implements IPageListingService {
     const pages: HydratedDocument<Omit<IPageForTreeItem, 'processData'>>[] = await queryBuilder
       .addConditionToSortPagesByAscPath()
       .query
-      .select('_id path parent descendantCount grant isEmpty createdAt updatedAt wip')
+      .select('_id path parent revision descendantCount grant isEmpty wip')
       .lean()
       .exec();
 
