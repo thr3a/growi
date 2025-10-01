@@ -5,7 +5,6 @@ import pkg from '^/package.json';
 
 import type UserEvent from '~/server/events/user';
 import { Config } from '~/server/models/config';
-import { getPageSchema } from '~/server/models/obsolete-page';
 import { configManager } from '~/server/service/config-manager';
 
 import type Crowi from '../../crowi';
@@ -25,7 +24,6 @@ describe('GrowiInfoService', () => {
     process.env.SAML_ENABLED = 'true';
 
     // setup page model before loading configs
-    // getPageSchema(null);
     pageModel(null);
     Page = mongoose.model('Page');
 
