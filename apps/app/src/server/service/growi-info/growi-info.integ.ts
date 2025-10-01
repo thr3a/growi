@@ -57,6 +57,11 @@ describe('GrowiInfoService', () => {
 
     await User.deleteMany({}); // clear users
     await Page.deleteMany({}); // clear pages
+
+    await Page.create({
+      path: '/',
+      descendantCount: 0,
+    });
   });
 
   describe('getGrowiInfo', () => {
@@ -119,7 +124,7 @@ describe('GrowiInfoService', () => {
           currentActiveUsersCount: 1,
           attachmentType: 'aws',
           activeExternalAccountTypes: ['saml', 'github'],
-          currentPagesCount: 0,
+          currentPagesCount: 1,
         },
       });
     });
@@ -179,7 +184,7 @@ describe('GrowiInfoService', () => {
         activeExternalAccountTypes: ['saml', 'github'],
         currentUsersCount: 1,
         currentActiveUsersCount: 1,
-        currentPagesCount: 0,
+        currentPagesCount: 1,
       });
     });
 
@@ -201,7 +206,7 @@ describe('GrowiInfoService', () => {
         installedAtByOldestUser: new Date('2000-01-01'),
         currentUsersCount: 1,
         currentActiveUsersCount: 1,
-        currentPagesCount: 0,
+        currentPagesCount: 1,
       });
     });
 
