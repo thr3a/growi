@@ -27,10 +27,9 @@ export type IPageForTreeItem = Pick<
   | 'path'
   | 'parent'
   | 'descendantCount'
+  | 'revision'
   | 'grant'
   | 'isEmpty'
-  | 'createdAt'
-  | 'updatedAt'
   | 'wip'
 > & {
   processData?: IPageOperationProcessData;
