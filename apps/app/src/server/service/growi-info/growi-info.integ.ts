@@ -25,7 +25,7 @@ describe('GrowiInfoService', () => {
     process.env.SAML_ENABLED = 'true';
 
     // setup page model before loading configs
-    getPageSchema(null);
+    // getPageSchema(null);
     pageModel(null);
     Page = mongoose.model('Page');
 
