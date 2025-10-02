@@ -62,7 +62,7 @@ type UseKnowledgeAssistant = () => {
   form: UseFormReturn<FormData>
   resetForm: () => void
   handleBackToInitialView: () => void;
-  threadTitleView: JSX.Element | null;
+  threadTitleView: JSX.Element
 
   // Views
   initialView: JSX.Element
@@ -240,7 +240,7 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
     const { threadData } = aiAssistantSidebarData ?? {};
 
     if (threadData?.title == null) {
-      return null;
+      return <></>;
     }
 
     return (
