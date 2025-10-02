@@ -1,8 +1,8 @@
 # Jotai Migration Progress - Consolidated Report
 
-## 完了状況: **57/63 フック完了** (90.5%)
+## 完了状況: **59/63 フック完了** (93.7%)
 
-### 既完了移行 (57フック) ✅
+### 既完了移行 (59フック) ✅
 
 #### UI/Modal States (8フック)
 - useTemplateModalStatus/Actions, useLinkEditModalStatus/Actions
@@ -16,10 +16,10 @@
 - useCurrentUserStatus/Actions, useIsGuestUserStatus/Actions
 - useIsReadOnlyUserStatus/Actions, useCurrentPathnameStatus/Actions
 
-#### Editor States (21フック)
+#### Editor States (23フック)
 - useEditorModeStatus/Actions, useEditingMarkdownStatus/Actions
-- useSelectedGrantStatus/Actions, useReservedNextCaretLineStatus/Actions
-- useSlackChannelsStatus/Actions, useIsSlackEnabledStatus/Actions
+- useSelectedGrantStatus/Actions, **useReservedNextCaretLine** ✨
+- useSlackChannelsStatus/Actions, **useIsSlackEnabled** ✨
 - useCurrentPageDataStatus/Actions, useCurrentPageIdStatus/Actions  
 - useCurrentPagePathStatus/Actions, usePageNotFoundStatus/Actions, useIsUntitledPageStatus
 - useWaitingSaveProcessingStatus/Actions, useCurrentIndentSizeStatus/Actions, usePageTagsForEditorsStatus/Actions
@@ -49,6 +49,17 @@
    - Socket管理: `defaultSocket, adminSocket, customSocket`
    - 成果: 適切なリソースライフサイクル
 
+#### **Phase 3完了 (2フック) - 本日** 🎉
+7. **useIsSlackEnabled** → **シンプルBoolean状態**
+   - データ: `boolean`
+   - 実装: `states/ui/editor/is-slack-enabled.ts`
+   - 成果: SWR不要な単純状態の最適化
+
+8. **useReservedNextCaretLine** → **EventEmitter統合**
+   - データ: `number`
+   - 実装: `states/ui/editor/reserved-next-caret-line.ts`
+   - 成果: globalEmitter連携 + 適切な初期化処理
+
 ## 確立された実装パターン
 
 ### **Derived Atom** (計算値パターン)
@@ -75,11 +86,25 @@ const resourceAtom = atomWithLazy(() => createResource());
 export const useResource = () => useAtomValue(resourceAtom);
 ```
 
-## 残り移行候補 (6フック)
+### **EventEmitter統合** (新パターン)
+```typescript
+const stateAtom = atom<T>(initialValue);
 
-### **優先度A (シンプル)** 
-- **useIsSlackEnabled** - boolean状態
-- **useReservedNextCaretLine** - number状態 + globalEmitter
+export const useStateWithEmitter = () => {
+  const state = useAtomValue(stateAtom);
+  const setState = useSetAtom(stateAtom);
+
+  useEffect(() => {
+    const handler = (value: T) => setState(value);
+    globalEmitter?.on('eventName', handler);
+    return () => globalEmitter?.removeListener('eventName', handler);
+  }, [setState]);
+
+  return state;
+};
+```
+
+## 残り移行候補 (4フック)
 
 ### **優先度B (中複雑度)**
 - **useAiAssistantSidebar** - 複雑サイドバー状態
@@ -95,6 +120,7 @@ export const useResource = () => useAtomValue(resourceAtom);
 - ❌ **Socket管理にSWR**: 一度作成したSocket接続をRevalidateする意味なし
 - ❌ **計算値にSWR**: 同期計算にRevalidation概念は無意義
 - ❌ **Modal状態にSWR**: UI状態にRevalidation不要
+- ❌ **シンプルBoolean状態にSWR**: 単純状態にRevalidation不要
 - ✅ **適切なツール選択**: 各状態管理に最適なJotaiパターン適用
 
 ### **パフォーマンス向上**
@@ -102,11 +128,13 @@ export const useResource = () => useAtomValue(resourceAtom);
 - useAtomValue/useSetAtom分離による最適化
 - 不要なリレンダリング削除
 - リソース適切管理
+- globalEmitter連携の適切な実装
 
 ## 品質保証実績
 - 型チェック完全通過 (`pnpm run lint:typecheck`)
 - 使用箇所完全移行確認
 - 確立パターンによる実装統一
+- 旧コード完全削除（stores/editor.tsx から削除済み）
 
 ## 完了予定
-**Phase 3**: 残り6フック移行で **100%完了** → **inappropriate SWR usage の完全根絶**
+**Phase 3**: 残り4フック移行で **100%完了** → **inappropriate SWR usage の完全根絶**
