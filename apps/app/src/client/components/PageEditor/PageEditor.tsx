@@ -45,7 +45,7 @@ import {
   useEditorMode, EditorMode, useEditingMarkdown, useSelectedGrant,
   useWaitingSaveProcessingActions, useSetReservedNextCaretLine, useReservedNextCaretLineValue,
 } from '~/states/ui/editor';
-import { useEditingClientsActions } from '~/states/ui/editor/editing-clients';
+import { useSetEditingClients } from '~/states/ui/editor/editing-clients';
 import { useNextThemes } from '~/stores-universal/use-next-themes';
 import { useEditorSettings } from '~/stores/editor';
 import {
@@ -116,7 +116,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   const { data: editorSettings } = useEditorSettings();
   const { mutate: mutateIsGrantNormalized } = useSWRxCurrentGrantData(currentPage?._id);
   const user = useCurrentUser();
-  const { mutate: mutateEditingUsers } = useEditingClientsActions();
+  const setEditingClients = useSetEditingClients();
   const onConflict = useConflictResolver();
   const reservedNextCaretLine = useReservedNextCaretLineValue();
   const setReservedNextCaretLine = useSetReservedNextCaretLine();
@@ -276,12 +276,13 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
     });
   }, [codeMirrorEditor, pageId]);
 
+  const onChangeHandler = useCallback((value: string) => {
+    setMarkdownPreviewWithDebounce(value);
+  }, [setMarkdownPreviewWithDebounce]);
 
   const cmProps = useMemo(() => ({
-    onChange: (value: string) => {
-      setMarkdownPreviewWithDebounce(value);
-    },
-  }), [setMarkdownPreviewWithDebounce]);
+    onChange: onChangeHandler,
+  }), [onChangeHandler]);
 
 
   // set handler to save and return to View
@@ -385,7 +386,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
           user={user ?? undefined}
           pageId={pageId ?? undefined}
           editorSettings={editorSettings}
-          onEditorsUpdated={mutateEditingUsers}
+          onEditorsUpdated={setEditingClients}
           cmProps={cmProps}
         />
       </div>

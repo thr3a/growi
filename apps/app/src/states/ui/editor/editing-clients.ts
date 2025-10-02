@@ -13,16 +13,3 @@ export const useEditingClients = (): EditingClient[] => {
 export const useSetEditingClients = () => {
   return useSetAtom(editingClientsAtom);
 };
-
-// Actions hook for mutate compatibility
-export const useEditingClientsActions = () => {
-  const setEditingClients = useSetAtom(editingClientsAtom);
-
-  const mutate = (newClients?: EditingClient[]) => {
-    if (newClients !== undefined) {
-      setEditingClients(newClients);
-    }
-  };
-
-  return { mutate };
-};
