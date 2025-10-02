@@ -32,8 +32,7 @@ import { ThreadType } from '../../../interfaces/thread-relation';
 import { handleIfSuccessfullyParsed } from '../../../utils/handle-if-successfully-parsed';
 import { AiAssistantDropdown } from '../../components/AiAssistant/AiAssistantSidebar/AiAssistantDropdown';
 import { QuickMenuList } from '../../components/AiAssistant/AiAssistantSidebar/QuickMenuList';
-import { useIsEnableUnifiedMergeView, useUnifiedMergeViewActions } from '../../states';
-import { useAiAssistantSidebar } from '../../stores/ai-assistant';
+import { useIsEnableUnifiedMergeView, useUnifiedMergeViewActions, useAiAssistantSidebarStatus } from '../../states';
 import { useClientEngineIntegration, shouldUseClientProcessing } from '../client-engine-integration';
 
 import { getPageBodyForContext } from './get-page-body-for-context';
@@ -145,7 +144,7 @@ export const useEditorAssistant: UseEditorAssistant = () => {
   const { disable: disableUnifiedMergeView, enable: enableUnifiedMergeView } = useUnifiedMergeViewActions();
   const { data: codeMirrorEditor } = useCodeMirrorEditorIsolated(GlobalCodeMirrorEditorKey.MAIN);
   const yDocs = useSecondaryYdocs(isEnableUnifiedMergeView ?? false, { pageId: currentPageId ?? undefined, useSecondary: isEnableUnifiedMergeView ?? false });
-  const { data: aiAssistantSidebarData } = useAiAssistantSidebar();
+  const aiAssistantSidebarData = useAiAssistantSidebarStatus();
   const clientEngine = useClientEngineIntegration({
     enableClientProcessing: shouldUseClientProcessing(),
     enableServerFallback: true,

@@ -1,8 +1,8 @@
 # Jotai Migration Progress - Consolidated Report
 
-## 完了状況: **59/63 フック完了** (93.7%)
+## 完了状況: **60/63 フック完了** (95.2%)
 
-### 既完了移行 (59フック) ✅
+### 既完了移行 (60フック) ✅
 
 #### UI/Modal States (8フック)
 - useTemplateModalStatus/Actions, useLinkEditModalStatus/Actions
@@ -24,32 +24,18 @@
 - useCurrentPagePathStatus/Actions, usePageNotFoundStatus/Actions, useIsUntitledPageStatus
 - useWaitingSaveProcessingStatus/Actions, useCurrentIndentSizeStatus/Actions, usePageTagsForEditorsStatus/Actions
 
+#### OpenAI/AI Assistant States (1フック) 🤖
+- **useAiAssistantSidebar** → **Status/Actions分離** ✨
+
 #### **Phase 2完了 (6フック) - 2025年** 🚀
 1. **useAcceptedUploadFileType** → **Derived Atom**
-   - 計算: `isUploadEnabled + isUploadAllFileAllowed → AcceptedUploadFileType`
-   - 成果: SWRオーバーヘッド削除、自動メモ化
-
 2. **usePluginDeleteModal** → **Features Modal Status/Actions**
-   - データ: `{isOpened, id, name, url}`
-   - 成果: リレンダリング最適化
-
 3. **useSearchModal** → **Features Modal Status/Actions**  
-   - データ: `{isOpened, searchKeyword?}`
-   - 成果: グローバル検索UI最適化
-
 4. **useEditingClients** → **シンプル配列状態**
-   - データ: `EditingClient[]`
-   - 成果: 協調編集UI効率化
-
 5. **useAiAssistantManagementModal** → **Features Modal + 技術修復**
-   - データ: `{isOpened, pageMode: enum, aiAssistantData?}`
-   - 成果: 複雑Modal状態管理、ストア修復
-
 6. **useSocket群** → **atomWithLazy**
-   - Socket管理: `defaultSocket, adminSocket, customSocket`
-   - 成果: 適切なリソースライフサイクル
 
-#### **Phase 3完了 (2フック) - 本日** 🎉
+#### **Phase 3完了 (3フック) - 本日** 🎉
 7. **useIsSlackEnabled** → **シンプルBoolean状態**
    - データ: `boolean`
    - 実装: `states/ui/editor/is-slack-enabled.ts`
@@ -59,6 +45,12 @@
    - データ: `number`
    - 実装: `states/ui/editor/reserved-next-caret-line.ts`
    - 成果: globalEmitter連携 + 適切な初期化処理
+
+9. **useAiAssistantSidebar** → **Status/Actions分離パターン**
+   - データ: `{isOpened, isEditorAssistant?, aiAssistantData?, threadData?}`
+   - 実装: `features/openai/client/states/ai-assistant-sidebar.ts`
+   - 移行ファイル数: 11ファイル
+   - 成果: 複雑サイドバー状態の最適化、リレンダリング削減
 
 ## 確立された実装パターン
 
@@ -104,10 +96,9 @@ export const useStateWithEmitter = () => {
 };
 ```
 
-## 残り移行候補 (4フック)
+## 残り移行候補 (3フック)
 
 ### **優先度B (中複雑度)**
-- **useAiAssistantSidebar** - 複雑サイドバー状態
 - **useKeywordManager** - Router連携 + URL同期
 
 ### **優先度C (高複雑度)**  
@@ -121,6 +112,7 @@ export const useStateWithEmitter = () => {
 - ❌ **計算値にSWR**: 同期計算にRevalidation概念は無意義
 - ❌ **Modal状態にSWR**: UI状態にRevalidation不要
 - ❌ **シンプルBoolean状態にSWR**: 単純状態にRevalidation不要
+- ❌ **サイドバー状態にSWR**: UI状態管理にRevalidation不要
 - ✅ **適切なツール選択**: 各状態管理に最適なJotaiパターン適用
 
 ### **パフォーマンス向上**
@@ -129,12 +121,34 @@ export const useStateWithEmitter = () => {
 - 不要なリレンダリング削除
 - リソース適切管理
 - globalEmitter連携の適切な実装
+- Status/Actions分離による参照安定化
 
 ## 品質保証実績
 - 型チェック完全通過 (`pnpm run lint:typecheck`)
-- 使用箇所完全移行確認
+- 使用箇所完全移行確認 (11ファイル更新)
 - 確立パターンによる実装統一
-- 旧コード完全削除（stores/editor.tsx から削除済み）
+- 旧コード完全削除
+  - `stores/editor.tsx`: useIsSlackEnabled, useReservedNextCaretLine削除済み
+  - `features/openai/client/stores/ai-assistant.tsx`: useAiAssistantSidebar削除済み
 
 ## 完了予定
-**Phase 3**: 残り4フック移行で **100%完了** → **inappropriate SWR usage の完全根絶**
+**Phase 3**: 残り3フック移行で **100%完了** → **inappropriate SWR usage の完全根絶**
+
+## useAiAssistantSidebar移行詳細
+
+### 更新ファイル一覧
+1. `OpenDefaultAiAssistantButton.tsx` - openChat使用
+2. `ThreadList.tsx` (Sidebar) - status + actions使用
+3. `AiAssistantSubstance.tsx` - status + close使用
+4. `AiAssistantList.tsx` - openChat使用
+5. `ThreadList.tsx` (AiAssistantSidebar) - status + openChat使用
+6. `AiAssistantSidebar.tsx` - status + close + refreshThreadData使用
+7. `AiAssistantManagementModal.tsx` - status + refreshAiAssistantData使用
+8. `knowledge-assistant.tsx` - status使用 (2箇所)
+9. `use-editor-assistant.tsx` - status使用
+10. `EditorAssistantToggleButton.tsx` - status + actions使用
+
+### 移行パターン
+- **Status読み取り専用**: `useAiAssistantSidebarStatus()`
+- **Actions書き込み専用**: `useAiAssistantSidebarActions()`
+- **メリット**: リレンダリング最適化、参照安定化

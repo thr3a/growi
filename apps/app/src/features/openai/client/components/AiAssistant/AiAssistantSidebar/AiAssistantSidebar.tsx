@@ -26,8 +26,7 @@ import {
   useFetchAndSetMessageDataEffect,
   type FormData as FormDataForKnowledgeAssistant,
 } from '../../../services/knowledge-assistant';
-import { useUnifiedMergeViewActions } from '../../../states';
-import { useAiAssistantSidebar } from '../../../stores/ai-assistant';
+import { useAiAssistantSidebarStatus, useAiAssistantSidebarActions, useUnifiedMergeViewActions } from '../../../states';
 import { useSWRxThreads } from '../../../stores/thread';
 
 import { MessageCard } from './MessageCard/MessageCard';
@@ -542,7 +541,8 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
 
 
 export const AiAssistantSidebar: FC = memo((): JSX.Element => {
-  const { data: aiAssistantSidebarData, close: closeAiAssistantSidebar, refreshThreadData } = useAiAssistantSidebar();
+  const aiAssistantSidebarData = useAiAssistantSidebarStatus();
+  const { close: closeAiAssistantSidebar, refreshThreadData } = useAiAssistantSidebarActions();
   const { disable: disableUnifiedMergeView } = useUnifiedMergeViewActions();
 
   const aiAssistantData = aiAssistantSidebarData?.aiAssistantData;

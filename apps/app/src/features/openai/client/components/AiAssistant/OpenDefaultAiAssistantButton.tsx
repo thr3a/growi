@@ -7,14 +7,15 @@ import { NotAvailable } from '~/client/components/NotAvailable';
 import { NotAvailableForGuest } from '~/client/components/NotAvailableForGuest';
 import { aiEnabledAtom } from '~/states/server-configurations';
 
-import { useAiAssistantSidebar, useSWRxAiAssistants } from '../../stores/ai-assistant';
+import { useAiAssistantSidebarActions } from '../../states';
+import { useSWRxAiAssistants } from '../../stores/ai-assistant';
 
 import styles from './OpenDefaultAiAssistantButton.module.scss';
 
 const OpenDefaultAiAssistantButtonSubstance = (): JSX.Element => {
   const { t } = useTranslation();
   const { data: aiAssistantData } = useSWRxAiAssistants();
-  const { openChat } = useAiAssistantSidebar();
+  const { openChat } = useAiAssistantSidebarActions();
 
   const defaultAiAssistant = useMemo(() => {
     if (aiAssistantData == null) {

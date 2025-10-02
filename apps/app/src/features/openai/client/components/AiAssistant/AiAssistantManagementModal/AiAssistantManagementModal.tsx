@@ -20,12 +20,13 @@ import loggerFactory from '~/utils/logger';
 import type { SelectablePage } from '../../../../interfaces/selectable-page';
 import { removeGlobPath } from '../../../../utils/remove-glob-path';
 import { createAiAssistant, updateAiAssistant } from '../../../services/ai-assistant';
+import { useAiAssistantSidebarStatus, useAiAssistantSidebarActions } from '../../../states';
 import {
   useAiAssistantManagementModalStatus,
   useAiAssistantManagementModalActions,
   AiAssistantManagementModalPageMode,
 } from '../../../states/modal/ai-assistant-management';
-import { useSWRxAiAssistants, useAiAssistantSidebar } from '../../../stores/ai-assistant';
+import { useSWRxAiAssistants } from '../../../stores/ai-assistant';
 
 import { AiAssistantManagementEditInstruction } from './AiAssistantManagementEditInstruction';
 import { AiAssistantManagementEditPages } from './AiAssistantManagementEditPages';
@@ -76,7 +77,8 @@ const AiAssistantManagementModalSubstance = (): JSX.Element => {
   const { mutate: mutateAiAssistants } = useSWRxAiAssistants();
   const aiAssistantManagementModalData = useAiAssistantManagementModalStatus();
   const { close: closeAiAssistantManagementModal } = useAiAssistantManagementModalActions();
-  const { data: aiAssistantSidebarData, refreshAiAssistantData } = useAiAssistantSidebar();
+  const aiAssistantSidebarData = useAiAssistantSidebarStatus();
+  const { refreshAiAssistantData } = useAiAssistantSidebarActions();
   const { data: pagePathsWithDescendantCount } = useSWRxPagePathsWithDescendantCount(
     removeGlobPath(aiAssistantManagementModalData?.aiAssistantData?.pagePathPatterns) ?? null,
     undefined,

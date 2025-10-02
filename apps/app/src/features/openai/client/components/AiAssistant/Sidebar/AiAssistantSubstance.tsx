@@ -2,8 +2,9 @@ import React, { type JSX, useCallback } from 'react';
 
 import { useTranslation } from 'react-i18next';
 
+import { useAiAssistantSidebarStatus, useAiAssistantSidebarActions } from '../../../states';
 import { useAiAssistantManagementModalActions } from '../../../states/modal/ai-assistant-management';
-import { useSWRxAiAssistants, useAiAssistantSidebar } from '../../../stores/ai-assistant';
+import { useSWRxAiAssistants } from '../../../stores/ai-assistant';
 import { useSWRINFxRecentThreads } from '../../../stores/thread';
 
 import { AiAssistantList } from './AiAssistantList';
@@ -16,7 +17,8 @@ const moduleClass = styles['grw-ai-assistant-substance'] ?? '';
 export const AiAssistantContent = (): JSX.Element => {
   const { t } = useTranslation();
   const { open } = useAiAssistantManagementModalActions();
-  const { data: aiAssistantSidebarData, close: closeAiAssistantSidebar } = useAiAssistantSidebar();
+  const aiAssistantSidebarData = useAiAssistantSidebarStatus();
+  const { close: closeAiAssistantSidebar } = useAiAssistantSidebarActions();
   const { mutate: mutateRecentThreads } = useSWRINFxRecentThreads();
   const { data: aiAssistants, mutate: mutateAiAssistants } = useSWRxAiAssistants();
 
