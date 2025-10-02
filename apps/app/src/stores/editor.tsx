@@ -1,5 +1,5 @@
 import { type Nullable } from '@growi/core';
-import { withUtils, type SWRResponseWithUtils, useSWRStatic } from '@growi/core/dist/swr';
+import { withUtils, type SWRResponseWithUtils } from '@growi/core/dist/swr';
 import type { EditorSettings } from '@growi/editor';
 import useSWR, { type SWRResponse } from 'swr';
 import useSWRImmutable from 'swr/immutable';
@@ -63,14 +63,6 @@ export const useSWRxSlackChannels = (currentPagePath: Nullable<string>): SWRResp
       revalidateOnFocus: false,
       fallbackData: [''],
     },
-  );
-};
-
-export const useIsSlackEnabled = (): SWRResponse<boolean, Error> => {
-  return useSWRStatic(
-    'isSlackEnabled',
-    undefined,
-    { fallbackData: false },
   );
 };
 

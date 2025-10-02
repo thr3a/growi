@@ -20,8 +20,10 @@ import {
   isSlackConfiguredAtom,
 } from '~/states/server-configurations';
 import { useDeviceLargerThanMd } from '~/states/ui/device';
-import { useEditorMode, useSelectedGrant, useWaitingSaveProcessing } from '~/states/ui/editor';
-import { useSWRxSlackChannels, useIsSlackEnabled } from '~/stores/editor';
+import {
+  useEditorMode, useSelectedGrant, useWaitingSaveProcessing, useIsSlackEnabled, EditorMode,
+} from '~/states/ui/editor';
+import { useSWRxSlackChannels } from '~/stores/editor';
 import loggerFactory from '~/utils/logger';
 
 import { NotAvailable } from '../../NotAvailable';
@@ -153,7 +155,7 @@ export const SavePageControls = (): JSX.Element | null => {
   const { editorMode } = useEditorMode();
   const currentPagePath = useCurrentPagePath();
   const isSlackConfigured = useAtomValue(isSlackConfiguredAtom);
-  const { data: isSlackEnabled, mutate: mutateIsSlackEnabled } = useIsSlackEnabled();
+  const [isSlackEnabled, setIsSlackEnabled] = useIsSlackEnabled();
   const { data: slackChannelsData } = useSWRxSlackChannels(currentPagePath);
   const [isDeviceLargerThanMd] = useDeviceLargerThanMd();
 
@@ -163,16 +165,12 @@ export const SavePageControls = (): JSX.Element | null => {
   // DO NOT dependent on slackChannelsData directly: https://github.com/growilabs/growi/pull/7332
   const slackChannelsDataString = slackChannelsData?.toString();
   useEffect(() => {
-    if (editorMode === 'editor') {
+    if (editorMode === EditorMode.Editor) {
       setSlackChannels(slackChannelsDataString ?? '');
-      mutateIsSlackEnabled(false);
+      setIsSlackEnabled(false);
     }
-  }, [editorMode, mutateIsSlackEnabled, slackChannelsDataString]);
+  }, [editorMode, setIsSlackEnabled, slackChannelsDataString]);
 
-
-  const isSlackEnabledToggleHandler = (bool: boolean) => {
-    mutateIsSlackEnabled(bool, false);
-  };
 
   const slackChannelsChangedHandler = useCallback((slackChannels: string) => {
     setSlackChannels(slackChannels);
@@ -200,7 +198,7 @@ export const SavePageControls = (): JSX.Element | null => {
                     <SlackNotification
                       isSlackEnabled={isSlackEnabled}
                       slackChannels={slackChannels}
-                      onEnabledFlagChange={isSlackEnabledToggleHandler}
+                      onEnabledFlagChange={setIsSlackEnabled}
                       onChannelChange={slackChannelsChangedHandler}
                       id="idForEditorNavbarBottom"
                     />
@@ -252,7 +250,7 @@ export const SavePageControls = (): JSX.Element | null => {
                       <SlackNotification
                         isSlackEnabled={isSlackEnabled}
                         slackChannels={slackChannels}
-                        onEnabledFlagChange={isSlackEnabledToggleHandler}
+                        onEnabledFlagChange={setIsSlackEnabled}
                         onChannelChange={slackChannelsChangedHandler}
                         id="idForEditorNavbarBottom"
                       />

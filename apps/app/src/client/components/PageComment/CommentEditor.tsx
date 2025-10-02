@@ -21,12 +21,11 @@ import { toastError } from '~/client/util/toastr';
 import { useCurrentUser } from '~/states/global';
 import { useCurrentPagePath } from '~/states/page';
 import { isSlackConfiguredAtom, useAcceptedUploadFileType } from '~/states/server-configurations';
+import { useIsSlackEnabled } from '~/states/ui/editor';
 import { useCommentEditorsDirtyMap } from '~/states/ui/unsaved-warning';
 import { useNextThemes } from '~/stores-universal/use-next-themes';
 import { useSWRxPageComment } from '~/stores/comment';
-import {
-  useSWRxSlackChannels, useIsSlackEnabled, useEditorSettings,
-} from '~/stores/editor';
+import { useSWRxSlackChannels, useEditorSettings } from '~/stores/editor';
 import loggerFactory from '~/utils/logger';
 
 import { NotAvailableForGuest } from '../NotAvailableForGuest';
@@ -79,7 +78,7 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
   const currentUser = useCurrentUser();
   const currentPagePath = useCurrentPagePath();
   const { update: updateComment, post: postComment } = useSWRxPageComment(pageId);
-  const { data: isSlackEnabled, mutate: mutateIsSlackEnabled } = useIsSlackEnabled();
+  const [isSlackEnabled, setIsSlackEnabled] = useIsSlackEnabled();
   const acceptedUploadFileType = useAcceptedUploadFileType();
   const { data: slackChannelsData } = useSWRxSlackChannels(currentPagePath);
   const isSlackConfigured = useAtomValue(isSlackConfiguredAtom);
@@ -115,15 +114,15 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
   const slackChannelsDataString = slackChannelsData?.toString();
   const initializeSlackEnabled = useCallback(() => {
     setSlackChannels(slackChannelsDataString ?? '');
-    mutateIsSlackEnabled(false);
-  }, [mutateIsSlackEnabled, slackChannelsDataString]);
+    setIsSlackEnabled(false);
+  }, [setIsSlackEnabled, slackChannelsDataString]);
 
   useEffect(() => {
     initializeSlackEnabled();
   }, [initializeSlackEnabled]);
 
   const isSlackEnabledToggleHandler = (isSlackEnabled: boolean) => {
-    mutateIsSlackEnabled(isSlackEnabled, false);
+    setIsSlackEnabled(isSlackEnabled);
   };
 
   const slackChannelsChangedHandler = useCallback((slackChannels: string) => {
