@@ -9,8 +9,11 @@ import type {
   ISelectableAll,
   ISelectableAndIndeterminatable,
 } from '~/client/interfaces/selectable-all';
-import { useKeywordManager } from '~/client/services/search-operation';
 import type { IFormattedSearchResult } from '~/interfaces/search';
+import {
+  useSearchKeyword,
+  useSetSearchKeyword,
+} from '~/states/search';
 import { showPageLimitationLAtom } from '~/states/server-configurations';
 import {
   type ISearchConditions,
@@ -103,7 +106,8 @@ export const SearchPage = (): JSX.Element => {
   const { t } = useTranslation();
   const showPageLimitationL = useAtomValue(showPageLimitationLAtom);
 
-  const { data: keyword, pushState } = useKeywordManager();
+  const keyword = useSearchKeyword();
+  const setSearchKeyword = useSetSearchKeyword();
 
   const [offset, setOffset] = useState<number>(0);
   const [limit, setLimit] = useState<number>(
@@ -133,11 +137,11 @@ export const SearchPage = (): JSX.Element => {
       setOffset(0);
       setConfigurationsByControl(newConfigurations);
 
-      pushState(newKeyword);
+      setSearchKeyword(newKeyword);
 
       mutate();
     },
-    [mutate, pushState],
+    [mutate, setSearchKeyword],
   );
 
   const selectAllCheckboxChangedHandler = useCallback((isChecked: boolean) => {

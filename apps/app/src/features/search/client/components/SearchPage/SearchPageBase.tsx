@@ -21,6 +21,7 @@ import type {
 } from '~/interfaces/search';
 import type { OnDeletedFunction } from '~/interfaces/ui';
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
+import { useKeywordManager } from '~/states/search';
 import {
   isSearchServiceConfiguredAtom,
   isSearchServiceReachableAtom,
@@ -81,6 +82,9 @@ const SearchPageBaseSubstance: ForwardRefRenderFunction<
   } = props;
 
   const searchResultListRef = useRef<ISelectableAll | null>(null);
+
+  // Initialize keyword manager for URL synchronization
+  useKeywordManager();
 
   const isGuestUser = useIsGuestUser();
   const isReadOnlyUser = useIsReadOnlyUser();
