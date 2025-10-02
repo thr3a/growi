@@ -4,7 +4,7 @@ import React, {
   useMemo,
 } from 'react';
 
-import { GlobalCodeMirrorEditorKey, useResolvedThemeActions } from '@growi/editor';
+import { GlobalCodeMirrorEditorKey, useSetResolvedTheme } from '@growi/editor';
 import { CodeMirrorEditorComment } from '@growi/editor/dist/client/components/CodeMirrorEditorComment';
 import { useCodeMirrorEditorIsolated } from '@growi/editor/dist/client/stores/codemirror-editor';
 import { UserPicture } from '@growi/ui/dist/components';
@@ -84,9 +84,12 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
   const isSlackConfigured = useAtomValue(isSlackConfiguredAtom);
   const { data: editorSettings } = useEditorSettings();
   const { markDirty, markClean } = useCommentEditorsDirtyMap();
-  const { mutateResolvedTheme } = useResolvedThemeActions();
+
+  const setResolvedTheme = useSetResolvedTheme();
   const { resolvedTheme } = useNextThemes();
-  mutateResolvedTheme(resolvedTheme);
+  useEffect(() => {
+    setResolvedTheme(resolvedTheme);
+  }, [resolvedTheme, setResolvedTheme]);
 
   const editorKey = useMemo(() => {
     if (replyTo != null) {
@@ -314,9 +317,11 @@ export const CommentEditorPre = (props: CommentEditorProps): JSX.Element => {
   const { onCommented, onCanceled, ...rest } = props;
 
   const currentUser = useCurrentUser();
-  const { mutateResolvedTheme } = useResolvedThemeActions();
+  const setResolvedTheme = useSetResolvedTheme();
   const { resolvedTheme } = useNextThemes();
-  mutateResolvedTheme(resolvedTheme);
+  useEffect(() => {
+    setResolvedTheme(resolvedTheme);
+  }, [resolvedTheme, setResolvedTheme]);
 
   const [isReadyToUse, setIsReadyToUse] = useState(false);
 

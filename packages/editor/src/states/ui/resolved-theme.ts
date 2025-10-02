@@ -1,26 +1,9 @@
 import type { ColorScheme } from '@growi/core';
-import { atom, useAtom, useSetAtom } from 'jotai';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
 
 
-type ResolvedThemeState = {
-  themeData?: ColorScheme;
-};
+const resolvedThemeAtom = atom<ColorScheme>();
 
-const resolvedThemeAtom = atom<ResolvedThemeState>({
-  themeData: undefined,
-});
+export const useResolvedTheme = () => useAtomValue(resolvedThemeAtom);
 
-export const useResolvedTheme = () => {
-  const [state] = useAtom(resolvedThemeAtom);
-  return state;
-};
-
-export const useResolvedThemeActions = () => {
-  const setState = useSetAtom(resolvedThemeAtom);
-
-  return {
-    mutateResolvedTheme: (resolvedTheme: ColorScheme) => {
-      setState({ themeData: resolvedTheme });
-    },
-  };
-};
+export const useSetResolvedTheme = () => useSetAtom(resolvedThemeAtom);

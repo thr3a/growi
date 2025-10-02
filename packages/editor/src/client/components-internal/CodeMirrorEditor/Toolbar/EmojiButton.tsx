@@ -80,7 +80,7 @@ export const EmojiButton = (props: Props): JSX.Element => {
             <span style={setStyle()}>
               <Picker
                 onEmojiSelect={selectEmoji}
-                theme={resolvedTheme?.themeData}
+                theme={resolvedTheme}
                 data={emojiData}
                 // TODO: https://redmine.weseek.co.jp/issues/133681
                 // i18n={}

@@ -14,9 +14,7 @@ const linkEditModalAtom = atom<LinkEditModalState>({
   onSave: undefined,
 });
 
-export const useLinkEditModalStatus = () => {
-  return useAtomValue(linkEditModalAtom);
-};
+export const useLinkEditModalStatus = () => useAtomValue(linkEditModalAtom);
 
 export const useLinkEditModalActions = () => {
   const setModalState = useSetAtom(linkEditModalAtom);

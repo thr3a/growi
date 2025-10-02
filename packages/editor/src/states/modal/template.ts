@@ -15,9 +15,7 @@ const templateModalAtom = atom<TemplateModalState>({
   onSubmit: undefined,
 });
 
-export const useTemplateModalStatus = () => {
-  return useAtomValue(templateModalAtom);
-};
+export const useTemplateModalStatus = () => useAtomValue(templateModalAtom);
 
 export const useTemplateModalActions = () => {
   const setModalState = useSetAtom(templateModalAtom);

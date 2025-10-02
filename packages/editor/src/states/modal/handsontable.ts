@@ -12,9 +12,7 @@ const handsontableModalAtom = atom<HandsontableModalState>({
   editor: undefined,
 });
 
-export const useHandsontableModalForEditorStatus = () => {
-  return useAtomValue(handsontableModalAtom);
-};
+export const useHandsontableModalForEditorStatus = () => useAtomValue(handsontableModalAtom);
 
 export const useHandsontableModalForEditorActions = () => {
   const setModalState = useSetAtom(handsontableModalAtom);

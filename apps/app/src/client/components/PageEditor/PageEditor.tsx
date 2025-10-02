@@ -9,7 +9,7 @@ import nodePath from 'path';
 import { Origin } from '@growi/core';
 import type { IPageHasId } from '@growi/core/dist/interfaces';
 import { pathUtils } from '@growi/core/dist/utils';
-import { GlobalCodeMirrorEditorKey, useResolvedThemeActions } from '@growi/editor';
+import { GlobalCodeMirrorEditorKey, useSetResolvedTheme } from '@growi/editor';
 import { CodeMirrorEditorMain } from '@growi/editor/dist/client/components/CodeMirrorEditorMain';
 import { useCodeMirrorEditorIsolated } from '@growi/editor/dist/client/stores/codemirror-editor';
 import { useRect } from '@growi/ui/dist/utils';
@@ -124,8 +124,6 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
 
   const { data: rendererOptions } = usePreviewOptions();
 
-  const { mutateResolvedTheme } = useResolvedThemeActions();
-
   const shouldExpandContent = useShouldExpandContent(currentPage);
 
   const updatePage = useUpdatePage();
@@ -133,8 +131,11 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
 
   useConflictEffect();
 
+  const setResolvedTheme = useSetResolvedTheme();
   const { resolvedTheme } = useNextThemes();
-  mutateResolvedTheme(resolvedTheme);
+  useEffect(() => {
+    setResolvedTheme(resolvedTheme);
+  }, [resolvedTheme, setResolvedTheme]);
 
   const currentRevisionId = currentPage?.revision?._id;
   const isRevisionIdRequiredForPageUpdate = currentPage?.revision?.origin === undefined;
