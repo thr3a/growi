@@ -43,19 +43,16 @@ import {
 import {
   useCurrentIndentSize, useCurrentIndentSizeActions,
   useEditorMode, EditorMode, useEditingMarkdown, useSelectedGrant,
-  useWaitingSaveProcessingActions,
+  useWaitingSaveProcessingActions, useSetReservedNextCaretLine, useReservedNextCaretLineValue,
 } from '~/states/ui/editor';
+import { useEditingClientsActions } from '~/states/ui/editor/editing-clients';
 import { useNextThemes } from '~/stores-universal/use-next-themes';
-import {
-  useReservedNextCaretLine,
-  useEditorSettings,
-} from '~/stores/editor';
+import { useEditorSettings } from '~/stores/editor';
 import {
   useSWRxCurrentGrantData,
 } from '~/stores/page';
 import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
 import { usePreviewOptions } from '~/stores/renderer';
-import { useEditingClientsActions } from '~/states/ui/editor/editing-clients';
 import loggerFactory from '~/utils/logger';
 
 import { EditorNavbar } from './EditorNavbar';
@@ -121,7 +118,8 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   const user = useCurrentUser();
   const { mutate: mutateEditingUsers } = useEditingClientsActions();
   const onConflict = useConflictResolver();
-  const { data: reservedNextCaretLine, mutate: mutateReservedNextCaretLine } = useReservedNextCaretLine();
+  const reservedNextCaretLine = useReservedNextCaretLineValue();
+  const setReservedNextCaretLine = useSetReservedNextCaretLine();
   const isEnableUnifiedMergeView = useIsEnableUnifiedMergeView();
 
   const { data: rendererOptions } = usePreviewOptions();
@@ -334,9 +332,9 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   // reset caret line if returning to the View.
   useEffect(() => {
     if (editorMode === EditorMode.View) {
-      mutateReservedNextCaretLine(0);
+      setReservedNextCaretLine(0);
     }
-  }, [editorMode, mutateReservedNextCaretLine]);
+  }, [editorMode, setReservedNextCaretLine]);
 
 
   // TODO: Check the reproduction conditions that made this code necessary and confirm reproduction

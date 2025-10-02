@@ -4,8 +4,7 @@ import dynamic from 'next/dynamic';
 
 import { useHashChangedEffect } from '~/client/services/side-effects/hash-changed';
 import { useIsEditable, useLatestRevision } from '~/states/page';
-import { EditorMode, useEditorMode } from '~/states/ui/editor';
-import { useReservedNextCaretLine } from '~/stores/editor';
+import { EditorMode, useEditorMode, useReservedNextCaretLine } from '~/states/ui/editor';
 
 import { LazyRenderer } from '../Common/LazyRenderer';
 

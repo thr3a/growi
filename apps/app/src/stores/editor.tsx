@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 import { type Nullable } from '@growi/core';
 import { withUtils, type SWRResponseWithUtils, useSWRStatic } from '@growi/core/dist/swr';
 import type { EditorSettings } from '@growi/editor';
@@ -78,27 +76,4 @@ export const useIsSlackEnabled = (): SWRResponse<boolean, Error> => {
 
 export type IPageTagsForEditorsOption = {
   sync: (tags?: string[]) => void;
-}
-
-
-export const useReservedNextCaretLine = (initialData?: number): SWRResponse<number> => {
-
-  const swrResponse = useSWRStatic('saveNextCaretLine', initialData, { fallbackData: 0 });
-  const { mutate } = swrResponse;
-
-  useEffect(() => {
-    const handler = (lineNumber: number) => {
-      mutate(lineNumber);
-    };
-
-    globalEmitter.on('reservedNextCaretLine', handler);
-
-    return function cleanup() {
-      globalEmitter.removeListener('reservedNextCaretLine', handler);
-    };
-  }, [mutate]);
-
-  return {
-    ...swrResponse,
-  };
 };
