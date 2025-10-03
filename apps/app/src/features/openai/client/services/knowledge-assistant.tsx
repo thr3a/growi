@@ -61,7 +61,6 @@ type UseKnowledgeAssistant = () => {
   processMessage: ProcessMessage
   form: UseFormReturn<FormData>
   resetForm: () => void
-  handleBackToInitialView: () => void;
   threadTitleView: JSX.Element
 
   // Views
@@ -265,7 +264,6 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
     processMessage,
     form,
     resetForm,
-    handleBackToInitialView,
     threadTitleView,
 
     // Views
