@@ -5,16 +5,17 @@ import { useSearchModalActions } from '../../states/modal/search';
 
 type Props = {
   keywordOnInit: string;
+  onSearchInvoked?: (keyword: string) => void;
 };
 
 export const SearchModalTriggerinput: React.FC<Props> = (props: Props) => {
-  const { keywordOnInit } = props;
+  const { keywordOnInit, onSearchInvoked } = props;
 
   const { open: openSearchModal } = useSearchModalActions();
 
   const inputClickHandler = useCallback(() => {
-    openSearchModal(keywordOnInit);
-  }, [openSearchModal, keywordOnInit]);
+    openSearchModal(keywordOnInit, onSearchInvoked);
+  }, [openSearchModal, keywordOnInit, onSearchInvoked]);
 
   return (
     <div className="d-flex align-items-center">

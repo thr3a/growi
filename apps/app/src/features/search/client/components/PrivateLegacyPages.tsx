@@ -35,6 +35,7 @@ import type { IFormattedSearchResult } from '~/interfaces/search';
 import type { PageMigrationErrorData } from '~/interfaces/websocket';
 import { SocketEventName } from '~/interfaces/websocket';
 import { useIsAdmin } from '~/states/context';
+import { useSearchKeyword, useSetSearchKeyword } from '~/states/search';
 import type { ILegacyPrivatePage } from '~/states/ui/modal/private-legacy-pages-migration';
 import { usePrivateLegacyPagesMigrationModalActions } from '~/states/ui/modal/private-legacy-pages-migration';
 import {
@@ -264,7 +265,9 @@ const PrivateLegacyPages = (): JSX.Element => {
 
   const isAdmin = useIsAdmin();
 
-  const [keyword, setKeyword] = useState<string>(initQ);
+  const keyword = useSearchKeyword();
+  const setSearchKeyword = useSetSearchKeyword('/_private-legacy-pages');
+
   const [offset, setOffset] = useState<number>(0);
   const [limit, setLimit] = useState<number>(INITIAL_PAGING_SIZE);
   const [isOpenConvertModal, setOpenConvertModal] = useState<boolean>(false);
@@ -295,10 +298,10 @@ const PrivateLegacyPages = (): JSX.Element => {
   const searchInvokedHandler = useCallback(
     (_keyword: string) => {
       mutateMigrationStatus();
-      setKeyword(_keyword);
+      setSearchKeyword(_keyword);
       setOffset(0);
     },
-    [mutateMigrationStatus],
+    [mutateMigrationStatus, setSearchKeyword],
   );
 
   const { open: openModal, close: closeModal } =

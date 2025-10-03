@@ -6,6 +6,8 @@ import Downshift, {
 } from 'downshift';
 import { Modal, ModalBody } from 'reactstrap';
 
+import { useSetSearchKeyword } from '~/states/search';
+
 import { isIncludeAiMenthion, removeAiMenthion } from '../../utils/ai';
 import type { DownshiftItem } from '../interfaces/downshift';
 import {
@@ -17,8 +19,15 @@ import { SearchHelp } from './SearchHelp';
 import { SearchMethodMenuItem } from './SearchMethodMenuItem';
 import { SearchResultMenuItem } from './SearchResultMenuItem';
 
-const SearchModalSubstance = (): JSX.Element => {
-  const [searchKeyword, setSearchKeyword] = useState('');
+
+type Props = {
+  onSearch: (keyword: string) => void;
+}
+
+const SearchModalSubstance = (props: Props): JSX.Element => {
+  const { onSearch } = props;
+
+  const [searchInput, setSearchInput] = useState('');
   const [isMenthionedToAi, setMenthionedToAi] = useState(false);
 
   const searchModalData = useSearchModalStatus();
@@ -26,7 +35,7 @@ const SearchModalSubstance = (): JSX.Element => {
   const router = useRouter();
 
   const changeSearchTextHandler = useCallback((searchText: string) => {
-    setSearchKeyword(searchText);
+    setSearchInput(searchText);
   }, []);
 
   const selectSearchMenuItemHandler = useCallback(
@@ -38,11 +47,9 @@ const SearchModalSubstance = (): JSX.Element => {
   );
 
   const submitHandler = useCallback(() => {
-    const url = new URL('_search', 'http://example.com');
-    url.searchParams.set('q', searchKeyword);
-    router.push(url.pathname + url.search);
+    onSearch(searchInput);
     closeSearchModal();
-  }, [closeSearchModal, router, searchKeyword]);
+  }, [closeSearchModal, onSearch, searchInput]);
 
   // Memoize stateReducer to prevent recreation on every render
   const stateReducer = useCallback(
@@ -68,20 +75,20 @@ const SearchModalSubstance = (): JSX.Element => {
       return;
     }
     if (searchModalData?.searchKeyword == null) {
-      setSearchKeyword('');
+      setSearchInput('');
     } else {
-      setSearchKeyword(searchModalData.searchKeyword);
+      setSearchInput(searchModalData.searchKeyword);
     }
   }, [searchModalData?.isOpened, searchModalData?.searchKeyword]);
 
   useEffect(() => {
-    setMenthionedToAi(isIncludeAiMenthion(searchKeyword));
-  }, [searchKeyword]);
+    setMenthionedToAi(isIncludeAiMenthion(searchInput));
+  }, [searchInput]);
 
   // Memoize AI mention removal to prevent recalculation on every render
-  const searchKeywordWithoutAi = useMemo(
-    () => removeAiMenthion(searchKeyword),
-    [searchKeyword],
+  const searchInputWithoutAi = useMemo(
+    () => removeAiMenthion(searchInput),
+    [searchInput],
   );
 
   // Memoize icon selection to prevent recalculation
@@ -115,7 +122,7 @@ const SearchModalSubstance = (): JSX.Element => {
             <div className="text-muted d-flex justify-content-center align-items-center p-1">
               <span className={iconClassName}>{searchIcon}</span>
               <SearchForm
-                searchKeyword={searchKeyword}
+                searchKeyword={searchInput}
                 onChange={changeSearchTextHandler}
                 onSubmit={submitHandler}
                 getInputProps={getInputProps}
@@ -135,12 +142,12 @@ const SearchModalSubstance = (): JSX.Element => {
               <div className="border-top mt-2 mb-2" />
               <SearchMethodMenuItem
                 activeIndex={highlightedIndex}
-                searchKeyword={searchKeywordWithoutAi}
+                searchKeyword={searchInputWithoutAi}
                 getItemProps={getItemProps}
               />
               <SearchResultMenuItem
                 activeIndex={highlightedIndex}
-                searchKeyword={searchKeywordWithoutAi}
+                searchKeyword={searchInputWithoutAi}
                 getItemProps={getItemProps}
               />
               <div className="border-top mt-2 mb-2" />
@@ -154,22 +161,36 @@ const SearchModalSubstance = (): JSX.Element => {
 };
 
 const SearchModal = (): JSX.Element => {
-  const searchModalData = useSearchModalStatus();
+  const { isOpened, onSearchOverride } = useSearchModalStatus();
   const { close: closeSearchModal } = useSearchModalActions();
 
+  const setSearchKeyword = useSetSearchKeyword();
+
+    const searchHandler = useCallback(
+    (keyword: string) => {
+      // invoke override function if exists
+      if (onSearchOverride != null) {
+        onSearchOverride(keyword);
+      } else {
+        setSearchKeyword(keyword);
+      }
+    },
+    [onSearchOverride, setSearchKeyword],
+  );
+
   // Early return for performance optimization
-  if (!searchModalData?.isOpened) {
+  if (!isOpened) {
     return <></>;
   }
 
   return (
     <Modal
       size="lg"
-      isOpen={searchModalData.isOpened}
+      isOpen={isOpened}
       toggle={closeSearchModal}
       data-testid="search-modal"
     >
-      <SearchModalSubstance />
+      <SearchModalSubstance onSearch={searchHandler} />
     </Modal>
   );
 };

@@ -1,13 +1,20 @@
 import { useCallback } from 'react';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
+type OnSearch = (keyword: string) => void;
+type OpenSearchModal = (
+  keywordOnInit?: string,
+  onSearchOverride?: OnSearch,
+) => void;
+
 export type SearchModalStatus = {
   isOpened: boolean;
   searchKeyword?: string;
+  onSearchOverride?: OnSearch;
 };
 
 export type SearchModalActions = {
-  open: (keywordOnInit?: string) => void;
+  open: OpenSearchModal;
   close: () => void;
 };
 
@@ -15,6 +22,7 @@ export type SearchModalActions = {
 const searchModalAtom = atom<SearchModalStatus>({
   isOpened: false,
   searchKeyword: undefined,
+  onSearchOverride: undefined,
 });
 
 // Read-only hook (useAtomValue)
@@ -27,10 +35,11 @@ export const useSearchModalActions = (): SearchModalActions => {
   const setStatus = useSetAtom(searchModalAtom);
 
   const open = useCallback(
-    (keywordOnInit?: string) => {
+    (keywordOnInit?: string, onSearchOverride?: OnSearch) => {
       setStatus({
         isOpened: true,
         searchKeyword: keywordOnInit,
+        onSearchOverride,
       });
     },
     [setStatus],
@@ -40,6 +49,7 @@ export const useSearchModalActions = (): SearchModalActions => {
     setStatus({
       isOpened: false,
       searchKeyword: undefined,
+      onSearchOverride: undefined,
     });
   }, [setStatus]);
 

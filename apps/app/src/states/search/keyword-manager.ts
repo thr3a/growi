@@ -50,11 +50,15 @@ export const useKeywordManager = (): void => {
   }, [setKeyword]);
 };
 
+type SetSearchKeyword = (newKeyword: string) => void;
+
 /**
  * Hook to set the search keyword and update the URL
  * @returns A function to update the search keyword and push to router history
  */
-export const useSetSearchKeyword = (): ((newKeyword: string) => void) => {
+export const useSetSearchKeyword = (
+  pathname = '/_search',
+): SetSearchKeyword => {
   const router = useRouter();
   const routerRef = useRef(router);
   const setKeyword = useSetAtom(searchKeywordAtom);
@@ -63,7 +67,7 @@ export const useSetSearchKeyword = (): ((newKeyword: string) => void) => {
     (newKeyword: string) => {
       setKeyword((prevKeyword) => {
         if (prevKeyword !== newKeyword) {
-          const newUrl = new URL('/_search', 'http://example.com');
+          const newUrl = new URL(pathname, 'http://example.com');
           newUrl.searchParams.append('q', newKeyword);
           routerRef.current.push(`${newUrl.pathname}${newUrl.search}`, '');
         }
@@ -71,6 +75,6 @@ export const useSetSearchKeyword = (): ((newKeyword: string) => void) => {
         return newKeyword;
       });
     },
-    [setKeyword],
+    [setKeyword, pathname],
   );
 };
