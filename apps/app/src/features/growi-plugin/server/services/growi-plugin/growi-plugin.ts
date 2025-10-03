@@ -66,7 +66,7 @@ function retrievePluginManifest(
 type FindThemePluginResult = {
   growiPlugin: IGrowiPlugin;
   themeMetadata: GrowiThemeMetadata;
-  themeHref: string;
+  themeHref: string | undefined;
 };
 
 export interface IGrowiPluginService {
@@ -155,7 +155,10 @@ export class GrowiPluginService implements IGrowiPluginService {
 
     const installedPath = `${organizationName}/${reposName}`;
 
-    const organizationPath = this.joinAndValidatePath(PLUGIN_STORING_PATH, organizationName);
+    const organizationPath = this.joinAndValidatePath(
+      PLUGIN_STORING_PATH,
+      organizationName,
+    );
     const zipFilePath = this.joinAndValidatePath(
       PLUGIN_STORING_PATH,
       organizationName,
@@ -166,7 +169,11 @@ export class GrowiPluginService implements IGrowiPluginService {
       organizationName,
       `${reposName}-${extractedArchiveDirName}`,
     );
-    const reposPath = this.joinAndValidatePath(PLUGIN_STORING_PATH, organizationName, reposName);
+    const reposPath = this.joinAndValidatePath(
+      PLUGIN_STORING_PATH,
+      organizationName,
+      reposName,
+    );
 
     if (!fs.existsSync(organizationPath)) fs.mkdirSync(organizationPath);
 
@@ -427,7 +434,7 @@ export class GrowiPluginService implements IGrowiPluginService {
       return null;
     }
 
-    let themeHref: string;
+    let themeHref: string | undefined;
     try {
       const manifest = retrievePluginManifest(matchedPlugin);
       if (manifest == null) {
@@ -484,10 +491,7 @@ export class GrowiPluginService implements IGrowiPluginService {
     return entries;
   }
 
-  private joinAndValidatePath(
-    baseDir: string,
-    ...paths: string[]
-  ): string {
+  private joinAndValidatePath(baseDir: string, ...paths: string[]): string {
     const joinedPath = path.join(baseDir, ...paths);
     if (!joinedPath.startsWith(baseDir)) {
       throw new Error(

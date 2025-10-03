@@ -103,7 +103,7 @@ describe('Installing a GROWI theme plugin', () => {
     expect(results.themeMetadata).not.toBeNull();
     expect(results.themeHref).not.toBeNull();
     expect(
-      results.themeHref.startsWith(
+      results.themeHref?.startsWith(
         '/static/plugins/growilabs/growi-plugin-theme-vivid-internet/dist/assets/style-',
       ),
     ).toBeTruthy();
