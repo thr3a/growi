@@ -1,6 +1,8 @@
+import type { PageBulkExportJobDocument } from '../../models/page-bulk-export-job';
+
 export class BulkExportJobExpiredError extends Error {
-  constructor() {
-    super('Bulk export job has expired');
+  constructor(pageBulkExportJob: PageBulkExportJobDocument) {
+    super(`Bulk export job has expired: ${pageBulkExportJob._id.toString()}`);
   }
 }
 

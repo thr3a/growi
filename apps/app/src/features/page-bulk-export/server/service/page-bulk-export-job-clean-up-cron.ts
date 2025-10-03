@@ -62,6 +62,7 @@ class PageBulkExportJobCleanUpCronService extends CronService {
         SupportedAction.ACTION_PAGE_BULK_EXPORT_JOB_EXPIRED,
         job,
       );
+      logger.error(`Bulk export job has expired: ${job._id.toString()}`);
     };
 
     if (pageBulkExportJobCronService != null) {
