@@ -1,15 +1,15 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { pipeline, Writable } from 'node:stream';
 import { dynamicImport } from '@cspell/dynamic-import';
 import { isPopulated } from '@growi/core';
 import {
   getParentPath,
   normalizePath,
 } from '@growi/core/dist/utils/path-utils';
-import fs from 'fs';
 import type { Root } from 'mdast';
-import path from 'path';
 import type * as RemarkHtml from 'remark-html';
 import type * as RemarkParse from 'remark-parse';
-import { pipeline, Writable } from 'stream';
 import type * as Unified from 'unified';
 
 import {
@@ -20,6 +20,7 @@ import type { PageBulkExportJobDocument } from '../../../models/page-bulk-export
 import type { PageBulkExportPageSnapshotDocument } from '../../../models/page-bulk-export-page-snapshot';
 import PageBulkExportPageSnapshot from '../../../models/page-bulk-export-page-snapshot';
 import type { IPageBulkExportJobCronService } from '..';
+import { BulkExportJobStreamDestroyedByCleanupError } from '../errors';
 
 async function convertMdToHtml(
   md: string,
@@ -132,9 +133,16 @@ export async function exportPagesToFsAsync(
 
   const pagesWritable = await getPageWritable.bind(this)(pageBulkExportJob);
 
-  this.setStreamInExecution(pageBulkExportJob._id, pageSnapshotsReadable);
+  this.setStreamsInExecution(
+    pageBulkExportJob._id,
+    pageSnapshotsReadable,
+    pagesWritable,
+  );
 
   pipeline(pageSnapshotsReadable, pagesWritable, (err) => {
-    this.handleError(err, pageBulkExportJob);
+    // prevent overlapping cleanup
+    if (!(err instanceof BulkExportJobStreamDestroyedByCleanupError)) {
+      this.handleError(err, pageBulkExportJob);
+    }
   });
 }
