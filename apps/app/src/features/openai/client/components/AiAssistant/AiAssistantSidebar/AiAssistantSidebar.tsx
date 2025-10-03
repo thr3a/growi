@@ -75,7 +75,6 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
     processMessage: processMessageForKnowledgeAssistant,
     form: formForKnowledgeAssistant,
     resetForm: resetFormForKnowledgeAssistant,
-    threadTitleView: threadTitleViewForKnowledgeAssistant,
 
     // Views
     initialView: initialViewForKnowledgeAssistant,
@@ -83,6 +82,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
     headerIcon: headerIconForKnowledgeAssistant,
     headerText: headerTextForKnowledgeAssistant,
     placeHolder: placeHolderForKnowledgeAssistant,
+    threadTitleView: threadTitleViewForKnowledgeAssistant,
   } = useKnowledgeAssistant();
 
   const {
