@@ -244,7 +244,7 @@
     "scope_read": "Read",
     "action": "アクション",
     "create_token": "トークンを作成",
-    "no_tokens_found":"アクセストークンが見つかりません",
+    "no_tokens_found": "アクセストークンが見つかりません",
     "new_token": {
       "title": "新しいアクセストークン",
       "copy_to_clipboard": "クリップボードにコピーしました",
@@ -633,6 +633,17 @@
       "create_failed": "アシスタントの作成に失敗しました",
       "update_failed": "アシスタントの更新に失敗しました"
     },
+    "select_source_pages": "アシスタントが参照するページを選択します",
+    "search_reference_pages_by_keyword": "アシスタントが参照するページをキーワードで検索",
+    "search_by_keyword": "キーワードで検索",
+    "enter_keywords": "キーワードを入力",
+    "max_items_space_separated_hint": "スペース区切りで最大5つまで入力できます",
+    "select_assistant_reference_pages": "アシスタントが参照するページを選択してください",
+    "reference_pages": "参照するページ",
+    "no_pages_selected": "ページが選択されていません",
+    "can_add_later": "あとからでも追加できます",
+    "next": "次へ",
+    "select_from_page_tree": "ページツリーから選択",
     "edit_page_description": " アシスタントが参照するページを編集します。<br> 参照できるページは配下ページも含めて {{limitLearnablePageCountPerAssistant}} ページまでです。",
     "default_instruction": "あなたはこのWikiの知識アシスタントです。\n\n## 多言語サポート:\nユーザーが入力で使用した言語と同じ言語で応答してください。\n",
     "add_page_button": "ページを追加する",
@@ -697,6 +708,10 @@
       "thread_deleted_failed": "スレッドの削除に失敗しました",
       "ai_assistant_set_default_success": "デフォルトアシスタントを設定しました",
       "ai_assistant_set_default_failed": "デフォルトアシスタントの設定に失敗しました"
+    },
+    "delete_modal": {
+      "title": "アシスタントを削除する",
+      "confirm_message": "本当にアシスタントを削除しますか？"
     }
   },
   "link_edit": {
@@ -915,7 +930,7 @@
     "Password field is required": "パスワードの欄は必ず入力してください",
     "Username or E-mail has invalid characters": "ユーザー名または、メールアドレスに無効な文字があります",
     "user_not_found": "ユーザーが見つかりません",
-    "provider_duplicated_username_exception": "<p><strong><span class='material-symbols-outlined me-1'>cancel</span>エラー: DuplicatedUsernameException</strong></p><p class='mb-0'> {{ failedProviderForDuplicatedUsernameException }} 認証は成功しましたが、新しいユーザーを作成できませんでした。詳しくは<a href='https://github.com/weseek/growi/issues/193'>こちら: #193</a>.</p>"
+    "provider_duplicated_username_exception": "<p><strong><span class='material-symbols-outlined me-1'>cancel</span>エラー: DuplicatedUsernameException</strong></p><p class='mb-0'> {{ failedProviderForDuplicatedUsernameException }} 認証は成功しましたが、新しいユーザーを作成できませんでした。詳しくは<a href='https://github.com/growilabs/growi/issues/193'>こちら: #193</a>.</p>"
   },
   "grid_edit": {
     "create_bootstrap_4_grid": "Bootstrap 4 グリッドを作成",

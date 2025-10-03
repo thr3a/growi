@@ -258,7 +258,7 @@
       "title": "Créer un nouveau jeton d'accès",
       "expiredAt_desc": "Sélectionnez la date d'expiration de ce jeton d'accès.",
       "description_desc": "Fournissez une description pour vous aider à identifier ce jeton ultérieurement.",
-      "description_max_length": "Veuillez saisir jusqu'à {{length}} caractères."
+      "description_max_length": "Veuillez saisir jusqu'à {{length}} caractères.",
       "scope_desc": "Sélectionnez la portée du jeton d'accès."
     },
     "copy_to_clipboard": "Copier dans le presse-papiers"
@@ -594,6 +594,17 @@
       "create_failed": "Échec de la création de l'assistant",
       "update_failed": "Échec de la mise à jour de l'assistant"
     },
+    "select_source_pages": "Sélectionnez les pages que l'assistant doit référencer",
+    "search_reference_pages_by_keyword": "Rechercher les pages de référence de l'assistant par mot-clé",
+    "search_by_keyword": "Rechercher par mot-clé",
+    "max_items_space_separated_hint": "Saisissez jusqu'à 5 éléments séparés par des espaces",
+    "select_assistant_reference_pages": "Sélectionnez les pages de référence pour l'assistant",
+    "enter_keywords": "Entrer des mots-clés",
+    "reference_pages": "Pages de référence",
+    "no_pages_selected": "Aucune page sélectionnée",
+    "can_add_later": "Vous pouvez en ajouter plus tard",
+    "next": "Suivant",
+    "select_from_page_tree": "Sélectionner depuis l'arborescence des pages",
     "edit_page_description": "Modifier les pages que l'assistant peut référencer.<br> L'assistant peut référencer jusqu'à {{limitLearnablePageCountPerAssistant}} pages, y compris les pages enfants.",
     "default_instruction": "Vous êtes l'assistant de connaissances pour ce Wiki.\n\n## Support multilingue :\nRépondez dans la même langue que celle utilisée par l'utilisateur dans sa requête.\n",
     "add_page_button": "Ajouter une page",
@@ -658,6 +669,10 @@
       "thread_deleted_failed": "Échec de la suppression de la discussion",
       "ai_assistant_set_default_success": "Assistant par défaut défini avec succès",
       "ai_assistant_set_default_failed": "Échec de la définition de l'assistant par défaut"
+    },
+    "delete_modal": {
+      "title": "Supprimer l'assistant",
+      "confirm_message": "Êtes-vous sûr de vouloir supprimer cet assistant ?"
     }
   },
   "link_edit": {
@@ -876,7 +891,7 @@
     "Password field is required": "Mot de passe requis.",
     "Username or E-mail has invalid characters": "Le nom d'utilisateur ou l'adresse courriel contient des caractères invalides",
     "user_not_found": "Utilisateur introuvable.",
-    "provider_duplicated_username_exception": "<p><strong><span class='material-symbols-outlined me-1'>cancel</span>DuplicatedUsernameException</strong></p><p class='mb-0'> L'authentification est réussie pour {{ failedProviderForDuplicatedUsernameException }} , mais la création d'un utilisateur a échouée. Voir <a href='https://github.com/weseek/growi/issues/193'>#193</a>.</p>"
+    "provider_duplicated_username_exception": "<p><strong><span class='material-symbols-outlined me-1'>cancel</span>DuplicatedUsernameException</strong></p><p class='mb-0'> L'authentification est réussie pour {{ failedProviderForDuplicatedUsernameException }} , mais la création d'un utilisateur a échouée. Voir <a href='https://github.com/growilabs/growi/issues/193'>#193</a>.</p>"
   },
   "grid_edit": {
     "create_bootstrap_4_grid": "Créer grille Bootstrap 4",

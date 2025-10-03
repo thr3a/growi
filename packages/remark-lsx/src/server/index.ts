@@ -5,7 +5,7 @@ import { FilterXSS } from 'xss';
 import type { LsxApiOptions } from '../interfaces/api';
 import { listPages } from './routes/list-pages';
 
-const loginRequiredFallback = (req: Request, res: Response) => {
+const loginRequiredFallback = (_req: Request, res: Response) => {
   return res.status(403).send('login required');
 };
 
@@ -19,7 +19,8 @@ const lsxValidator = [
     .optional()
     .customSanitizer((options) => {
       try {
-        const jsonData: LsxApiOptions = JSON.parse(options);
+        const jsonData: LsxApiOptions =
+          typeof options === 'string' ? JSON.parse(options) : options;
 
         for (const key in jsonData) {
           jsonData[key] = filterXSS.process(jsonData[key]);

@@ -50,6 +50,7 @@ export const CONFIG_KEYS = [
   'app:aiEnabled',
   'app:publishOpenAPI',
   'app:maxFileSize',
+  'app:fileUploadTimeout',
   'app:fileUploadTotalLimit',
   'app:fileUploadDisabled',
   'app:elasticsearchVersion',
@@ -429,6 +430,10 @@ export const CONFIG_DEFINITIONS = {
     envVarName: 'MAX_FILE_SIZE',
     defaultValue: Infinity,
   }),
+  'app:fileUploadTimeout': defineConfig<number>({
+    envVarName: 'FILE_UPLOAD_TIMEOUT',
+    defaultValue: 10 * 60 * 1000, // 10 minutes
+  }),
   'app:fileUploadTotalLimit': defineConfig<number>({
     envVarName: 'FILE_UPLOAD_TOTAL_LIMIT',
     defaultValue: Infinity,
@@ -503,7 +508,7 @@ export const CONFIG_DEFINITIONS = {
   }),
   'app:deploymentType': defineConfig<GrowiDeploymentType>({
     envVarName: 'DEPLOYMENT_TYPE',
-    defaultValue: GrowiDeploymentType.others,
+    defaultValue: GrowiDeploymentType.node,
   }),
   'app:ssrMaxRevisionBodyLength': defineConfig<number>({
     envVarName: 'SSR_MAX_REVISION_BODY_LENGTH',

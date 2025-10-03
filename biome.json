@@ -9,11 +9,12 @@
       "!**/vite.config.ts.timestamp-*",
       "!**/vite.server.config.ts.timestamp-*",
       "!**/vite.client.config.ts.timestamp-*",
-      "!**/.pnpm-store/**",
       "!**/.turbo/**",
       "!**/.vscode/**",
       "!**/turbo.json",
+      "!**/.claude/**",
       "!**/.next/**",
+      "!**/.terraform/**",
       "!bin/**",
       "!tsconfig.base.json",
       "!**/.devcontainer/**",
@@ -23,13 +24,19 @@
       "!apps/slackbot-proxy/src/public/bootstrap/**",
       "!packages/editor/**",
       "!packages/pdf-converter-client/src/index.ts",
-      "!apps/app/bin/**",
-      "!apps/app/config/**",
-      "!apps/app/docker/**",
       "!apps/app/playwright/**",
       "!apps/app/public/**",
-      "!apps/app/resource/**",
-      "!apps/app/src/**",
+      "!apps/app/src/client/**",
+      "!apps/app/src/components/**",
+      "!apps/app/src/features/growi-plugin/**",
+      "!apps/app/src/features/openai/**",
+      "!apps/app/src/features/rate-limiter/**",
+      "!apps/app/src/models/**",
+      "!apps/app/src/pages/**",
+      "!apps/app/src/server/**",
+      "!apps/app/src/services/**",
+      "!apps/app/src/stores/**",
+      "!apps/app/src/styles/**",
       "!apps/app/test-with-vite/**",
       "!apps/app/tmp/**"
     ]
@@ -61,7 +68,10 @@
   },
   "overrides": [
     {
-      "includes": ["apps/pdf-converter/**", "./apps/slackbot-proxy/**"],
+      "includes": [
+        "apps/pdf-converter/**",
+        "./apps/slackbot-proxy/**"
+      ],
       "linter": {
         "rules": {
           "style": {
