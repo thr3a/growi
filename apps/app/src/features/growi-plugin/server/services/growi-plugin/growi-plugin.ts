@@ -155,16 +155,18 @@ export class GrowiPluginService implements IGrowiPluginService {
 
     const installedPath = `${organizationName}/${reposName}`;
 
-    const organizationPath = path.join(PLUGIN_STORING_PATH, organizationName);
-    const zipFilePath = path.join(
-      organizationPath,
+    const organizationPath = this.joinAndValidatePath(PLUGIN_STORING_PATH, organizationName);
+    const zipFilePath = this.joinAndValidatePath(
+      PLUGIN_STORING_PATH,
+      organizationName,
       `${reposName}-${extractedArchiveDirName}.zip`,
     );
-    const temporaryReposPath = path.join(
-      organizationPath,
+    const temporaryReposPath = this.joinAndValidatePath(
+      PLUGIN_STORING_PATH,
+      organizationName,
       `${reposName}-${extractedArchiveDirName}`,
     );
-    const reposPath = path.join(organizationPath, reposName);
+    const reposPath = this.joinAndValidatePath(PLUGIN_STORING_PATH, organizationName, reposName);
 
     if (!fs.existsSync(organizationPath)) fs.mkdirSync(organizationPath);
 
@@ -485,7 +487,7 @@ export class GrowiPluginService implements IGrowiPluginService {
   private joinAndValidatePath(
     baseDir: string,
     ...paths: string[]
-  ): fs.PathLike {
+  ): string {
     const joinedPath = path.join(baseDir, ...paths);
     if (!joinedPath.startsWith(baseDir)) {
       throw new Error(
