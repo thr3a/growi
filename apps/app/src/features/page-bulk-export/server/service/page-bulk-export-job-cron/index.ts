@@ -279,11 +279,18 @@ class PageBulkExportJobCronService
       pageBulkExportJob._id,
     );
     if (streamsInExecution != null && streamsInExecution.length > 0) {
-      streamsInExecution.forEach((stream) => {
-        if (!stream.destroyed) {
-          stream.destroy(new BulkExportJobStreamDestroyedByCleanupError());
-        }
-      });
+      // Wait for all streams to be destroyed before proceeding with cleanup
+      await Promise.allSettled(
+        streamsInExecution.map((stream) => {
+          if (!stream.destroyed) {
+            return new Promise<void>((resolve) => {
+              stream.destroy(new BulkExportJobStreamDestroyedByCleanupError());
+              stream.once('close', () => resolve());
+            });
+          }
+          return Promise.resolve();
+        }),
+      );
 
       this.removeStreamInExecution(pageBulkExportJob._id);
     }
