@@ -17,7 +17,8 @@ export const certifyAiService = (
   if (!aiEnabled) {
     const message = 'AI_ENABLED is not true';
     logger.error(message);
-    return res.apiv3Err(message, 403);
+    res.apiv3Err(message, 403);
+    return;
   }
 
   const openaiServiceType = configManager.getConfig('openai:serviceType');
@@ -27,7 +28,8 @@ export const certifyAiService = (
   ) {
     const message = 'AI_SERVICE_TYPE is missing or contains an invalid value';
     logger.error(message);
-    return res.apiv3Err(message, 403);
+    res.apiv3Err(message, 403);
+    return;
   }
 
   next();

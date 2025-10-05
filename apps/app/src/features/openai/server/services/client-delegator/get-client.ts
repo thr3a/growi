@@ -17,6 +17,7 @@ type Delegator<Opts extends GetDelegatorOptions> = IsAny<Opts> extends true
       ? AzureOpenaiClientDelegator
       : IOpenaiClientDelegator;
 
+// biome-ignore lint/suspicious/noImplicitAnyLet: ignore
 let instance;
 
 export const getClient = <Opts extends GetDelegatorOptions>(

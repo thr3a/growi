@@ -8,6 +8,7 @@ export const embed = async (
   input: string,
   username?: string,
 ): Promise<OpenAI.Embedding[]> => {
+  // biome-ignore lint/suspicious/noImplicitAnyLet: ignore
   let user;
 
   if (username != null) {
