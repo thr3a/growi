@@ -7,7 +7,11 @@ import { OpenaiServiceTypes } from '../../../interfaces/ai';
 
 const logger = loggerFactory('growi:middlewares:certify-ai-service');
 
-export const certifyAiService = (req: Request, res: Response & { apiv3Err }, next: NextFunction): void => {
+export const certifyAiService = (
+  req: Request,
+  res: Response & { apiv3Err },
+  next: NextFunction,
+): void => {
   const aiEnabled = configManager.getConfig('app:aiEnabled');
 
   if (!aiEnabled) {
@@ -17,7 +21,10 @@ export const certifyAiService = (req: Request, res: Response & { apiv3Err }, nex
   }
 
   const openaiServiceType = configManager.getConfig('openai:serviceType');
-  if (openaiServiceType == null || !OpenaiServiceTypes.includes(openaiServiceType)) {
+  if (
+    openaiServiceType == null ||
+    !OpenaiServiceTypes.includes(openaiServiceType)
+  ) {
     const message = 'AI_SERVICE_TYPE is missing or contains an invalid value';
     logger.error(message);
     return res.apiv3Err(message, 403);
