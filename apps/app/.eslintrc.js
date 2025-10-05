@@ -40,6 +40,7 @@ module.exports = {
     'src/features/external-user-group/**',
     'src/features/page-bulk-export/**',
     'src/features/opentelemetry/**',
+    'src/features/rate-limiter/**',
     'src/stores-universal/**',
     'src/interfaces/**',
     'src/utils/**',
