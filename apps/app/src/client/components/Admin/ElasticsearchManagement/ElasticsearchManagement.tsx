@@ -83,7 +83,19 @@ const ElasticsearchManagement = (): JSX.Element => {
     });
 
     socket.on(SocketEventName.FinishAddPage, async(data) => {
-      await retrieveIndicesStatus();
+      let retryCount = 0;
+      const maxRetries = 5;
+      const retryDelay = 500;
+
+      const retrieveIndicesStatusWithRetry = async() => {
+        const isNormalizedResult = await retrieveIndicesStatus();
+        if (!isNormalizedResult && retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(retrieveIndicesStatusWithRetry, retryDelay);
+        }
+      };
+
+      await retrieveIndicesStatusWithRetry();
       setIsRebuildingProcessing(false);
       setIsRebuildingCompleted(true);
     });
