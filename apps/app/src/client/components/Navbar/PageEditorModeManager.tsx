@@ -8,10 +8,10 @@ import { useTranslation } from 'next-i18next';
 
 import { useCreatePage } from '~/client/services/create-page';
 import { toastError } from '~/client/util/toastr';
+import { useCurrentPageYjsData } from '~/features/collaborative-editor/states';
 import { usePageNotFound } from '~/states/page';
 import { useDeviceLargerThanMd } from '~/states/ui/device';
 import { useEditorMode, EditorMode } from '~/states/ui/editor';
-import { useCurrentPageYjsData } from '~/stores/yjs';
 
 import { shouldCreateWipPage } from '../../../utils/should-create-wip-page';
 
@@ -69,7 +69,7 @@ export const PageEditorModeManager = (props: Props): JSX.Element => {
   const isNotFound = usePageNotFound();
   const { setEditorMode } = useEditorMode();
   const [isDeviceLargerThanMd] = useDeviceLargerThanMd();
-  const { data: currentPageYjsData } = useCurrentPageYjsData();
+  const currentPageYjsData = useCurrentPageYjsData();
 
   const { isCreating, create } = useCreatePage();
 

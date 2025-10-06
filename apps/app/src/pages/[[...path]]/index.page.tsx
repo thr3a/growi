@@ -15,13 +15,12 @@ import { PageView } from '~/components/PageView/PageView';
 import { DrawioViewerScript } from '~/components/Script/DrawioViewerScript';
 import { useEditorModeClassName } from '~/services/layout/use-editor-mode-class-name';
 import {
-  useCurrentPageData, useCurrentPageId, useCurrentPagePath, usePageNotFound,
+  useCurrentPageData, useCurrentPagePath,
 } from '~/states/page';
 import { useHydratePageAtoms } from '~/states/page/hydrate';
 import { useRendererConfig } from '~/states/server-configurations';
 import { useSetupGlobalSocket, useSetupGlobalSocketForPage } from '~/states/socket-io';
 import { useSetEditingMarkdown } from '~/states/ui/editor';
-import { useSWRMUTxCurrentPageYjsData } from '~/stores/yjs';
 
 import type { NextPageWithLayout } from '../_app.page';
 import { useHydrateBasicLayoutConfigurationAtoms } from '../basic-layout-page/hydrate';
@@ -96,13 +95,9 @@ const Page: NextPageWithLayout<Props> = (props: Props) => {
   });
 
   const currentPage = useCurrentPageData();
-  const pageId = useCurrentPageId();
   const currentPagePath = useCurrentPagePath();
-  const isNotFound = usePageNotFound();
   const rendererConfig = useRendererConfig();
   const setEditingMarkdown = useSetEditingMarkdown();
-
-  const { trigger: mutateCurrentPageYjsDataFromApi } = useSWRMUTxCurrentPageYjsData();
 
   // setup socket.io
   useSetupGlobalSocket();
@@ -114,14 +109,6 @@ const Page: NextPageWithLayout<Props> = (props: Props) => {
 
   // If initial props and skipSSR, fetch page data on client-side
   useInitialCSRFetch(isInitialProps(props) && props.skipSSR);
-
-  // Optimized effects with minimal dependencies
-  useEffect(() => {
-    // Load YJS data only when revision changes and page exists
-    if (pageId && currentPage?.revision?._id && !isNotFound) {
-      mutateCurrentPageYjsDataFromApi();
-    }
-  }, [currentPage?.revision?._id, mutateCurrentPageYjsDataFromApi, isNotFound, pageId]);
 
   useEffect(() => {
     // Initialize editing markdown only when page path changes

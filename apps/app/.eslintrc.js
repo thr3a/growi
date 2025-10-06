@@ -32,6 +32,7 @@ module.exports = {
     'src/linter-checker/**',
     'src/migrations/**',
     'src/features/callout/**',
+    'src/features/collaborative-editor/**',
     'src/features/comment/**',
     'src/features/templates/**',
     'src/features/mermaid/**',

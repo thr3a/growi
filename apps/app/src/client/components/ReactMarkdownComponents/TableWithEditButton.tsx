@@ -4,10 +4,10 @@ import type EventEmitter from 'events';
 
 import type { Element } from 'hast';
 
+import { useCurrentPageYjsData } from '~/features/collaborative-editor/states';
 import { useIsGuestUser, useIsReadOnlyUser, useIsSharedUser } from '~/states/context';
 import { useIsRevisionOutdated } from '~/states/page';
 import { useShareLinkId } from '~/states/page/hooks';
-import { useCurrentPageYjsData } from '~/stores/yjs';
 
 import styles from './TableWithEditButton.module.scss';
 
@@ -30,7 +30,7 @@ const TableWithEditButtonNoMemorized = (props: TableWithEditButtonProps): JSX.El
   const isSharedUser = useIsSharedUser();
   const shareLinkId = useShareLinkId();
   const isRevisionOutdated = useIsRevisionOutdated();
-  const { data: currentPageYjsData } = useCurrentPageYjsData();
+  const currentPageYjsData = useCurrentPageYjsData();
 
   const bol = node.position?.start.line;
   const eol = node.position?.end.line;
