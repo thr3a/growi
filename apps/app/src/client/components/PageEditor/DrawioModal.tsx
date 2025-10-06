@@ -14,7 +14,7 @@ import { replaceFocusedDrawioWithEditor, getMarkdownDrawioMxfile } from '~/clien
 import { useRendererConfig } from '~/states/server-configurations';
 import { useDrawioModalActions, useDrawioModalStatus } from '~/states/ui/modal/drawio';
 import { useDrawioModalForEditorStatus, useDrawioModalForEditorActions } from '~/states/ui/modal/drawio-for-editor';
-import { usePersonalSettings } from '~/stores/personal-settings';
+import { useSWRxPersonalSettings } from '~/stores/personal-settings';
 import loggerFactory from '~/utils/logger';
 
 
@@ -56,7 +56,7 @@ const drawioConfig: DrawioConfig = {
 
 const DrawioModalSubstance = (): JSX.Element => {
   const { drawioUri } = useRendererConfig();
-  const { data: personalSettingsInfo } = usePersonalSettings({
+  const { data: personalSettingsInfo } = useSWRxPersonalSettings({
     // make immutable
     revalidateIfStale: false,
     revalidateOnFocus: false,

@@ -23,7 +23,7 @@ import {
 } from 'reactstrap';
 
 import { useSWRxTemplate, useSWRxTemplates } from '~/features/templates/stores';
-import { usePersonalSettings } from '~/stores/personal-settings';
+import { useSWRxPersonalSettings } from '~/stores/personal-settings';
 import { usePreviewOptions } from '~/stores/renderer';
 import loggerFactory from '~/utils/logger';
 
@@ -120,7 +120,7 @@ const TemplateModalSubstance = (props: TemplateModalSubstanceProps): JSX.Element
 
   const { t } = useTranslation(['translation', 'commons']);
 
-  const { data: personalSettingsInfo } = usePersonalSettings();
+  const { data: personalSettingsInfo } = useSWRxPersonalSettings();
   const { data: rendererOptions } = usePreviewOptions();
   const { data: templateSummaries, isLoading } = useSWRxTemplates();
 
