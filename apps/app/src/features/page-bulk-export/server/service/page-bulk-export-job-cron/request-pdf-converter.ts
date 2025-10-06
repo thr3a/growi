@@ -48,7 +48,7 @@ export async function requestPdfConverter(
   }
 
   if (new Date() > bulkExportJobExpirationDate) {
-    throw new BulkExportJobExpiredError();
+    throw new BulkExportJobExpiredError(pageBulkExportJob);
   }
 
   try {
