@@ -4122,6 +4122,9 @@ class PageService implements IPageService {
     return [...userUnrelatedPreviousGrantedGroups, ...userRelatedGrantedGroups];
   }
 
+
+  // There are cases where "revisionId" is not required for revision updates
+  // See: https://dev.growi.org/651a6f4a008fee2f99187431#origin-%E3%81%AE%E5%BC%B7%E5%BC%B1
   async updatePage(
       pageData: HydratedDocument<PageDocument>,
       body: string | null,
@@ -4271,6 +4274,8 @@ class PageService implements IPageService {
   }
 
 
+  // There are cases where "revisionId" is not required for revision updates
+  // See: https://dev.growi.org/651a6f4a008fee2f99187431#origin-%E3%81%AE%E5%BC%B7%E5%BC%B1
   async updatePageV4(
       pageData: HydratedDocument<PageDocument>, body, previousBody, user, options: IOptionsForUpdate = {},
   ): Promise<HydratedDocument<PageDocument>> {
