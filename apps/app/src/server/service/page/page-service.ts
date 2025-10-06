@@ -4,7 +4,7 @@ import type {
   HasObjectId,
   IDataWithMeta,
   IGrantedGroup,
-  IPageInfo, IPageInfoForEntity, IPageNotFoundInfo, IUser, IPageInfoExt,
+  IPageInfo, IPageInfoForEntity, IPageNotFoundInfo, IUser, IPageInfoExt, IPage,
 } from '@growi/core';
 import type { HydratedDocument, Types } from 'mongoose';
 
