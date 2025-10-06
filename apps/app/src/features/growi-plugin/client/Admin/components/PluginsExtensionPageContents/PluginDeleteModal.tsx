@@ -7,6 +7,10 @@ import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 import { apiv3Delete } from '~/client/util/apiv3-client';
 import { toastError, toastSuccess } from '~/client/util/toastr';
 
+import {
+  usePluginDeleteModalActions,
+  usePluginDeleteModalStatus,
+} from '../../states/modal/plugin-delete';
 import { useSWRxAdminPlugins } from '../../stores/admin-plugins';
 
 export const PluginDeleteModal: React.FC = () => {
