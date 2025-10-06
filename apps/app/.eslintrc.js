@@ -45,6 +45,7 @@ module.exports = {
     'src/stores-universal/**',
     'src/interfaces/**',
     'src/utils/**',
+    'src/components/**',
   ],
   settings: {
     // resolve path aliases by eslint-import-resolver-typescript
