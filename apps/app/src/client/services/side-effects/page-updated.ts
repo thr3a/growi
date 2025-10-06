@@ -1,10 +1,9 @@
 import { useCallback, useEffect } from 'react';
 
-import { useGlobalSocket } from '@growi/core/dist/swr';
-
 import { SocketEventName } from '~/interfaces/websocket';
 import { useCurrentPageData, useFetchCurrentPage, useSetRemoteLatestPageData } from '~/states/page';
 import type { RemoteRevisionData } from '~/states/page';
+import { useGlobalSocket } from '~/states/socket-io';
 import { useEditorMode, EditorMode } from '~/states/ui/editor';
 import { usePageStatusAlertActions } from '~/states/ui/modal/page-status-alert';
 
@@ -13,7 +12,7 @@ export const usePageUpdatedEffect = (): void => {
 
   const setRemoteLatestPageData = useSetRemoteLatestPageData();
 
-  const { data: socket } = useGlobalSocket();
+  const socket = useGlobalSocket();
   const { editorMode } = useEditorMode();
   const currentPage = useCurrentPageData();
   const { fetchCurrentPage } = useFetchCurrentPage();

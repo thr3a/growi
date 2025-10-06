@@ -6,7 +6,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useGlobalSocket } from '@growi/core/dist/swr';
 import { LoadingSpinner } from '@growi/ui/dist/components';
 import { useTranslation } from 'next-i18next';
 import {
@@ -36,6 +35,7 @@ import type { PageMigrationErrorData } from '~/interfaces/websocket';
 import { SocketEventName } from '~/interfaces/websocket';
 import { useIsAdmin } from '~/states/context';
 import { useSearchKeyword, useSetSearchKeyword } from '~/states/search';
+import { useGlobalSocket } from '~/states/socket-io';
 import type { ILegacyPrivatePage } from '~/states/ui/modal/private-legacy-pages-migration';
 import { usePrivateLegacyPagesMigrationModalActions } from '~/states/ui/modal/private-legacy-pages-migration';
 import {
@@ -306,7 +306,7 @@ const PrivateLegacyPages = (): JSX.Element => {
 
   const { open: openModal, close: closeModal } =
     usePrivateLegacyPagesMigrationModalActions();
-  const { data: socket } = useGlobalSocket();
+  const socket = useGlobalSocket();
 
   useEffect(() => {
     socket?.on(SocketEventName.PageMigrationSuccess, () => {

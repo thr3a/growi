@@ -3,7 +3,6 @@ import React, { useEffect, useCallback, type JSX } from 'react';
 import path from 'path';
 
 import type { IPageToDeleteWithMeta } from '@growi/core';
-import { useGlobalSocket } from '@growi/core/dist/swr';
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
@@ -13,6 +12,7 @@ import type { OnDuplicatedFunction, OnDeletedFunction } from '~/interfaces/ui';
 import type { UpdateDescCountData, UpdateDescCountRawData } from '~/interfaces/websocket';
 import { SocketEventName } from '~/interfaces/websocket';
 import { useCurrentPagePath, useFetchCurrentPage } from '~/states/page';
+import { useGlobalSocket } from '~/states/socket-io';
 import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
 import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 import { usePageDuplicateModalActions } from '~/states/ui/modal/page-duplicate';
@@ -60,7 +60,7 @@ export const ItemsTree = (props: ItemsTreeProps): JSX.Element => {
   const { open: openDuplicateModal } = usePageDuplicateModalActions();
   const { open: openDeleteModal } = usePageDeleteModalActions();
 
-  const { data: socket } = useGlobalSocket();
+  const socket = useGlobalSocket();
   const { update: updatePtDescCountMap } = usePageTreeDescCountMapAction();
 
   // for mutation

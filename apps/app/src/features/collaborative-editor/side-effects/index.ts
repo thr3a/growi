@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useGlobalSocket } from '@growi/core/dist/swr';
 
 import { useCurrentPageYjsDataActions } from '~/features/collaborative-editor/states';
 import { SocketEventName } from '~/interfaces/websocket';
@@ -8,6 +7,7 @@ import {
   useCurrentPageId,
   usePageNotFound,
 } from '~/states/page';
+import { useGlobalSocket } from '~/states/socket-io';
 
 export const useCurrentPageYjsDataAutoLoadEffect = (): void => {
   const { fetchCurrentPageYjsData } = useCurrentPageYjsDataActions();
@@ -25,7 +25,7 @@ export const useCurrentPageYjsDataAutoLoadEffect = (): void => {
 };
 
 export const useNewlyYjsDataSyncingEffect = (): void => {
-  const { data: socket } = useGlobalSocket();
+  const socket = useGlobalSocket();
   const { updateHasYdocsNewerThanLatestRevision } =
     useCurrentPageYjsDataActions();
 
@@ -49,7 +49,7 @@ export const useNewlyYjsDataSyncingEffect = (): void => {
 };
 
 export const useAwarenessSyncingEffect = (): void => {
-  const { data: socket } = useGlobalSocket();
+  const socket = useGlobalSocket();
   const { updateAwarenessStateSize } = useCurrentPageYjsDataActions();
 
   useEffect(() => {

@@ -1,7 +1,6 @@
 import { useCallback, useEffect } from 'react';
 
 import { Origin } from '@growi/core';
-import { useGlobalSocket } from '@growi/core/dist/swr';
 import { GlobalCodeMirrorEditorKey } from '@growi/editor';
 import { useCodeMirrorEditorIsolated } from '@growi/editor/dist/client/stores/codemirror-editor';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +11,7 @@ import { toastSuccess } from '~/client/util/toastr';
 import { SocketEventName } from '~/interfaces/websocket';
 import type { RemoteRevisionData } from '~/states/page';
 import { useCurrentPageData, useCurrentPageId, useSetRemoteLatestPageData } from '~/states/page';
+import { useGlobalSocket } from '~/states/socket-io';
 import { EditorMode, useEditorMode } from '~/states/ui/editor';
 import { useConflictDiffModalActions } from '~/states/ui/modal/conflict-diff';
 import { usePageStatusAlertActions } from '~/states/ui/modal/page-status-alert';
@@ -84,7 +84,7 @@ export const useConflictEffect = (): void => {
   const { close: closePageStatusAlert, open: openPageStatusAlert } = usePageStatusAlertActions();
   const { close: closeConflictDiffModal, open: openConflictDiffModal } = useConflictDiffModalActions();
   const { data: codeMirrorEditor } = useCodeMirrorEditorIsolated(GlobalCodeMirrorEditorKey.MAIN);
-  const { data: socket } = useGlobalSocket();
+  const socket = useGlobalSocket();
   const { editorMode } = useEditorMode();
 
   const conflictHandler = useCallback(() => {

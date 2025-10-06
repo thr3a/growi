@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from 'react';
-import { GLOBAL_SOCKET_NS } from '@growi/core/dist/swr';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import type { Socket } from 'socket.io-client';
 
@@ -8,6 +7,9 @@ import { useCurrentPageId } from '~/states/page';
 import loggerFactory from '~/utils/logger';
 
 const logger = loggerFactory('growi:states:websocket');
+
+// Constants
+export const GLOBAL_SOCKET_NS = '/';
 
 // WebSocket connection atom
 const globalSocketAtom = atom<Socket | null>(null);
