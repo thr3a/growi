@@ -4291,7 +4291,7 @@ class PageService implements IPageService {
     let savedPage = await pageData.save();
 
     // Update revision
-    const isBodyPresent = body != null && previousBody != null;
+    const isBodyPresent = body != null;
     const shouldUpdateBody = isBodyPresent;
     if (shouldUpdateBody) {
       const newRevision = await Revision.prepareRevision(pageData, body, previousBody, user);
