@@ -93,7 +93,7 @@ export const useGrowiVersion = () => useAtomValue(growiVersionAtom);
  */
 const isMaintenanceModeAtom = atom<boolean>(false);
 /**
- * Maintenance Mode atom setter
+ * Maintenance Mode atom getter
  */
 export const useIsMaintenanceMode = () => useAtomValue(isMaintenanceModeAtom);
 
@@ -162,6 +162,14 @@ export const _atomsForAdminPagesHydration = {
   growiCloudUriAtom,
   growiAppIdForGrowiCloudAtom,
 };
+
+/**
+ * Internal atoms for maintenance mode actions (special naming convention)
+ * These atoms are exposed only for actions in client/services
+ */
+export const _atomsForMaintenanceMode = {
+  isMaintenanceModeAtom,
+} as const;
 
 /**
  * Internal atoms for derived atom usage (special naming convention)
