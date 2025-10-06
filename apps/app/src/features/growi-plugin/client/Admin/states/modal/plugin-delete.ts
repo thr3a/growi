@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
 import type { IGrowiPluginHasId } from '../../../../interfaces';
@@ -33,14 +32,17 @@ export const usePluginDeleteModalStatus = (): PluginDeleteModalStatus => {
 export const usePluginDeleteModalActions = (): PluginDeleteModalActions => {
   const setStatus = useSetAtom(pluginDeleteModalAtom);
 
-  const open = useCallback((plugin: IGrowiPluginHasId) => {
-    setStatus({
-      isOpened: true,
-      id: plugin._id,
-      name: plugin.meta.name,
-      url: plugin.origin.url,
-    });
-  }, [setStatus]);
+  const open = useCallback(
+    (plugin: IGrowiPluginHasId) => {
+      setStatus({
+        isOpened: true,
+        id: plugin._id,
+        name: plugin.meta.name,
+        url: plugin.origin.url,
+      });
+    },
+    [setStatus],
+  );
 
   const close = useCallback(() => {
     setStatus({

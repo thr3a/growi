@@ -1,5 +1,5 @@
+import { type JSX, useCallback } from 'react';
 import { useTranslation } from 'next-i18next';
-import React, { type JSX, useCallback } from 'react';
 
 import { apiv3Post } from '~/client/util/apiv3-client';
 import { toastError, toastSuccess } from '~/client/util/toastr';
