@@ -41,6 +41,7 @@ module.exports = {
     'src/features/page-bulk-export/**',
     'src/features/growi-plugin/**',
     'src/features/opentelemetry/**',
+    'src/features/rate-limiter/**',
     'src/stores-universal/**',
     'src/interfaces/**',
     'src/utils/**',
