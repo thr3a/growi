@@ -192,8 +192,12 @@
 ### 今後の展開（オプション）
 1. 全移行済みフックの包括的なテスト
 2. パフォーマンスベンチマーク
-3. `packages/editor` への Jotai 導入検討
-4. 他パッケージへの展開検討
+3. ✅ **`packages/editor` への Jotai 導入検討完了** → 詳細は `packages-editor-jotai-migration-plan.md` 参照
+4. ✅ **`useSWRStatic/useStaticSWR` 廃止計画策定完了** → 詳細は `useSWRStatic-deprecation-plan.md` 参照
+5. 🔄 **`useSWRStatic/useStaticSWR` 廃止進行中** → 進捗は `useSWRStatic-deprecation-progress.md` 参照
+   - ✅ Phase 1-1 完了: useIsMaintenanceMode (1/7 箇所)
+   - ⏳ Phase 1-2 次: useGlobalAdminSocket
+6. 他パッケージへの展開検討
 
 ---
 
