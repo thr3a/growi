@@ -29,7 +29,6 @@
       "!apps/app/playwright/**",
       "!apps/app/public/**",
       "!apps/app/src/client/**",
-      "!apps/app/src/components/**",
       "!apps/app/src/features/openai/**",
       "!apps/app/src/models/**",
       "!apps/app/src/pages/**",
