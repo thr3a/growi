@@ -39,6 +39,7 @@ yarn-error.log*
 .claude
 *.orig
 *.code-workspace
+*.timestamp-*.mjs
 
 # turborepo
 .turbo

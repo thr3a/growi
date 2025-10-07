@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Readable, Writable } from 'node:stream';
 import { pipeline as pipelinePromise } from 'node:stream/promises';
-
 import { OnInit } from '@tsed/common';
 import { Service } from '@tsed/di';
 import { Logger } from '@tsed/logger';
@@ -225,7 +224,7 @@ class PdfConvertService implements OnInit {
   private getPdfWritable(): Writable {
     return new Writable({
       objectMode: true,
-      write: async (pageInfo: PageInfo, encoding, callback) => {
+      write: async (pageInfo: PageInfo, _encoding, callback) => {
         const pattern = new RegExp(
           `^${this.tmpOutputRootDir}(?:\\/([0-9]+))?\\/html\\/(.+?)\\.html$`,
         );
