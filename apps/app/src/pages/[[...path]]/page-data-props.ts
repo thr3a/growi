@@ -145,6 +145,25 @@ export async function getPageDataForInitial(
     // type assertion
     assert(isIPageInfo(meta), 'meta should be IPageInfo when data is not null');
 
+    // Handle empty pages - return as not found to avoid serialization issues
+    if (page.isEmpty) {
+      return {
+        props: {
+          currentPathname,
+          isIdenticalPathPage: false,
+          pageWithMeta: {
+            data: null,
+            meta: {
+              isNotFound: true,
+              isForbidden: false,
+            },
+          } satisfies IDataWithMeta<null, IPageNotFoundInfo>,
+          skipSSR: false,
+          redirectFrom,
+        },
+      };
+    }
+
     // Add user to seen users
     if (user != null) {
       await page.seen(user);

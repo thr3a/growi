@@ -416,10 +416,10 @@ class PageService implements IPageService {
 
     let page: HydratedDocument<PageDocument> | null;
     if (pageId != null) { // prioritized
-      page = await Page.findByIdAndViewer(pageId, user, null, includeEmpty);
+      page = await Page.findByIdAndViewer(pageId, user, null, true);
     }
     else {
-      page = await Page.findByPathAndViewer(path, user, null, true, includeEmpty);
+      page = await Page.findByPathAndViewer(path, user, null, true, true);
     }
 
     if (page == null) {
@@ -430,7 +430,18 @@ class PageService implements IPageService {
         meta: {
           isNotFound: true,
           isForbidden,
-        },
+        } satisfies IPageNotFoundInfo,
+      };
+    }
+
+    if (page.isEmpty && !includeEmpty) {
+      const isVisible = await Page.countByIdAndViewer(page._id, user, null, true);
+      return {
+        data: null,
+        meta: {
+          isNotFound: true,
+          isForbidden: !isVisible,
+        } satisfies IPageNotFoundInfo,
       };
     }
 
