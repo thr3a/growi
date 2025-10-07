@@ -1,5 +1,4 @@
 import type { AxiosRequestConfig } from 'axios';
-// eslint-disable-next-line no-restricted-imports
 import axios from 'axios';
 import { formatISO } from 'date-fns';
 import qs from 'qs';
