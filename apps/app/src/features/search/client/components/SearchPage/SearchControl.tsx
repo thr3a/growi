@@ -123,7 +123,10 @@ const SearchControl = React.memo((props: Props): JSX.Element => {
     <div className="shadow-sm">
       <div className="grw-search-page-nav d-flex py-3 align-items-center">
         <div className="flex-grow-1 mx-4">
-          <SearchModalTriggerinput keywordOnInit={keyword} onSearchInvoked={searchBySearchControlHandler} />
+          <SearchModalTriggerinput
+            keywordOnInit={keyword}
+            onSearchInvoked={searchBySearchControlHandler}
+          />
         </div>
       </div>
       {/* TODO: replace the following elements deleteAll button , relevance button and include specificPath button component */}

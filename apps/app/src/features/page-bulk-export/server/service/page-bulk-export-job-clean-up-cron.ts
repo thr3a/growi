@@ -1,4 +1,5 @@
 import type { HydratedDocument } from 'mongoose';
+
 import { SupportedAction } from '~/interfaces/activity';
 import type Crowi from '~/server/crowi';
 import { configManager } from '~/server/service/config-manager';

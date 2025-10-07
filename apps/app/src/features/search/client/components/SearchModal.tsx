@@ -19,10 +19,9 @@ import { SearchHelp } from './SearchHelp';
 import { SearchMethodMenuItem } from './SearchMethodMenuItem';
 import { SearchResultMenuItem } from './SearchResultMenuItem';
 
-
 type Props = {
   onSearch: (keyword: string) => void;
-}
+};
 
 const SearchModalSubstance = (props: Props): JSX.Element => {
   const { onSearch } = props;
@@ -166,7 +165,7 @@ const SearchModal = (): JSX.Element => {
 
   const setSearchKeyword = useSetSearchKeyword();
 
-    const searchHandler = useCallback(
+  const searchHandler = useCallback(
     (keyword: string) => {
       // invoke override function if exists
       if (onSearchOverride != null) {

@@ -10,10 +10,7 @@ import type {
   ISelectableAndIndeterminatable,
 } from '~/client/interfaces/selectable-all';
 import type { IFormattedSearchResult } from '~/interfaces/search';
-import {
-  useSearchKeyword,
-  useSetSearchKeyword,
-} from '~/states/search';
+import { useSearchKeyword, useSetSearchKeyword } from '~/states/search';
 import { showPageLimitationLAtom } from '~/states/server-configurations';
 import {
   type ISearchConditions,
