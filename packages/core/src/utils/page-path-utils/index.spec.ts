@@ -189,7 +189,7 @@ describe.concurrent('isCreatablePage test', () => {
   describe.concurrent('Test getUsernameByPath', () => {
     test.concurrent('found', () => {
       const username = getUsernameByPath('/user/username');
-      expect(username).toBe('yuki');
+      expect(username).toBe('username');
     });
 
     test.concurrent('found with slash', () => {
