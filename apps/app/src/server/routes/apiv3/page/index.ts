@@ -217,7 +217,7 @@ module.exports = (crowi) => {
       // not found or forbidden
       if (page == null && (pages == null || pages.length === 0)) {
         if (isIPageNotFoundInfo(meta) && meta.isForbidden) {
-          return res.apiv3Err(new ErrorV3('Page is forbidden', 'page-not-found', undefined, meta), 403);
+          return res.apiv3Err(new ErrorV3('Page is forbidden', 'page-is-forbidden', undefined, meta), 403);
         }
         return res.apiv3Err(new ErrorV3('Page is not found', 'page-not-found', undefined, meta), 404);
       }
