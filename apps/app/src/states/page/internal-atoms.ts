@@ -61,7 +61,7 @@ export const isUntitledPageAtom = atom(
   },
 );
 
-// Remote revision data atoms (migrated from useSWRStatic)
+// Remote revision data atoms
 export const remoteRevisionIdAtom = atom<string>();
 export const remoteRevisionBodyAtom = atom<string>();
 export const remoteRevisionLastUpdateUserAtom = atom<IUserHasId>();
