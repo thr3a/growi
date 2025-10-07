@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 import { useCurrentPageYjsDataActions } from '~/features/collaborative-editor/states';
 import { SocketEventName } from '~/interfaces/websocket';
+import { useIsGuestUser } from '~/states/context';
 import {
   useCurrentPageData,
   useCurrentPageId,
@@ -13,15 +14,27 @@ export const useCurrentPageYjsDataAutoLoadEffect = (): void => {
   const { fetchCurrentPageYjsData } = useCurrentPageYjsDataActions();
   const pageId = useCurrentPageId();
   const currentPage = useCurrentPageData();
+  const isGuestUser = useIsGuestUser();
   const isNotFound = usePageNotFound();
 
   // Optimized effects with minimal dependencies
   useEffect(() => {
     // Load YJS data only when revision changes and page exists
-    if (pageId && currentPage?.revision?._id && !isNotFound) {
+    if (
+      !isGuestUser &&
+      pageId != null &&
+      currentPage?.revision?._id != null &&
+      !isNotFound
+    ) {
       fetchCurrentPageYjsData();
     }
-  }, [currentPage?.revision?._id, fetchCurrentPageYjsData, isNotFound, pageId]);
+  }, [
+    isGuestUser,
+    currentPage?.revision?._id,
+    fetchCurrentPageYjsData,
+    isNotFound,
+    pageId,
+  ]);
 };
 
 export const useNewlyYjsDataSyncingEffect = (): void => {
@@ -31,6 +44,7 @@ export const useNewlyYjsDataSyncingEffect = (): void => {
 
   useEffect(() => {
     if (socket == null) {
+      // socket must be null if the user is a guest
       return;
     }
 
@@ -54,6 +68,7 @@ export const useAwarenessSyncingEffect = (): void => {
 
   useEffect(() => {
     if (socket == null) {
+      // socket must be null if the user is a guest
       return;
     }
 

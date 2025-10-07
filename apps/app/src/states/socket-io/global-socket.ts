@@ -6,6 +6,8 @@ import { SocketEventName } from '~/interfaces/websocket';
 import { useCurrentPageId } from '~/states/page';
 import loggerFactory from '~/utils/logger';
 
+import { useIsGuestUser } from '../context';
+
 const logger = loggerFactory('growi:states:websocket');
 
 // Constants
@@ -27,6 +29,8 @@ export const useGlobalSocket = (): Socket | null =>
 export const useSetupGlobalSocket = (): void => {
   const setSocket = useSetAtom(globalSocketAtom);
   const socket = useAtomValue(globalSocketAtom);
+
+  const isGuestUser = useIsGuestUser();
 
   const initializeSocket = useCallback(async () => {
     try {
@@ -52,10 +56,10 @@ export const useSetupGlobalSocket = (): void => {
   }, [setSocket]);
 
   useEffect(() => {
-    if (socket == null) {
+    if (!isGuestUser && socket == null) {
       initializeSocket();
     }
-  }, [socket, initializeSocket]);
+  }, [isGuestUser, socket, initializeSocket]);
 };
 
 /**
