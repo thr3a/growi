@@ -114,7 +114,7 @@ export const generateViewOptions = (
     components.refimg = refsGrowiDirective.RefImg;
     components.refsimg = refsGrowiDirective.RefsImg;
     components.gallery = refsGrowiDirective.Gallery;
-    components.drawio = DrawioViewerWithEditButton;
+    components.drawio = props => <DrawioViewerWithEditButton isDarkMode={config.isDarkMode} {...props} />;
     components.table = TableWithEditButton;
     components.mermaid = mermaid.MermaidViewer;
     components.callout = callout.CalloutViewer;
@@ -218,7 +218,7 @@ export const generateSimpleViewOptions = (
     components.refimg = refsGrowiDirective.RefImgImmutable;
     components.refsimg = refsGrowiDirective.RefsImgImmutable;
     components.gallery = refsGrowiDirective.GalleryImmutable;
-    components.drawio = drawio.DrawioViewer;
+    components.drawio = props => <drawio.DrawioViewer {...props} isDarkMode={config.isDarkMode} />;
     components.mermaid = mermaid.MermaidViewer;
     components.callout = callout.CalloutViewer;
     components.attachment = RichAttachment;
@@ -312,7 +312,7 @@ export const generatePreviewOptions = (config: RendererConfigExt, pagePath: stri
     components.refimg = refsGrowiDirective.RefImgImmutable;
     components.refsimg = refsGrowiDirective.RefsImgImmutable;
     components.gallery = refsGrowiDirective.GalleryImmutable;
-    components.drawio = drawio.DrawioViewer;
+    components.drawio = props => <drawio.DrawioViewer {...props} isDarkMode={config.isDarkMode} />;
     components.mermaid = mermaid.MermaidViewer;
     components.callout = callout.CalloutViewer;
     components.attachment = RichAttachment;
