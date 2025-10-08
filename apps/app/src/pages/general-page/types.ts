@@ -1,11 +1,11 @@
 import type {
-  IDataWithMeta, IPageInfoExt, IPageNotFoundInfo, IPagePopulatedToShowRevision,
+  IDataWithRequiredMeta, IPageInfoExt, IPageNotFoundInfo, IPagePopulatedToShowRevision,
 } from '@growi/core';
 
 import type { RendererConfig } from '~/interfaces/services/renderer';
 import type { PageDocument } from '~/server/models/page';
 
-export type IPageToShowRevisionWithMeta = IDataWithMeta<IPagePopulatedToShowRevision & PageDocument, IPageInfoExt>;
+export type IPageToShowRevisionWithMeta = IDataWithRequiredMeta<IPagePopulatedToShowRevision & PageDocument, IPageInfoExt>;
 
 export type RendererConfigProps = {
   rendererConfig: RendererConfig,
@@ -43,6 +43,6 @@ export type GeneralPageEachProps = {};
 
 // Do not include CommonEachProps for multi stage
 export type GeneralPageInitialProps = RendererConfigProps & ServerConfigurationProps & {
-  pageWithMeta: IPageToShowRevisionWithMeta | IDataWithMeta<null, IPageNotFoundInfo> | null,
+  pageWithMeta: IPageToShowRevisionWithMeta | IDataWithRequiredMeta<null, IPageNotFoundInfo> | null,
   skipSSR?: boolean,
 }

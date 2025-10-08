@@ -1,11 +1,9 @@
-import type {
-  IDataWithMeta,
-} from '@growi/core';
+import type { IDataWithRequiredMeta } from '@growi/core';
 import superjson from 'superjson';
 
 import type { IPageToShowRevisionWithMeta } from '../types';
 
-type IPageToShowRevisionWithMetaSerialized = IDataWithMeta<string, string | undefined>;
+type IPageToShowRevisionWithMetaSerialized = IDataWithRequiredMeta<string, string>;
 
 let isRegistered = false;
 
@@ -23,13 +21,13 @@ export const registerPageToShowRevisionWithMeta = (): void => {
       serialize: (v) => {
         return {
           data: superjson.stringify(v.data.toObject()),
-          meta: v.meta != null ? superjson.stringify(v.meta) : undefined,
+          meta: superjson.stringify(v.meta),
         };
       },
       deserialize: (v) => {
         return {
           data: superjson.parse(v.data),
-          meta: v.meta != null ? superjson.parse(v.meta) : undefined,
+          meta: superjson.parse(v.meta),
         };
       },
     },

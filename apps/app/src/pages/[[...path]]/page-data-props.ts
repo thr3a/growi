@@ -1,7 +1,7 @@
 import assert from 'assert';
 
 import type {
-  IDataWithMeta, IPage, IPageNotFoundInfo, IUser,
+  IDataWithRequiredMeta, IPage, IPageNotFoundInfo, IUser,
 } from '@growi/core/dist/interfaces';
 import {
   isIPageInfo,
@@ -133,7 +133,7 @@ export async function getPageDataForInitial(
   }
 
   // Get full page data
-  const pageWithMeta = await pageService.findPageAndMetaDataByViewer(pageId, resolvedPagePath, user, true);
+  const pageWithMeta = await pageService.findPageAndMetaDataByViewer(pageId, resolvedPagePath, user);
 
   // Handle URL conversion
   const currentPathname = resolveFinalizedPathname(resolvedPagePath, pageWithMeta.data, isPermalink);
@@ -157,7 +157,7 @@ export async function getPageDataForInitial(
               isNotFound: true,
               isForbidden: false,
             },
-          } satisfies IDataWithMeta<null, IPageNotFoundInfo>,
+          } satisfies IDataWithRequiredMeta<null, IPageNotFoundInfo>,
           skipSSR: false,
           redirectFrom,
         },
@@ -201,7 +201,7 @@ export async function getPageDataForInitial(
     props: {
       currentPathname: resolvedPagePath,
       isIdenticalPathPage: false,
-      pageWithMeta: pageWithMeta satisfies IDataWithMeta<null, IPageNotFoundInfo>,
+      pageWithMeta: pageWithMeta satisfies IDataWithRequiredMeta<null, IPageNotFoundInfo>,
       skipSSR: false,
       redirectFrom,
     },

@@ -176,6 +176,10 @@ export type IDataWithMeta<D = unknown, M = unknown> = {
   data: D;
   meta?: M;
 };
+export type IDataWithRequiredMeta<D = unknown, M = unknown> = IDataWithMeta<
+  D,
+  M
+> & { meta: M };
 
 export type IPageWithMeta<M = IPageInfoExt> = IDataWithMeta<IPageHasId, M>;
 

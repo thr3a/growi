@@ -1,3 +1,4 @@
+import assert from 'assert';
 import type EventEmitter from 'events';
 import pathlib from 'path';
 import { Readable, Writable } from 'stream';
@@ -11,7 +12,8 @@ import { PageGrant, isIPageInfoForEntity } from '@growi/core/dist/interfaces';
 import type {
   Ref, HasObjectId, IUserHasId, IUser,
   IPage, IGrantedGroup, IRevisionHasId,
-  IDataWithMeta, IPageNotFoundInfo, IPageInfoExt, IPageInfo, IPageInfoForEntity, IPageInfoForOperation,
+  IPageNotFoundInfo, IPageInfoExt, IPageInfo, IPageInfoForEntity, IPageInfoForOperation,
+  IDataWithRequiredMeta,
 } from '@growi/core/dist/interfaces';
 import {
   pagePathUtils, pathUtils,
@@ -402,15 +404,15 @@ class PageService implements IPageService {
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   async findPageAndMetaDataByViewer(
-      pageId: string | null,
-      path: string,
+      pageId: string | null, // either pageId or path must be specified
+      path: string | null, // either pageId or path must be specified
       user?: HydratedDocument<IUser>,
-      includeEmpty = false,
       isSharedPage = false,
   ): Promise<
-    IDataWithMeta<HydratedDocument<PageDocument>, IPageInfoExt> |
-    IDataWithMeta<null, IPageNotFoundInfo>
+    IDataWithRequiredMeta<HydratedDocument<PageDocument>, IPageInfoExt> |
+    IDataWithRequiredMeta<null, IPageNotFoundInfo>
   > {
+    assert(pageId != null || path != null);
 
     const Page = mongoose.model<HydratedDocument<PageDocument>, PageModel>('Page');
 
@@ -422,6 +424,7 @@ class PageService implements IPageService {
       page = await Page.findByPathAndViewer(path, user, null, true, true);
     }
 
+    // not found or forbidden
     if (page == null) {
       const count = pageId != null ? await Page.count({ _id: pageId }) : await Page.count({ path });
       const isForbidden = count > 0;
@@ -434,40 +437,28 @@ class PageService implements IPageService {
       };
     }
 
-    if (page.isEmpty && !includeEmpty) {
-      const isVisible = await Page.countByIdAndViewer(page._id, user, null, true);
-      return {
-        data: null,
-        meta: {
-          isNotFound: true,
-          isForbidden: !isVisible,
-        } satisfies IPageNotFoundInfo,
-      };
-    }
+    const isGuestUser = user == null;
+    const basicPageInfo = this.constructBasicPageInfo(page, isGuestUser);
 
     if (isSharedPage) {
       return {
         data: page,
         meta: {
-          isNotFound: page.isEmpty,
-          isV5Compatible: isTopPage(page.path) || page.parent != null,
-          isEmpty: page.isEmpty,
+          ...basicPageInfo,
           isMovable: false,
           isDeletable: false,
           isAbleToDeleteCompletely: false,
           isRevertible: false,
           bookmarkCount: 0,
-        },
+        } satisfies IPageInfo | IPageInfoForEntity,
       };
     }
-
-    const isGuestUser = user == null;
 
     const Bookmark = mongoose.model<BookmarkedPage, { countDocuments, findByPageIdAndUserId }>('Bookmark');
     const bookmarkCount: number = await Bookmark.countDocuments({ page: pageId });
 
     const pageInfo = {
-      ...this.constructBasicPageInfo(page, isGuestUser),
+      ...basicPageInfo,
       bookmarkCount,
     } satisfies IPageInfo | IPageInfoForEntity;
 
@@ -4085,11 +4076,11 @@ class PageService implements IPageService {
 
   /**
    * A wrapper method of updatePage for updating grant only.
-   * @param {PageDocument} page
-   * @param {UserDocument} user
-   * @param options
    */
-  async updateGrant(page, user, grantData: {grant: PageGrant, userRelatedGrantedGroups: IGrantedGroup[]}): Promise<PageDocument> {
+  async updateGrant(
+      page: HydratedDocument<PageDocument>, user: IUserHasId, grantData: {grant: PageGrant, userRelatedGrantedGroups: IGrantedGroup[]},
+  ): Promise<PageDocument> {
+
     const { grant, userRelatedGrantedGroups } = grantData;
 
     const options: IOptionsForUpdate = {

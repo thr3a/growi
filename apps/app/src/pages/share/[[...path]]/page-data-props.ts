@@ -38,7 +38,7 @@ export const getPageDataForInitial = async(context: GetServerSidePropsContext):
     return {
       props: {
         isNotFound: true,
-        pageWithMeta: null,
+        page: null,
         isExpired: undefined,
         shareLink: undefined,
       },
@@ -50,7 +50,7 @@ export const getPageDataForInitial = async(context: GetServerSidePropsContext):
     return {
       props: {
         isNotFound: false,
-        pageWithMeta: null,
+        page: null,
         isExpired: true,
         shareLink,
       },
@@ -65,7 +65,7 @@ export const getPageDataForInitial = async(context: GetServerSidePropsContext):
     return {
       props: {
         isNotFound: true,
-        pageWithMeta: null,
+        page: null,
         isExpired: undefined,
         shareLink: undefined,
       },
@@ -84,7 +84,7 @@ export const getPageDataForInitial = async(context: GetServerSidePropsContext):
   return {
     props: {
       isNotFound: false,
-      pageWithMeta: { data: populatedPage },
+      page: populatedPage,
       skipSSR,
       isExpired: false,
       shareLink: shareLink.toObject(),
