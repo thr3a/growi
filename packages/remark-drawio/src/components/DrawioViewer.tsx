@@ -24,7 +24,7 @@ declare global {
 
 export type DrawioViewerProps = {
   isDarkMode: boolean
-  diagramIndex: number;
+  diagramIndex: number
   bol: number;
   eol: number;
   children?: ReactNode;
