@@ -104,7 +104,7 @@ const SearchResultListSubstance: ForwardRefRenderFunction<
           ...page.meta,
           ...pageInfo,
         },
-      } as IPageWithMeta<IPageInfoForListing & IPageSearchMeta>;
+      } satisfies IPageWithMeta<IPageInfoForListing & IPageSearchMeta>;
     });
   }
 
