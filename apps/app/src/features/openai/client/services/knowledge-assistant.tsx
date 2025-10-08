@@ -243,7 +243,7 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
     }
 
     return (
-      <div className="thread-title-sticky position-sticky top-0 py-2 px-3 z-1">
+      <div className="thread-title-sticky sticky-top bg-body bg-opacity-75 py-2 px-3 z-1 ">
         <div className="d-flex align-items-center gap-2">
           <button
             type="button"
