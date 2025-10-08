@@ -218,6 +218,7 @@ export const useFetchCurrentPage = (): {
           set(currentPageDataAtom, newData);
           set(currentPageIdAtom, newData._id);
           set(pageNotFoundAtom, false);
+          set(isForbiddenAtom, false);
 
           return newData;
         } catch (err) {
