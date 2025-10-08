@@ -114,7 +114,7 @@ export const generateViewOptions = (
     components.refimg = refsGrowiDirective.RefImg;
     components.refsimg = refsGrowiDirective.RefsImg;
     components.gallery = refsGrowiDirective.Gallery;
-    components.drawio = props => <DrawioViewerWithEditButton isDarkMode={config.isDarkMode} {...props} />;
+    components.drawio = props => <DrawioViewerWithEditButton {...props} isDarkMode={config.isDarkMode} />;
     components.table = TableWithEditButton;
     components.mermaid = mermaid.MermaidViewer;
     components.callout = callout.CalloutViewer;
