@@ -28,7 +28,7 @@ declare global {
 export const DrawioViewerWithEditButton = React.memo((props: DrawioViewerProps): JSX.Element => {
   const { t } = useTranslation();
 
-  const { isDarkMode, bol, eol } = props;
+  const { bol, eol } = props;
   const { data: isGuestUser } = useIsGuestUser();
   const { data: isReadOnlyUser } = useIsReadOnlyUser();
   const { data: isSharedUser } = useIsSharedUser();
@@ -78,7 +78,7 @@ export const DrawioViewerWithEditButton = React.memo((props: DrawioViewerProps):
           <span className="material-symbols-outlined me-1">edit_square</span>{t('Edit')}
         </button>
       ) }
-      <DrawioViewer {...props} isDarkMode={isDarkMode} onRenderingStart={renderingStartHandler} onRenderingUpdated={renderingUpdatedHandler} />
+      <DrawioViewer {...props} onRenderingStart={renderingStartHandler} onRenderingUpdated={renderingUpdatedHandler} />
     </div>
   );
 });

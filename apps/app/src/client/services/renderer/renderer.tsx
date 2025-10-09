@@ -63,7 +63,7 @@ export const generateViewOptions = (
   remarkPlugins.push(
     math,
     [plantuml.remarkPlugin, { plantumlUri: config.plantumlUri, isDarkMode: config.isDarkMode }],
-    drawio.remarkPlugin,
+    [drawio.remarkPlugin, { isDarkMode: config.isDarkMode }],
     mermaid.remarkPlugin,
     xsvToTable.remarkPlugin,
     attachment.remarkPlugin,
@@ -114,7 +114,7 @@ export const generateViewOptions = (
     components.refimg = refsGrowiDirective.RefImg;
     components.refsimg = refsGrowiDirective.RefsImg;
     components.gallery = refsGrowiDirective.Gallery;
-    components.drawio = props => <DrawioViewerWithEditButton {...props} isDarkMode={config.isDarkMode} />;
+    components.drawio = DrawioViewerWithEditButton;
     components.table = TableWithEditButton;
     components.mermaid = mermaid.MermaidViewer;
     components.callout = callout.CalloutViewer;
@@ -171,7 +171,7 @@ export const generateSimpleViewOptions = (
   remarkPlugins.push(
     math,
     [plantuml.remarkPlugin, { plantumlUri: config.plantumlUri, isDarkMode: config.isDarkMode }],
-    drawio.remarkPlugin,
+    [drawio.remarkPlugin, { isDarkMode: config.isDarkMode }],
     mermaid.remarkPlugin,
     xsvToTable.remarkPlugin,
     attachment.remarkPlugin,
@@ -218,7 +218,7 @@ export const generateSimpleViewOptions = (
     components.refimg = refsGrowiDirective.RefImgImmutable;
     components.refsimg = refsGrowiDirective.RefsImgImmutable;
     components.gallery = refsGrowiDirective.GalleryImmutable;
-    components.drawio = props => <drawio.DrawioViewer {...props} isDarkMode={config.isDarkMode} />;
+    components.drawio = drawio.DrawioViewer;
     components.mermaid = mermaid.MermaidViewer;
     components.callout = callout.CalloutViewer;
     components.attachment = RichAttachment;
@@ -268,7 +268,7 @@ export const generatePreviewOptions = (config: RendererConfigExt, pagePath: stri
   remarkPlugins.push(
     math,
     [plantuml.remarkPlugin, { plantumlUri: config.plantumlUri, isDarkMode: config.isDarkMode }],
-    drawio.remarkPlugin,
+    [drawio.remarkPlugin, { isDarkMode: config.isDarkMode }],
     mermaid.remarkPlugin,
     xsvToTable.remarkPlugin,
     attachment.remarkPlugin,
@@ -312,7 +312,7 @@ export const generatePreviewOptions = (config: RendererConfigExt, pagePath: stri
     components.refimg = refsGrowiDirective.RefImgImmutable;
     components.refsimg = refsGrowiDirective.RefsImgImmutable;
     components.gallery = refsGrowiDirective.GalleryImmutable;
-    components.drawio = props => <drawio.DrawioViewer {...props} isDarkMode={config.isDarkMode} />;
+    components.drawio = drawio.DrawioViewer;
     components.mermaid = mermaid.MermaidViewer;
     components.callout = callout.CalloutViewer;
     components.attachment = RichAttachment;

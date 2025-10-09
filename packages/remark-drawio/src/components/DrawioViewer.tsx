@@ -23,7 +23,7 @@ declare global {
 }
 
 export type DrawioViewerProps = {
-  isDarkMode: boolean;
+  isDarkMode: 'true' | 'false';
   diagramIndex: number;
   bol: number;
   eol: number;
@@ -111,7 +111,7 @@ export const DrawioViewer = memo((props: DrawioViewerProps): JSX.Element => {
 
     let mxgraphData: string | undefined;
     try {
-      mxgraphData = generateMxgraphData(code, isDarkMode);
+      mxgraphData = generateMxgraphData(code, isDarkMode === 'true');
     } catch (err) {
       setError(err);
     }
