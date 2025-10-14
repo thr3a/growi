@@ -36,35 +36,71 @@
    - 特記事項: 子コンポーネントとして `register` を props で受け取る
    - テスト状況: ⏳ 未テスト
 
+#### AdminCustomizeContainer 配下
+
+6. **CustomizeCssSetting.tsx** ✨ NEW
+   - パス: `apps/app/src/client/components/Admin/Customize/CustomizeCssSetting.tsx`
+   - 担当フィールド: カスタム CSS
+   - 特記事項: textarea での大きなテキスト入力、空値更新が重要
+   - テスト状況: ⏳ 未テスト（IME 入力、空値更新の確認が必要）
+
+7. **CustomizeScriptSetting.tsx** ✨ NEW
+   - パス: `apps/app/src/client/components/Admin/Customize/CustomizeScriptSetting.tsx`
+   - 担当フィールド: カスタムスクリプト（JavaScript）
+   - 特記事項: Google Tag Manager の例を含む、空値更新が重要
+   - テスト状況: ⏳ 未テスト（IME 入力、空値更新の確認が必要）
+
+8. **CustomizeNoscriptSetting.tsx** ✨ NEW
+   - パス: `apps/app/src/client/components/Admin/Customize/CustomizeNoscriptSetting.tsx`
+   - 担当フィールド: カスタム noscript タグ（HTML）
+   - 特記事項: Google Tag Manager の iframe 例を含む、空値更新が重要
+   - テスト状況: ⏳ 未テスト（IME 入力、空値更新の確認が必要）
+
 ### 🔄 移行対象候補（未着手）
 
-以下は AdminAppContainer または他の Admin*Container を使用している可能性があるコンポーネント：
+#### AdminCustomizeContainer 配下
 
-#### AdminAppContainer 配下（推測）
-- `apps/app/src/client/components/Admin/App/` 配下の他のコンポーネント
-  - 確認が必要
+以下のコンポーネントは AdminCustomizeContainer を使用しているが、フォームの構造が異なる可能性があるため要調査：
+
+- `CustomizeFunctionSetting.tsx` - 機能設定（複数のチェックボックス/選択肢）
+- `CustomizePresentationSetting.tsx` - プレゼンテーション設定
+- その他の Customize 配下のコンポーネント
 
 #### 他の Admin Container 配下
-- AdminCustomizeContainer 配下のフォーム
+
 - AdminSecurityContainer 配下のフォーム
+  - `OidcSecuritySetting.jsx` とその Contents
+  - `SamlSecuritySetting.jsx` とその Contents
+  - `LdapSecuritySetting.jsx` とその Contents
+  - `GoogleSecuritySetting.jsx` とその Contents
+  - `GitHubSecuritySetting.jsx` とその Contents
+  - `LocalSecuritySetting.jsx` とその Contents
+- AdminMarkdownContainer 配下のフォーム
+  - `XssForm.jsx`
+  - `LineBreakForm.jsx`
+  - その他の MarkdownSetting 配下のコンポーネント
 - AdminImportContainer 配下のフォーム
 - AdminExternalAccountsContainer 配下のフォーム
 - その他の Admin*Container 配下のフォーム
 
 ### 📋 次のステップ
 
-1. **現在完了したコンポーネントの統合テスト**
-   - MailSetting (SMTP/SES) の動作確認
-   - IME 入力テスト
-   - 空値更新テスト
+1. **今回移行したコンポーネントのテスト**
+   - CustomizeCssSetting の IME 入力テスト
+   - CustomizeScriptSetting の IME 入力テスト
+   - CustomizeNoscriptSetting の IME 入力テスト
+   - 空値更新のテスト（これらのフィールドは空にできることが重要）
 
-2. **移行対象コンポーネントの洗い出し**
-   - `apps/app/src/client/components/Admin/` 配下を調査
-   - 各 Container ファイルを確認し、使用箇所を特定
+2. **CustomizeFunctionSetting の調査と移行**
+   - より複雑なフォーム構造の可能性がある
+   - チェックボックスや選択肢の扱いを確認
 
-3. **優先度の決定**
-   - よく使われるフォームから優先的に移行
-   - IME 入力が必要なフォームを優先
+3. **Security 関連フォームの優先順位決定**
+   - よく使われる認証方式から優先的に移行
+   - LDAP, OIDC, SAML などは企業での利用が多い
+
+4. **Markdown 関連フォームの調査**
+   - XssForm.jsx と LineBreakForm.jsx を確認
 
 ## 発見した問題と解決策
 
@@ -79,6 +115,53 @@
 ### 問題3: defaultValues の重複
 - **原因**: `useForm({ defaultValues })` と `useEffect` での `reset()` で二重定義
 - **解決**: `defaultValues` を削除し、`reset()` のみで管理
+
+### 問題4: textarea での IME 入力問題
+- **原因**: 制御されたコンポーネント（`value` + `onChange`）を使用していた
+- **解決**: React Hook Form の `register` を使用して非制御コンポーネント化
+
+## 移行パターンの確立
+
+以下のパターンが確立されました：
+
+### 単一 textarea フィールドのパターン
+
+```typescript
+const {
+  register,
+  handleSubmit,
+  reset,
+} = useForm();
+
+useEffect(() => {
+  reset({
+    fieldName: container.state.currentFieldName || '',
+  });
+}, [container.state.currentFieldName, reset]);
+
+const onSubmit = useCallback(async(data) => {
+  try {
+    await container.changeFieldName(data.fieldName);
+    await container.updateFieldName();
+    toastSuccess('...');
+  }
+  catch (err) {
+    toastError(err);
+  }
+}, [container]);
+
+return (
+  <form onSubmit={handleSubmit(onSubmit)}>
+    <textarea {...register('fieldName')} />
+    <AdminUpdateButtonRow type="submit" />
+  </form>
+);
+```
+
+このパターンは以下に適用可能：
+- CustomizeCssSetting (CSS)
+- CustomizeScriptSetting (JavaScript)
+- CustomizeNoscriptSetting (HTML/noscript)
 
 ## 削除したファイル
 
