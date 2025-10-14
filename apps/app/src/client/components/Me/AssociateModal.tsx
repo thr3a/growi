@@ -22,13 +22,20 @@ type Props = {
   onClose: () => void,
 }
 
-const AssociateModal = (props: Props): JSX.Element => {
+/**
+ * AssociateModalSubstance - Presentation component (heavy logic, rendered only when isOpen)
+ */
+type AssociateModalSubstanceProps = {
+  onClose: () => void;
+};
+
+const AssociateModalSubstance = (props: AssociateModalSubstanceProps): JSX.Element => {
+  const { onClose } = props;
   const { t } = useTranslation();
   const { mutate: mutatePersonalExternalAccounts } = useSWRxPersonalExternalAccounts();
-  const { trigger: associateLdapAccount, isMutating } = useAssociateLdapAccount();
-  const [activeTab, setActiveTab] = useState(1);
-  const { isOpen, onClose } = props;
+  const { trigger: associateLdapAccount } = useAssociateLdapAccount();
 
+  const [activeTab, setActiveTab] = useState(1);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -37,7 +44,6 @@ const AssociateModal = (props: Props): JSX.Element => {
     setUsername('');
     setPassword('');
   }, [onClose]);
-
 
   const clickAddLdapAccountHandler = useCallback(async() => {
     try {
@@ -50,23 +56,16 @@ const AssociateModal = (props: Props): JSX.Element => {
     catch (err) {
       toastError(err);
     }
-
   }, [associateLdapAccount, closeModalHandler, mutatePersonalExternalAccounts, password, t, username]);
 
-  // Memoize event handlers
   const setTabToLdap = useCallback(() => setActiveTab(1), []);
   const setTabToGithub = useCallback(() => setActiveTab(2), []);
   const setTabToGoogle = useCallback(() => setActiveTab(3), []);
   const handleUsernameChange = useCallback((username: string) => setUsername(username), []);
   const handlePasswordChange = useCallback((password: string) => setPassword(password), []);
 
-  // Early return optimization
-  if (!isOpen) {
-    return <></>;
-  }
-
   return (
-    <Modal isOpen={isOpen} toggle={closeModalHandler} size="lg" data-testid="grw-associate-modal">
+    <>
       <ModalHeader toggle={onClose}>
         { t('admin:user_management.create_external_account') }
       </ModalHeader>
@@ -122,6 +121,19 @@ const AssociateModal = (props: Props): JSX.Element => {
           {t('add')}
         </button>
       </ModalFooter>
+    </>
+  );
+};
+
+/**
+ * AssociateModal - Container component (lightweight, always rendered)
+ */
+const AssociateModal = (props: Props): JSX.Element => {
+  const { isOpen, onClose } = props;
+
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="lg" data-testid="grw-associate-modal">
+      {isOpen && <AssociateModalSubstance onClose={onClose} />}
     </Modal>
   );
 };

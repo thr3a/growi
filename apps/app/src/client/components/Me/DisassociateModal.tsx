@@ -19,10 +19,16 @@ type Props = {
   accountForDisassociate: IExternalAccount<IExternalAuthProviderType> & HasObjectId,
 }
 
+/**
+ * DisassociateModalSubstance - Presentation component (heavy logic, rendered only when isOpen)
+ */
+type DisassociateModalSubstanceProps = {
+  onClose: () => void;
+  accountForDisassociate: IExternalAccount<IExternalAuthProviderType> & HasObjectId;
+};
 
-const DisassociateModal = (props: Props): React.JSX.Element => {
-  const { isOpen, onClose, accountForDisassociate } = props;
-
+const DisassociateModalSubstance = (props: DisassociateModalSubstanceProps): React.JSX.Element => {
+  const { onClose, accountForDisassociate } = props;
   const { t } = useTranslation();
   const { mutate: mutatePersonalExternalAccounts } = useSWRxPersonalExternalAccounts();
   const { trigger: disassociateLdapAccount } = useDisassociateLdapAccount();
@@ -30,7 +36,6 @@ const DisassociateModal = (props: Props): React.JSX.Element => {
   const { providerType, accountId } = accountForDisassociate;
 
   const disassociateAccountHandler = useCallback(async() => {
-
     try {
       await disassociateLdapAccount({ providerType, accountId });
       onClose();
@@ -45,13 +50,8 @@ const DisassociateModal = (props: Props): React.JSX.Element => {
     }
   }, [accountId, disassociateLdapAccount, mutatePersonalExternalAccounts, onClose, providerType, t]);
 
-  // Early return optimization
-  if (!isOpen) {
-    return <></>;
-  }
-
   return (
-    <Modal isOpen={isOpen} toggle={onClose}>
+    <>
       <ModalHeader className="text-info" toggle={onClose}>
         {t('personal_settings.disassociate_external_account')}
       </ModalHeader>
@@ -68,6 +68,24 @@ const DisassociateModal = (props: Props): React.JSX.Element => {
           { t('Disassociate') }
         </button>
       </ModalFooter>
+    </>
+  );
+};
+
+/**
+ * DisassociateModal - Container component (lightweight, always rendered)
+ */
+const DisassociateModal = (props: Props): React.JSX.Element => {
+  const { isOpen, onClose, accountForDisassociate } = props;
+
+  return (
+    <Modal isOpen={isOpen} toggle={onClose}>
+      {isOpen && (
+        <DisassociateModalSubstance
+          onClose={onClose}
+          accountForDisassociate={accountForDisassociate}
+        />
+      )}
     </Modal>
   );
 };
