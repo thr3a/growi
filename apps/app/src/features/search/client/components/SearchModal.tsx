@@ -177,11 +177,6 @@ const SearchModal = (): JSX.Element => {
     [onSearchOverride, setSearchKeyword],
   );
 
-  // Early return for performance optimization
-  if (!isOpened) {
-    return <></>;
-  }
-
   return (
     <Modal
       size="lg"
@@ -189,7 +184,7 @@ const SearchModal = (): JSX.Element => {
       toggle={closeSearchModal}
       data-testid="search-modal"
     >
-      <SearchModalSubstance onSearch={searchHandler} />
+      {isOpened && <SearchModalSubstance onSearch={searchHandler} />}
     </Modal>
   );
 };

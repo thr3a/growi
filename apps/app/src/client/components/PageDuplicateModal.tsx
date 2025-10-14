@@ -303,13 +303,9 @@ const PageDuplicateModal = (): React.JSX.Element => {
   const { isOpened } = usePageDuplicateModalStatus();
   const { close: closeDuplicateModal } = usePageDuplicateModalActions();
 
-  if (!isOpened) {
-    return <></>;
-  }
-
   return (
     <Modal size="lg" isOpen={isOpened} toggle={closeDuplicateModal} data-testid="page-duplicate-modal" className="grw-duplicate-page" autoFocus={false}>
-      <PageDuplicateModalSubstance />
+      {isOpened && <PageDuplicateModalSubstance />}
     </Modal>
   );
 };

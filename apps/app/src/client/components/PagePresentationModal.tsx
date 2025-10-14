@@ -118,10 +118,6 @@ const PagePresentationModal = (): React.JSX.Element => {
 
   const isOpen = presentationModalData?.isOpened ?? false;
 
-  if (!isOpen) {
-    return <></>;
-  }
-
   return (
     <Modal
       isOpen={isOpen}
@@ -129,7 +125,7 @@ const PagePresentationModal = (): React.JSX.Element => {
       data-testid="page-presentation-modal"
       className={moduleClass}
     >
-      <PagePresentationModalSubstance />
+      {isOpen && <PagePresentationModalSubstance />}
     </Modal>
   );
 };

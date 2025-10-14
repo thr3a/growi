@@ -378,13 +378,11 @@ export const LinkEditModal = (): React.JSX.Element => {
   const linkEditModalStatus = useLinkEditModalStatus();
   const { close } = useLinkEditModalActions();
 
-  if (linkEditModalStatus == null || !linkEditModalStatus.isOpened) {
-    return <></>;
-  }
+  const isOpened = linkEditModalStatus?.isOpened ?? false;
 
   return (
-    <Modal className="link-edit-modal" isOpen={linkEditModalStatus.isOpened} toggle={close} size="lg" autoFocus={false}>
-      <LinkEditModalSubstance />
+    <Modal className="link-edit-modal" isOpen={isOpened} toggle={close} size="lg" autoFocus={false}>
+      {isOpened && <LinkEditModalSubstance />}
     </Modal>
   );
 };

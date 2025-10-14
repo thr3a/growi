@@ -162,14 +162,9 @@ const PageBulkExportSelectModalSubstance = (): JSX.Element => {
 const PageBulkExportSelectModal = (): JSX.Element => {
   const status = usePageBulkExportSelectModalStatus();
 
-  // Early return for performance optimization
-  if (!status?.isOpened) {
-    return <></>;
-  }
-
   return (
-    <Modal isOpen={status.isOpened} size="lg">
-      <PageBulkExportSelectModalSubstance />
+    <Modal isOpen={status?.isOpened ?? false} size="lg">
+      {status?.isOpened && <PageBulkExportSelectModalSubstance />}
     </Modal>
   );
 };

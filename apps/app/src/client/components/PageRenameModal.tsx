@@ -375,13 +375,9 @@ const PageRenameModal = (): React.JSX.Element => {
   const { isOpened } = usePageRenameModalStatus();
   const { close: closeRenameModal } = usePageRenameModalActions();
 
-  if (!isOpened) {
-    return <></>;
-  }
-
   return (
     <Modal size="lg" isOpen={isOpened} toggle={closeRenameModal} data-testid="page-rename-modal" autoFocus={false}>
-      <PageRenameModalSubstance />
+      {isOpened && <PageRenameModalSubstance />}
     </Modal>
   );
 };

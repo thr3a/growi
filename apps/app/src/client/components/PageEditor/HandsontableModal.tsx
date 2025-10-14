@@ -535,12 +535,5 @@ export const HandsontableModalSubstance = (): JSX.Element => {
 };
 
 export const HandsontableModal = (): JSX.Element => {
-  const handsontableModalData = useHandsontableModalStatus();
-  const isOpened = handsontableModalData?.isOpened ?? false;
-
-  if (!isOpened) {
-    return <></>;
-  }
-
   return <HandsontableModalSubstance />;
 };

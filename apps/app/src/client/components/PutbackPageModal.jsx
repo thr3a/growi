@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 
 
 import { useTranslation } from 'next-i18next';
+import PropTypes from 'prop-types';
 import {
   Modal, ModalHeader, ModalBody, ModalFooter,
 } from 'reactstrap';
@@ -12,12 +13,10 @@ import { mutateAllPageInfo } from '~/stores/page';
 
 import ApiErrorMessageList from './PageManagement/ApiErrorMessageList';
 
-const PutBackPageModal = () => {
+const PutBackPageModalSubstance = ({ pageDataToRevert, closePutBackPageModal }) => {
   const { t } = useTranslation();
 
-  const pageDataToRevert = usePutBackPageModalStatus();
-  const { close: closePutBackPageModal } = usePutBackPageModalActions();
-  const { isOpened, page } = pageDataToRevert;
+  const { page } = pageDataToRevert;
   const { pageId, path } = page;
   const onPutBacked = pageDataToRevert.opts?.onPutBacked;
 
@@ -99,12 +98,8 @@ const PutBackPageModal = () => {
     </>
   ), [errs, targetPath, putbackPageButtonHandler, t]);
 
-  if (!isOpened) {
-    return <></>;
-  }
-
   return (
-    <Modal isOpen={isOpened} toggle={closeModalHandler} data-testid="put-back-page-modal">
+    <>
       <ModalHeader tag="h4" toggle={closeModalHandler} className="text-info">
         {headerContent}
       </ModalHeader>
@@ -114,9 +109,42 @@ const PutBackPageModal = () => {
       <ModalFooter>
         {footerContent}
       </ModalFooter>
+    </>
+  );
+};
+
+PutBackPageModalSubstance.propTypes = {
+  pageDataToRevert: PropTypes.shape({
+    page: PropTypes.shape({
+      pageId: PropTypes.string,
+      path: PropTypes.string,
+    }),
+    opts: PropTypes.shape({
+      onPutBacked: PropTypes.func,
+    }),
+  }).isRequired,
+  closePutBackPageModal: PropTypes.func.isRequired,
+};
+
+const PutBackPageModal = () => {
+  const pageDataToRevert = usePutBackPageModalStatus();
+  const { close: closePutBackPageModal } = usePutBackPageModalActions();
+  const { isOpened } = pageDataToRevert;
+
+  const closeModalHandler = useCallback(() => {
+    closePutBackPageModal();
+  }, [closePutBackPageModal]);
+
+  return (
+    <Modal isOpen={isOpened} toggle={closeModalHandler} data-testid="put-back-page-modal">
+      {isOpened && (
+        <PutBackPageModalSubstance
+          pageDataToRevert={pageDataToRevert}
+          closePutBackPageModal={closePutBackPageModal}
+        />
+      )}
     </Modal>
   );
-
 };
 
 export default PutBackPageModal;
