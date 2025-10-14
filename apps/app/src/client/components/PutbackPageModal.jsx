@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 
 import { useTranslation } from 'next-i18next';
@@ -26,11 +26,11 @@ const PutBackPageModal = () => {
 
   const [isPutbackRecursively, setIsPutbackRecursively] = useState(true);
 
-  function changeIsPutbackRecursivelyHandler() {
+  const changeIsPutbackRecursivelyHandler = useCallback(() => {
     setIsPutbackRecursively(!isPutbackRecursively);
-  }
+  }, [isPutbackRecursively]);
 
-  async function putbackPageButtonHandler() {
+  const putbackPageButtonHandler = useCallback(async () => {
     setErrs(null);
 
     try {
@@ -53,77 +53,66 @@ const PutBackPageModal = () => {
       setTargetPath(err.data);
       setErrs([err]);
     }
-  }
-
-  const HeaderContent = () => {
-    if (!isOpened) {
-      return <></>;
-    }
-    return (
-      <>
-        <span className="material-symbols-outlined" aria-hidden="true">undo</span> { t('modal_putback.label.Put Back Page') }
-      </>
-    );
-  };
-
-  const BodyContent = () => {
-    if (!isOpened) {
-      return <></>;
-    }
-    return (
-      <>
-        <div>
-          <label className="form-label">{t('modal_putback.label.Put Back Page')}:</label><br />
-          <code>{path}</code>
-        </div>
-        <div className="form-check form-check-warning">
-          <input
-            className="form-check-input"
-            id="cbPutBackRecursively"
-            type="checkbox"
-            checked={isPutbackRecursively}
-            onChange={changeIsPutbackRecursivelyHandler}
-          />
-          <label htmlFor="cbPutBackRecursively" className="form-label form-check-label">
-            { t('modal_putback.label.recursively') }
-          </label>
-          <p className="form-text text-muted mt-0">
-            <code>{ path }</code>{ t('modal_putback.help.recursively') }
-          </p>
-        </div>
-      </>
-    );
-
-  };
-  const FooterContent = () => {
-    if (!isOpened) {
-      return <></>;
-    }
-    return (
-      <>
-        <ApiErrorMessageList errs={errs} targetPath={targetPath} />
-        <button type="button" className="btn btn-info" onClick={putbackPageButtonHandler} data-testid="put-back-execution-button">
-          <span className="material-symbols-outlined" aria-hidden="true">undo</span> { t('Put Back') }
-        </button>
-      </>
-    );
-  };
+  }, [pageId, isPutbackRecursively, onPutBacked, closePutBackPageModal]);
 
   const closeModalHandler = useCallback(() => {
     closePutBackPageModal();
     setErrs(null);
   }, [closePutBackPageModal]);
 
+  const headerContent = useMemo(() => (
+    <>
+      <span className="material-symbols-outlined" aria-hidden="true">undo</span> { t('modal_putback.label.Put Back Page') }
+    </>
+  ), [t]);
+
+  const bodyContent = useMemo(() => (
+    <>
+      <div>
+        <label className="form-label">{t('modal_putback.label.Put Back Page')}:</label><br />
+        <code>{path}</code>
+      </div>
+      <div className="form-check form-check-warning">
+        <input
+          className="form-check-input"
+          id="cbPutBackRecursively"
+          type="checkbox"
+          checked={isPutbackRecursively}
+          onChange={changeIsPutbackRecursivelyHandler}
+        />
+        <label htmlFor="cbPutBackRecursively" className="form-label form-check-label">
+          { t('modal_putback.label.recursively') }
+        </label>
+        <p className="form-text text-muted mt-0">
+          <code>{ path }</code>{ t('modal_putback.help.recursively') }
+        </p>
+      </div>
+    </>
+  ), [t, path, isPutbackRecursively, changeIsPutbackRecursivelyHandler]);
+
+  const footerContent = useMemo(() => (
+    <>
+      <ApiErrorMessageList errs={errs} targetPath={targetPath} />
+      <button type="button" className="btn btn-info" onClick={putbackPageButtonHandler} data-testid="put-back-execution-button">
+        <span className="material-symbols-outlined" aria-hidden="true">undo</span> { t('Put Back') }
+      </button>
+    </>
+  ), [errs, targetPath, putbackPageButtonHandler, t]);
+
+  if (!isOpened) {
+    return <></>;
+  }
+
   return (
     <Modal isOpen={isOpened} toggle={closeModalHandler} data-testid="put-back-page-modal">
       <ModalHeader tag="h4" toggle={closeModalHandler} className="text-info">
-        <HeaderContent />
+        {headerContent}
       </ModalHeader>
       <ModalBody>
-        <BodyContent />
+        {bodyContent}
       </ModalBody>
       <ModalFooter>
-        <FooterContent />
+        {footerContent}
       </ModalFooter>
     </Modal>
   );
