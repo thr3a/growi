@@ -205,7 +205,7 @@ const PageRenameModalSubstance: React.FC = () => {
 
   }, [isOpened, page]);
 
-  const bodyContent = useMemo(() => {
+  const bodyContent = () => {
     if (!isOpened || page == null) {
       return <></>;
     }
@@ -329,12 +329,9 @@ const PageRenameModalSubstance: React.FC = () => {
         </Collapse>
       </>
     );
-  }, [isOpened, page, siteUrl, t, pageNameInput, isTargetPageDuplicate, isMatchedWithUserHomepagePath,
-      isReachable, ppacInputChangeHandler, rename, inputChangeHandler,
-      isRenameRecursively, existingPaths, expandOtherOptions, isRenameRedirect,
-      isRemainMetadata, subordinatedError]);
+  };
 
-  const footerContent = useMemo(() => {
+  const footerContent = () => {
     if (!isOpened || page == null) {
       return <></>;
     }
@@ -354,7 +351,7 @@ const PageRenameModalSubstance: React.FC = () => {
         </button>
       </>
     );
-  }, [isOpened, page, canRename, errs, pageNameInput, rename]);
+  };
 
   return (
     <>
@@ -362,10 +359,10 @@ const PageRenameModalSubstance: React.FC = () => {
         { t('modal_rename.label.Move/Rename page') }
       </ModalHeader>
       <ModalBody>
-        {bodyContent}
+        {bodyContent()}
       </ModalBody>
       <ModalFooter>
-        {footerContent}
+        {footerContent()}
       </ModalFooter>
     </>
   );
