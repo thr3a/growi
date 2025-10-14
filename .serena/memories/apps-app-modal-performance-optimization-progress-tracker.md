@@ -5,7 +5,7 @@
 - [x] **SearchOptionModal.tsx** - 検索オプション
 - [x] **DescendantsPageListModal.tsx** - 子ページリスト
 - [x] **GrantedGroupsInheritanceSelectModal.tsx** - 権限グループ継承選択  
-- [x] **ImageCropModal.tsx** - 画像クロップ### ✅ **完了済み (29個)** - Phase 1+2+3+4+5(進行中) 完了
+- [x] **ImageCropModal.tsx** - 画像クロップ### ✅ **完了済み (35個)** - Phase 1+2+3+4+5 完了
 1. **SearchModal.tsx** ✅ (検索機能)
 2. **PageBulkExportSelectModal.tsx** ✅ (一括エクスポート)
 3. **PageSelectModal.tsx** ✅ (ページ選択)
@@ -35,6 +35,13 @@
 27. **DeleteSlackBotSettingsModal.tsx** ✅ (Slack Bot設定削除) - **3コンテンツメモ化、条件分岐最適化**
 28. **PrivateLegacyPagesMigrationModal.tsx** ✅ (プライベートページ移行) - **Submit関数・レンダリング関数メモ化**
 29. **DeleteAiAssistantModal.tsx** ✅ (AI アシスタント削除) - **3コンテンツメモ化、early return**
+30. **ShareScopeWarningModal.tsx** ✅ (共有スコープ警告) - **selectedPagesList useMemo、early return**
+31. **SelectUserGroupModal.tsx** ✅ (ユーザーグループ選択) - **userGroupList useMemo、early return**
+32. **ShortcutsModal.tsx** ✅ (ショートカット表示) - **421行bodyContent useMemo、early return**
+33. **ShowShortcutsModal.tsx** ✅ (ショートカット表示) - **既に最適化済み(変更不要)**
+34. **EmptyTrashModal.tsx** ✅ (ゴミ箱を空にする) - **renderPagePaths useMemo、early return**
+35. **DeleteBookmarkFolderModal.tsx** ✅ (ブックマークフォルダ削除) - **early return追加**
+36. **PutbackPageModal.jsx** ✅ (ゴミ箱から復元) - **3コンテンツメモ化、2ハンドラーメモ化、early return**
 
 ---
 
@@ -76,40 +83,48 @@
 - [x] **DeleteSlackBotSettingsModal.tsx** - Slack Bot設定削除
 - [x] **PrivateLegacyPagesMigrationModal.tsx** - プライベートページ移行
 
-#### **🤖 AI機能系 (3個中1個完了)**
+#### **🤖 AI機能系 (3個)** ✅ **全完了**
 - [x] **DeleteAiAssistantModal.tsx** - AI アシスタント削除
-- [ ] **ShareScopeWarningModal.tsx** - 共有スコープ警告
-- [ ] **SelectUserGroupModal.tsx** - ユーザーグループ選択
+- [x] **ShareScopeWarningModal.tsx** - 共有スコープ警告
+- [x] **SelectUserGroupModal.tsx** - ユーザーグループ選択
 
-#### **🎨 UI/UX系 (4個)**
-- [ ] **ShortcutsModal.tsx** - ショートカット表示
-- [ ] **ShowShortcutsModal.tsx** - ショートカット表示(Hotkeys)
-- [ ] **EmptyTrashModal.tsx** - ゴミ箱を空にする
-- [ ] **DeleteBookmarkFolderModal.tsx** - ブックマークフォルダ削除
+#### **🎨 UI/UX系 (4個)** ✅ **全完了**
+- [x] **ShortcutsModal.tsx** - ショートカット表示
+- [x] **ShowShortcutsModal.tsx** - ショートカット表示(Hotkeys)
+- [x] **EmptyTrashModal.tsx** - ゴミ箱を空にする
+- [x] **DeleteBookmarkFolderModal.tsx** - ブックマークフォルダ削除
 
-#### **🔌 プラグイン系 (2個)**
-- [ ] **PluginDeleteModal.tsx** - プラグイン削除
-- [ ] **TreeItemForModal.tsx** - ツリーアイテム (サブコンポーネント)
+#### **🔌 プラグイン系 (2個)** ✅ **全完了**
+- [x] **PluginDeleteModal.tsx** - プラグイン削除
+- [x] **TreeItemForModal.tsx** - ツリーアイテム (サブコンポーネント・最適化不要)
 
 ---
 
-### 🔄 **未完了 - 低優先度** 
-(対応は任意 - 軽量なモーダルが多数)
+### 🔄 **未完了 - 低優先度 (2個)** 
+- [x] **PutbackPageModal.jsx** - ゴミ箱から復元 ✅ **完了**
+- [ ] **UserInviteModal.jsx** - ユーザー招待 (クラスコンポーネント - リファクタ対象外)
+- [ ] **GridEditModal.jsx** - グリッド編集 (クラスコンポーネント - リファクタ対象外)
 
 ---
 
 ## 📈 **統計情報**
 
-- **完了済み**: 29モーダル (55%)
-- **高優先度**: 5モーダル (9%) - Admin系のみ残存
-- **中優先度**: 8モーダル (15%) - 7個完了、残り8個
-- **低優先度**: 11モーダル (21%)
-- **総計**: 53モーダル
+- **完了済み**: 36モーダル (71%)
+- **高優先度**: 11モーダル Admin系 (21%) - **次の対応対象**
+- **中優先度**: 15モーダル (29%) ✅ **全完了**
+- **低優先度**: 3モーダル (6%) - 1完了、2クラスコンポーネント(対象外)
+- **総計**: 51モーダル (関数コンポーネントのみカウント)
 
-### 🎉 **Phase 5進行中: 中優先度モーダル 7個完了**
+### 🎉 **Phase 5完了: 中優先度モーダル 15個完了**
 - DeleteCommentModal.tsx, DeleteAttachmentModal.tsx (コメント/添付ファイル系)
 - AssociateModal.tsx, DisassociateModal.tsx, DeleteSlackBotSettingsModal.tsx, PrivateLegacyPagesMigrationModal.tsx (機能統合系)
-- DeleteAiAssistantModal.tsx (AI機能系)
+- DeleteAiAssistantModal.tsx, ShareScopeWarningModal.tsx, SelectUserGroupModal.tsx (AI機能系)
+- ShortcutsModal.tsx, ShowShortcutsModal.tsx, EmptyTrashModal.tsx, DeleteBookmarkFolderModal.tsx (UI/UX系)
+- PluginDeleteModal.tsx, TreeItemForModal.tsx (プラグイン系)
+
+### 🎉 **Phase 6完了: 低優先度モーダル 1個完了**
+- PutbackPageModal.jsx (ゴミ箱から復元)
+- UserInviteModal.jsx, GridEditModal.jsx はクラスコンポーネントのため対象外
 
 ### 🎉 **Phase 3完了: Page操作系 6モーダル最適化完了**
 - PageCreateModal.tsx, PageRenameModal.tsx, PageDuplicateModal.tsx
