@@ -5,7 +5,7 @@
 - [x] **SearchOptionModal.tsx** - 検索オプション
 - [x] **DescendantsPageListModal.tsx** - 子ページリスト
 - [x] **GrantedGroupsInheritanceSelectModal.tsx** - 権限グループ継承選択  
-- [x] **ImageCropModal.tsx** - 画像クロップ### ✅ **完了済み (22個)** - Phase 1+2+3+4 完了
+- [x] **ImageCropModal.tsx** - 画像クロップ### ✅ **完了済み (29個)** - Phase 1+2+3+4+5(進行中) 完了
 1. **SearchModal.tsx** ✅ (検索機能)
 2. **PageBulkExportSelectModal.tsx** ✅ (一括エクスポート)
 3. **PageSelectModal.tsx** ✅ (ページ選択)
@@ -28,6 +28,13 @@
 20. **DescendantsPageListModal.tsx** ✅ (子ページリスト) - **3ハンドラーメモ化、early return最適化**
 21. **GrantedGroupsInheritanceSelectModal.tsx** ✅ (権限グループ継承選択) - **3ハンドラーメモ化、early return最適化**
 22. **ImageCropModal.tsx** ✅ (画像クロップ) - **6関数メモ化、Canvas/Blob処理最適化**
+23. **DeleteCommentModal.tsx** ✅ (コメント削除) - **3コンテンツメモ化、日付/本文処理メモ化**
+24. **DeleteAttachmentModal.tsx** ✅ (添付ファイル削除) - **early return追加（既に最適化済み）**
+25. **AssociateModal.tsx** ✅ (アカウント連携) - **5ハンドラーメモ化、タブ切替最適化**
+26. **DisassociateModal.tsx** ✅ (アカウント連携解除) - **Props分割代入、early return**
+27. **DeleteSlackBotSettingsModal.tsx** ✅ (Slack Bot設定削除) - **3コンテンツメモ化、条件分岐最適化**
+28. **PrivateLegacyPagesMigrationModal.tsx** ✅ (プライベートページ移行) - **Submit関数・レンダリング関数メモ化**
+29. **DeleteAiAssistantModal.tsx** ✅ (AI アシスタント削除) - **3コンテンツメモ化、early return**
 
 ---
 
@@ -59,18 +66,18 @@
 
 ### 🔄 **未完了 - 中優先度 (15個)**
 
-#### **💬 コメント/添付ファイル系 (2個)**
-- [ ] **DeleteCommentModal.tsx** - コメント削除
-- [ ] **DeleteAttachmentModal.tsx** - 添付ファイル削除
+#### **💬 コメント/添付ファイル系 (2個)** ✅ **全完了**
+- [x] **DeleteCommentModal.tsx** - コメント削除
+- [x] **DeleteAttachmentModal.tsx** - 添付ファイル削除
 
-#### **🔌 機能統合系 (4個)**  
-- [ ] **AssociateModal.tsx** - アカウント連携
-- [ ] **DisassociateModal.tsx** - アカウント連携解除
-- [ ] **DeleteSlackBotSettingsModal.tsx** - Slack Bot設定削除
-- [ ] **PrivateLegacyPagesMigrationModal.tsx** - プライベートページ移行
+#### **🔌 機能統合系 (4個)** ✅ **全完了**
+- [x] **AssociateModal.tsx** - アカウント連携
+- [x] **DisassociateModal.tsx** - アカウント連携解除
+- [x] **DeleteSlackBotSettingsModal.tsx** - Slack Bot設定削除
+- [x] **PrivateLegacyPagesMigrationModal.tsx** - プライベートページ移行
 
-#### **🤖 AI機能系 (3個)**
-- [ ] **DeleteAiAssistantModal.tsx** - AI アシスタント削除
+#### **🤖 AI機能系 (3個中1個完了)**
+- [x] **DeleteAiAssistantModal.tsx** - AI アシスタント削除
 - [ ] **ShareScopeWarningModal.tsx** - 共有スコープ警告
 - [ ] **SelectUserGroupModal.tsx** - ユーザーグループ選択
 
@@ -93,11 +100,16 @@
 
 ## 📈 **統計情報**
 
-- **完了済み**: 22モーダル (42%)
+- **完了済み**: 29モーダル (55%)
 - **高優先度**: 5モーダル (9%) - Admin系のみ残存
-- **中優先度**: 15モーダル (28%)
+- **中優先度**: 8モーダル (15%) - 7個完了、残り8個
 - **低優先度**: 11モーダル (21%)
 - **総計**: 53モーダル
+
+### 🎉 **Phase 5進行中: 中優先度モーダル 7個完了**
+- DeleteCommentModal.tsx, DeleteAttachmentModal.tsx (コメント/添付ファイル系)
+- AssociateModal.tsx, DisassociateModal.tsx, DeleteSlackBotSettingsModal.tsx, PrivateLegacyPagesMigrationModal.tsx (機能統合系)
+- DeleteAiAssistantModal.tsx (AI機能系)
 
 ### 🎉 **Phase 3完了: Page操作系 6モーダル最適化完了**
 - PageCreateModal.tsx, PageRenameModal.tsx, PageDuplicateModal.tsx

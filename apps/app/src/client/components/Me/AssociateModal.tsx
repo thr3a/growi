@@ -53,6 +53,17 @@ const AssociateModal = (props: Props): JSX.Element => {
 
   }, [associateLdapAccount, closeModalHandler, mutatePersonalExternalAccounts, password, t, username]);
 
+  // Memoize event handlers
+  const setTabToLdap = useCallback(() => setActiveTab(1), []);
+  const setTabToGithub = useCallback(() => setActiveTab(2), []);
+  const setTabToGoogle = useCallback(() => setActiveTab(3), []);
+  const handleUsernameChange = useCallback((username: string) => setUsername(username), []);
+  const handlePasswordChange = useCallback((password: string) => setPassword(password), []);
+
+  // Early return optimization
+  if (!isOpen) {
+    return <></>;
+  }
 
   return (
     <Modal isOpen={isOpen} toggle={closeModalHandler} size="lg" data-testid="grw-associate-modal">
@@ -64,19 +75,19 @@ const AssociateModal = (props: Props): JSX.Element => {
           <Nav tabs className="mb-2">
             <NavLink
               className={`${activeTab === 1 ? 'active' : ''} d-flex gap-1 align-items-center`}
-              onClick={() => setActiveTab(1)}
+              onClick={setTabToLdap}
             >
               <span className="material-symbols-outlined fs-5">network_node</span> LDAP
             </NavLink>
             <NavLink
               className={`${activeTab === 2 ? 'active' : ''} d-flex gap-1 align-items-center`}
-              onClick={() => setActiveTab(2)}
+              onClick={setTabToGithub}
             >
               <span className="growi-custom-icons">github</span> (TBD) GitHub
             </NavLink>
             <NavLink
               className={`${activeTab === 3 ? 'active' : ''} d-flex gap-1 align-items-center`}
-              onClick={() => setActiveTab(3)}
+              onClick={setTabToGoogle}
             >
               <span className="growi-custom-icons">google</span> (TBD) Google OAuth
             </NavLink>
@@ -86,8 +97,8 @@ const AssociateModal = (props: Props): JSX.Element => {
               <LdapAuthTest
                 username={username}
                 password={password}
-                onChangeUsername={username => setUsername(username)}
-                onChangePassword={password => setPassword(password)}
+                onChangeUsername={handleUsernameChange}
+                onChangePassword={handlePasswordChange}
               />
             </TabPane>
             <TabPane tabId={2}>

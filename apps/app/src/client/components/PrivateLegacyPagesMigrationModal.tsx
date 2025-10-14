@@ -1,4 +1,4 @@
-import React, { useState, type JSX } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import {
@@ -11,7 +11,7 @@ import { usePrivateLegacyPagesMigrationModalActions, usePrivateLegacyPagesMigrat
 import ApiErrorMessageList from './PageManagement/ApiErrorMessageList';
 
 
-export const PrivateLegacyPagesMigrationModal = (): JSX.Element => {
+export const PrivateLegacyPagesMigrationModal = (): React.JSX.Element => {
   const { t } = useTranslation();
 
   const status = usePrivateLegacyPagesMigrationModalStatus();
@@ -24,7 +24,8 @@ export const PrivateLegacyPagesMigrationModal = (): JSX.Element => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [errs, setErrs] = useState<Error[] | null>(null);
 
-  async function submit() {
+  // Memoize submit handler
+  const submit = useCallback(async() => {
     if (status == null || status.pages == null || status.pages.length === 0) {
       return;
     }
@@ -44,9 +45,15 @@ export const PrivateLegacyPagesMigrationModal = (): JSX.Element => {
     catch (err) {
       setErrs([err]);
     }
-  }
+  }, [status, isRecursively]);
 
-  function renderForm() {
+  // Memoize checkbox handler
+  const handleRecursivelyChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsRecursively(e.target.checked);
+  }, []);
+
+  // Memoize form rendering
+  const renderForm = useMemo(() => {
     return (
       <div className="form-check form-check-warning">
         <input
@@ -54,9 +61,7 @@ export const PrivateLegacyPagesMigrationModal = (): JSX.Element => {
           id="convertRecursively"
           type="checkbox"
           checked={isRecursively}
-          onChange={(e) => {
-            setIsRecursively(e.target.checked);
-          }}
+          onChange={handleRecursivelyChange}
         />
         <label className="form-label form-check-label" htmlFor="convertRecursively">
           { t('private_legacy_pages.modal.convert_recursively_label') }
@@ -64,14 +69,20 @@ export const PrivateLegacyPagesMigrationModal = (): JSX.Element => {
         </label>
       </div>
     );
-  }
+  }, [isRecursively, handleRecursivelyChange, t]);
 
-  const renderPageIds = () => {
+  // Memoize page IDs rendering
+  const renderPageIds = useMemo(() => {
     if (status != null && status.pages != null) {
       return status.pages.map(page => <div key={page.pageId}><code>{ page.path }</code></div>);
     }
     return <></>;
-  };
+  }, [status]);
+
+  // Early return optimization
+  if (!isOpened) {
+    return <></>;
+  }
 
   return (
     <Modal size="lg" isOpen={isOpened} toggle={close}>
@@ -83,9 +94,9 @@ export const PrivateLegacyPagesMigrationModal = (): JSX.Element => {
           <label>{ t('private_legacy_pages.modal.converting_pages') }:</label><br />
           {/* Todo: change the way to show path on modal when too many pages are selected */}
           {/* https://redmine.weseek.co.jp/issues/82787 */}
-          {renderPageIds()}
+          {renderPageIds}
         </div>
-        {renderForm()}
+        {renderForm}
       </ModalBody>
       <ModalFooter>
         <ApiErrorMessageList errs={errs} />

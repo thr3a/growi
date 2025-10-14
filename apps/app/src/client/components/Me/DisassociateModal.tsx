@@ -1,4 +1,4 @@
-import React, { useCallback, type JSX } from 'react';
+import React, { useCallback } from 'react';
 
 import type { HasObjectId, IExternalAccount } from '@growi/core';
 import { useTranslation } from 'next-i18next';
@@ -20,19 +20,20 @@ type Props = {
 }
 
 
-const DisassociateModal = (props: Props): JSX.Element => {
+const DisassociateModal = (props: Props): React.JSX.Element => {
+  const { isOpen, onClose, accountForDisassociate } = props;
 
   const { t } = useTranslation();
   const { mutate: mutatePersonalExternalAccounts } = useSWRxPersonalExternalAccounts();
   const { trigger: disassociateLdapAccount } = useDisassociateLdapAccount();
 
-  const { providerType, accountId } = props.accountForDisassociate;
+  const { providerType, accountId } = accountForDisassociate;
 
   const disassociateAccountHandler = useCallback(async() => {
 
     try {
       await disassociateLdapAccount({ providerType, accountId });
-      props.onClose();
+      onClose();
       toastSuccess(t('security_settings.updated_general_security_setting'));
     }
     catch (err) {
@@ -42,11 +43,16 @@ const DisassociateModal = (props: Props): JSX.Element => {
     if (mutatePersonalExternalAccounts != null) {
       mutatePersonalExternalAccounts();
     }
-  }, [accountId, disassociateLdapAccount, mutatePersonalExternalAccounts, props, providerType, t]);
+  }, [accountId, disassociateLdapAccount, mutatePersonalExternalAccounts, onClose, providerType, t]);
+
+  // Early return optimization
+  if (!isOpen) {
+    return <></>;
+  }
 
   return (
-    <Modal isOpen={props.isOpen} toggle={props.onClose}>
-      <ModalHeader className="text-info" toggle={props.onClose}>
+    <Modal isOpen={isOpen} toggle={onClose}>
+      <ModalHeader className="text-info" toggle={onClose}>
         {t('personal_settings.disassociate_external_account')}
       </ModalHeader>
       <ModalBody>
@@ -54,7 +60,7 @@ const DisassociateModal = (props: Props): JSX.Element => {
         <p dangerouslySetInnerHTML={{ __html: t('personal_settings.disassociate_external_account_desc', { providerType, accountId }) }} />
       </ModalBody>
       <ModalFooter>
-        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={props.onClose}>
+        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onClose}>
           { t('Cancel') }
         </button>
         <button type="button" className="btn btn-sm btn-danger" onClick={disassociateAccountHandler}>

@@ -93,6 +93,11 @@ export const DeleteAttachmentModal: React.FC = () => {
     return <></>;
   }, [deleting, deleteError]);
 
+  // Early return optimization
+  if (!isOpen) {
+    return <></>;
+  }
+
   return (
     <Modal
       isOpen={isOpen}
