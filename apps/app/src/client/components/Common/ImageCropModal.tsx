@@ -76,14 +76,14 @@ const ImageCropModal: FC<Props> = (props: Props) => {
     reset();
   }, [reset]);
 
-  const onImageLoaded = (image) => {
+  // Memoize image processing functions
+  const onImageLoaded = useCallback((image) => {
     setImageRef(image);
     reset();
     return false;
-  };
+  }, [reset]);
 
-
-  const getCroppedImg = async(image: HTMLImageElement, crop: ICropOptions) => {
+  const getCroppedImg = useCallback(async(image: HTMLImageElement, crop: ICropOptions) => {
     const {
       naturalWidth: imageNaturalWidth, naturalHeight: imageNaturalHeight, width: imageWidth, height: imageHeight,
     } = image;
@@ -107,32 +107,37 @@ const ImageCropModal: FC<Props> = (props: Props) => {
       logger.error(err);
       toastError(new Error('Failed to draw image'));
     }
-  };
+  }, []);
 
   // Convert base64 Image to blob
-  const convertBase64ToBlob = async(base64Image: string) => {
+  const convertBase64ToBlob = useCallback(async(base64Image: string) => {
     const base64Response = await fetch(base64Image);
     return base64Response.blob();
-  };
+  }, []);
 
 
-  // Clear image and set isImageCrop true on modal close
-  const onModalCloseHandler = async() => {
+  // Memoize event handlers
+  const onModalCloseHandler = useCallback(async() => {
     setImageRef(null);
     onModalClose();
-  };
+  }, [onModalClose]);
 
-  // Process and save image
-  // Cropping image is optional
-  // If crop is active , the saved image is cropped image (png). Otherwise, the original image will be saved (Original size and file type)
-  const processAndSaveImage = async() => {
+  const processAndSaveImage = useCallback(async() => {
     if (imageRef && cropOptions?.width && cropOptions.height) {
       const processedImage = isCropImage ? await getCroppedImg(imageRef, cropOptions) : await convertBase64ToBlob(imageRef.src);
       // Save image to database
       onImageProcessCompleted(processedImage);
     }
     onModalCloseHandler();
-  };
+  }, [imageRef, cropOptions, isCropImage, getCroppedImg, convertBase64ToBlob, onImageProcessCompleted, onModalCloseHandler]);
+
+  const toggleCropMode = useCallback(() => setIsCropImage(!isCropImage), [isCropImage]);
+  const handleCropChange = useCallback((crop: CropOptions) => setCropOtions(crop), []);
+
+  // Early return optimization
+  if (!isShow) {
+    return <></>;
+  }
 
   return (
     <Modal isOpen={isShow} toggle={onModalCloseHandler}>
@@ -148,7 +153,7 @@ const ImageCropModal: FC<Props> = (props: Props) => {
                 src={src}
                 crop={cropOptions}
                 onImageLoaded={onImageLoaded}
-                onChange={crop => setCropOtions(crop)}
+                onChange={handleCropChange}
                 circularCrop={isCircular}
               />
             )
@@ -167,7 +172,7 @@ const ImageCropModal: FC<Props> = (props: Props) => {
                 className="form-check-input me-auto"
                 type="checkbox"
                 checked={isCropImage}
-                onChange={() => { setIsCropImage(!isCropImage) }}
+                onChange={toggleCropMode}
               />
               <label className="form-label form-check-label" htmlFor="cropImageOption">
                 { t('crop_image_modal.image_crop') }

@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react';
+import { useState, useCallback } from 'react';
 
 import { useTranslation } from 'react-i18next';
 import {
@@ -9,16 +9,25 @@ import {
   useGrantedGroupsInheritanceSelectModalActions, useGrantedGroupsInheritanceSelectModalStatus,
 } from '~/states/ui/modal/granted-groups-inheritance-select';
 
-const GrantedGroupsInheritanceSelectModal = (): JSX.Element => {
+const GrantedGroupsInheritanceSelectModal = (): React.JSX.Element => {
   const { t } = useTranslation();
   const { isOpened, onCreateBtnClick: _onCreateBtnClick } = useGrantedGroupsInheritanceSelectModalStatus();
   const { close: closeModal } = useGrantedGroupsInheritanceSelectModalActions();
   const [onlyInheritUserRelatedGrantedGroups, setOnlyInheritUserRelatedGrantedGroups] = useState(false);
 
-  const onCreateBtnClick = async() => {
+  // Memoize event handlers
+  const onCreateBtnClick = useCallback(async() => {
     await _onCreateBtnClick?.(onlyInheritUserRelatedGrantedGroups);
     setOnlyInheritUserRelatedGrantedGroups(false); // reset to false after create request
-  };
+  }, [_onCreateBtnClick, onlyInheritUserRelatedGrantedGroups]);
+
+  const setInheritAll = useCallback(() => setOnlyInheritUserRelatedGrantedGroups(false), []);
+  const setInheritRelatedOnly = useCallback(() => setOnlyInheritUserRelatedGrantedGroups(true), []);
+
+  // Early return optimization
+  if (!isOpened) {
+    return <></>;
+  }
 
   return (
     <Modal
@@ -37,7 +46,7 @@ const GrantedGroupsInheritanceSelectModal = (): JSX.Element => {
               className="form-check-input"
               form="formImageType"
               checked={!onlyInheritUserRelatedGrantedGroups}
-              onChange={() => { setOnlyInheritUserRelatedGrantedGroups(false) }}
+              onChange={setInheritAll}
             />
             <label className="form-check-label" htmlFor="inheritAllGroupsRadio">
               {t('modal_granted_groups_inheritance_select.inherit_all_granted_groups_from_parent')}
@@ -50,7 +59,7 @@ const GrantedGroupsInheritanceSelectModal = (): JSX.Element => {
               className="form-check-input"
               form="formImageType"
               checked={onlyInheritUserRelatedGrantedGroups}
-              onChange={() => { setOnlyInheritUserRelatedGrantedGroups(true) }}
+              onChange={setInheritRelatedOnly}
             />
             <label className="form-check-label" htmlFor="onlyInheritRelatedGroupsRadio">
               {t('modal_granted_groups_inheritance_select.only_inherit_related_groups')}

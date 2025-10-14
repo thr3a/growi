@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { pathUtils } from '@growi/core/dist/utils';
 import { useTranslation } from 'next-i18next';
@@ -67,9 +67,11 @@ export const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
     }
   }, [createTemplate, onClose, path, t]);
 
-  const parentPath = pathUtils.addTrailingSlash(path);
+  // Memoize computed path
+  const parentPath = useMemo(() => pathUtils.addTrailingSlash(path), [path]);
 
-  const renderTemplateCard = (target: TargetType, label: LabelType) => (
+  // Memoize template card rendering function
+  const renderTemplateCard = useCallback((target: TargetType, label: LabelType) => (
     <div className="col">
       <TemplateCard
         target={target}
@@ -78,7 +80,7 @@ export const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
         onClickHandler={() => onClickTemplateButtonHandler(label)}
       />
     </div>
-  );
+  ), [isCreating, onClickTemplateButtonHandler]);
 
   if (!isCreatable) {
     return <></>;

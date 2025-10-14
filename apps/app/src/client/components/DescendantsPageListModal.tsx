@@ -1,6 +1,6 @@
 
 import React, {
-  useState, useMemo, useEffect, type JSX,
+  useState, useMemo, useEffect, useCallback,
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -25,7 +25,7 @@ const DescendantsPageList = dynamic<DescendantsPageListProps>(() => import('./De
 
 const PageTimeline = dynamic(() => import('./PageTimeline').then(mod => mod.PageTimeline), { ssr: false });
 
-export const DescendantsPageListModal = (): JSX.Element => {
+export const DescendantsPageListModal = (): React.JSX.Element => {
   const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState('pagelist');
@@ -74,18 +74,24 @@ export const DescendantsPageListModal = (): JSX.Element => {
     };
   }, [isSharedUser, status, t]);
 
+  // Memoize event handlers
+  const expandWindow = useCallback(() => setIsWindowExpanded(true), []);
+  const contractWindow = useCallback(() => setIsWindowExpanded(false), []);
+  const onNavSelected = useCallback((v: string) => setActiveTab(v), []);
+
   const buttons = useMemo(() => (
     <span className="me-3">
       <ExpandOrContractButton
         isWindowExpanded={isWindowExpanded}
-        expandWindow={() => setIsWindowExpanded(true)}
-        contractWindow={() => setIsWindowExpanded(false)}
+        expandWindow={expandWindow}
+        contractWindow={contractWindow}
       />
       <button type="button" className="btn btn-close ms-2" onClick={close} aria-label="Close"></button>
     </span>
-  ), [close, isWindowExpanded]);
+  ), [close, isWindowExpanded, expandWindow, contractWindow]);
 
-  if (status == null) {
+  // Early return after all hooks
+  if (status == null || !status.isOpened) {
     return <></>;
   }
 
@@ -105,7 +111,7 @@ export const DescendantsPageListModal = (): JSX.Element => {
             activeTab={activeTab}
             navTabMapping={navTabMapping}
             breakpointToHideInactiveTabsDown="md"
-            onNavSelected={v => setActiveTab(v)}
+            onNavSelected={onNavSelected}
             hideBorderBottom
           />
         )}
@@ -115,7 +121,7 @@ export const DescendantsPageListModal = (): JSX.Element => {
           <CustomNavDropdown
             activeTab={activeTab}
             navTabMapping={navTabMapping}
-            onNavSelected={v => setActiveTab(v)}
+            onNavSelected={onNavSelected}
           />
         )}
         <CustomTabContent
