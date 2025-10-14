@@ -1,5 +1,5 @@
 import React, {
-  useState, useEffect, useCallback, useMemo, type JSX,
+  useState, useEffect, useCallback, useMemo,
 } from 'react';
 
 import type { IUser } from '@growi/core';
@@ -41,7 +41,7 @@ const formatedDate = (date: Date): string => {
   return format(date, 'yyyy/MM/dd HH:mm:ss');
 };
 
-const ConflictDiffModalCore = (props: ConflictDiffModalCoreProps): JSX.Element => {
+const ConflictDiffModalCore = (props: ConflictDiffModalCoreProps): React.JSX.Element => {
   const { request, latest } = props;
 
   const [resolvedRevision, setResolvedRevision] = useState<string>('');
@@ -53,6 +53,10 @@ const ConflictDiffModalCore = (props: ConflictDiffModalCoreProps): JSX.Element =
   const conflictDiffModalStatus = useConflictDiffModalStatus();
   const { close: closeConflictDiffModal } = useConflictDiffModalActions();
   const { data: codeMirrorEditor } = useCodeMirrorEditorIsolated(GlobalCodeMirrorEditorKey.DIFF);
+
+  // Memoize formatted dates
+  const requestFormattedDate = useMemo(() => formatedDate(request.createdAt), [request.createdAt]);
+  const latestFormattedDate = useMemo(() => formatedDate(latest.createdAt), [latest.createdAt]);
 
   const selectRevisionHandler = useCallback((selectedRevision: string) => {
     setResolvedRevision(selectedRevision);
@@ -109,7 +113,7 @@ const ConflictDiffModalCore = (props: ConflictDiffModalCoreProps): JSX.Element =
               </div>
               <div className="ms-3 text-muted">
                 <p className="my-0">updated by {request.user.username}</p>
-                <p className="my-0">{ formatedDate(request.createdAt) }</p>
+                <p className="my-0">{ requestFormattedDate }</p>
               </div>
             </div>
           </div>
@@ -122,7 +126,7 @@ const ConflictDiffModalCore = (props: ConflictDiffModalCoreProps): JSX.Element =
               </div>
               <div className="ms-3 text-muted">
                 <p className="my-0">updated by {latest.user.username}</p>
-                <p className="my-0">{ formatedDate(latest.createdAt) }</p>
+                <p className="my-0">{ latestFormattedDate }</p>
               </div>
             </div>
           </div>
@@ -189,7 +193,7 @@ const ConflictDiffModalCore = (props: ConflictDiffModalCoreProps): JSX.Element =
 };
 
 
-export const ConflictDiffModal = (): JSX.Element => {
+export const ConflictDiffModal = (): React.JSX.Element => {
   const currentUser = useCurrentUser();
   const currentPage = useCurrentPageData();
   const conflictDiffModalStatus = useConflictDiffModalStatus();
