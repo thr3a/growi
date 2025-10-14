@@ -40,6 +40,11 @@ const DeleteBookmarkFolderModal: FC = () => {
     await deleteBookmark();
   }, [deleteBookmark]);
 
+  // Early return optimization
+  if (!isOpened || bookmarkFolder == null) {
+    return <></>;
+  }
+
   return (
     <Modal size="md" isOpen={isOpened} toggle={closeBookmarkFolderDeleteModal} data-testid="page-delete-modal" className="grw-create-page">
       <ModalHeader tag="h4" toggle={closeBookmarkFolderDeleteModal} className="text-danger">

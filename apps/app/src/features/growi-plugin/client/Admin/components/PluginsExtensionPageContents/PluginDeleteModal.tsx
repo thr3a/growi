@@ -41,6 +41,11 @@ export const PluginDeleteModal: React.FC = () => {
     }
   }, [id, closePluginDeleteModal, t, mutate]);
 
+  // Early return optimization
+  if (!isOpen) {
+    return <></>;
+  }
+
   return (
     <Modal isOpen={isOpen} toggle={toggleHandler}>
       <ModalHeader

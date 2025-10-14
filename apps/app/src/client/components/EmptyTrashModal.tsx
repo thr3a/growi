@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import {
@@ -43,7 +43,8 @@ const EmptyTrashModal: FC = () => {
     await emptyTrash();
   }, [emptyTrash]);
 
-  const renderPagePaths = useCallback(() => {
+  // Memoize page paths rendering
+  const renderPagePaths = useMemo(() => {
     if (pages != null) {
       return pages.map(page => (
         <p key={page.data._id} className="mb-1">
@@ -53,6 +54,11 @@ const EmptyTrashModal: FC = () => {
     }
     return <></>;
   }, [pages]);
+
+  // Early return optimization
+  if (!isOpened) {
+    return <></>;
+  }
 
   return (
     <Modal size="lg" isOpen={isOpened} toggle={closeEmptyTrashModal} data-testid="page-delete-modal">
@@ -64,7 +70,7 @@ const EmptyTrashModal: FC = () => {
         <div className="grw-scrollable-modal-body pb-1">
           <label className="form-label">{ t('modal_delete.deleting_page') }:</label><br />
           {/* Todo: change the way to show path on modal when too many pages are selected */}
-          {renderPagePaths()}
+          {renderPagePaths}
         </div>
         {!canDeleteAllpages && t('modal_empty.not_deletable_notice')}<br />
         {t('modal_empty.notice')}

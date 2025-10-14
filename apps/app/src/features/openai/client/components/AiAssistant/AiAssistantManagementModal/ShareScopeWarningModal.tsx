@@ -1,4 +1,4 @@
-import React, { useCallback, type JSX } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,7 +14,7 @@ type Props = {
   onSubmit: () => Promise<void>,
 }
 
-export const ShareScopeWarningModal = (props: Props): JSX.Element => {
+export const ShareScopeWarningModal = (props: Props): React.JSX.Element => {
   const {
     isOpen,
     selectedPages,
@@ -28,6 +28,20 @@ export const ShareScopeWarningModal = (props: Props): JSX.Element => {
     closeModal();
     onSubmit();
   }, [closeModal, onSubmit]);
+
+  // Memoize selected pages list
+  const selectedPagesList = useMemo(() => {
+    return selectedPages.map(selectedPage => (
+      <code key={selectedPage.path}>
+        {selectedPage.path}
+      </code>
+    ));
+  }, [selectedPages]);
+
+  // Early return optimization
+  if (!isOpen) {
+    return <></>;
+  }
 
   return (
     <Modal size="lg" isOpen={isOpen} toggle={closeModal}>
@@ -47,11 +61,7 @@ export const ShareScopeWarningModal = (props: Props): JSX.Element => {
 
         <div className="mb-4">
           <p className="mb-2 text-secondary">{t('share_scope_warning_modal.selected_pages_label')}</p>
-          {selectedPages.map(selectedPage => (
-            <code key={selectedPage.path}>
-              {selectedPage.path}
-            </code>
-          ))}
+          {selectedPagesList}
         </div>
 
         <p>
