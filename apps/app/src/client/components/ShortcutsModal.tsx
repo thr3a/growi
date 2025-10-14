@@ -8,10 +8,11 @@ import { useShortcutsModalStatus, useShortcutsModalActions } from '~/states/ui/m
 import styles from './ShortcutsModal.module.scss';
 
 
-const ShortcutsModal = (): React.JSX.Element => {
+/**
+ * ShortcutsModalSubstance - Presentation component (heavy logic, rendered only when isOpen)
+ */
+const ShortcutsModalSubstance = (): React.JSX.Element => {
   const { t } = useTranslation();
-
-  const status = useShortcutsModalStatus();
   const { close } = useShortcutsModalActions();
 
   // Memoize OS-specific class
@@ -400,19 +401,28 @@ const ShortcutsModal = (): React.JSX.Element => {
     );
   }, [additionalClassByOs, t]);
 
-  // Early return optimization
-  if (status == null || !status.isOpened) {
-    return <></>;
-  }
-
   return (
-    <Modal id="shortcuts-modal" size="lg" isOpen={status.isOpened} toggle={close} className={`shortcuts-modal ${styles['shortcuts-modal']}`}>
+    <>
       <ModalHeader tag="h4" toggle={close} className="px-4">
         {t('Shortcuts')}
       </ModalHeader>
       <ModalBody className="p-md-4 mb-3 grw-modal-body-style overflow-auto">
         {bodyContent}
       </ModalBody>
+    </>
+  );
+};
+
+/**
+ * ShortcutsModal - Container component (lightweight, always rendered)
+ */
+const ShortcutsModal = (): React.JSX.Element => {
+  const status = useShortcutsModalStatus();
+  const { close } = useShortcutsModalActions();
+
+  return (
+    <Modal id="shortcuts-modal" size="lg" isOpen={status?.isOpened ?? false} toggle={close} className={`shortcuts-modal ${styles['shortcuts-modal']}`}>
+      {status?.isOpened && <ShortcutsModalSubstance />}
     </Modal>
   );
 };

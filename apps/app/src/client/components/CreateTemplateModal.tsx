@@ -82,27 +82,27 @@ export const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
     </div>
   ), [isCreating, onClickTemplateButtonHandler]);
 
-  if (!isCreatable) {
-    return <></>;
-  }
-
   return (
     <Modal isOpen={isOpen} toggle={onClose} data-testid="page-template-modal">
-      <ModalHeader tag="h4" toggle={onClose}>
-        {t('template.modal_label.Create/Edit Template Page')}
-      </ModalHeader>
-      <ModalBody>
-        <div>
-          <label className="form-label mb-4">
-            <code>{parentPath}</code><br />
-            {t('template.modal_label.Create template under')}
-          </label>
-          <div className="row row-cols-2">
-            {renderTemplateCard('children', '_template')}
-            {renderTemplateCard('descendants', '__template')}
-          </div>
-        </div>
-      </ModalBody>
+      {(isCreatable && isOpen) && (
+        <>
+          <ModalHeader tag="h4" toggle={onClose}>
+            {t('template.modal_label.Create/Edit Template Page')}
+          </ModalHeader>
+          <ModalBody>
+            <div>
+              <label className="form-label mb-4">
+                <code>{parentPath}</code><br />
+                {t('template.modal_label.Create template under')}
+              </label>
+              <div className="row row-cols-2">
+                {renderTemplateCard('children', '_template')}
+                {renderTemplateCard('descendants', '__template')}
+              </div>
+            </div>
+          </ModalBody>
+        </>
+      )}
     </Modal>
   );
 };

@@ -15,8 +15,17 @@ export type DeleteAiAssistantModalProps = {
   onConfirm: () => void;
 };
 
-export const DeleteAiAssistantModal: React.FC<DeleteAiAssistantModalProps> = ({
-  isShown, aiAssistant, errorMessage, onCancel, onConfirm,
+/**
+ * DeleteAiAssistantModalSubstance - Presentation component (heavy logic, rendered only when isOpen)
+ */
+type DeleteAiAssistantModalSubstanceProps = {
+  errorMessage?: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+};
+
+const DeleteAiAssistantModalSubstance: React.FC<DeleteAiAssistantModalSubstanceProps> = ({
+  errorMessage, onCancel, onConfirm,
 }) => {
   const { t } = useTranslation();
 
@@ -46,13 +55,8 @@ export const DeleteAiAssistantModal: React.FC<DeleteAiAssistantModalProps> = ({
     </>
   ), [errorMessage, onCancel, onConfirm, t]);
 
-  // Early return optimization
-  if (!isShown || aiAssistant == null) {
-    return <></>;
-  }
-
   return (
-    <Modal isOpen={isShown} toggle={onCancel} centered>
+    <>
       <ModalHeader tag="h5" toggle={onCancel} className="text-danger px-4">
         {headerContent}
       </ModalHeader>
@@ -62,6 +66,25 @@ export const DeleteAiAssistantModal: React.FC<DeleteAiAssistantModalProps> = ({
       <ModalFooter className="px-4 gap-2">
         {footerContent}
       </ModalFooter>
+    </>
+  );
+};
+
+/**
+ * DeleteAiAssistantModal - Container component (lightweight, always rendered)
+ */
+export const DeleteAiAssistantModal: React.FC<DeleteAiAssistantModalProps> = ({
+  isShown, aiAssistant, errorMessage, onCancel, onConfirm,
+}) => {
+  return (
+    <Modal isOpen={isShown} toggle={onCancel} centered>
+      {isShown && aiAssistant != null && (
+        <DeleteAiAssistantModalSubstance
+          errorMessage={errorMessage}
+          onCancel={onCancel}
+          onConfirm={onConfirm}
+        />
+      )}
     </Modal>
   );
 };

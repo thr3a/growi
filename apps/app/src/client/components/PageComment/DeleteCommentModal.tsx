@@ -22,9 +22,19 @@ export type DeleteCommentModalProps = {
   confirmToDelete: () => void,
 }
 
-export const DeleteCommentModal = (props: DeleteCommentModalProps): React.JSX.Element => {
+/**
+ * DeleteCommentModalSubstance - Presentation component (heavy logic, rendered only when isOpen)
+ */
+type DeleteCommentModalSubstanceProps = {
+  comment: ICommentHasId,
+  errorMessage: string,
+  cancelToDelete: () => void,
+  confirmToDelete: () => void,
+}
+
+const DeleteCommentModalSubstance = (props: DeleteCommentModalSubstanceProps): React.JSX.Element => {
   const {
-    isShown, comment, errorMessage, cancelToDelete, confirmToDelete,
+    comment, errorMessage, cancelToDelete, confirmToDelete,
   } = props;
 
   const { t } = useTranslation();
@@ -82,13 +92,8 @@ export const DeleteCommentModal = (props: DeleteCommentModalProps): React.JSX.El
     </>
   ), [errorMessage, cancelToDelete, confirmToDelete, t]);
 
-  // Early return after all hooks
-  if (!isShown || comment == null) {
-    return <></>;
-  }
-
   return (
-    <Modal data-testid="page-comment-delete-modal" isOpen={isShown} toggle={cancelToDelete} className={`${styles['page-comment-delete-modal']}`}>
+    <>
       <ModalHeader tag="h4" toggle={cancelToDelete} className="text-danger">
         {headerContent}
       </ModalHeader>
@@ -98,6 +103,28 @@ export const DeleteCommentModal = (props: DeleteCommentModalProps): React.JSX.El
       <ModalFooter>
         {footerContent}
       </ModalFooter>
+    </>
+  );
+};
+
+/**
+ * DeleteCommentModal - Container component (lightweight, always rendered)
+ */
+export const DeleteCommentModal = (props: DeleteCommentModalProps): React.JSX.Element => {
+  const {
+    isShown, comment, errorMessage, cancelToDelete, confirmToDelete,
+  } = props;
+
+  return (
+    <Modal data-testid="page-comment-delete-modal" isOpen={isShown} toggle={cancelToDelete} className={`${styles['page-comment-delete-modal']}`}>
+      {isShown && comment != null && (
+        <DeleteCommentModalSubstance
+          comment={comment}
+          errorMessage={errorMessage}
+          cancelToDelete={cancelToDelete}
+          confirmToDelete={confirmToDelete}
+        />
+      )}
     </Modal>
   );
 };
