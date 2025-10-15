@@ -3,14 +3,18 @@ import { useAtomValue } from 'jotai';
 
 import { isContainerFluidAtom } from '~/states/server-configurations';
 
-const useDetermineExpandContent = (expandContentWidth?: boolean | null): boolean => {
+const useDetermineExpandContent = (
+  expandContentWidth?: boolean | null,
+): boolean => {
   const dataIsContainerFluid = useAtomValue(isContainerFluidAtom);
 
   const isContainerFluidDefault = dataIsContainerFluid;
   return expandContentWidth ?? isContainerFluidDefault ?? false;
 };
 
-export const useShouldExpandContent = (data?: IPage | IPagePopulatedToShowRevision | boolean | null): boolean => {
+export const useShouldExpandContent = (
+  data?: IPage | IPagePopulatedToShowRevision | boolean | null,
+): boolean => {
   const expandContentWidth = (() => {
     // when data is null
     if (data == null) {

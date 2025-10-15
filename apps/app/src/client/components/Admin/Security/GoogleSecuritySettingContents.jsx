@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { pathUtils } from '@growi/core/dist/utils';
 import { useTranslation } from 'next-i18next';
-import PropTypes from 'prop-types';
+import { useForm } from 'react-hook-form';
 import urljoin from 'url-join';
 
 import AdminGeneralSecurityContainer from '~/client/services/AdminGeneralSecurityContainer';
@@ -12,18 +12,32 @@ import { useSiteUrlWithEmptyValueWarn } from '~/states/global';
 
 import { withUnstatedContainers } from '../../UnstatedUtils';
 
-class GoogleSecurityManagementContents extends React.Component {
+const GoogleSecurityManagementContents = (props) => {
+  const {
+    adminGeneralSecurityContainer, adminGoogleSecurityContainer,
+  } = props;
 
-  constructor(props) {
-    super(props);
+  const { t } = useTranslation('admin');
+  const siteUrl = useSiteUrlWithEmptyValueWarn();
 
-    this.onClickSubmit = this.onClickSubmit.bind(this);
-  }
+  const { isGoogleEnabled } = adminGeneralSecurityContainer.state;
+  const { googleClientId, googleClientSecret, retrieveError } = adminGoogleSecurityContainer.state;
+  const googleCallbackUrl = urljoin(pathUtils.removeTrailingSlash(siteUrl), '/passport/google/callback');
 
-  async onClickSubmit() {
-    const { t, adminGoogleSecurityContainer, adminGeneralSecurityContainer } = this.props;
+  const { register, handleSubmit, reset } = useForm();
 
+  // Sync form with container state
+  useEffect(() => {
+    reset({
+      googleClientId,
+      googleClientSecret,
+    });
+  }, [reset, googleClientId, googleClientSecret]);
+
+  const onClickSubmit = useCallback(async(data) => {
     try {
+      await adminGoogleSecurityContainer.changeGoogleClientId(data.googleClientId ?? '');
+      await adminGoogleSecurityContainer.changeGoogleClientSecret(data.googleClientSecret ?? '');
       await adminGoogleSecurityContainer.updateGoogleSetting();
       await adminGeneralSecurityContainer.retrieveSetupStratedies();
       toastSuccess(t('security_settings.OAuth.Google.updated_google'));
@@ -31,26 +45,19 @@ class GoogleSecurityManagementContents extends React.Component {
     catch (err) {
       toastError(err);
     }
-  }
+  }, [adminGoogleSecurityContainer, adminGeneralSecurityContainer, t]);
 
-  render() {
-    const {
-      t, adminGeneralSecurityContainer, adminGoogleSecurityContainer, siteUrl,
-    } = this.props;
-    const { isGoogleEnabled } = adminGeneralSecurityContainer.state;
-    const googleCallbackUrl = urljoin(pathUtils.removeTrailingSlash(siteUrl), '/passport/google/callback');
-
-    return (
-
+  return (
+    <form onSubmit={handleSubmit(onClickSubmit)}>
       <React.Fragment>
 
         <h2 className="alert-anchor border-bottom">
           {t('security_settings.OAuth.Google.name')}
         </h2>
 
-        {adminGoogleSecurityContainer.state.retrieveError != null && (
+        {retrieveError != null && (
           <div className="alert alert-danger">
-            <p>{t('Error occurred')} : {adminGoogleSecurityContainer.state.retrieveError}</p>
+            <p>{t('Error occurred')} : {retrieveError}</p>
           </div>
         )}
 
@@ -107,9 +114,7 @@ class GoogleSecurityManagementContents extends React.Component {
                 <input
                   className="form-control"
                   type="text"
-                  name="googleClientId"
-                  value={adminGoogleSecurityContainer.state.googleClientId || ''}
-                  onChange={e => adminGoogleSecurityContainer.changeGoogleClientId(e.target.value)}
+                  {...register('googleClientId')}
                 />
                 <p className="form-text text-muted">
                   <small dangerouslySetInnerHTML={{ __html: t('security_settings.Use env var if empty', { env: 'OAUTH_GOOGLE_CLIENT_ID' }) }} />
@@ -123,9 +128,7 @@ class GoogleSecurityManagementContents extends React.Component {
                 <input
                   className="form-control"
                   type="password"
-                  name="googleClientSecret"
-                  value={adminGoogleSecurityContainer.state.googleClientSecret || ''}
-                  onChange={e => adminGoogleSecurityContainer.changeGoogleClientSecret(e.target.value)}
+                  {...register('googleClientSecret')}
                 />
                 <p className="form-text text-muted">
                   <small dangerouslySetInnerHTML={{ __html: t('security_settings.Use env var if empty', { env: 'OAUTH_GOOGLE_CLIENT_SECRET' }) }} />
@@ -157,12 +160,7 @@ class GoogleSecurityManagementContents extends React.Component {
 
             <div className="row mb-4">
               <div className="offset-3 col-5">
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  disabled={adminGoogleSecurityContainer.state.retrieveError != null}
-                  onClick={this.onClickSubmit}
-                >
+                <button type="submit" className="btn btn-primary" disabled={retrieveError != null}>
                   {t('Update')}
                 </button>
               </div>
@@ -191,28 +189,16 @@ class GoogleSecurityManagementContents extends React.Component {
         </div>
 
       </React.Fragment>
-
-
-    );
-  }
-
-}
-
-const GoogleSecurityManagementContentsFc = (props) => {
-  const { t } = useTranslation('admin');
-  const siteUrl = useSiteUrlWithEmptyValueWarn();
-  return <GoogleSecurityManagementContents t={t} siteUrl={siteUrl} {...props} />;
+    </form>
+  );
 };
-
 
 GoogleSecurityManagementContents.propTypes = {
-  t: PropTypes.func.isRequired, // i18next
   adminGeneralSecurityContainer: PropTypes.instanceOf(AdminGeneralSecurityContainer).isRequired,
   adminGoogleSecurityContainer: PropTypes.instanceOf(AdminGoogleSecurityContainer).isRequired,
-  siteUrl: PropTypes.string,
 };
 
-const GoogleSecurityManagementContentsWrapper = withUnstatedContainers(GoogleSecurityManagementContentsFc, [
+const GoogleSecurityManagementContentsWrapper = withUnstatedContainers(GoogleSecurityManagementContents, [
   AdminGeneralSecurityContainer,
   AdminGoogleSecurityContainer,
 ]);
