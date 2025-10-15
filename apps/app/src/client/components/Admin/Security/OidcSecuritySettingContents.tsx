@@ -14,15 +14,16 @@ import { useSiteUrl } from '~/stores-universal/context';
 import { withUnstatedContainers } from '../../UnstatedUtils';
 
 type Props = {
-  t: any;
   adminGeneralSecurityContainer: AdminGeneralSecurityContainer;
   adminOidcSecurityContainer: AdminOidcSecurityContainer;
-  siteUrl: string;
 };
 
 const OidcSecurityManagementContents = (props: Props) => {
+  const { t } = useTranslation('admin');
+  const { data: siteUrl } = useSiteUrl();
+
   const {
-    t, adminGeneralSecurityContainer, adminOidcSecurityContainer, siteUrl,
+    adminGeneralSecurityContainer, adminOidcSecurityContainer,
   } = props;
   const { isOidcEnabled } = adminGeneralSecurityContainer.state;
   const {
@@ -32,7 +33,10 @@ const OidcSecurityManagementContents = (props: Props) => {
     oidcAttrMapId, oidcAttrMapUserName, oidcAttrMapName, oidcAttrMapEmail,
   } = adminOidcSecurityContainer.state;
 
-  const oidcCallbackUrl = urljoin(pathUtils.removeTrailingSlash(siteUrl), '/passport/oidc/callback');
+  const oidcCallbackUrl = urljoin(
+    siteUrl == null ? '' : pathUtils.removeTrailingSlash(siteUrl),
+    '/passport/oidc/callback',
+  );
 
   const { register, handleSubmit, reset } = useForm();
 
@@ -479,13 +483,7 @@ const OidcSecurityManagementContents = (props: Props) => {
   );
 };
 
-const OidcSecurityManagementContentsWrapperFC = (props) => {
-  const { t } = useTranslation('admin');
-  const { data: siteUrl } = useSiteUrl();
-  return <OidcSecurityManagementContents t={t} {...props} siteUrl={siteUrl} />;
-};
-
-const OidcSecurityManagementContentsWrapper = withUnstatedContainers(OidcSecurityManagementContentsWrapperFC, [
+const OidcSecurityManagementContentsWrapper = withUnstatedContainers(OidcSecurityManagementContents, [
   AdminGeneralSecurityContainer,
   AdminOidcSecurityContainer,
 ]);
