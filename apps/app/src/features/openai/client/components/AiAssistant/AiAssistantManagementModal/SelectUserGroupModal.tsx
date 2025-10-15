@@ -66,22 +66,23 @@ const SelectUserGroupModalSubstance: React.FC<Props> = (props: Props) => {
   );
 };
 
+/**
+ * SelectUserGroupModal - Container component (lightweight, always rendered)
+ */
 export const SelectUserGroupModal: React.FC<Props> = (props) => {
   const { t } = useTranslation();
-
   const { isOpen, closeModal } = props;
-
-  // Early return optimization
-  if (!isOpen) {
-    return <></>;
-  }
 
   return (
     <Modal isOpen={isOpen} toggle={closeModal}>
-      <ModalHeader toggle={closeModal}>
-        {t('user_group.select_group')}
-      </ModalHeader>
-      <SelectUserGroupModalSubstance {...props} />
+      {isOpen && (
+        <>
+          <ModalHeader toggle={closeModal}>
+            {t('user_group.select_group')}
+          </ModalHeader>
+          <SelectUserGroupModalSubstance {...props} />
+        </>
+      )}
     </Modal>
   );
 };

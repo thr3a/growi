@@ -7,20 +7,20 @@ import {
 
 import type { SelectablePage } from '../../../../interfaces/selectable-page';
 
-type Props = {
-  isOpen: boolean,
-  selectedPages: SelectablePage[],
-  closeModal: () => void,
-  onSubmit: () => Promise<void>,
-}
+/**
+ * ShareScopeWarningModalSubstance - Presentation component (all logic here)
+ */
+type ShareScopeWarningModalSubstanceProps = {
+  selectedPages: SelectablePage[];
+  closeModal: () => void;
+  onSubmit: () => Promise<void>;
+};
 
-export const ShareScopeWarningModal = (props: Props): React.JSX.Element => {
-  const {
-    isOpen,
-    selectedPages,
-    closeModal,
-    onSubmit,
-  } = props;
+const ShareScopeWarningModalSubstance = ({
+  selectedPages,
+  closeModal,
+  onSubmit,
+}: ShareScopeWarningModalSubstanceProps): React.JSX.Element => {
 
   const { t } = useTranslation();
 
@@ -38,13 +38,8 @@ export const ShareScopeWarningModal = (props: Props): React.JSX.Element => {
     ));
   }, [selectedPages]);
 
-  // Early return optimization
-  if (!isOpen) {
-    return <></>;
-  }
-
   return (
-    <Modal size="lg" isOpen={isOpen} toggle={closeModal}>
+    <div>
       <ModalHeader toggle={closeModal}>
         <div className="d-flex align-items-center">
           <span className="material-symbols-outlined text-warning me-2 fs-4">warning</span>
@@ -86,6 +81,37 @@ export const ShareScopeWarningModal = (props: Props): React.JSX.Element => {
           {t('share_scope_warning_modal.button.proceed')}
         </button>
       </ModalFooter>
+    </div>
+  );
+};
+
+/**
+ * ShareScopeWarningModal - Container component (lightweight, always rendered)
+ */
+type Props = {
+  isOpen: boolean;
+  selectedPages: SelectablePage[];
+  closeModal: () => void;
+  onSubmit: () => Promise<void>;
+};
+
+export const ShareScopeWarningModal = (props: Props): React.JSX.Element => {
+  const {
+    isOpen,
+    selectedPages,
+    closeModal,
+    onSubmit,
+  } = props;
+
+  return (
+    <Modal size="lg" isOpen={isOpen} toggle={closeModal}>
+      {isOpen && (
+        <ShareScopeWarningModalSubstance
+          selectedPages={selectedPages}
+          closeModal={closeModal}
+          onSubmit={onSubmit}
+        />
+      )}
     </Modal>
   );
 };
