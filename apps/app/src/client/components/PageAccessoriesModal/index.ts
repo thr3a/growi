@@ -1,1 +1,1 @@
-export * from './PageAccessoriesModal';
+export { PageAccessoriesModalDynamic } from './dynamic';

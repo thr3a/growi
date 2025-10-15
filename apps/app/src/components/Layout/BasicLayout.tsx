@@ -3,6 +3,9 @@ import React from 'react';
 
 import dynamic from 'next/dynamic';
 
+// eslint-disable-next-line no-restricted-imports
+import { PageAccessoriesModalDynamic } from '~/client/components/PageAccessoriesModal';
+
 import { RawLayout } from './RawLayout';
 
 
@@ -34,7 +37,6 @@ const PageDuplicateModal = dynamic(() => import('~/client/components/PageDuplica
 const PageDeleteModal = dynamic(() => import('~/client/components/PageDeleteModal'), { ssr: false });
 const PageRenameModal = dynamic(() => import('~/client/components/PageRenameModal'), { ssr: false });
 const PagePresentationModal = dynamic(() => import('~/client/components/PagePresentationModal'), { ssr: false });
-const PageAccessoriesModal = dynamic(() => import('~/client/components/PageAccessoriesModal').then(mod => mod.PageAccessoriesModal), { ssr: false });
 const GrantedGroupsInheritanceSelectModal = dynamic(() => import('~/client/components/GrantedGroupsInheritanceSelectModal'), { ssr: false });
 const DeleteBookmarkFolderModal = dynamic(
   () => import('~/client/components/DeleteBookmarkFolderModal').then(mod => mod.DeleteBookmarkFolderModal), { ssr: false },
@@ -77,7 +79,7 @@ export const BasicLayout = ({ children, className }: Props): JSX.Element => {
       <PageDuplicateModal />
       <PageDeleteModal />
       <PageRenameModal />
-      <PageAccessoriesModal />
+      <PageAccessoriesModalDynamic />
       <DeleteAttachmentModal />
       <DeleteBookmarkFolderModal />
       <PutbackPageModal />
