@@ -129,13 +129,31 @@ export const useLazyLoader = <T extends Record<string, unknown>>(
 
 **テスト**: `apps/app/src/client/util/use-lazy-loader.spec.tsx` (12 tests passing)
 
-### 2. ディレクトリ構造
+### 2. ディレクトリ構造と命名規則
 
 ```
 apps/app/.../[ModalName]/
 ├── index.ts           # エクスポート用 (named export)
 ├── [ModalName].tsx    # 実際のモーダルコンポーネント (named export)
 └── dynamic.tsx        # 動的ローダー (named export)
+```
+
+**命名規則**:
+- Hook: `useLazyLoader` (lazy系の命名)
+- 動的ローダーコンポーネント: `[ModalName]LazyLoaded` (例: `ShortcutsModalLazyLoaded`)
+- ファイル名: `dynamic.tsx` (Next.jsの慣例を維持)
+- 最終エクスポート名: `[ModalName]` (元のモーダル名、後方互換性のため)
+
+**例**:
+```tsx
+// dynamic.tsx
+export const ShortcutsModalLazyLoaded = () => { /* ... */ };
+
+// index.ts
+export { ShortcutsModalLazyLoaded } from './dynamic';
+
+// BasicLayout.tsx
+import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 ```
 
 ### 3. Named Exportベストプラクティス
@@ -156,7 +174,7 @@ export default ShortcutsModal;
 export const ShortcutsModal = () => { /* ... */ };
 
 // dynamic.tsx
-export const ShortcutsModalDynamic = () => {
+export const ShortcutsModalLazyLoaded = () => {
   const Modal = useLazyLoader(
     'shortcuts-modal',
     () => import('./ShortcutsModal').then(mod => ({ default: mod.ShortcutsModal })),
@@ -166,10 +184,10 @@ export const ShortcutsModalDynamic = () => {
 };
 
 // index.ts
-export { ShortcutsModalDynamic as ShortcutsModal } from './dynamic';
+export { ShortcutsModalLazyLoaded } from './dynamic';
 
 // BasicLayout.tsx
-import { ShortcutsModal } from '~/client/components/ShortcutsModal';
+import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 ```
 
 ---
@@ -219,7 +237,7 @@ import { useTemplateModalStatus } from '~/states/...';
 
 type TemplateModalProps = Record<string, unknown>;
 
-export const TemplateModalDynamic = (): JSX.Element => {
+export const TemplateModalLazyLoaded = (): JSX.Element => {
   const status = useTemplateModalStatus();
 
   const TemplateModal = useLazyLoader<TemplateModalProps>(
@@ -235,7 +253,7 @@ export const TemplateModalDynamic = (): JSX.Element => {
 
 4. **index.ts作成**
 ```tsx
-export { TemplateModalDynamic as TemplateModal } from './dynamic';
+export { TemplateModalLazyLoaded } from './dynamic';
 ```
 
 5. **BasicLayout.tsx更新**
@@ -245,7 +263,7 @@ const TemplateModal = dynamic(() => import('~/components/TemplateModal'), { ssr:
 
 // After: 直接import (named)
 // eslint-disable-next-line no-restricted-imports
-import { TemplateModal } from '~/components/TemplateModal';
+import { TemplateModalLazyLoaded } from '~/components/TemplateModal';
 ```
 
 ---
@@ -440,7 +458,7 @@ import { useShortcutsModalStatus } from '~/states/ui/modal/shortcuts';
 
 type ShortcutsModalProps = Record<string, unknown>;
 
-export const ShortcutsModalDynamic = (): JSX.Element => {
+export const ShortcutsModalLazyLoaded = (): JSX.Element => {
   const status = useShortcutsModalStatus();
 
   const ShortcutsModal = useLazyLoader<ShortcutsModalProps>(
@@ -455,7 +473,7 @@ export const ShortcutsModalDynamic = (): JSX.Element => {
 
 3. **ShortcutsModal/index.ts** (新規)
 ```tsx
-export { ShortcutsModalDynamic as ShortcutsModal } from './dynamic';
+export { ShortcutsModalLazyLoaded } from './dynamic';
 ```
 
 4. **BasicLayout.tsx**
@@ -464,7 +482,7 @@ export { ShortcutsModalDynamic as ShortcutsModal } from './dynamic';
 const ShortcutsModal = dynamic(() => import('~/client/components/ShortcutsModal'), { ssr: false });
 
 // After
-import { ShortcutsModal } from '~/client/components/ShortcutsModal';
+import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 ```
 
 **作業時間**: 約5分（ケースCは非常に高速）
