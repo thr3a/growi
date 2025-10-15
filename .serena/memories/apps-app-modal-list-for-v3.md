@@ -1,5 +1,13 @@
 # モーダル一覧 - V3動的ロード対象
 
+## V3進捗状況
+
+**実装完了**: 2/46モーダル (2025-10-15)
+- ✅ PageAccessoriesModal
+- ✅ ShortcutsModal
+
+---
+
 ## V2完了モーダル (46個) - V3動的ロード候補
 
 ### 高頻度使用 - 動的ロード非推奨 (2個)
@@ -8,12 +16,12 @@
 2. PageCreateModal.tsx - ページ作成 (重要機能)
 
 ### 中頻度使用 - 動的ロードを検討 (6個)
-- PageAccessoriesModal.tsx
-- PageDeleteModal.tsx
-- PageRenameModal.tsx
-- PageDuplicateModal.tsx
-- DescendantsPageListModal.tsx
-- ShortcutsModal.tsx
+- ✅ PageAccessoriesModal.tsx
+- ✅ ShortcutsModal.tsx
+- [ ] PageDeleteModal.tsx
+- [ ] PageRenameModal.tsx
+- [ ] PageDuplicateModal.tsx
+- [ ] DescendantsPageListModal.tsx
 
 ### 低頻度使用 - 動的ロード確定 (38個)
 - PageBulkExportSelectModal.tsx
@@ -45,6 +53,8 @@
 - AiAssistantManagementModal.tsx
 - PageSelectModal.tsx
 - その他9個
+
+---
 
 ## Container-Presentation構造 (V2成果)
 
