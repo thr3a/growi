@@ -1,5 +1,4 @@
-import type { FC } from 'react';
-import { useCallback } from 'react';
+import { type FC, useCallback } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal, ModalBody, ModalHeader } from 'reactstrap';
 
@@ -31,17 +30,23 @@ const SearchOptionModal: FC<Props> = (props: Props) => {
     }
   }, [onClose]);
 
-  const includeUserPagesChangeHandler = useCallback((isChecked: boolean) => {
-    if (onIncludeUserPagesSwitched != null) {
-      onIncludeUserPagesSwitched(isChecked);
-    }
-  }, [onIncludeUserPagesSwitched]);
+  const includeUserPagesChangeHandler = useCallback(
+    (isChecked: boolean) => {
+      if (onIncludeUserPagesSwitched != null) {
+        onIncludeUserPagesSwitched(isChecked);
+      }
+    },
+    [onIncludeUserPagesSwitched],
+  );
 
-  const includeTrashPagesChangeHandler = useCallback((isChecked: boolean) => {
-    if (onIncludeTrashPagesSwitched != null) {
-      onIncludeTrashPagesSwitched(isChecked);
-    }
-  }, [onIncludeTrashPagesSwitched]);
+  const includeTrashPagesChangeHandler = useCallback(
+    (isChecked: boolean) => {
+      if (onIncludeTrashPagesSwitched != null) {
+        onIncludeTrashPagesSwitched(isChecked);
+      }
+    },
+    [onIncludeTrashPagesSwitched],
+  );
 
   return (
     <Modal size="lg" isOpen={isOpen} toggle={onCloseModal} autoFocus={false}>
@@ -55,7 +60,10 @@ const SearchOptionModal: FC<Props> = (props: Props) => {
               <input
                 className="me-2"
                 type="checkbox"
-                onChange={useCallback((e) => includeUserPagesChangeHandler(e.target.checked), [includeUserPagesChangeHandler])}
+                onChange={useCallback(
+                  (e) => includeUserPagesChangeHandler(e.target.checked),
+                  [includeUserPagesChangeHandler],
+                )}
                 checked={includeUserPages}
               />
               {t('Include Subordinated Target Page', { target: '/user' })}
@@ -66,7 +74,10 @@ const SearchOptionModal: FC<Props> = (props: Props) => {
               <input
                 className="me-2"
                 type="checkbox"
-                onChange={useCallback((e) => includeTrashPagesChangeHandler(e.target.checked), [includeTrashPagesChangeHandler])}
+                onChange={useCallback(
+                  (e) => includeTrashPagesChangeHandler(e.target.checked),
+                  [includeTrashPagesChangeHandler],
+                )}
                 checked={includeTrashPages}
               />
               {t('Include Subordinated Target Page', { target: '/trash' })}
