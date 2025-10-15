@@ -5,7 +5,7 @@ import { useShortcutsModalStatus } from '~/states/ui/modal/shortcuts';
 
 type ShortcutsModalProps = Record<string, unknown>;
 
-export const ShortcutsModalDynamic = (): JSX.Element => {
+export const ShortcutsModalLazyLoaded = (): JSX.Element => {
   const status = useShortcutsModalStatus();
 
   const ShortcutsModal = useLazyLoader<ShortcutsModalProps>(

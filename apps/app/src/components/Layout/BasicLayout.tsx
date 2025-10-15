@@ -4,9 +4,9 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 
 // eslint-disable-next-line no-restricted-imports
-import { PageAccessoriesModalDynamic } from '~/client/components/PageAccessoriesModal';
+import { PageAccessoriesModalLazyLoaded } from '~/client/components/PageAccessoriesModal';
 // eslint-disable-next-line no-restricted-imports
-import { ShortcutsModalDynamic } from '~/client/components/ShortcutsModal';
+import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 
 import { RawLayout } from './RawLayout';
 
@@ -80,7 +80,7 @@ export const BasicLayout = ({ children, className }: Props): JSX.Element => {
       <PageDuplicateModal />
       <PageDeleteModal />
       <PageRenameModal />
-      <PageAccessoriesModalDynamic />
+      <PageAccessoriesModalLazyLoaded />
       <DeleteAttachmentModal />
       <DeleteBookmarkFolderModal />
       <PutbackPageModal />
@@ -90,7 +90,7 @@ export const BasicLayout = ({ children, className }: Props): JSX.Element => {
       <PagePresentationModal />
       <HotkeysManager />
 
-      <ShortcutsModalDynamic />
+      <ShortcutsModalLazyLoaded />
       <PageBulkExportSelectModal />
       <GrantedGroupsInheritanceSelectModal />
       <SystemVersion showShortcutsButton />

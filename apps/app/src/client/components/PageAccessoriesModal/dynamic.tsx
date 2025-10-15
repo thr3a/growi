@@ -5,7 +5,7 @@ import { usePageAccessoriesModalStatus } from '~/states/ui/modal/page-accessorie
 
 type PageAccessoriesModalProps = Record<string, unknown>;
 
-export const PageAccessoriesModalDynamic = (): JSX.Element => {
+export const PageAccessoriesModalLazyLoaded = (): JSX.Element => {
   const status = usePageAccessoriesModalStatus();
 
   const PageAccessoriesModal = useLazyLoader<PageAccessoriesModalProps>(
