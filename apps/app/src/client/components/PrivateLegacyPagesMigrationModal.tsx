@@ -6,18 +6,26 @@ import {
 } from 'reactstrap';
 
 import { apiv3Post } from '~/client/util/apiv3-client';
+import type { ILegacyPrivatePage, PrivateLegacyPagesMigrationModalSubmitedHandler } from '~/states/ui/modal/private-legacy-pages-migration';
 import { usePrivateLegacyPagesMigrationModalActions, usePrivateLegacyPagesMigrationModalStatus } from '~/states/ui/modal/private-legacy-pages-migration';
 
 import ApiErrorMessageList from './PageManagement/ApiErrorMessageList';
 
 
-export const PrivateLegacyPagesMigrationModal = (): React.JSX.Element => {
+/**
+ * PrivateLegacyPagesMigrationModalSubstance - Presentation component (all logic here)
+ */
+type PrivateLegacyPagesMigrationModalSubstanceProps = {
+  status: {
+    isOpened: boolean;
+    pages?: ILegacyPrivatePage[];
+    onSubmit?: PrivateLegacyPagesMigrationModalSubmitedHandler;
+  } | null;
+  close: () => void;
+};
+
+const PrivateLegacyPagesMigrationModalSubstance = ({ status, close }: PrivateLegacyPagesMigrationModalSubstanceProps): React.JSX.Element => {
   const { t } = useTranslation();
-
-  const status = usePrivateLegacyPagesMigrationModalStatus();
-  const { close } = usePrivateLegacyPagesMigrationModalActions();
-
-  const isOpened = status?.isOpened ?? false;
 
   const [isRecursively, setIsRecursively] = useState(true);
 
@@ -79,13 +87,8 @@ export const PrivateLegacyPagesMigrationModal = (): React.JSX.Element => {
     return <></>;
   }, [status]);
 
-  // Early return optimization
-  if (!isOpened) {
-    return <></>;
-  }
-
   return (
-    <Modal size="lg" isOpen={isOpened} toggle={close}>
+    <div>
       <ModalHeader tag="h4" toggle={close}>
         { t('private_legacy_pages.modal.title') }
       </ModalHeader>
@@ -105,7 +108,26 @@ export const PrivateLegacyPagesMigrationModal = (): React.JSX.Element => {
           { t('private_legacy_pages.modal.button_label') }
         </button>
       </ModalFooter>
-    </Modal>
+    </div>
+  );
+};
 
+/**
+ * PrivateLegacyPagesMigrationModal - Container component (lightweight, always rendered)
+ */
+export const PrivateLegacyPagesMigrationModal = (): React.JSX.Element => {
+  const status = usePrivateLegacyPagesMigrationModalStatus();
+  const { close } = usePrivateLegacyPagesMigrationModalActions();
+  const isOpened = status?.isOpened ?? false;
+
+  return (
+    <Modal size="lg" isOpen={isOpened} toggle={close}>
+      {isOpened && (
+        <PrivateLegacyPagesMigrationModalSubstance
+          status={status}
+          close={close}
+        />
+      )}
+    </Modal>
   );
 };
