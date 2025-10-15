@@ -185,15 +185,5 @@ const DrawioModalSubstance = (): JSX.Element => {
 };
 
 export const DrawioModal = (): JSX.Element => {
-  const drawioModalData = useDrawioModalStatus();
-  const drawioModalDataInEditor = useDrawioModalForEditorStatus();
-
-  const isOpened = drawioModalData?.isOpened ?? false;
-  const isOpenedInEditor = drawioModalDataInEditor?.isOpened ?? false;
-
-  if (!isOpened && !isOpenedInEditor) {
-    return <></>;
-  }
-
   return <DrawioModalSubstance />;
 };

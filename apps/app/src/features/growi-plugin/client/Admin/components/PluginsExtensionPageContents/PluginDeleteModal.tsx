@@ -13,19 +13,28 @@ import {
 } from '../../states/modal/plugin-delete';
 import { useSWRxAdminPlugins } from '../../stores/admin-plugins';
 
-export const PluginDeleteModal: React.FC = () => {
+/**
+ * PluginDeleteModalSubstance - Presentation component (all logic here)
+ */
+type PluginDeleteModalSubstanceProps = {
+  id: string;
+  name: string;
+  url: string;
+  closeModal: () => void;
+};
+
+const PluginDeleteModalSubstance = ({
+  id,
+  name,
+  url,
+  closeModal,
+}: PluginDeleteModalSubstanceProps): React.JSX.Element => {
   const { t } = useTranslation('admin');
   const { mutate } = useSWRxAdminPlugins();
-  const pluginDeleteModalData = usePluginDeleteModalStatus();
-  const { close: closePluginDeleteModal } = usePluginDeleteModalActions();
-  const isOpen = pluginDeleteModalData.isOpened;
-  const id = pluginDeleteModalData.id;
-  const name = pluginDeleteModalData.name;
-  const url = pluginDeleteModalData.url;
 
   const toggleHandler = useCallback(() => {
-    closePluginDeleteModal();
-  }, [closePluginDeleteModal]);
+    closeModal();
+  }, [closeModal]);
 
   const onClickDeleteButtonHandler = useCallback(async () => {
     const reqUrl = `/plugins/${id}/remove`;
@@ -33,16 +42,16 @@ export const PluginDeleteModal: React.FC = () => {
     try {
       const res = await apiv3Delete(reqUrl);
       const pluginName = res.data.pluginName;
-      closePluginDeleteModal();
+      closeModal();
       toastSuccess(t('toaster.remove_plugin_success', { pluginName }));
       mutate();
     } catch (err) {
       toastError(err);
     }
-  }, [id, closePluginDeleteModal, t, mutate]);
+  }, [id, closeModal, t, mutate]);
 
   return (
-    <Modal isOpen={isOpen} toggle={toggleHandler}>
+    <div>
       <ModalHeader
         tag="h4"
         toggle={toggleHandler}
@@ -67,6 +76,28 @@ export const PluginDeleteModal: React.FC = () => {
           {t('Delete')}
         </Button>
       </ModalFooter>
+    </div>
+  );
+};
+
+/**
+ * PluginDeleteModal - Container component (lightweight, always rendered)
+ */
+export const PluginDeleteModal: React.FC = () => {
+  const pluginDeleteModalData = usePluginDeleteModalStatus();
+  const { close: closeModal } = usePluginDeleteModalActions();
+  const isOpen = pluginDeleteModalData.isOpened;
+
+  return (
+    <Modal isOpen={isOpen} toggle={closeModal}>
+      {isOpen && pluginDeleteModalData.id != null && (
+        <PluginDeleteModalSubstance
+          id={pluginDeleteModalData.id}
+          name={pluginDeleteModalData.name ?? ''}
+          url={pluginDeleteModalData.url ?? ''}
+          closeModal={closeModal}
+        />
+      )}
     </Modal>
   );
 };

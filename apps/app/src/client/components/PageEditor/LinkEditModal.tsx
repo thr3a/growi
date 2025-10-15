@@ -1,5 +1,5 @@
 import React, {
-  useEffect, useState, useCallback, type JSX,
+  useEffect, useState, useCallback,
 } from 'react';
 
 import path from 'path';
@@ -32,7 +32,10 @@ import styles from './LinkEditPreview.module.scss';
 
 const logger = loggerFactory('growi:components:LinkEditModal');
 
-export const LinkEditModal = (): JSX.Element => {
+/**
+ * LinkEditModalSubstance - Heavy processing component (rendered only when modal is open)
+ */
+const LinkEditModalSubstance: React.FC = () => {
   const { t } = useTranslation();
   const currentPath = useCurrentPagePath();
   const { data: rendererOptions } = usePreviewOptions();
@@ -106,7 +109,7 @@ export const LinkEditModal = (): JSX.Element => {
 
   }, [linkEditModalStatus, parseLinkAndSetState]);
 
-  const toggleIsUseRelativePath = () => {
+  const toggleIsUseRelativePath = useCallback(() => {
     if (!linkInputValue.startsWith('/') || linkerType === Linker.types.growiLink) {
       return;
     }
@@ -114,9 +117,9 @@ export const LinkEditModal = (): JSX.Element => {
     // User can't use both relativePath and permalink at the same time
     setIsUseRelativePath(!isUseRelativePath);
     setIsUsePermanentLink(false);
-  };
+  }, [linkInputValue, linkerType, isUseRelativePath]);
 
-  const toggleIsUsePamanentLink = () => {
+  const toggleIsUsePamanentLink = useCallback(() => {
     if (permalink === '' || linkerType === Linker.types.growiLink) {
       return;
     }
@@ -124,9 +127,9 @@ export const LinkEditModal = (): JSX.Element => {
     // User can't use both relativePath and permalink at the same time
     setIsUsePermanentLink(!isUsePermanentLink);
     setIsUseRelativePath(false);
-  };
+  }, [permalink, linkerType, isUsePermanentLink]);
 
-  const setMarkdownHandler = async() => {
+  const setMarkdownHandler = useCallback(async() => {
     const path = linkInputValue;
     let markdown = '';
     let pagePath = '';
@@ -155,9 +158,9 @@ export const LinkEditModal = (): JSX.Element => {
     setMarkdown(markdown);
     setPagePath(pagePath);
     setPermalink(permalink);
-  };
+  }, [linkInputValue, t]);
 
-  const generateLink = () => {
+  const generateLink = useCallback(() => {
 
     let reshapedLink = linkInputValue;
     if (isUseRelativePath) {
@@ -170,9 +173,9 @@ export const LinkEditModal = (): JSX.Element => {
     }
 
     return new Linker(linkerType, labelInputValue, reshapedLink);
-  };
+  }, [linkInputValue, isUseRelativePath, getRootPath, linkerType, isUsePermanentLink, permalink, labelInputValue]);
 
-  const renderLinkPreview = (): JSX.Element => {
+  const renderLinkPreview = (): React.JSX.Element => {
     const linker = generateLink();
     return (
       <div className="d-flex justify-content-between mb-3 flex-column flex-sm-row">
@@ -196,7 +199,7 @@ export const LinkEditModal = (): JSX.Element => {
     );
   };
 
-  const handleChangeTypeahead = (selected) => {
+  const handleChangeTypeahead = useCallback((selected) => {
     const pageWithMeta = selected[0];
     if (pageWithMeta != null) {
       const page = pageWithMeta.data;
@@ -204,13 +207,13 @@ export const LinkEditModal = (): JSX.Element => {
       setLinkInputValue(page.path);
       setPermalink(permalink);
     }
-  };
+  }, []);
 
-  const handleChangeLabelInput = (label: string) => {
+  const handleChangeLabelInput = useCallback((label: string) => {
     setLabelInputValue(label);
-  };
+  }, []);
 
-  const handleChangeLinkInput = (link) => {
+  const handleChangeLinkInput = useCallback((link) => {
     let useRelativePath = isUseRelativePath;
     if (!linkInputValue.startsWith('/') || linkerType === Linker.types.growiLink) {
       useRelativePath = false;
@@ -219,9 +222,9 @@ export const LinkEditModal = (): JSX.Element => {
     setIsUseRelativePath(useRelativePath);
     setIsUsePermanentLink(false);
     setPermalink('');
-  };
+  }, [linkInputValue, isUseRelativePath, linkerType]);
 
-  const save = () => {
+  const save = useCallback(() => {
     const linker = generateLink();
 
     if (linkEditModalStatus?.onSave != null) {
@@ -229,17 +232,17 @@ export const LinkEditModal = (): JSX.Element => {
     }
 
     close();
-  };
+  }, [generateLink, linkEditModalStatus, close]);
 
-  const toggleIsPreviewOpen = async() => {
+  const toggleIsPreviewOpen = useCallback(async() => {
     // open popover
     if (!isPreviewOpen) {
       setMarkdownHandler();
     }
     setIsPreviewOpen(!isPreviewOpen);
-  };
+  }, [isPreviewOpen, setMarkdownHandler]);
 
-  const renderLinkAndLabelForm = (): JSX.Element => {
+  const renderLinkAndLabelForm = (): React.JSX.Element => {
     return (
       <>
         <h3 className="grw-modal-head">{t('link_edit.set_link_and_label')}</h3>
@@ -295,7 +298,7 @@ export const LinkEditModal = (): JSX.Element => {
     );
   };
 
-  const renderPathFormatForm = (): JSX.Element => {
+  const renderPathFormatForm = (): React.JSX.Element => {
     return (
       <div className="card custom-card pt-3">
         <form className="mb-0">
@@ -335,12 +338,8 @@ export const LinkEditModal = (): JSX.Element => {
     );
   };
 
-  if (linkEditModalStatus == null) {
-    return <></>;
-  }
-
   return (
-    <Modal className="link-edit-modal" isOpen={linkEditModalStatus.isOpened} toggle={close} size="lg" autoFocus={false}>
+    <>
       <ModalHeader tag="h4" toggle={close}>
         {t('link_edit.edit_link')}
       </ModalHeader>
@@ -368,6 +367,22 @@ export const LinkEditModal = (): JSX.Element => {
           {t('Done')}
         </button>
       </ModalFooter>
+    </>
+  );
+};
+
+/**
+ * LinkEditModal - Container component (lightweight, always rendered)
+ */
+export const LinkEditModal = (): React.JSX.Element => {
+  const linkEditModalStatus = useLinkEditModalStatus();
+  const { close } = useLinkEditModalActions();
+
+  const isOpened = linkEditModalStatus?.isOpened ?? false;
+
+  return (
+    <Modal className="link-edit-modal" isOpen={isOpened} toggle={close} size="lg" autoFocus={false}>
+      {isOpened && <LinkEditModalSubstance />}
     </Modal>
   );
 };

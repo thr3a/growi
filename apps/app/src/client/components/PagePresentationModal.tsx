@@ -1,4 +1,4 @@
-import React, { useCallback, type JSX } from 'react';
+import React, { useCallback } from 'react';
 
 import type { PresentationProps } from '@growi/presentation/dist/client';
 import { useSlidesByFrontmatter } from '@growi/presentation/dist/services';
@@ -30,10 +30,11 @@ const Presentation = dynamic<PresentationProps>(() => import('./Presentation/Pre
   ),
 });
 
+/**
+ * PagePresentationModalSubstance - Heavy processing component (rendered only when modal is open)
+ */
+const PagePresentationModalSubstance: React.FC = () => {
 
-const PagePresentationModal = (): JSX.Element => {
-
-  const presentationModalData = usePresentationModalStatus();
   const { close: closePresentationModal } = usePresentationModalActions();
 
   const { isDarkMode } = useNextThemes();
@@ -64,19 +65,8 @@ const PagePresentationModal = (): JSX.Element => {
     closePresentationModal();
   }, [fullscreen, closePresentationModal]);
 
-  const isOpen = presentationModalData?.isOpened ?? false;
-
-  if (!isOpen) {
-    return <></>;
-  }
-
   return (
-    <Modal
-      isOpen={isOpen}
-      toggle={closeHandler}
-      data-testid="page-presentation-modal"
-      className={moduleClass}
-    >
+    <>
       <div className="grw-presentation-controls d-flex">
         <button
           className="btn material-symbols-outlined"
@@ -106,6 +96,36 @@ const PagePresentationModal = (): JSX.Element => {
           </Presentation>
         ) }
       </ModalBody>
+    </>
+  );
+};
+
+/**
+ * PagePresentationModal - Container component (lightweight, always rendered)
+ */
+const PagePresentationModal = (): React.JSX.Element => {
+  const presentationModalData = usePresentationModalStatus();
+  const { close: closePresentationModal } = usePresentationModalActions();
+
+  const fullscreen = useFullScreen();
+
+  const closeHandler = useCallback(() => {
+    if (fullscreen.active) {
+      fullscreen.exit();
+    }
+    closePresentationModal();
+  }, [fullscreen, closePresentationModal]);
+
+  const isOpen = presentationModalData?.isOpened ?? false;
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      toggle={closeHandler}
+      data-testid="page-presentation-modal"
+      className={moduleClass}
+    >
+      {isOpen && <PagePresentationModalSubstance />}
     </Modal>
   );
 };
