@@ -170,7 +170,7 @@ const LdapSecuritySettingContents = (props) => {
                 {...register('ldapBindDN')}
               />
               {(adminLdapSecurityContainer.state.isUserBind === true) ? (
-                <p className="form-text text-muted passport-ldap-userbind">
+                <p className="form-text text-muted">
                   <small>
                     {t('security_settings.ldap.bind_DN_user_detail1')}<br />
                     {/* eslint-disable-next-line react/no-danger */}
@@ -181,7 +181,7 @@ const LdapSecuritySettingContents = (props) => {
                 </p>
               )
                 : (
-                  <p className="form-text text-muted passport-ldap-managerbind">
+                  <p className="form-text text-muted">
                     <small>
                       {t('security_settings.ldap.bind_DN_manager_detail')}<br />
                       {t('security_settings.example')}1: <code>uid=admin,dc=domain,dc=com</code><br />
@@ -193,12 +193,12 @@ const LdapSecuritySettingContents = (props) => {
           </div>
 
           <div className="row my-3">
-            <div htmlFor="bindDNPassword" className="text-start text-md-end col-md-3 col-form-label">
+            <label className="text-start text-md-end col-md-3 col-form-label" htmlFor="bindDNPassword">
               <strong>{t('security_settings.ldap.bind_DN_password')}</strong>
-            </div>
+            </label>
             <div className="col-md-9">
               {(adminLdapSecurityContainer.state.isUserBind) ? (
-                <p className="card custom-card passport-ldap-userbind">
+                <p className="card custom-card">
                   <small>
                     {t('security_settings.ldap.bind_DN_password_user_detail')}
                   </small>
@@ -206,16 +206,14 @@ const LdapSecuritySettingContents = (props) => {
               )
                 : (
                   <>
-                    <p className="card custom-card passport-ldap-managerbind">
-                      <small>
-                        {t('security_settings.ldap.bind_DN_password_manager_detail')}
-                      </small>
-                    </p>
                     <input
-                      className="form-control passport-ldap-managerbind"
+                      className="form-control"
                       type="password"
                       {...register('ldapBindDNPassword')}
                     />
+                    <p className="form-text text-muted">
+                      <small>{t('security_settings.ldap.bind_DN_password_manager_detail')}</small>
+                    </p>
                   </>
                 )}
             </div>
@@ -256,8 +254,8 @@ const LdapSecuritySettingContents = (props) => {
           </h3>
 
           <div className="row my-3">
-            <label className="form-label text-start text-md-end col-md-3 col-form-label">
-              <strong htmlFor="attrMapUsername">{t('username')}</strong>
+            <label className="form-label text-start text-md-end col-md-3 col-form-label" htmlFor="attrMapUsername">
+              <strong>{t('username')}</strong>
             </label>
             <div className="col-md-9">
               <input
@@ -298,8 +296,8 @@ const LdapSecuritySettingContents = (props) => {
           </div>
 
           <div className="row my-3">
-            <label className="form-label text-start text-md-end col-md-3 col-form-label">
-              <strong htmlFor="attrMapMail">{t('Email')}</strong>
+            <label className="form-label text-start text-md-end col-md-3 col-form-label" htmlFor="attrMapMail">
+              <strong>{t('Email')}</strong>
             </label>
             <div className="col-md-9">
               <input
@@ -317,8 +315,8 @@ const LdapSecuritySettingContents = (props) => {
           </div>
 
           <div className="row my-3">
-            <label className="form-label text-start text-md-end col-md-3 col-form-label">
-              <strong htmlFor="attrMapName">{t('Name')}</strong>
+            <label className="form-label text-start text-md-end col-md-3 col-form-label" htmlFor="attrMapName">
+              <strong>{t('Name')}</strong>
             </label>
             <div className="col-md-9">
               <input
@@ -340,8 +338,8 @@ const LdapSecuritySettingContents = (props) => {
           </h3>
 
           <div className="row my-3">
-            <label className="form-label text-start text-md-end col-md-3 col-form-label">
-              <strong htmlFor="groupSearchBase">{t('security_settings.ldap.group_search_base_DN')}</strong>
+            <label className="form-label text-start text-md-end col-md-3 col-form-label" htmlFor="groupSearchBase">
+              <strong>{t('security_settings.ldap.group_search_base_DN')}</strong>
             </label>
             <div className="col-md-9">
               <input
@@ -360,8 +358,8 @@ const LdapSecuritySettingContents = (props) => {
           </div>
 
           <div className="row my-3">
-            <label className="form-label text-start text-md-end col-md-3 col-form-label">
-              <strong htmlFor="groupSearchFilter">{t('security_settings.ldap.group_search_filter')}</strong>
+            <label className="form-label text-start text-md-end col-md-3 col-form-label" htmlFor="groupSearchFilter">
+              <strong>{t('security_settings.ldap.group_search_filter')}</strong>
             </label>
             <div className="col-md-9">
               <input
@@ -389,8 +387,8 @@ const LdapSecuritySettingContents = (props) => {
           </div>
 
           <div className="row my-3">
-            <label className="form-label text-start text-md-end col-md-3 col-form-label">
-              <strong htmlFor="groupDnProperty">{t('security_settings.ldap.group_search_user_DN_property')}</strong>
+            <label className="form-label text-start text-md-end col-md-3 col-form-label" htmlFor="groupDnProperty">
+              <strong>{t('security_settings.ldap.group_search_user_DN_property')}</strong>
             </label>
             <div className="col-md-9">
               <input
