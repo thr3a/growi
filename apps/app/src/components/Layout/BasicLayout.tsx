@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic';
 
 // eslint-disable-next-line no-restricted-imports
 import { PageAccessoriesModalDynamic } from '~/client/components/PageAccessoriesModal';
+// eslint-disable-next-line no-restricted-imports
+import { ShortcutsModalDynamic } from '~/client/components/ShortcutsModal';
 
 import { RawLayout } from './RawLayout';
 
@@ -28,7 +30,6 @@ const DeleteAttachmentModal = dynamic(
 );
 const HotkeysManager = dynamic(() => import('~/client/components/Hotkeys/HotkeysManager'), { ssr: false });
 const GrowiNavbarBottom = dynamic(() => import('~/client/components/Navbar/GrowiNavbarBottom').then(mod => mod.GrowiNavbarBottom), { ssr: false });
-const ShortcutsModal = dynamic(() => import('~/client/components/ShortcutsModal'), { ssr: false });
 const SystemVersion = dynamic(() => import('~/client/components/SystemVersion'), { ssr: false });
 const PutbackPageModal = dynamic(() => import('~/client/components/PutbackPageModal'), { ssr: false });
 // Page modals
@@ -89,7 +90,7 @@ export const BasicLayout = ({ children, className }: Props): JSX.Element => {
       <PagePresentationModal />
       <HotkeysManager />
 
-      <ShortcutsModal />
+      <ShortcutsModalDynamic />
       <PageBulkExportSelectModal />
       <GrantedGroupsInheritanceSelectModal />
       <SystemVersion showShortcutsButton />

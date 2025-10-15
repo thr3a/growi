@@ -1,0 +1,1 @@
+export { ShortcutsModalDynamic } from './dynamic';

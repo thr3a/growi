@@ -193,7 +193,7 @@ const ShortcutsModalSubstance = (): React.JSX.Element => {
               <li className="d-flex align-items-center p-3 border-bottom">
                 <div className="flex-grow-1">
                   <span
-                  // eslint-disable-next-line react/no-danger
+                    // eslint-disable-next-line react/no-danger
                     dangerouslySetInnerHTML={{ __html: t('modal_shortcuts.editor.Insert Line') }}
                   />
                   <br />
@@ -416,7 +416,7 @@ const ShortcutsModalSubstance = (): React.JSX.Element => {
 /**
  * ShortcutsModal - Container component (lightweight, always rendered)
  */
-const ShortcutsModal = (): React.JSX.Element => {
+export const ShortcutsModal = (): React.JSX.Element => {
   const status = useShortcutsModalStatus();
   const { close } = useShortcutsModalActions();
 
@@ -426,5 +426,3 @@ const ShortcutsModal = (): React.JSX.Element => {
     </Modal>
   );
 };
-
-export default ShortcutsModal;
