@@ -34,7 +34,7 @@
 ## 解決策
 
 ### アーキテクチャ
-1. **useDynamicModalLoader**: 汎用的な動的ローディングフック
+1. **useLazyLoader**: 汎用的な動的ローディングフック (コンポーネントのアクティブ/非アクティブ状態に応じて動的ロード)
 2. **グローバルキャッシュ**: 同じimportの重複実行防止
 3. **責務の分離**: モーダルロジックと動的ローディングロジックの分離
 
@@ -42,39 +42,59 @@
 
 ### 1. 汎用ローダーの作成
 
-**ファイル**: `apps/app/client/util/use-dynamic-modal-loader.ts`
+**ファイル**: `apps/app/src/client/util/use-lazy-loader.ts`
 
 ```tsx
 import { useState, useEffect, useCallback } from 'react';
 
-// グローバルキャッシュ
-const modalCache = new Map<string, Promise<any>>();
+// Global cache for dynamically loaded components
+const componentCache = new Map<string, Promise<any>>();
 
 const getCachedImport = <T>(
   key: string,
   importFn: () => Promise<{ default: React.ComponentType<T> }>
 ): Promise<{ default: React.ComponentType<T> }> => {
-  if (!modalCache.has(key)) {
-    modalCache.set(key, importFn());
+  if (!componentCache.has(key)) {
+    componentCache.set(key, importFn());
   }
-  return modalCache.get(key)!;
+  return componentCache.get(key)!;
 };
 
-export const useDynamicModalLoader = <T extends {}>(
+/**
+ * Dynamically loads a component when it becomes active
+ * 
+ * @param importKey - Unique identifier for the component (used for caching)
+ * @param importFn - Function that returns a dynamic import promise
+ * @param isActive - Whether the component should be loaded (e.g., modal open, tab selected, etc.)
+ * @returns The loaded component or null if not yet loaded
+ * 
+ * @example
+ * // For modals
+ * const Modal = useLazyLoader('my-modal', () => import('./MyModal'), isOpen);
+ * 
+ * @example
+ * // For tab content
+ * const TabContent = useLazyLoader('tab-advanced', () => import('./AdvancedTab'), activeTab === 'advanced');
+ * 
+ * @example
+ * // For conditional panels
+ * const AdminPanel = useLazyLoader('admin-panel', () => import('./AdminPanel'), isAdmin);
+ */
+export const useLazyLoader = <T extends {}>(
   importKey: string,
   importFn: () => Promise<{ default: React.ComponentType<T> }>,
-  isOpen: boolean
+  isActive: boolean
 ) => {
   const [Component, setComponent] = useState<React.ComponentType<T> | null>(null);
 
   const memoizedImportFn = useCallback(importFn, [importKey]);
 
   useEffect(() => {
-    if (isOpen && !Component) {
+    if (isActive && !Component) {
       getCachedImport(importKey, memoizedImportFn)
         .then(mod => setComponent(() => mod.default));
     }
-  }, [isOpen, Component, importKey, memoizedImportFn]);
+  }, [isActive, Component, importKey, memoizedImportFn]);
 
   return Component;
 };
@@ -128,13 +148,13 @@ export const TemplateModal = (props: TemplateModalProps) => {
 ```tsx
 import React from 'react';
 import { Modal } from 'reactstrap';
-import { useDynamicModalLoader } from '~/utils/use-dynamic-modal-loader';
+import { useLazyLoader } from '~/client/util/use-lazy-loader';
 import { useTemplateModal } from '~/hooks/useTemplateModal';
 
 export const TemplateModalDynamic = (): JSX.Element => {
   const { data: templateModalStatus, close } = useTemplateModal();
   
-  const TemplateModal = useDynamicModalLoader(
+  const TemplateModal = useLazyLoader(
     'template-modal',
     () => import('./TemplateModal').then(mod => ({ default: mod.TemplateModal })),
     templateModalStatus?.isOpened ?? false
@@ -171,10 +191,10 @@ export { TemplateModalDynamic as TemplateModal } from './dynamic';
 ## チェックリスト
 
 ### 実装確認項目
-- [ ] `useDynamicModalLoader` フックが作成済み
+- [ ] `useLazyLoader` フックが作成済み
 - [ ] モーダルディレクトリが作成済み（index.ts, [Modal].ts, dynamic.ts）
 - [ ] 実際のモーダルコンポーネントが分離済み
-- [ ] 動的ローダーが `useDynamicModalLoader` を使用
+- [ ] 動的ローダーが `useLazyLoader` を使用
 - [ ] エクスポートファイルが正しく設定済み
 
 ### 動作確認項目
