@@ -3,7 +3,6 @@ import React, {
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
 
 import AdminGeneralSecurityContainer from '~/client/services/AdminGeneralSecurityContainer';
@@ -15,8 +14,16 @@ import { withUnstatedContainers } from '../../UnstatedUtils';
 import LdapAuthTestModal from './LdapAuthTestModal';
 
 
-const LdapSecuritySettingContents = (props) => {
-  const { t, adminGeneralSecurityContainer, adminLdapSecurityContainer } = props;
+type Props = {
+  adminGeneralSecurityContainer: AdminGeneralSecurityContainer;
+  adminLdapSecurityContainer: AdminLdapSecurityContainer;
+};
+
+const LdapSecuritySettingContents = (props: Props) => {
+  const { adminGeneralSecurityContainer, adminLdapSecurityContainer } = props;
+
+  const { t } = useTranslation('admin');
+
   const { isLdapEnabled } = adminGeneralSecurityContainer.state;
   const {
     serverUrl, ldapBindDN, ldapBindDNPassword, ldapSearchFilter,
@@ -431,18 +438,7 @@ const LdapSecuritySettingContents = (props) => {
   );
 };
 
-LdapSecuritySettingContents.propTypes = {
-  t: PropTypes.func.isRequired, // i18next
-  adminGeneralSecurityContainer: PropTypes.instanceOf(AdminGeneralSecurityContainer).isRequired,
-  adminLdapSecurityContainer: PropTypes.instanceOf(AdminLdapSecurityContainer).isRequired,
-};
-
-const LdapSecuritySettingContentsWrapperFC = (props) => {
-  const { t } = useTranslation('admin');
-  return <LdapSecuritySettingContents t={t} {...props} />;
-};
-
-const LdapSecuritySettingContentsWrapper = withUnstatedContainers(LdapSecuritySettingContentsWrapperFC, [
+const LdapSecuritySettingContentsWrapper = withUnstatedContainers(LdapSecuritySettingContents, [
   AdminGeneralSecurityContainer,
   AdminLdapSecurityContainer,
 ]);
