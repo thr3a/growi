@@ -3,7 +3,6 @@ import React, { useCallback, useEffect } from 'react';
 
 import { pathUtils } from '@growi/core/dist/utils';
 import { useTranslation } from 'next-i18next';
-import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
 import urljoin from 'url-join';
 
@@ -15,7 +14,12 @@ import { useSiteUrlWithEmptyValueWarn } from '~/states/global';
 
 import { withUnstatedContainers } from '../../UnstatedUtils';
 
-const GitHubSecurityManagementContents = (props) => {
+type Props = {
+  adminGeneralSecurityContainer: AdminGeneralSecurityContainer
+  adminGitHubSecurityContainer: AdminGitHubSecurityContainer
+};
+
+const GitHubSecurityManagementContents = (props: Props) => {
   const {
     adminGeneralSecurityContainer, adminGitHubSecurityContainer,
   } = props;
@@ -191,11 +195,6 @@ const GitHubSecurityManagementContents = (props) => {
       </React.Fragment>
     </form>
   );
-};
-
-GitHubSecurityManagementContents.propTypes = {
-  adminGeneralSecurityContainer: PropTypes.instanceOf(AdminGeneralSecurityContainer).isRequired,
-  adminGitHubSecurityContainer: PropTypes.instanceOf(AdminGitHubSecurityContainer).isRequired,
 };
 
 /**

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-danger */
 import React, { useCallback, useEffect } from 'react';
 
 import { pathUtils } from '@growi/core/dist/utils';
@@ -12,7 +13,12 @@ import { useSiteUrlWithEmptyValueWarn } from '~/states/global';
 
 import { withUnstatedContainers } from '../../UnstatedUtils';
 
-const GoogleSecurityManagementContents = (props) => {
+type Props = {
+  adminGeneralSecurityContainer: AdminGeneralSecurityContainer
+  adminGoogleSecurityContainer: AdminGoogleSecurityContainer
+};
+
+const GoogleSecurityManagementContents = (props: Props) => {
   const {
     adminGeneralSecurityContainer, adminGoogleSecurityContainer,
   } = props;
@@ -191,11 +197,6 @@ const GoogleSecurityManagementContents = (props) => {
       </React.Fragment>
     </form>
   );
-};
-
-GoogleSecurityManagementContents.propTypes = {
-  adminGeneralSecurityContainer: PropTypes.instanceOf(AdminGeneralSecurityContainer).isRequired,
-  adminGoogleSecurityContainer: PropTypes.instanceOf(AdminGoogleSecurityContainer).isRequired,
 };
 
 const GoogleSecurityManagementContentsWrapper = withUnstatedContainers(GoogleSecurityManagementContents, [
