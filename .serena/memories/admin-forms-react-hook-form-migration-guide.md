@@ -2,43 +2,45 @@
 
 ## プロジェクトコンテキスト
 
-### 現状 (Before)
-素の React + Unstated Container で書かれていた Admin フォーム。以下の問題がある：
+### 現状 (2025年10月時点)
+**✅ PR #10051 完了: Admin フォームの IME 問題は100%解決済み**
 
-1. **日本語 IME 入力の問題**: 制御されたコンポーネント（`value` プロパティ使用）により、1文字ずつ確定文字として入力されてしまい、漢字変換ができない
-2. **空値更新の問題**: カスタムスクリプト/CSS フィールドなどを空白で更新できない
-3. **レガシーライブラリ問題**: Unstated はメンテナンスされていないレガシーライブラリで、将来的に廃止したい
+全27ファイルが React Hook Form に移行完了し、以下の問題を解決：
+1. ✅ **日本語 IME 入力の問題**: 非制御コンポーネント化により完全解決
+2. ✅ **空値更新の問題**: 完全解決
+3. ⏳ **レガシーライブラリ問題**: Unstated は現在も使用中（次のステップで解決予定）
 
 ### 最終目標 (理想像)
-- React Hook Form を利用
-- Unstated を完全に廃止
-- グローバルステートは Jotai で管理
+- React Hook Form を利用（✅ 完了）
+- Unstated を完全に廃止（⏳ 次のステップ）
+- グローバルステートは Jotai で管理（⏳ 次のステップ）
 
-### 現在の移行戦略 (中間地点)
+### 現在の構成 (中間地点)
 **React Hook Form + Unstated Container のハイブリッド構成**
 
-理由：
-- 一度に全てを変更するのはリスクが高い
-- フォームの問題（IME、空値）を先に解決する必要がある
-- Container の段階的な移行が可能
-
-この中間地点により：
+この構成により：
 1. ✅ IME 入力問題を解決（非制御コンポーネント化）
 2. ✅ 空値更新問題を解決
-3. ⏳ Container は残すが、将来的に Jotai への移行パスを確保
+3. ✅ Container は残しているが、将来的に Jotai への移行パスを確保
+4. ✅ 段階的な移行によりリグレッションを最小化
 
-## 移行パターン
+## 移行パターン（確立済み）
 
 ### 基本的なフォームセットアップ
 
-```javascript
+```typescript
 import { useForm } from 'react-hook-form';
+
+type FormData = {
+  fieldName: string;
+  // ... 他のフィールド
+};
 
 const {
   register,
   handleSubmit,
   reset,
-} = useForm();
+} = useForm<FormData>();
 ```
 
 **重要**: `defaultValues` は指定しない。`useEffect` で `reset()` を呼ぶため不要。
@@ -47,7 +49,7 @@ const {
 
 Container の state とフォームを同期するため、`useEffect` で `reset()` を使用：
 
-```javascript
+```typescript
 useEffect(() => {
   reset({
     fieldName: container.state.fieldName || '',
@@ -58,8 +60,8 @@ useEffect(() => {
 
 ### Container を使ったフォーム送信
 
-```javascript
-const onSubmit = useCallback(async(data) => {
+```typescript
+const onSubmit = useCallback(async(data: FormData) => {
   try {
     // 重要: API 呼び出し前に setState の完了を待つ
     await Promise.all([
@@ -68,12 +70,18 @@ const onSubmit = useCallback(async(data) => {
     ]);
     
     await container.updateHandler();
-    toastSuccess('更新しました');
+    toastSuccess(t('updated_successfully'));
   }
   catch (err) {
     toastError(err);
   }
-}, [container]);
+}, [container, t]);
+
+return (
+  <form onSubmit={handleSubmit(onSubmit)}>
+    {/* フォームフィールド */}
+  </form>
+);
 ```
 
 ## 重要な注意点
@@ -83,19 +91,19 @@ const onSubmit = useCallback(async(data) => {
 **問題**: Unstated Container の `setState` は非同期処理です。`change*()` メソッドの後に `await` せずに API ハンドラーを即座に呼ぶと、API リクエストは**古い/古びた値**で送信されます。
 
 ❌ **間違い:**
-```javascript
+```typescript
 container.changeSiteUrl(data.siteUrl);
-updateHandler(); // 古い値が送信される！
+await container.updateHandler(); // 古い値が送信される！
 ```
 
 ✅ **正しい:**
-```javascript
+```typescript
 await container.changeSiteUrl(data.siteUrl);
 await container.updateHandler(); // 新しい値が送信される
 ```
 
 複数フィールドの場合は `Promise.all()` を使用：
-```javascript
+```typescript
 await Promise.all([
   container.changeTitle(data.title),
   container.changeConfidential(data.confidential),
@@ -108,7 +116,7 @@ await container.updateHandler();
 **問題**: ラジオボタンは**文字列**の値を持ちますが、Container の state は boolean かもしれません。型が一致しないと、選択状態の復元ができません。
 
 ❌ **間違い:**
-```javascript
+```typescript
 // HTML: <input type="radio" value="true" />
 reset({
   isEmailPublished: true, // boolean - 文字列 "true" とマッチしない
@@ -116,7 +124,7 @@ reset({
 ```
 
 ✅ **正しい:**
-```javascript
+```typescript
 reset({
   isEmailPublished: String(container.state.isEmailPublished ?? true),
 });
@@ -125,7 +133,7 @@ reset({
 ### 3. チェックボックスの値の扱い
 
 チェックボックスは boolean 値を直接使えます（変換不要）：
-```javascript
+```typescript
 reset({
   fileUpload: container.state.fileUpload ?? false,
 });
@@ -136,7 +144,7 @@ reset({
 **削除したパターン**: フォームの変更を `watch()` と `useEffect` でリアルタイムに Container に同期し戻すのは不要で、複雑さを増すだけです。
 
 ❌ **これはやらない:**
-```javascript
+```typescript
 const watchedValues = watch();
 useEffect(() => {
   container.changeField(watchedValues.field);
@@ -164,7 +172,7 @@ useEffect(() => {
 - コードの重複を避ける
 - 他のファイルとパターンを統一
 
-```javascript
+```typescript
 // ❌ 冗長
 const { register, reset } = useForm({
   defaultValues: { field: container.state.field }
@@ -180,25 +188,102 @@ useEffect(() => {
 }, [container.state.field]);
 ```
 
-## 子コンポーネントのパターン
+## 高度なパターン
 
-大きなフォームを子コンポーネントに分割する場合：
+### モジュラーコンポーネント設計（SecuritySetting の例）
 
-**親コンポーネント:**
+大規模なフォームは、複数の小さなコンポーネントに分割することを推奨します。
+
+**親コンポーネント（統合）:**
 ```typescript
-const { register, handleSubmit, reset } = useForm();
-return <SmtpSetting register={register} />;
-```
+type FormData = {
+  sessionMaxAge: string;
+  // Container で管理される他のフィールドは不要
+};
 
-**子コンポーネント:**
-```typescript
-type Props = { register: UseFormRegister<any> };
-export const SmtpSetting = ({ register }: Props) => {
-  return <input {...register('smtpHost')} />;
+const Parent: React.FC<Props> = ({ container }) => {
+  const { register, handleSubmit, reset } = useForm<FormData>();
+
+  useEffect(() => {
+    reset({
+      sessionMaxAge: container.state.sessionMaxAge || '',
+    });
+  }, [reset, container.state.sessionMaxAge]);
+
+  const onSubmit = useCallback(async(data: FormData) => {
+    try {
+      // React Hook Form で管理されているフィールドのみ更新
+      await container.setSessionMaxAge(data.sessionMaxAge);
+      // 全ての設定を保存（Container 管理のフィールドも含む）
+      await container.updateGeneralSecuritySetting();
+      toastSuccess(t('updated'));
+    }
+    catch (err) {
+      toastError(err);
+    }
+  }, [container, t]);
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* React Hook Form 管理のフィールド */}
+      <SessionMaxAgeSettings register={register} t={t} />
+      
+      {/* Container 直接管理のフィールド */}
+      <PageListDisplaySettings container={container} t={t} />
+      <PageAccessRightsSettings container={container} t={t} />
+      
+      <button type="submit">{t('Update')}</button>
+    </form>
+  );
 };
 ```
 
-子コンポーネントは `useForm` を使わず、親から `register` を受け取るだけです。
+**子コンポーネント（React Hook Form 管理）:**
+```typescript
+type Props = {
+  register: UseFormRegister<{ sessionMaxAge: string }>;
+  t: (key: string) => string;
+};
+
+export const SessionMaxAgeSettings: React.FC<Props> = ({ register, t }) => {
+  return (
+    <input
+      className="form-control"
+      type="text"
+      {...register('sessionMaxAge')}
+      placeholder="2592000000"
+    />
+  );
+};
+```
+
+**子コンポーネント（Container 直接管理）:**
+```typescript
+type Props = {
+  container: AdminGeneralSecurityContainer;
+  t: (key: string) => string;
+};
+
+export const PageListDisplaySettings: React.FC<Props> = ({ container, t }) => {
+  return (
+    <select
+      className="form-control"
+      value={container.state.currentOwnerRestrictionDisplayMode}
+      onChange={(e) => container.changeOwnerRestrictionDisplayMode(e.target.value)}
+    >
+      <option value="Displayed">{t('Displayed')}</option>
+      <option value="Hidden">{t('Hidden')}</option>
+    </select>
+  );
+};
+```
+
+### 統一された Submit ボタン
+
+複数のセクションを持つフォームでも、Submit ボタンは1つに統一：
+- React Hook Form のフィールドは `onSubmit` で処理
+- Container 管理のフィールドは既に state に反映されている
+- 1つの `updateHandler()` で全て保存
 
 ## テストチェックリスト
 
@@ -209,6 +294,79 @@ export const SmtpSetting = ({ register }: Props) => {
 3. ✅ **空値を送信できる**（フィールドをクリアできる）
 4. ✅ **フォーム送信で現在の入力値が送信される**（古い/古びた値ではない）
 5. ✅ **ラジオボタンとチェックボックスが正しく復元される**
+6. ✅ **複数セクションがある場合、全ての設定が1つの Submit で保存される**
+
+## PR #10051 の成果
+
+全27ファイルを React Hook Form に移行完了：
+
+### 主要な成果
+1. **企業認証システム**: LDAP (10フィールド)、OIDC (16フィールド)、SAML (9フィールド)
+2. **SecuritySetting のモジュラー化**: 636行のクラスコンポーネント → 8つの Function Component
+3. **セキュリティ設定**: LocalSecurity (1フィールド)、Import (4フィールド)
+4. **カスタマイズ**: CustomizeCss (1フィールド)、Slack (2フィールド)
+5. **その他**: 17ファイル
+
+### アーキテクチャの改善
+- TypeScript 完全対応
+- PropTypes 廃止
+- Function Component への統一
+- モジュラー設計の採用
+- テスト容易性の向上
+
+## 将来の移行パス: Unstated から Jotai へ
+
+### フェーズ 1: React Hook Form 移行（✅ 完了）
+- 全ての Admin フォームを React Hook Form に移行
+- IME 問題と空値問題を解決
+- 非制御コンポーネントパターンを確立
+
+### フェーズ 2: Jotai 導入準備（次のステップ）
+1. **Container の分析**
+   - どの state が本当にグローバルである必要があるか特定
+   - ローカル state で十分なものを useState に移行
+
+2. **API レイヤーの分離**
+   - Container の `update*Handler()` メソッドを独立した API 関数に抽出
+   - `apps/app/src/client/util/apiv3-client.ts` パターンに従う
+
+3. **段階的な Container の削除**
+   - 小さな Container から始める
+   - Jotai atom で置き換え
+   - 各ステップでテストを実行
+
+### フェーズ 3: 完全な Jotai 移行（最終目標）
+```typescript
+// 理想的な最終形態
+import { atom, useAtom } from 'jotai';
+import { useForm } from 'react-hook-form';
+
+// グローバル state
+const sessionMaxAgeAtom = atom<string>('');
+
+const SecuritySetting = () => {
+  const [sessionMaxAge, setSessionMaxAge] = useAtom(sessionMaxAgeAtom);
+  const { register, handleSubmit, reset } = useForm();
+
+  useEffect(() => {
+    reset({ sessionMaxAge });
+  }, [sessionMaxAge, reset]);
+
+  const onSubmit = async(data: FormData) => {
+    // 直接 API 呼び出し
+    await apiv3Put('/admin/security-settings', {
+      sessionMaxAge: data.sessionMaxAge,
+      // ... 他の設定
+    });
+    
+    // Jotai state を更新
+    setSessionMaxAge(data.sessionMaxAge);
+    toastSuccess('Updated');
+  };
+
+  return <form onSubmit={handleSubmit(onSubmit)}>{/* ... */}</form>;
+};
+```
 
 ## 適用可能な範囲
 
@@ -217,21 +375,24 @@ export const SmtpSetting = ({ register }: Props) => {
 - Unstated Container でグローバルステートを管理しているフォーム
 - `apps/app/src/client/services/Admin*Container.js` 配下の Container を使用しているフォーム
 - `/admin` ルート配下のコンポーネント
-
-## 将来の移行パス
-
-現在の中間地点（React Hook Form + Unstated）から最終目標（React Hook Form + Jotai）への移行は：
-
-1. まず全ての Admin フォームを React Hook Form に移行（このガイドライン）
-2. Container の `change*()` メソッドを Jotai の setter に置き換え
-3. Container の `update*Handler()` を直接 API 呼び出しに変更
-4. Unstated Container を完全に削除
-
-この段階的アプローチにより、各ステップでリグレッションを最小化できます。
+- 将来的に Jotai に移行予定のフォーム
 
 ## 関連ファイル
 
+### 現在使用中
 - Container 群: `apps/app/src/client/services/Admin*Container.js`
 - ボタンコンポーネント: `apps/app/src/client/components/Admin/Common/AdminUpdateButtonRow.tsx`
-- React Hook Form: package.json に v7.45.4 として既存
-- Jotai: 将来的に導入予定
+- React Hook Form: v7.45.4
+
+### 将来導入予定
+- Jotai: グローバル state 管理
+- SWR または React Query: サーバー state 管理（検討中）
+
+## 参考実装
+
+以下のファイルがベストプラクティスの参考になります：
+
+1. **モジュラー構造**: `apps/app/src/client/components/Admin/Security/SecuritySetting/`
+2. **React Hook Form 基本**: `apps/app/src/client/components/Admin/Security/OidcSecuritySettingContents.tsx`
+3. **複雑なフォーム**: `apps/app/src/client/components/Admin/Security/SamlSecuritySettingContents.tsx`
+4. **既存の良い実装**: `apps/app/src/client/components/Admin/Customize/CustomizeCssSetting.tsx`
