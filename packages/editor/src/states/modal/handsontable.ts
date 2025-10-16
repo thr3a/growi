@@ -1,7 +1,6 @@
 import type { EditorView } from '@codemirror/view';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
-
 type HandsontableModalState = {
   isOpened: boolean;
   editor?: EditorView;
@@ -12,7 +11,8 @@ const handsontableModalAtom = atom<HandsontableModalState>({
   editor: undefined,
 });
 
-export const useHandsontableModalForEditorStatus = () => useAtomValue(handsontableModalAtom);
+export const useHandsontableModalForEditorStatus = () =>
+  useAtomValue(handsontableModalAtom);
 
 export const useHandsontableModalForEditorActions = () => {
   const setModalState = useSetAtom(handsontableModalAtom);

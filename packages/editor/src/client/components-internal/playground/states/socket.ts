@@ -1,6 +1,5 @@
-import { useCallback, useEffect } from 'react';
-
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { useCallback, useEffect } from 'react';
 import type { Socket } from 'socket.io-client';
 
 // Constants
@@ -12,7 +11,8 @@ const playgroundSocketAtom = atom<Socket | null>(null);
 /**
  * Hook to get WebSocket connection for playground
  */
-export const usePlaygroundSocket = (): Socket | null => useAtomValue(playgroundSocketAtom);
+export const usePlaygroundSocket = (): Socket | null =>
+  useAtomValue(playgroundSocketAtom);
 
 /**
  * Hook to initialize WebSocket connection for playground
@@ -21,7 +21,7 @@ export const useSetupPlaygroundSocket = (): void => {
   const setSocket = useSetAtom(playgroundSocketAtom);
   const socket = useAtomValue(playgroundSocketAtom);
 
-  const initializeSocket = useCallback(async() => {
+  const initializeSocket = useCallback(async () => {
     try {
       // Dynamic import of socket.io-client
       const { io } = await import('socket.io-client');
@@ -41,8 +41,7 @@ export const useSetupPlaygroundSocket = (): void => {
 
       // Store connection in atom
       setSocket(newSocket);
-    }
-    catch (error) {
+    } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to initialize WebSocket:', error);
     }

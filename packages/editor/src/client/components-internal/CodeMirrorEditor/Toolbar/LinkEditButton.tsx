@@ -3,9 +3,11 @@ import { DropdownItem } from 'reactstrap';
 
 import type { GlobalCodeMirrorEditorKey } from '../../../../consts';
 import { useLinkEditModalActions } from '../../../../states/modal/link-edit';
-import { getMarkdownLink, replaceFocusedMarkdownLinkWithEditor } from '../../../services-internal';
+import {
+  getMarkdownLink,
+  replaceFocusedMarkdownLinkWithEditor,
+} from '../../../services-internal';
 import { useCodeMirrorEditorIsolated } from '../../../stores/codemirror-editor';
-
 
 type Props = {
   editorKey: string | GlobalCodeMirrorEditorKey;
