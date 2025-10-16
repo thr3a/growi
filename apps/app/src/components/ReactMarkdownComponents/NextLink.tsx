@@ -47,6 +47,7 @@ export const NextLink = (props: Props): JSX.Element => {
   const { data: siteUrl } = useSiteUrl();
 
   if (href == null) {
+    // biome-ignore lint/a11y/useValidAnchor: ignore
     return <a className={className}>{children}</a>;
   }
 

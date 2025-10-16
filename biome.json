@@ -25,7 +25,7 @@
       "!apps/slackbot-proxy/src/public/bootstrap/**",
       "!packages/editor/**",
       "!packages/pdf-converter-client/src/index.ts",
-      "!packages/pdf-converter-client/specs/**",
+      "!apps/pdf-converter/specs/**",
       "!apps/app/playwright/**",
       "!apps/app/public/**",
       "!apps/app/src/client/**",

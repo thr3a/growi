@@ -358,6 +358,7 @@ export const AdminNavigation = (): JSX.Element => {
         </button>
         <div
           className="dropdown-menu"
+          role="menu"
           aria-labelledby="dropdown-admin-navigation"
         >
           {getListGroupItemOrDropdownItemList(false)}

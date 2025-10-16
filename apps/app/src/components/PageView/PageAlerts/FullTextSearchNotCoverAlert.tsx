@@ -28,7 +28,7 @@ export const FullTextSearchNotCoverAlert = (): JSX.Element => {
       </strong>
       <br />
       <small
-        // eslint-disable-next-line react/no-danger
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
         dangerouslySetInnerHTML={{
           __html: t('page_page.notice.not_indexed2', {
             threshold: `<code>ELASTICSEARCH_MAX_BODY_LENGTH_TO_INDEX=${elasticsearchMaxBodyLengthToIndex}</code>`,

@@ -42,8 +42,8 @@ const ShareLinkAlert: FC<Props> = (props: Props) => {
       {expiredAt == null ? (
         <span>{t('page_page.notice.no_deadline')}</span>
       ) : (
-        // eslint-disable-next-line react/no-danger
         <span
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
           dangerouslySetInnerHTML={{
             __html: t('page_page.notice.expiration', { expiredAt }),
           }}

@@ -26,7 +26,7 @@ export const PageStaleAlert = (): JSX.Element => {
     return <></>;
   }
 
-  let alertClass;
+  let alertClass: string;
   switch (contentAge) {
     case 1:
       alertClass = 'alert-info';

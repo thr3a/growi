@@ -103,18 +103,19 @@ export const PagePathHierarchicalLink = memo(
         {isSeparatorRequired && (
           <span className={`separator ${styles.separator}`}>/</span>
         )}
-
         <Link href={href} prefetch={false} legacyBehavior>
           {shouldDangerouslySetInnerHTML ? (
-            // eslint-disable-next-line react/no-danger
+            // biome-ignore-start lint/a11y/useValidAnchor: ignore
             <a
               className="page-segment"
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
               dangerouslySetInnerHTML={{
                 __html: linkedPagePathByHtml.pathName,
               }}
             ></a>
           ) : (
             <a className="page-segment">{linkedPagePath.pathName}</a>
+            // biome-ignore-end lint/a11y/useValidAnchor: ignore
           )}
         </Link>
       </RootElm>

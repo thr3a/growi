@@ -165,8 +165,8 @@ const FixPageGrantModal = (props: ModalProps): JSX.Element => {
           {t('fix_page_grant.modal.grant_label.currentPageGrantLabel') +
             currentGrantLabel}
         </p>
-        {/* eslint-disable-next-line react/no-danger */}
         <p
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
           dangerouslySetInnerHTML={{
             __html: t('fix_page_grant.modal.grant_label.docLink'),
           }}
@@ -188,9 +188,9 @@ const FixPageGrantModal = (props: ModalProps): JSX.Element => {
       <>
         <ModalBody>
           <div>
-            {/* eslint-disable-next-line react/no-danger */}
             <p
               className="mb-2"
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
               dangerouslySetInnerHTML={{
                 __html: t('fix_page_grant.modal.need_to_fix_grant'),
               }}
