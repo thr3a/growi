@@ -1,5 +1,4 @@
 import React, { type JSX } from 'react';
-
 import type { FallbackProps } from 'react-error-boundary';
 import { ErrorBoundary } from 'react-error-boundary';
 import ReactMarkdown from 'react-markdown';

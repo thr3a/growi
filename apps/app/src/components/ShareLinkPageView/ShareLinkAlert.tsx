@@ -1,6 +1,6 @@
-import { useTranslation } from 'next-i18next';
 import type { FC } from 'react';
 import React from 'react';
+import { useTranslation } from 'next-i18next';
 
 const generateRatio = (expiredAt: Date, createdAt: Date): number => {
   const wholeTime =

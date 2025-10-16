@@ -1,5 +1,4 @@
 import type { JSX, ReactNode } from 'react';
-
 import { PrismAsyncLight } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 

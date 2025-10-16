@@ -1,7 +1,7 @@
+import { type JSX, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import type { IPagePopulatedToShowRevision } from '@growi/core';
 import { useSlidesByFrontmatter } from '@growi/presentation/dist/services';
-import dynamic from 'next/dynamic';
-import { type JSX, useMemo } from 'react';
 
 import { PagePathNavTitle } from '~/components/Common/PagePathNavTitle';
 import type { RendererConfig } from '~/interfaces/services/renderer';
@@ -15,7 +15,6 @@ import loggerFactory from '~/utils/logger';
 import { PageContentFooter } from '../PageView/PageContentFooter';
 import { PageViewLayout } from '../PageView/PageViewLayout';
 import RevisionRenderer from '../PageView/RevisionRenderer';
-
 import ShareLinkAlert from './ShareLinkAlert';
 
 const logger = loggerFactory('growi:Page');

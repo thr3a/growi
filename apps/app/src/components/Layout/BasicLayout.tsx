@@ -1,8 +1,10 @@
-import dynamic from 'next/dynamic';
 import type { JSX, ReactNode } from 'react';
 import React from 'react';
-import styles from './BasicLayout.module.scss';
+import dynamic from 'next/dynamic';
+
 import { RawLayout } from './RawLayout';
+
+import styles from './BasicLayout.module.scss';
 
 const AiAssistantSidebar = dynamic(
   () =>

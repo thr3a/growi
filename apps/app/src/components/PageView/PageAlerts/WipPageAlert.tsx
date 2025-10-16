@@ -1,5 +1,4 @@
 import React, { type JSX, useCallback } from 'react';
-
 import { useTranslation } from 'react-i18next';
 
 import { useSWRMUTxCurrentPage, useSWRxCurrentPage } from '~/stores/page';

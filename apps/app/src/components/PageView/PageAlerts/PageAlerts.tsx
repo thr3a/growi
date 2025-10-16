@@ -1,5 +1,5 @@
-import dynamic from 'next/dynamic';
 import type { JSX } from 'react';
+import dynamic from 'next/dynamic';
 
 import { useIsNotFound } from '~/stores/page';
 

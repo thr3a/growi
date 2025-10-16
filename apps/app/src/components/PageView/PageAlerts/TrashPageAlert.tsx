@@ -1,7 +1,7 @@
+import React, { type JSX, useCallback } from 'react';
+import { useRouter } from 'next/router';
 import { UserPicture } from '@growi/ui/dist/components';
 import { format } from 'date-fns/format';
-import { useRouter } from 'next/router';
-import React, { type JSX, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { usePageDeleteModal, usePutBackPageModal } from '~/stores/modal';

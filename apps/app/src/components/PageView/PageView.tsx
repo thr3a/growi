@@ -1,8 +1,8 @@
+import React, { type JSX, useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import type { IPagePopulatedToShowRevision } from '@growi/core';
 import { isUsersHomepage } from '@growi/core/dist/utils/page-path-utils';
 import { useSlidesByFrontmatter } from '@growi/presentation/dist/services';
-import dynamic from 'next/dynamic';
-import React, { type JSX, useEffect, useMemo, useRef, useState } from 'react';
 
 import { PagePathNavTitle } from '~/components/Common/PagePathNavTitle';
 import type { RendererConfig } from '~/interfaces/services/renderer';
@@ -17,7 +17,6 @@ import {
 } from '~/stores-universal/context';
 
 import { UserInfo } from '../User/UserInfo';
-
 import { PageAlerts } from './PageAlerts/PageAlerts';
 import { PageContentFooter } from './PageContentFooter';
 import { PageViewLayout } from './PageViewLayout';

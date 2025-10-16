@@ -1,6 +1,6 @@
-import type { IGraphViewerGlobal } from '@growi/remark-drawio';
-import Head from 'next/head';
 import { type JSX, useCallback } from 'react';
+import Head from 'next/head';
+import type { IGraphViewerGlobal } from '@growi/remark-drawio';
 
 import { useViewerMinJsUrl } from './use-viewer-min-js-url';
 

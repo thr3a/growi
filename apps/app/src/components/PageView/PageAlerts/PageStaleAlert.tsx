@@ -1,6 +1,7 @@
+import type { JSX } from 'react';
 import { isIPageInfoForEntity } from '@growi/core';
 import { useTranslation } from 'next-i18next';
-import type { JSX } from 'react';
+
 import { useSWRxCurrentPage, useSWRxPageInfo } from '~/stores/page';
 import { useIsEnabledStaleNotification } from '~/stores-universal/context';
 

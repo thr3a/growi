@@ -1,13 +1,14 @@
+import { type JSX, useMemo } from 'react';
 import { DevidedPagePath } from '@growi/core/dist/models';
 import { pagePathUtils } from '@growi/core/dist/utils';
-import { type JSX, useMemo } from 'react';
 
 import LinkedPagePath from '~/models/linked-page-path';
 
 import { PagePathHierarchicalLink } from '../PagePathHierarchicalLink';
-import styles from './PagePathNav.module.scss';
 import type { PagePathNavLayoutProps } from './PagePathNavLayout';
 import { PagePathNavLayout } from './PagePathNavLayout';
+
+import styles from './PagePathNav.module.scss';
 
 const { isTrashPage } = pagePathUtils;
 

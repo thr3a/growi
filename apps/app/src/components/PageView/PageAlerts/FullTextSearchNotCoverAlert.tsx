@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
-
 import { useTranslation } from 'react-i18next';
+
 import { useSWRxCurrentPage } from '~/stores/page';
 import { useElasticsearchMaxBodyLengthToIndex } from '~/stores-universal/context';
 

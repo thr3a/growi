@@ -1,5 +1,5 @@
-import { isPopulated } from '@growi/core';
 import React, { type JSX } from 'react';
+import { isPopulated } from '@growi/core';
 import { useTranslation } from 'react-i18next';
 
 import { useSWRxCurrentPage } from '~/stores/page';
