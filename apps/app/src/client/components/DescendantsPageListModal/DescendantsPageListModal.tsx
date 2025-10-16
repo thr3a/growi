@@ -14,16 +14,16 @@ import { useIsSharedUser } from '~/states/context';
 import { useDeviceLargerThanLg } from '~/states/ui/device';
 import { useDescendantsPageListModalActions, useDescendantsPageListModalStatus } from '~/states/ui/modal/descendants-page-list';
 
-import { CustomNavDropdown, CustomNavTab } from './CustomNavigation/CustomNav';
-import CustomTabContent from './CustomNavigation/CustomTabContent';
-import type { DescendantsPageListProps } from './DescendantsPageList';
-import ExpandOrContractButton from './ExpandOrContractButton';
+import { CustomNavDropdown, CustomNavTab } from '../CustomNavigation/CustomNav';
+import CustomTabContent from '../CustomNavigation/CustomTabContent';
+import type { DescendantsPageListProps } from '../DescendantsPageList';
+import ExpandOrContractButton from '../ExpandOrContractButton';
 
 import styles from './DescendantsPageListModal.module.scss';
 
-const DescendantsPageList = dynamic<DescendantsPageListProps>(() => import('./DescendantsPageList').then(mod => mod.DescendantsPageList), { ssr: false });
+const DescendantsPageList = dynamic<DescendantsPageListProps>(() => import('../DescendantsPageList').then(mod => mod.DescendantsPageList), { ssr: false });
 
-const PageTimeline = dynamic(() => import('./PageTimeline').then(mod => mod.PageTimeline), { ssr: false });
+const PageTimeline = dynamic(() => import('../PageTimeline').then(mod => mod.PageTimeline), { ssr: false });
 
 /**
  * DescendantsPageListModalSubstance - Presentation component (all logic here)

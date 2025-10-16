@@ -18,9 +18,9 @@ import { isSearchServiceReachableAtom } from '~/states/server-configurations';
 import { usePageRenameModalStatus, usePageRenameModalActions } from '~/states/ui/modal/page-rename';
 import { useSWRxPageInfo } from '~/stores/page';
 
-import DuplicatedPathsTable from './DuplicatedPathsTable';
-import ApiErrorMessageList from './PageManagement/ApiErrorMessageList';
-import PagePathAutoComplete from './PagePathAutoComplete';
+import DuplicatedPathsTable from '../DuplicatedPathsTable';
+import ApiErrorMessageList from '../PageManagement/ApiErrorMessageList';
+import PagePathAutoComplete from '../PagePathAutoComplete';
 
 const isV5Compatible = (meta: unknown): boolean => {
   return isIPageInfoForEntity(meta) ? meta.isV5Compatible : true;
@@ -371,7 +371,7 @@ const PageRenameModalSubstance: React.FC = () => {
 /**
  * PageRenameModal - Container component (lightweight, always rendered)
  */
-const PageRenameModal = (): React.JSX.Element => {
+export const PageRenameModal = (): React.JSX.Element => {
   const { isOpened } = usePageRenameModalStatus();
   const { close: closeRenameModal } = usePageRenameModalActions();
 
@@ -381,5 +381,3 @@ const PageRenameModal = (): React.JSX.Element => {
     </Modal>
   );
 };
-
-export default PageRenameModal;

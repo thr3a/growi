@@ -6,6 +6,12 @@ import dynamic from 'next/dynamic';
 // eslint-disable-next-line no-restricted-imports
 import { PageAccessoriesModalLazyLoaded } from '~/client/components/PageAccessoriesModal';
 // eslint-disable-next-line no-restricted-imports
+import { PageDeleteModalLazyLoaded } from '~/client/components/PageDeleteModal';
+// eslint-disable-next-line no-restricted-imports
+import { PageDuplicateModalLazyLoaded } from '~/client/components/PageDuplicateModal';
+// eslint-disable-next-line no-restricted-imports
+import { PageRenameModalLazyLoaded } from '~/client/components/PageRenameModal';
+// eslint-disable-next-line no-restricted-imports
 import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 
 import { RawLayout } from './RawLayout';
@@ -34,9 +40,6 @@ const SystemVersion = dynamic(() => import('~/client/components/SystemVersion'),
 const PutbackPageModal = dynamic(() => import('~/client/components/PutbackPageModal'), { ssr: false });
 // Page modals
 const PageCreateModal = dynamic(() => import('~/client/components/PageCreateModal'), { ssr: false });
-const PageDuplicateModal = dynamic(() => import('~/client/components/PageDuplicateModal'), { ssr: false });
-const PageDeleteModal = dynamic(() => import('~/client/components/PageDeleteModal'), { ssr: false });
-const PageRenameModal = dynamic(() => import('~/client/components/PageRenameModal'), { ssr: false });
 const PagePresentationModal = dynamic(() => import('~/client/components/PagePresentationModal'), { ssr: false });
 const GrantedGroupsInheritanceSelectModal = dynamic(() => import('~/client/components/GrantedGroupsInheritanceSelectModal'), { ssr: false });
 const DeleteBookmarkFolderModal = dynamic(
@@ -77,9 +80,9 @@ export const BasicLayout = ({ children, className }: Props): JSX.Element => {
       <SearchModal />
 
       <PageCreateModal />
-      <PageDuplicateModal />
-      <PageDeleteModal />
-      <PageRenameModal />
+      <PageDuplicateModalLazyLoaded />
+      <PageDeleteModalLazyLoaded />
+      <PageRenameModalLazyLoaded />
       <PageAccessoriesModalLazyLoaded />
       <DeleteAttachmentModal />
       <DeleteBookmarkFolderModal />

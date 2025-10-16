@@ -15,9 +15,9 @@ import { useSiteUrl } from '~/states/global';
 import { isSearchServiceReachableAtom } from '~/states/server-configurations';
 import { usePageDuplicateModalStatus, usePageDuplicateModalActions } from '~/states/ui/modal/page-duplicate';
 
-import DuplicatePathsTable from './DuplicatedPathsTable';
-import ApiErrorMessageList from './PageManagement/ApiErrorMessageList';
-import PagePathAutoComplete from './PagePathAutoComplete';
+import DuplicatePathsTable from '../DuplicatedPathsTable';
+import ApiErrorMessageList from '../PageManagement/ApiErrorMessageList';
+import PagePathAutoComplete from '../PagePathAutoComplete';
 
 /**
  * PageDuplicateModalSubstance - Heavy processing component (rendered only when modal is open)
@@ -299,7 +299,7 @@ const PageDuplicateModalSubstance: React.FC = () => {
 /**
  * PageDuplicateModal - Container component (lightweight, always rendered)
  */
-const PageDuplicateModal = (): React.JSX.Element => {
+export const PageDuplicateModal = (): React.JSX.Element => {
   const { isOpened } = usePageDuplicateModalStatus();
   const { close: closeDuplicateModal } = usePageDuplicateModalActions();
 
@@ -309,5 +309,3 @@ const PageDuplicateModal = (): React.JSX.Element => {
     </Modal>
   );
 };
-
-export default PageDuplicateModal;

@@ -19,7 +19,7 @@ import { useSWRxPageInfoForList } from '~/stores/page-listing';
 import loggerFactory from '~/utils/logger';
 
 
-import ApiErrorMessageList from './PageManagement/ApiErrorMessageList';
+import ApiErrorMessageList from '../PageManagement/ApiErrorMessageList';
 
 const { isTrashPage } = pagePathUtils;
 
@@ -45,7 +45,7 @@ const isIPageInfoForEntityForDeleteModal = (pageInfo: any | undefined): pageInfo
   return pageInfo != null && 'isDeletable' in pageInfo && 'isAbleToDeleteCompletely' in pageInfo;
 };
 
-const PageDeleteModal: FC = () => {
+export const PageDeleteModal: FC = () => {
   const { t } = useTranslation();
   const { isOpened, pages, opts } = usePageDeleteModalStatus() ?? {};
   const { close: closeDeleteModal } = usePageDeleteModalActions();
@@ -328,5 +328,3 @@ const PageDeleteModal: FC = () => {
 
   );
 };
-
-export default PageDeleteModal;

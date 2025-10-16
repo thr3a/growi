@@ -10,6 +10,8 @@ import type {
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 
+// eslint-disable-next-line no-restricted-imports
+import { DescendantsPageListModal } from '~/client/components/DescendantsPageListModal/DescendantsPageListModal';
 import { BasicLayout } from '~/components/Layout/BasicLayout';
 import { PageView } from '~/components/PageView/PageView';
 import { DrawioViewerScript } from '~/components/Script/DrawioViewerScript';
@@ -57,10 +59,6 @@ const DisplaySwitcher = dynamic(() => import('~/client/components/Page/DisplaySw
 const PageStatusAlert = dynamic(() => import('~/client/components/PageStatusAlert').then(mod => mod.PageStatusAlert), { ssr: false });
 
 const UnsavedAlertDialog = dynamic(() => import('~/client/components/UnsavedAlertDialog'), { ssr: false });
-const DescendantsPageListModal = dynamic(
-  () => import('~/client/components/DescendantsPageListModal').then(mod => mod.DescendantsPageListModal),
-  { ssr: false },
-);
 const DrawioModal = dynamic(() => import('~/client/components/PageEditor/DrawioModal').then(mod => mod.DrawioModal), { ssr: false });
 const HandsontableModal = dynamic(() => import('~/client/components/PageEditor/HandsontableModal').then(mod => mod.HandsontableModal), { ssr: false });
 const TemplateModal = dynamic(() => import('~/client/components/TemplateModal').then(mod => mod.TemplateModal), { ssr: false });
