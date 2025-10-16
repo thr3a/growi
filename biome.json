@@ -48,7 +48,24 @@
   "assist": {
     "actions": {
       "source": {
-        "organizeImports": "on"
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              ["react", "react/**"],
+              ["next", "next/**"],
+              [":NODE:", ":PACKAGE:"],
+              ":BLANK_LINE:",
+              ["@/**", "^/**"],
+              ":BLANK_LINE:",
+              "~/**",
+              ":BLANK_LINE:",
+              [":PATH:", "!**/*.css", "!**/*.scss"],
+              ":BLANK_LINE:",
+              ["**/*.css", "**/*.scss"]
+            ]
+          }
+        }
       }
     }
   },
