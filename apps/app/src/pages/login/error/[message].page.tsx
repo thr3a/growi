@@ -1,13 +1,12 @@
 import React from 'react';
-
 import type {
   GetServerSideProps,
   GetServerSidePropsContext,
   NextPage,
 } from 'next';
+import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import { useRouter } from 'next/router';
 
 import { NoLoginLayout } from '~/components/Layout/NoLoginLayout';
 import type { CommonProps } from '~/pages/utils/commons';
@@ -107,9 +106,9 @@ const LoginPage: NextPage<CommonProps> = () => {
  * @param namespacesRequired
  */
 async function injectNextI18NextConfigurations(
-    context: GetServerSidePropsContext,
-    props: Props,
-    namespacesRequired?: string[] | undefined,
+  context: GetServerSidePropsContext,
+  props: Props,
+  namespacesRequired?: string[] | undefined,
 ): Promise<void> {
   const nextI18NextConfig = await getNextI18NextConfig(
     serverSideTranslations,
@@ -119,8 +118,8 @@ async function injectNextI18NextConfigurations(
   props._nextI18Next = nextI18NextConfig._nextI18Next;
 }
 
-export const getServerSideProps: GetServerSideProps = async(
-    context: GetServerSidePropsContext,
+export const getServerSideProps: GetServerSideProps = async (
+  context: GetServerSidePropsContext,
 ) => {
   const result = await getServerSideCommonProps(context);
 
