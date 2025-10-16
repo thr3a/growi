@@ -38,6 +38,7 @@ export const LdapGroupManagement: FC = () => {
     [isUserBind],
   );
 
+  // biome-ignore lint/correctness/noNestedComponentDefinitions: ignore
   const AdditionalForm = (): JSX.Element => {
     return isUserBind ? (
       <div className="row form-group">

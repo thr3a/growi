@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { useRouter } from 'next/router';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { useRouter } from 'next/router';
+import { useCallback, useEffect, useRef } from 'react';
 
 /**
  * Atom for managing search keyword state

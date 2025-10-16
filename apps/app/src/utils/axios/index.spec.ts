@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/style/noRestrictedImports: This file is a test file for an adapter for axios */
 import axios from 'axios';
 import { describe, expect, it } from 'vitest';
 

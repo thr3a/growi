@@ -1,9 +1,9 @@
-import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/router';
 import Downshift, {
   type DownshiftState,
   type StateChangeOptions,
 } from 'downshift';
+import { useRouter } from 'next/router';
+import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, ModalBody } from 'reactstrap';
 
 import { useSetSearchKeyword } from '~/states/search';

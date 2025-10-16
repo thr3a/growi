@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { useCallback } from 'react';
 
 // Constants to match the original implementation
 export const PageAccessoriesModalContents = {

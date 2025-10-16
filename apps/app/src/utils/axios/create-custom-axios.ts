@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/style/noRestrictedImports: This file provides a factory method for custom axios instance */
 import type { AxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import { formatISO } from 'date-fns';

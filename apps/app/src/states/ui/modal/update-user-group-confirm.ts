@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
 import type { IUserGroupHasId } from '@growi/core';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { useCallback } from 'react';
 
 export type UpdateUserGroupConfirmModalStatus = {
   isOpened: boolean;

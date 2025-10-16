@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import type EventEmitter from 'node:events';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { useEffect } from 'react';
 
 declare global {
   // eslint-disable-next-line vars-on-top, no-var
