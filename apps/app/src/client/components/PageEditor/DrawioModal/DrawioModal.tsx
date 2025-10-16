@@ -17,7 +17,6 @@ import { useDrawioModalForEditorStatus, useDrawioModalForEditorActions } from '~
 import { useSWRxPersonalSettings } from '~/stores/personal-settings';
 import loggerFactory from '~/utils/logger';
 
-
 import { type DrawioConfig, DrawioCommunicationHelper } from './DrawioCommunicationHelper';
 
 const logger = loggerFactory('growi:components:DrawioModal');

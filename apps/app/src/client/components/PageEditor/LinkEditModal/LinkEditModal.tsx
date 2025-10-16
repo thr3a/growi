@@ -4,7 +4,7 @@ import React, {
 
 import path from 'path';
 
-import { Linker } from '@growi/editor';
+import { Linker } from '@growi/editor/dist/models/linker';
 import { useLinkEditModalStatus, useLinkEditModalActions } from '@growi/editor/dist/states/modal/link-edit';
 import { useTranslation } from 'next-i18next';
 import {
@@ -22,9 +22,8 @@ import { useCurrentPagePath } from '~/states/page';
 import { usePreviewOptions } from '~/stores/renderer';
 import loggerFactory from '~/utils/logger';
 
-import SearchTypeahead from '../SearchTypeahead';
-
-import Preview from './Preview';
+import SearchTypeahead from '../../SearchTypeahead';
+import Preview from '../Preview';
 
 
 import styles from './LinkEditPreview.module.scss';

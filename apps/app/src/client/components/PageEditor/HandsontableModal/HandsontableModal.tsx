@@ -16,9 +16,8 @@ import { debounce } from 'throttle-debounce';
 import { replaceFocusedMarkdownTableWithEditor, getMarkdownTable } from '~/client/components/PageEditor/markdown-table-util-for-editor';
 import { useHandsontableModalActions, useHandsontableModalStatus } from '~/states/ui/modal/handsontable';
 
-import ExpandOrContractButton from '../ExpandOrContractButton';
-
-import { MarkdownTableDataImportForm } from './MarkdownTableDataImportForm';
+import ExpandOrContractButton from '../../ExpandOrContractButton';
+import { MarkdownTableDataImportForm } from '../MarkdownTableDataImportForm';
 
 import styles from './HandsontableModal.module.scss';
 import 'handsontable/dist/handsontable.full.min.css';
