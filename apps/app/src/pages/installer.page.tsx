@@ -58,31 +58,38 @@ type Props = CommonProps & {
   pageWithMetaStr: string;
 };
 
+const UserInfoIcon = () => (
+  <span className="material-symbols-outlined me-2">person</span>
+);
+
+const ExternalAccountsIcon = () => (
+  <span className="growi-custom-icons me-2">external_link</span>
+);
+
 const InstallerPage: NextPage<Props> = (props: Props) => {
   const { t } = useTranslation();
   const { t: tCommons } = useTranslation('commons');
 
+  const BoundInstallerForm = useMemo(
+    () => () => <InstallerForm minPasswordLength={props.minPasswordLength} />,
+    [props.minPasswordLength],
+  );
+
   const navTabMapping = useMemo(() => {
     return {
       user_infomation: {
-        Icon: () => (
-          <span className="material-symbols-outlined me-2">person</span>
-        ),
-        Content: () => (
-          <InstallerForm minPasswordLength={props.minPasswordLength} />
-        ),
+        Icon: UserInfoIcon,
+        Content: BoundInstallerForm,
         i18n: t('installer.tab'),
       },
       external_accounts: {
         // TODO: chack and fix font-size. see: https://redmine.weseek.co.jp/issues/143015
-        Icon: () => (
-          <span className="growi-custom-icons me-2">external_link</span>
-        ),
+        Icon: ExternalAccountsIcon,
         Content: DataTransferForm,
         i18n: tCommons('g2g_data_transfer.tab'),
       },
     };
-  }, [props.minPasswordLength, t, tCommons]);
+  }, [BoundInstallerForm, t, tCommons]);
 
   // commons
   useAppTitle(props.appTitle);

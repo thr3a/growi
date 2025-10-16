@@ -59,6 +59,7 @@ export const getServerSideCommonProps: GetServerSideProps<CommonProps> = async (
 
   const isMaintenanceMode = appService.isMaintenanceMode();
 
+  // biome-ignore lint/suspicious/noImplicitAnyLet: ignore
   let currentUser;
   if (user != null) {
     currentUser = user.toObject();

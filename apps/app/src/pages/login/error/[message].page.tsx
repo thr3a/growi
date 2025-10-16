@@ -18,56 +18,60 @@ import {
 type Props = CommonProps;
 const classNames: string[] = ['login-page'];
 
+const ApprovalPendingUserError = () => {
+  const { t } = useTranslation();
+  return (
+    <>
+      <div className="alert alert-warning">
+        <h2>{t('login.sign_in_error')}</h2>
+      </div>
+      <p>Wait for approved by administrators.</p>
+    </>
+  );
+};
+
+const SuspendedUserError = () => {
+  const { t } = useTranslation();
+  return (
+    <>
+      <div className="alert alert-warning">
+        <h2>{t('login.sign_in_error')}</h2>
+      </div>
+      <p>This account is suspended.</p>
+    </>
+  );
+};
+
+const PasswordResetOrderError = () => {
+  const { t } = useTranslation();
+  return (
+    <>
+      <div className="alert alert-warning mb-3">
+        <h2>{t('forgot_password.incorrect_token_or_expired_url')}</h2>
+      </div>
+      <a href="/forgot-password" className="link-switch">
+        <span className="material-symbols-outlined">key</span>{' '}
+        {t('forgot_password.forgot_password')}
+      </a>
+    </>
+  );
+};
+
+const DefaultLoginError = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="alert alert-warning">
+      <h2>{t('login.sign_in_error')}</h2>
+    </div>
+  );
+};
+
 const LoginPage: NextPage<CommonProps> = () => {
   const { t } = useTranslation();
   const router = useRouter();
   const { message } = router.query;
 
-  let loginErrorElm;
-
-  const ApprovalPendingUserError = () => {
-    return (
-      <>
-        <div className="alert alert-warning">
-          <h2>{t('login.sign_in_error')}</h2>
-        </div>
-        <p>Wait for approved by administrators.</p>
-      </>
-    );
-  };
-
-  const SuspendedUserError = () => {
-    return (
-      <>
-        <div className="alert alert-warning">
-          <h2>{t('login.sign_in_error')}</h2>
-        </div>
-        <p>This account is suspended.</p>
-      </>
-    );
-  };
-
-  const PasswordResetOrderError = () => {
-    return (
-      <>
-        <div className="alert alert-warning mb-3">
-          <h2>{t('forgot_password.incorrect_token_or_expired_url')}</h2>
-        </div>
-        <a href="/forgot-password" className="link-switch">
-          <span className="material-symbols-outlined">key</span>{' '}
-          {t('forgot_password.forgot_password')}
-        </a>
-      </>
-    );
-  };
-
-  const DefaultLoginError = () => {
-    return (
-      <div className="alert alert-warning">
-        <h2>{t('login.sign_in_error')}</h2>
-      </div>
-    );
-  };
+  let loginErrorElm: JSX.Element;
 
   switch (message) {
     case 'registered':

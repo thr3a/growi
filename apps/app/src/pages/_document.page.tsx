@@ -94,6 +94,7 @@ class GrowiDocument extends Document<GrowiDocumentInitialProps> {
     return (
       <script
         id="customScript"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
         dangerouslySetInnerHTML={{ __html: customScript }}
       />
     );
@@ -103,6 +104,7 @@ class GrowiDocument extends Document<GrowiDocumentInitialProps> {
     if (customCss == null || customCss.length === 0) {
       return <></>;
     }
+    // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
     return <style dangerouslySetInnerHTML={{ __html: customCss }} />;
   }
 
@@ -110,6 +112,7 @@ class GrowiDocument extends Document<GrowiDocumentInitialProps> {
     if (customNoscript == null || customNoscript.length === 0) {
       return <></>;
     }
+    // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
     return <noscript dangerouslySetInnerHTML={{ __html: customNoscript }} />;
   }
 
