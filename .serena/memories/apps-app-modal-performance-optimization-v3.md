@@ -509,6 +509,65 @@ import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 - [ ] **Container-Presentation効果**: モーダル閉じている時、Substanceがレンダリングされない
 - [ ] TypeScriptエラーが発生しない
 
+### デグレチェック項目 🚨 NEW
+- [ ] **モーダルが開くか**: トリガーボタンを押してモーダルが正しく開くことを確認
+- [ ] **State import パス**: `@growi/editor`パッケージのstateを使用していないか確認
+  - LinkEditModal: `@growi/editor/dist/states/modal/link-edit`
+  - TemplateModal: `@growi/editor`
+  - HandsontableModal (Editor): `@growi/editor` (useHandsontableModalForEditorStatus)
+- [ ] **複数ステータス**: モーダルが複数のステータスプロパティを持っていないか確認
+  - 例: HandsontableModal は `isOpened || isOpendInEditor` の両方をチェック必要
+- [ ] **Export宣言**: モーダルコンポーネントが`export const`で正しくexportされているか
+- [ ] **動的ローダーのtrigger条件**: `status?.isOpened`だけでなく、他のプロパティも必要ないか確認
+
+---
+
+## デバッグガイド 🔧 NEW
+
+### モーダルが開かない場合のチェックリスト
+
+1. **State import パスの確認**
+```bash
+# モーダル本体で使用しているstate hookのimport元を確認
+grep -n "useXxxModalStatus" path/to/Modal.tsx
+
+# dynamic.tsxで同じimport元を使用しているか確認
+grep -n "useXxxModalStatus" path/to/dynamic.tsx
+```
+
+**よくある間違い**:
+- ❌ dynamic.tsx: `import { useXxxModalStatus } from '~/states/ui/modal/xxx'`
+- ✅ 本体と同じ: `import { useXxxModalStatus } from '@growi/editor'`
+
+2. **ステータスプロパティの確認**
+```tsx
+// モーダル本体で使用しているプロパティを確認
+<Modal isOpen={status?.isOpened || anotherStatus?.isOpened}>
+
+// dynamic.tsxで同じ条件を使用
+const Component = useLazyLoader(
+  'modal-key',
+  () => import('./Modal'),
+  status?.isOpened || anotherStatus?.isOpened || false, // ⭐すべての条件を含める
+);
+```
+
+3. **Export宣言の確認**
+```tsx
+// ❌ 間違い: default export
+export default MyModal;
+
+// ✅ 正しい: named export
+export const MyModal = () => { ... };
+```
+
+4. **Import パスの確認**
+```tsx
+// dynamic.tsx内
+() => import('./Modal').then(mod => ({ default: mod.MyModal }))
+//                                              ↑ named exportの名前
+```
+
 ---
 
 ## 注意点
@@ -533,24 +592,42 @@ import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 - **Substance**: `isOpened && <Substance />`で条件付きレンダリング
 - この設計により、`<Modal isOpen={false}>`が正しくfadeout transitionを実行できる
 
+### Cross-Package State Management 🚨 NEW
+エディター関連のモーダルは`@growi/editor`パッケージでstateを管理している場合があります：
+- `~/states`からインポートできると仮定しないこと
+- モーダル本体のimport元を必ず確認すること
+- dynamic.tsxで同じimport元を使用すること
+
+**例**:
+```tsx
+// LinkEditModal.tsx (本体)
+import { useLinkEditModalStatus } from '@growi/editor/dist/states/modal/link-edit';
+
+// dynamic.tsx (同じimport元を使用)
+import { useLinkEditModalStatus } from '@growi/editor/dist/states/modal/link-edit';
+```
+
 ---
 
 ## 他のモーダルへの適用優先度
 
-### 高優先度（低頻度使用モーダル）
-1. LinkEditModal
-2. TagEditModal
-3. ConflictDiffModal
-4. 管理者専用モーダル群
+### 高優先度（低頻度使用モーダル） - 残り32個
+1. PagePresentationModal
+2. PageBulkExportSelectModal
+3. CreateTemplateModal
+4. SearchOptionModal
+5. ImageCropModal
+6. 管理者専用モーダル群
 
-### 中優先度（中頻度使用モーダル）
-- PageAccessoriesModal ✅ (完了)
-- ShortcutsModal ✅ (完了)
-- PageDuplicateModal
-- PageRenameModal
-- PageDeleteModal
+### 中優先度（中頻度使用モーダル） - 完了✅
+- PageAccessoriesModal ✅
+- ShortcutsModal ✅
+- PageDuplicateModal ✅
+- PageRenameModal ✅
+- PageDeleteModal ✅
+- DescendantsPageListModal ✅
 
-### 低優先度（高頻度使用モーダル）
+### 低優先度（高頻度使用モーダル） - 動的ロード非推奨
 - PageCreateModal（使用頻度が非常に高いため保留）
 - SearchModal（使用頻度が非常に高いため保留）
 
@@ -611,4 +688,5 @@ import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 
 【変更】[Modal].tsx本体はnamed export化のみ（実装は変更なし）
 【達成】動的ロード効果を即座に獲得
+【デグレチェック】モーダルが開くか、state import パス、複数ステータス確認
 ```

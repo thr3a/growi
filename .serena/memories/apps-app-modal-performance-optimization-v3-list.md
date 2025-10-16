@@ -2,7 +2,9 @@
 
 ## V3進捗状況
 
-**実装完了**: 6/46モーダル (2025-10-16更新)
+**実装完了**: 12/46モーダル (26%) (2025-10-16更新)
+
+### 中頻度モーダル (6/6 - 100%完了) ✅
 - ✅ PageAccessoriesModal (2025-10-15)
 - ✅ ShortcutsModal (2025-10-15)
 - ✅ PageRenameModal (2025-10-16) - ケースC
@@ -10,9 +12,22 @@
 - ✅ DescendantsPageListModal (2025-10-16) - ケースC
 - ✅ PageDeleteModal (2025-10-16) - ケースA
 
-**今回完了**: 中頻度モーダル4つ (約20分)
+**時間**: 中頻度4モーダル完了に約20分
 - 3つケースC (最短経路): 各5分程度
 - 1つケースA: 約5分
+
+### 低頻度モーダル (6/38 - 16%完了) 🔄
+- ✅ DrawioModal (2025-10-16) - ケースC
+- ✅ HandsontableModal (2025-10-16) - ケースC + 複数ステータス対応
+- ✅ TemplateModal (2025-10-16) - ケースC + @growi/editor state
+- ✅ LinkEditModal (2025-10-16) - ケースC + @growi/editor state
+- ✅ TagEditModal (2025-10-16) - ケースC
+- ✅ ConflictDiffModal (2025-10-16) - ケースC
+
+**バグ修正 (2025-10-16)**:
+- LinkEditModal: 誤ったstate importパス修正 (`~/states` → `@growi/editor/dist/states`)
+- TemplateModal: 誤ったstate importパス修正 (`~/states` → `@growi/editor`)
+- HandsontableModal: 複数ステータス対応 (`isOpened || isOpendInEditor`)
 
 ---
 
@@ -31,16 +46,18 @@
 - ✅ PageDuplicateModal.tsx
 - ✅ DescendantsPageListModal.tsx
 
-### 低頻度使用 - 動的ロード確定 (38個)
-**次の優先候補**:
-- LinkEditModal.tsx
-- TagEditModal.tsx
-- ConflictDiffModal.tsx
-- PagePresentationModal.tsx
-- HandsontableModal.tsx
-- DrawioModal.tsx
+### 低頻度使用 - 動的ロード候補 (38個)
 
-**その他**:
+**完了 (6個)** ✅:
+- ✅ LinkEditModal.tsx
+- ✅ TagEditModal.tsx
+- ✅ ConflictDiffModal.tsx
+- ✅ HandsontableModal.tsx
+- ✅ DrawioModal.tsx
+- ✅ TemplateModal.tsx
+
+**次の優先候補 (32個)** 🔜:
+- PagePresentationModal.tsx
 - PageBulkExportSelectModal.tsx
 - CreateTemplateModal.tsx
 - SearchOptionModal.tsx
@@ -53,7 +70,6 @@
 - GrantedGroupsInheritanceSelectModal.tsx
 - SelectUserGroupModal.tsx
 - UserGroupModal.tsx
-- TemplateModal.tsx
 - DeleteAiAssistantModal.tsx
 - ShareScopeWarningModal.tsx
 - DeleteAttachmentModal.tsx
@@ -63,7 +79,7 @@
 - DeleteSlackBotSettingsModal.tsx
 - AiAssistantManagementModal.tsx
 - PageSelectModal.tsx
-- その他
+- その他 (約10個)
 
 ---
 
@@ -91,3 +107,20 @@ Modal/
 - 所要時間: 約5-10分/モーダル
 - Container-Presentation分離なし
 - 作業: ディレクトリ化 + dynamic.tsx/index.ts追加 + named export化
+
+---
+
+## 重要な注意事項
+
+### Cross-Package State Management
+一部のモーダル（特にエディター関連）は`@growi/editor`パッケージでstateを管理:
+- LinkEditModal: `@growi/editor/dist/states/modal/link-edit`
+- TemplateModal: `@growi/editor`
+- HandsontableModal (Editor用): `@growi/editor` (useHandsontableModalForEditorStatus)
+
+**注意**: `~/states`からインポートできると仮定しないこと！
+
+### 複数ステータス対応
+一部のモーダルは複数のステータスプロパティを持つ:
+- HandsontableModal: `isOpened || isOpendInEditor`
+- dynamic.tsxで両方をチェックする必要あり
