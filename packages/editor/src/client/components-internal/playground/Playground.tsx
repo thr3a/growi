@@ -44,30 +44,7 @@ export const Playground = (): JSX.Element => {
       autoFormatMarkdownTable: true,
       pasteMode: editorPaste,
     });
-  }, [setEditorSettings, editorKeymap, editorTheme, editorPaste]);
-
-  // initialize global socket
-  useEffect(() => {
-    const setUpSocket = async () => {
-      const { io } = await import('socket.io-client');
-      const socket = io(GLOBAL_SOCKET_NS, {
-        transports: ['websocket'],
-      });
-
-      // eslint-disable-next-line no-console
-      socket.on('error', (err) => {
-        console.error(err);
-      });
-      // eslint-disable-next-line no-console
-      socket.on('connect_error', (err) => {
-        console.error('Failed to connect with websocket.', err);
-      });
-
-      mutate(socket);
-    };
-
-    setUpSocket();
-  }, [mutate]);
+  }, [editorKeymap, editorTheme, editorPaste]);
 
   // set handler to save with shortcut key
   const saveHandler = useCallback(() => {
