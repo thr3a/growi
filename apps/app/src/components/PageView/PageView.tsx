@@ -1,4 +1,5 @@
-import { type JSX, useEffect, useMemo, useRef } from 'react';
+import { type JSX, memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { isUsersHomepage } from '@growi/core/dist/utils/page-path-utils';
 import { useSlidesByFrontmatter } from '@growi/presentation/dist/services';
 
@@ -261,7 +262,7 @@ export const PageView = memo((props: Props): JSX.Element => {
     pagePath,
     viewOptions,
     isSlide,
-    isIdenticalPathPage,
+    isIdenticalPathPage, page
   ]);
 
   // DEBUG: Log final render completion time
