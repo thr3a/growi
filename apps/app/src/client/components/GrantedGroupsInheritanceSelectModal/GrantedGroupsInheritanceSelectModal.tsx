@@ -79,7 +79,7 @@ const GrantedGroupsInheritanceSelectModalSubstance = (props: GrantedGroupsInheri
 /**
  * GrantedGroupsInheritanceSelectModal - Container component (lightweight, always rendered)
  */
-const GrantedGroupsInheritanceSelectModal = (): React.JSX.Element => {
+export const GrantedGroupsInheritanceSelectModal = (): React.JSX.Element => {
   const { isOpened, onCreateBtnClick } = useGrantedGroupsInheritanceSelectModalStatus();
   const { close: closeModal } = useGrantedGroupsInheritanceSelectModalActions();
 
@@ -97,5 +97,3 @@ const GrantedGroupsInheritanceSelectModal = (): React.JSX.Element => {
     </Modal>
   );
 };
-
-export default GrantedGroupsInheritanceSelectModal;

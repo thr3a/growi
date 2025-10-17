@@ -16,14 +16,14 @@ import { usePresentationModalActions, usePresentationModalStatus } from '~/state
 import { useNextThemes } from '~/stores-universal/use-next-themes';
 import { usePresentationViewOptions } from '~/stores/renderer';
 
-import { RendererErrorMessage } from './Common/RendererErrorMessage';
+import { RendererErrorMessage } from '../Common/RendererErrorMessage';
 
 import styles from './PagePresentationModal.module.scss';
 
 const moduleClass = styles['grw-presentation-modal'] ?? '';
 
 
-const Presentation = dynamic<PresentationProps>(() => import('./Presentation/Presentation').then(mod => mod.Presentation), {
+const Presentation = dynamic<PresentationProps>(() => import('../Presentation/Presentation').then(mod => mod.Presentation), {
   ssr: false,
   loading: () => (
     <LoadingSpinner className="text-muted fs-1" />
@@ -103,7 +103,7 @@ const PagePresentationModalSubstance: React.FC = () => {
 /**
  * PagePresentationModal - Container component (lightweight, always rendered)
  */
-const PagePresentationModal = (): React.JSX.Element => {
+export const PagePresentationModal = (): React.JSX.Element => {
   const presentationModalData = usePresentationModalStatus();
   const { close: closePresentationModal } = usePresentationModalActions();
 
@@ -129,5 +129,3 @@ const PagePresentationModal = (): React.JSX.Element => {
     </Modal>
   );
 };
-
-export default PagePresentationModal;
