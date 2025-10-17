@@ -1,4 +1,4 @@
-import { type JSX, useMemo } from 'react';
+import { type JSX, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import type { IPagePopulatedToShowRevision } from '@growi/core';
 import { useSlidesByFrontmatter } from '@growi/presentation/dist/services';
@@ -90,7 +90,7 @@ export const ShareLinkPageView = (props: Props): JSX.Element => {
 
   const footerContents = !isNotFound ? <PageContentFooter page={page} /> : null;
 
-  const Contents = () => {
+  const Contents = useCallback(() => {
     if (isNotFound || page.revision == null) {
       return <></>;
     }
@@ -117,7 +117,17 @@ export const ShareLinkPageView = (props: Props): JSX.Element => {
     ) : (
       <RevisionRenderer rendererOptions={rendererOptions} markdown={markdown} />
     );
-  };
+  }, [
+    isExpired,
+    isSlide,
+    pagePath,
+    viewOptions,
+    page?.revision?.body,
+    rendererConfig,
+    page?.revision,
+    isNotFound,
+    isSlide?.marp,
+  ]);
 
   return (
     <PageViewLayout

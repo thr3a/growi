@@ -1,4 +1,11 @@
-import React, { type JSX, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  type JSX,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import dynamic from 'next/dynamic';
 import type { IPagePopulatedToShowRevision } from '@growi/core';
 import { isUsersHomepage } from '@growi/core/dist/utils/page-path-utils';
@@ -190,7 +197,7 @@ export const PageView = (props: Props): JSX.Element => {
       </>
     ) : null;
 
-  const Contents = () => {
+  const Contents = useCallback(() => {
     if (isNotFound || page?.revision == null) {
       return <NotFoundPage path={pagePath} />;
     }
@@ -225,7 +232,16 @@ export const PageView = (props: Props): JSX.Element => {
         </div>
       </>
     );
-  };
+  }, [
+    isNotFound,
+    page?.revision,
+    page?._id,
+    rendererConfig,
+    pagePath,
+    viewOptions,
+    isSlide,
+    isIdenticalPathPage,
+  ]);
 
   return (
     <PageViewLayout
