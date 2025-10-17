@@ -202,7 +202,7 @@ import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 |--------|------|----------|
 | **ケースA** | Container-Presentation分離なし | 単一のコンポーネントのみ存在 |
 | **ケースB** | 分離済み、Container無`<Modal>` | `Substance`があるが、Containerに`<Modal>`なし |
-| **ケースC** | 分離済み、Container有`<Modal>` | Containerが`<Modal>`外枠を持つ |
+| **ケースC** | 分離済み、Container有`<Modal>` | Containerが`<Modal>`外枠を持つ ⭐最短経路 |
 
 ---
 
@@ -467,7 +467,7 @@ export const ShortcutsModalLazyLoaded = (): JSX.Element => {
     status?.isOpened ?? false,
   );
 
-  return ShortcutsModal ? <ShortcutsModal /> : <></>;
+  return ShortcutsModal ? <ShortcutsModal /> : <></>
 };
 ```
 
@@ -486,6 +486,47 @@ import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 ```
 
 **作業時間**: 約5分（ケースCは非常に高速）
+
+---
+
+## 最適化判断基準
+
+### ✅ 最適化すべきモーダル
+
+1. **モーダル自身の利用頻度が低い**（親ページの頻度ではない）
+2. **ファイルサイズが50行以上**（100行以上は強く推奨）
+3. **レンダリングコストが高い**
+
+### 最適化判断フローチャート
+
+```
+1. モーダルは常にレンダリングされるか？
+   YES → 次へ
+   NO → 最適化不要
+
+2. モーダル自身の利用頻度は？
+   高頻度 → スキップ（初期ロード維持）
+   中〜低頻度 → 次へ
+
+3. ファイルサイズは？
+   50行未満 → 効果小、要検討
+   50行以上 → V3最適化推奨
+   100行以上 → V3最適化強く推奨
+```
+
+### 重要な注意点
+
+**親の遅延ロード ≠ 子の遅延ロード**:
+```
+BasicLayout (常にレンダリング)
+  ├─ HotkeysManager (dynamic()) ← 遅延ロード
+  │    └─ ShowShortcutsModal (静的import) ← ❌ 遅延ロードされない！
+  │
+  ├─ SearchPage (dynamic()) ← 遅延ロード
+  │    └─ SearchOptionModal (静的import) ← ❌ 遅延ロードされない！
+```
+
+**結論**: 親がdynamic()でも、子モーダルは親と一緒にダウンロードされる
 
 ---
 
@@ -509,7 +550,7 @@ import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 - [ ] **Container-Presentation効果**: モーダル閉じている時、Substanceがレンダリングされない
 - [ ] TypeScriptエラーが発生しない
 
-### デグレチェック項目 🚨 NEW
+### デグレチェック項目 🚨
 - [ ] **モーダルが開くか**: トリガーボタンを押してモーダルが正しく開くことを確認
 - [ ] **State import パス**: `@growi/editor`パッケージのstateを使用していないか確認
   - LinkEditModal: `@growi/editor/dist/states/modal/link-edit`
@@ -522,7 +563,7 @@ import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 
 ---
 
-## デバッグガイド 🔧 NEW
+## デバッグガイド 🔧
 
 ### モーダルが開かない場合のチェックリスト
 
@@ -592,7 +633,7 @@ export const MyModal = () => { ... };
 - **Substance**: `isOpened && <Substance />`で条件付きレンダリング
 - この設計により、`<Modal isOpen={false}>`が正しくfadeout transitionを実行できる
 
-### Cross-Package State Management 🚨 NEW
+### Cross-Package State Management 🚨
 エディター関連のモーダルは`@growi/editor`パッケージでstateを管理している場合があります：
 - `~/states`からインポートできると仮定しないこと
 - モーダル本体のimport元を必ず確認すること
@@ -606,32 +647,6 @@ import { useLinkEditModalStatus } from '@growi/editor/dist/states/modal/link-edi
 // dynamic.tsx (同じimport元を使用)
 import { useLinkEditModalStatus } from '@growi/editor/dist/states/modal/link-edit';
 ```
-
----
-
-## 他のモーダルへの適用優先度
-
-### 高優先度（低頻度使用モーダル） - 残り32個
-1. PagePresentationModal
-2. PageBulkExportSelectModal
-3. CreateTemplateModal
-4. SearchOptionModal
-5. ImageCropModal
-6. 管理者専用モーダル群
-
-### 中優先度（中頻度使用モーダル） - 完了✅
-- PageAccessoriesModal ✅
-- ShortcutsModal ✅
-- PageDuplicateModal ✅
-- PageRenameModal ✅
-- PageDeleteModal ✅
-- DescendantsPageListModal ✅
-
-### 低優先度（高頻度使用モーダル） - 動的ロード非推奨
-- PageCreateModal（使用頻度が非常に高いため保留）
-- SearchModal（使用頻度が非常に高いため保留）
-
-各モーダルで `importKey` を一意にし、適切な状態管理フックを使用することで同様の効果を得られる。
 
 ---
 
