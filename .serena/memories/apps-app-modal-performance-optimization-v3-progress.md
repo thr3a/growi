@@ -2,11 +2,9 @@
 
 ## 📊 進捗状況サマリー (2025-10-17更新)
 
-**実装完了**: 25/46モーダル (54%) 🎉
+**実装完了**: 25モーダル + 4 PageAlerts = 29/48 (60%) 🎉
 
-**残り作業**: 
-- PageAlerts最適化: 4個
-- **合計目標**: 29/48 = **60%完了**（クラスコンポーネント2個、非モーダル、admin専用等を除く）
+**V3最適化完了！** 目標の60%達成 ✨
 
 ---
 
@@ -27,30 +25,6 @@
 - **Admin画面**: 管理画面、低頻度利用 → 配下のモーダルは最適化不要
   - ImageCropModal, DeleteSlackBotSettingsModal, PluginDeleteModal は除外
 - **理由**: 親ページ自体がdynamic()かつ低頻度なら、子モーダルの最適化効果は限定的
-
-### 遅延ロードの階層構造
-
-```
-BasicLayout (常にレンダリング)
-  ├─ HotkeysManager (dynamic()) ← 遅延ロード
-  │    └─ ShowShortcutsModal ← ❌ 実体はモーダルではない（ホットキートリガーのみ）
-  │
-  ├─ SearchPage (dynamic()) ← 遅延ロード（中頻度）
-  │    └─ SearchOptionModal (静的import) ← ✅ 最適化対象（低頻度モーダル）
-  │
-  ├─ Me/PersonalSettings (dynamic()) ← 遅延ロード（低頻度）
-  │    ├─ AssociateModal ← ❌ 親自体が低頻度、最適化不要
-  │    └─ DisassociateModal ← ❌ 親自体が低頻度、最適化不要
-  │
-  └─ Admin/* (dynamic()) ← 遅延ロード（低頻度）
-       ├─ ImageCropModal ← ❌ 親自体が低頻度、最適化不要
-       ├─ DeleteSlackBotSettingsModal ← ❌ 親自体が低頻度、最適化不要
-       └─ PluginDeleteModal ← ❌ 親自体が低頻度、最適化不要
-```
-
-**結論**: 
-- 親がdynamic()でも、子モーダルは親と一緒にダウンロードされる → モーダル自身の頻度で判断
-- **ただし親自体が低頻度（Me画面、Admin画面など）なら、子の最適化は不要**
 
 ---
 
@@ -91,43 +65,67 @@ BasicLayout (常にレンダリング)
 - ✅ CreateTemplateModal (2025-10-17) - ケースB
 - ✅ DeleteCommentModal (2025-10-17) - ケースB
 
-**Session 3完了 (2個)** ✅:
+**Session 3 & 4完了 (2個)** ✅:
 - ✅ SearchOptionModal (2025-10-17) - ケースA, SearchPage配下
 - ✅ DeleteAiAssistantModal (2025-10-17) - ケースC, AiAssistantSidebar配下
 
 ---
 
-## 🔄 残りの最適化対象
+## ✅ 完了済みPageAlerts (4個) 🎉
 
-### 🔵 Session 4: PageAlerts最適化（4個）
+**Session 5完了 (2025-10-17)** ✅:
 
-PageAlertsは`BasicLayout → PageView → PageAlerts`経由で全ページ常時レンダリング。
-既にNext.js `dynamic()`使用だが、getLayoutパターンでは初期ロードされる問題。
+全てPageAlerts.tsxで`useLazyLoader`を使用した動的ロード実装に変更。
+Next.js `dynamic()`から`useLazyLoader`への移行により、表示条件に基づいた真の遅延ロードを実現。
 
-1. **TrashPageAlert**
-   - **表示条件**: `useIsTrashPage()` hook
+1. **TrashPageAlert** (171行)
+   - **表示条件**: `isTrashPage` hook
    - **頻度**: ゴミ箱ページのみ（極めて低頻度）
-   - **最適化**: `useLazyLoader('trash-page-alert', ..., isTrashPage)`
+   - **実装**: `useLazyLoader('trash-page-alert', ..., isTrashPage)`
 
-2. **FixPageGrantAlert** ⭐ 最重要
-   - **サイズ**: 412行（大規模）
-   - **特徴**: 内部にModalコンポーネント含む
-   - **表示条件**: 権限修正が必要な時（低頻度）
-   - **効果**: 大きなバンドル削減
-
-3. **PageRedirectedAlert**
-   - **表示条件**: `useRedirectFrom() != null`
+2. **PageRedirectedAlert** (60行)
+   - **表示条件**: `redirectFrom != null && redirectFrom !== ''`
    - **頻度**: リダイレクト時のみ（低頻度）
+   - **実装**: `useLazyLoader('page-redirected-alert', ..., redirectFrom != null && redirectFrom !== '')`
 
-4. **FullTextSearchNotCoverAlert**
+3. **FullTextSearchNotCoverAlert** (40行)
    - **表示条件**: `markdownLength > elasticsearchMaxBodyLengthToIndex`
    - **頻度**: 非常に長いページのみ（低頻度）
+   - **実装**: `useLazyLoader('full-text-search-not-cover-alert', ..., shouldShowFullTextSearchAlert)`
 
-**予想時間**: 約40-60分
+4. **FixPageGrantAlert** ⭐ 最重要 (412行)
+   - **サイズ**: 412行（大規模）
+   - **特徴**: 内部にModalコンポーネント含む
+   - **表示条件**: `!dataIsGrantNormalized.isGrantNormalized` (権限修正が必要な時)
+   - **頻度**: 低頻度
+   - **実装**: `useLazyLoader('fix-page-grant-alert', ..., shouldShowFixPageGrantAlert)`
+   - **効果**: 最大のバンドル削減効果
+
+### PageAlerts最適化の技術的詳細
+
+**Before**: Next.js `dynamic()` を使用
+```tsx
+const FixPageGrantAlert = dynamic(
+  () => import('./FixPageGrantAlert').then((mod) => mod.FixPageGrantAlert),
+  { ssr: false },
+);
+```
+- **問題点**: getLayoutパターンでは初期ロード時にすべてダウンロードされる
+
+**After**: `useLazyLoader` を使用
+```tsx
+const FixPageGrantAlert = useLazyLoader<Record<string, unknown>>(
+  'fix-page-grant-alert',
+  () => import('./FixPageGrantAlert').then(mod => ({ default: mod.FixPageGrantAlert })),
+  shouldShowFixPageGrantAlert, // 表示条件に基づく
+);
+```
+- **解決**: 表示条件が真になった時のみダウンロード
+- **効果**: 全ページの初期ロード時の不要なレンダリングとダウンロードを削減
 
 ---
 
-## ⏭️ 最適化不要/スキップ（21個）
+## ⏭️ 最適化不要/スキップ（19個）
 
 ### 非モーダルコンポーネント（1個）
 - ❌ **ShowShortcutsModal** (35行) - 実体はモーダルではなくホットキートリガーのみ
@@ -170,61 +168,76 @@ PageAlertsは`BasicLayout → PageView → PageAlerts`経由で全ページ常�
 ## 📈 最適化進捗チャート
 
 ```
-完了済み: ██████████████████████████████████████████████████████  25/46 (54%)
-残り:     
-スキップ:  ████████                                                8/46 (17%)
-対象外:   ██                                                      2/46 (4%)
-不要:     ███████████                                            11/46 (24%)
+完了済み: ████████████████████████████████████████████████████████████  29/48 (60%) 🎉
+スキップ:  ████████                                                      8/48 (17%)
+対象外:   ██                                                            2/48 (4%)
+不要:     ███████████                                                  11/48 (23%)
 ```
 
-**次のマイルストーン**:
-- PageAlerts完了後: 25モーダル + 4 PageAlerts = **29/48 (60%)**
+**V3最適化完了！** 🎉
 
 ---
 
-## 🎯 次のアクション
+## 🎉 V3最適化完了サマリー
 
-### 即座に開始可能: Session 4 (PageAlerts最適化)
+### 達成内容
+- **モーダル最適化**: 25個
+- **PageAlerts最適化**: 4個
+- **合計**: 29/48 (60%)
 
-**対象**:
-1. TrashPageAlert - ゴミ箱ページ専用
-2. FixPageGrantAlert - 412行、最重要
-3. PageRedirectedAlert - リダイレクト時のみ
-4. FullTextSearchNotCoverAlert - 長文ページのみ
+### 主要成果
 
-**所要時間**: 約40-60分
+1. **useLazyLoader実装**: 汎用的な動的ローディングフック
+   - グローバルキャッシュによる重複実行防止
+   - 表示条件に基づく真の遅延ロード
+   - テストカバレッジ完備
 
-**完了後の効果**:
-- 全ページの初期ロード時の不要なレンダリング削減
-- 特にFixPageGrantAlertの大規模バンドル削減
-- 進捗: 25 → 29/48 (60%)
+2. **3つのケース別最適化パターン確立**:
+   - ケースA: 単一ファイル → ディレクトリ構造化
+   - ケースB: Container-Presentation分離 (Modal外枠なし) → リファクタリング
+   - ケースC: Container-Presentation分離 (Modal外枠あり) → 最短経路 ⭐
 
-**次のステップ**: V3最適化完了 🎉
+3. **PageAlerts最適化**: Next.js dynamic()からuseLazyLoaderへの移行
+   - 全ページの初期ロード削減
+   - FixPageGrantAlert (412行) の大規模バンドル削減
 
----
+### パフォーマンス効果
 
-## 📝 再評価の記録 (2025-10-17)
+- **初期バンドルサイズ削減**: 29コンポーネント分の遅延ロード
+- **初期レンダリングコスト削減**: Container-Presentation分離による無駄なレンダリング回避
+- **メモリ効率向上**: グローバルキャッシュによる重複ロード防止
 
-### 除外判断
-1. **ShowShortcutsModal**: 実体はモーダルコンポーネントではなく、ホットキートリガーのみ（36行、空のJSX返す）
-2. **AssociateModal, DisassociateModal**: Me画面（低頻度利用）内のモーダルのため、最適化効果限定的
-3. **ImageCropModal, DeleteSlackBotSettingsModal, PluginDeleteModal**: Admin画面（低頻度利用）内のモーダルのため、最適化効果限定的
+### 技術的成果
 
-### 判断基準の明確化
-- **親ページ自体が低頻度**（Me画面、Admin画面など） → 子モーダルの最適化不要
-  - 例: Me/PersonalSettings（低頻度） → AssociateModal/DisassociateModal（最適化不要）
-  - 例: Admin/Customize（低頻度） → ImageCropModal（最適化不要）
-- **親ページが中頻度以上** → 子モーダルの頻度で判断
-  - 例: SearchPage（中頻度） → SearchOptionModal（低頻度、最適化**必要**）
-- **親ページがBasicLayout直下のdynamic()** → 親の頻度次第
-  - 例: AiAssistantSidebar（BasicLayoutから直接） → DeleteAiAssistantModal（最適化必要）
+- **Named Export標準化**: コード可読性とメンテナンス性向上
+- **型安全性保持**: ジェネリクスによる完全な型サポート
+- **開発体験向上**: 既存のインポートパスは変更不要
 
 ---
 
-## 📝 セッション完了時の更新手順
+## 📝 今後の展開（オプション）
 
-各セッション完了時に以下を更新:
-1. ✅ 完了済みリストに追加
-2. 🔄 残りリストから削除
-3. 📊 進捗チャート更新
-4. 🎯 次のアクション更新
+### 残りの19個の評価
+
+現在スキップ・対象外としている19個について、将来的に再評価可能：
+
+1. **Me画面モーダル** (2個): Me画面自体の使用頻度が上がれば最適化検討
+2. **Admin画面モーダル** (15個): 管理機能の使用パターン変化で再評価
+3. **クラスコンポーネント** (2個): Function Component化後に最適化可能
+
+### さらなる最適化の可能性
+
+- 高頻度モーダル (SearchModal, PageCreateModal) のコード分割検討
+- 他のレイアウトでの同様パターン適用
+- ページトランジションの最適化
+
+---
+
+## 🏆 完了日: 2025-10-17
+
+**V3最適化プロジェクト完了！** 🎉
+
+- モーダル最適化: 25個 ✅
+- PageAlerts最適化: 4個 ✅
+- 合計達成率: 60% (29/48) ✅
+- 目標達成！ 🎊
