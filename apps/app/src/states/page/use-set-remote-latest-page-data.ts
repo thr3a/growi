@@ -1,6 +1,6 @@
+import { useCallback } from 'react';
 import type { IUserHasId } from '@growi/core/dist/interfaces';
 import { useSetAtom } from 'jotai/react';
-import { useCallback } from 'react';
 
 import {
   remoteRevisionBodyAtom,

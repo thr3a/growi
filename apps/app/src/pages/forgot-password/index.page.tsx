@@ -1,24 +1,28 @@
 import React from 'react';
-
-import type { NextPage, GetServerSideProps, GetServerSidePropsContext } from 'next';
+import type {
+  GetServerSideProps,
+  GetServerSidePropsContext,
+  NextPage,
+} from 'next';
 import dynamic from 'next/dynamic';
 
 import { RawLayout } from '~/components/Layout/RawLayout';
 import type { CrowiRequest } from '~/interfaces/crowi-request';
 
-import type {
-  CommonEachProps,
-  CommonInitialProps,
-} from '../common-props';
+import type { CommonEachProps, CommonInitialProps } from '../common-props';
 import {
-  getServerSideCommonEachProps, getServerSideCommonInitialProps, getServerSideI18nProps,
+  getServerSideCommonEachProps,
+  getServerSideCommonInitialProps,
+  getServerSideI18nProps,
 } from '../common-props';
 import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
-
 import type { ServerConfigurationProps } from './types';
 import { useHydrateServerConfigurationAtoms } from './use-hydrate-server-configurations';
 
-const PasswordResetRequestForm = dynamic(() => import('~/client/components/PasswordResetRequestForm'), { ssr: false });
+const PasswordResetRequestForm = dynamic(
+  () => import('~/client/components/PasswordResetRequestForm'),
+  { ssr: false },
+);
 
 type Props = CommonInitialProps & CommonEachProps & ServerConfigurationProps;
 
@@ -44,7 +48,9 @@ const ForgotPasswordPage: NextPage<Props> = (props: Props) => {
   );
 };
 
-const getServerSideConfigurationProps: GetServerSideProps<ServerConfigurationProps> = async(context: GetServerSidePropsContext) => {
+const getServerSideConfigurationProps: GetServerSideProps<
+  ServerConfigurationProps
+> = async (context: GetServerSidePropsContext) => {
   const req: CrowiRequest = context.req as CrowiRequest;
   const { crowi } = req;
   const { mailService } = crowi;
@@ -58,7 +64,9 @@ const getServerSideConfigurationProps: GetServerSideProps<ServerConfigurationPro
   };
 };
 
-export const getServerSideProps: GetServerSideProps = async(context: GetServerSidePropsContext) => {
+export const getServerSideProps: GetServerSideProps = async (
+  context: GetServerSidePropsContext,
+) => {
   const [
     commonInitialResult,
     commonEachResult,
@@ -71,9 +79,13 @@ export const getServerSideProps: GetServerSideProps = async(context: GetServerSi
     getServerSideI18nProps(context, ['translation', 'commons']),
   ]);
 
-  return mergeGetServerSidePropsResults(commonInitialResult,
-    mergeGetServerSidePropsResults(commonEachResult,
-      mergeGetServerSidePropsResults(serverConfigResult, i18nPropsResult)));
+  return mergeGetServerSidePropsResults(
+    commonInitialResult,
+    mergeGetServerSidePropsResults(
+      commonEachResult,
+      mergeGetServerSidePropsResults(serverConfigResult, i18nPropsResult),
+    ),
+  );
 };
 
 export default ForgotPasswordPage;

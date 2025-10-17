@@ -2,7 +2,6 @@ import { DevidedPagePath } from '@growi/core/dist/models';
 
 import { useAppTitle, useCustomTitleTemplate } from '~/states/global';
 
-
 /**
  * Generate whole title string for the specified title
  * @param props

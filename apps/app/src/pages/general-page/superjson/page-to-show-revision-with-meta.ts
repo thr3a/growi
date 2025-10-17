@@ -3,20 +3,29 @@ import superjson from 'superjson';
 
 import type { IPageToShowRevisionWithMeta } from '../types';
 
-type IPageToShowRevisionWithMetaSerialized = IDataWithRequiredMeta<string, string>;
+type IPageToShowRevisionWithMetaSerialized = IDataWithRequiredMeta<
+  string,
+  string
+>;
 
 let isRegistered = false;
 
 export const registerPageToShowRevisionWithMeta = (): void => {
   if (isRegistered) return;
 
-  superjson.registerCustom<IPageToShowRevisionWithMeta, IPageToShowRevisionWithMetaSerialized>(
+  superjson.registerCustom<
+    IPageToShowRevisionWithMeta,
+    IPageToShowRevisionWithMetaSerialized
+  >(
     {
       isApplicable: (v): v is IPageToShowRevisionWithMeta => {
         const data = v?.data;
-        return data != null
-          && data.toObject != null
-          && data.revision != null && typeof data.revision === 'object';
+        return (
+          data != null &&
+          data.toObject != null &&
+          data.revision != null &&
+          typeof data.revision === 'object'
+        );
       },
       serialize: (v) => {
         return {

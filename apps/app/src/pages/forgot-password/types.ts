@@ -1,5 +1,5 @@
 export type ServerConfigurationProps = {
   serverConfig: {
-    isMailerSetup: boolean,
-  },
-}
+    isMailerSetup: boolean;
+  };
+};

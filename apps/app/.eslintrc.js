@@ -2,12 +2,8 @@
  * @type {import('eslint').Linter.Config}
  */
 module.exports = {
-  extends: [
-    'next/core-web-vitals',
-    'weseek/react',
-  ],
-  plugins: [
-  ],
+  extends: ['next/core-web-vitals', 'weseek/react'],
+  plugins: [],
   ignorePatterns: [
     'dist/**',
     '**/dist/**',
@@ -53,6 +49,7 @@ module.exports = {
     'src/components/**',
     'src/services/**',
     'src/states/**',
+    'src/pages/**',
   ],
   settings: {
     // resolve path aliases by eslint-import-resolver-typescript

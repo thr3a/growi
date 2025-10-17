@@ -1,6 +1,6 @@
+import React, { type JSX, useCallback, useMemo, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { useTranslation } from 'next-i18next';
-import React, { type JSX, useCallback, useMemo, useRef, useState } from 'react';
 
 import { NotAvailableForGuest } from '~/client/components/NotAvailableForGuest';
 import { NotAvailableForReadOnlyUser } from '~/client/components/NotAvailableForReadOnlyUser';
@@ -20,12 +20,13 @@ import {
 
 import { OperateAllControl } from './OperateAllControl';
 import SearchControl from './SearchControl';
-import styles from './SearchPage.module.scss';
 import type { IReturnSelectedPageIds } from './SearchPageBase';
 import {
   SearchPageBase,
   usePageDeleteModalForBulkDeletion,
 } from './SearchPageBase';
+
+import styles from './SearchPage.module.scss';
 
 // TODO: replace with "customize:showPageLimitationS"
 const INITIAL_PAGIONG_SIZE = 20;

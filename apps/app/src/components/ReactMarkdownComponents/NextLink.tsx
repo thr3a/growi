@@ -1,7 +1,7 @@
-import { pagePathUtils } from '@growi/core/dist/utils';
+import type { JSX } from 'react';
 import type { LinkProps } from 'next/link';
 import Link from 'next/link';
-import type { JSX } from 'react';
+import { pagePathUtils } from '@growi/core/dist/utils';
 
 import { useSiteUrl } from '~/states/global';
 import loggerFactory from '~/utils/logger';

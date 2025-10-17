@@ -9,12 +9,15 @@
  * @vitest-environment happy-dom
  */
 
+import type { GetServerSidePropsContext } from 'next';
 import { renderHook } from '@testing-library/react';
 import Cookies from 'js-cookie';
-import { type GetServerSidePropsContext } from 'next';
 import { mock } from 'vitest-mock-extended';
 
-import { useNextjsRoutingPageRegister, detectNextjsRoutingType } from './nextjs-routing-utils';
+import {
+  detectNextjsRoutingType,
+  useNextjsRoutingPageRegister,
+} from './nextjs-routing-utils';
 
 // Mock js-cookie
 vi.mock('js-cookie', () => ({
@@ -77,7 +80,9 @@ describe('nextjs-routing-utils', () => {
     it('should call useEffect cleanup when component unmounts', () => {
       const testPage = '/test-page';
 
-      const { unmount } = renderHook(() => useNextjsRoutingPageRegister(testPage));
+      const { unmount } = renderHook(() =>
+        useNextjsRoutingPageRegister(testPage),
+      );
 
       expect(mockCookies.set).toHaveBeenCalledWith(
         'nextjsRoutingPage',
@@ -93,7 +98,8 @@ describe('nextjs-routing-utils', () => {
 
     it('should handle rapid prop changes correctly', () => {
       const { rerender } = renderHook(
-        ({ page }: { page: string | null }) => useNextjsRoutingPageRegister(page ?? undefined),
+        ({ page }: { page: string | null }) =>
+          useNextjsRoutingPageRegister(page ?? undefined),
         { initialProps: { page: '/page1' as string | null } },
       );
 
@@ -125,8 +131,8 @@ describe('nextjs-routing-utils', () => {
   describe('detectNextjsRoutingType', () => {
     // Type-safe helper function to create mock contexts using vitest-mock-extended
     const createMockContext = (
-        hasNextjsHeader: boolean,
-        cookieValue?: string,
+      hasNextjsHeader: boolean,
+      cookieValue?: string,
     ): GetServerSidePropsContext => {
       const mockReq = mock<GetServerSidePropsContext['req']>();
       const mockRes = mock<GetServerSidePropsContext['res']>();
@@ -148,15 +154,19 @@ describe('nextjs-routing-utils', () => {
 
     // Helper function for special edge cases requiring type coercion
     const createMockContextWithSpecialValues = (
-        headerValue: string | undefined,
-        cookieValue: string | null,
+      headerValue: string | undefined,
+      cookieValue: string | null,
     ): GetServerSidePropsContext => {
       const mockReq = mock<GetServerSidePropsContext['req']>();
       const mockRes = mock<GetServerSidePropsContext['res']>();
 
       // For edge cases where we need to simulate invalid types that can occur at runtime
-      mockReq.headers = headerValue !== undefined ? { 'x-nextjs-data': headerValue } : {};
-      mockReq.cookies = cookieValue !== null ? { nextjsRoutingPage: cookieValue as string } : {};
+      mockReq.headers =
+        headerValue !== undefined ? { 'x-nextjs-data': headerValue } : {};
+      mockReq.cookies =
+        cookieValue !== null
+          ? { nextjsRoutingPage: cookieValue as string }
+          : {};
 
       return {
         req: mockReq,
@@ -215,7 +225,9 @@ describe('nextjs-routing-utils', () => {
     it('should handle x-nextjs-data header with different truthy values', () => {
       const context = createMockContext(true, '/test-page');
       // Override the header value to test different truthy values
-      const mockReq = context.req as typeof context.req & { headers: Record<string, string> };
+      const mockReq = context.req as typeof context.req & {
+        headers: Record<string, string>;
+      };
       mockReq.headers = { 'x-nextjs-data': 'some-value' };
 
       const result = detectNextjsRoutingType(context, '/test-page');
@@ -254,7 +266,10 @@ describe('nextjs-routing-utils', () => {
 
     it('should handle undefined x-nextjs-data header value', () => {
       // Using helper function for edge case where header value is undefined
-      const context = createMockContextWithSpecialValues(undefined, '/test-page');
+      const context = createMockContextWithSpecialValues(
+        undefined,
+        '/test-page',
+      );
 
       const result = detectNextjsRoutingType(context, '/test-page');
 

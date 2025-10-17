@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { type JSX, memo, useCallback } from 'react';
+import Link from 'next/link';
 import urljoin from 'url-join';
 
 import type LinkedPagePath from '~/models/linked-page-path';

@@ -1,5 +1,5 @@
-import { useAtomValue } from 'jotai';
 import type { JSX } from 'react';
+import { useAtomValue } from 'jotai';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentPageData } from '~/states/page';

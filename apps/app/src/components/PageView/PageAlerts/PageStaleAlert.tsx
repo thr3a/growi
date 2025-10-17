@@ -1,7 +1,7 @@
+import type { JSX } from 'react';
 import { isIPageInfoForEntity } from '@growi/core';
 import { useAtomValue } from 'jotai';
 import { useTranslation } from 'next-i18next';
-import type { JSX } from 'react';
 
 import { useCurrentPageData } from '~/states/page';
 import { isEnabledStaleNotificationAtom } from '~/states/server-configurations';

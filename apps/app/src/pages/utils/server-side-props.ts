@@ -3,8 +3,8 @@ import deepMerge from 'ts-deepmerge';
 
 // Type-safe GetServerSidePropsResult merger for two results
 export function mergeGetServerSidePropsResults<T1, T2>(
-    result1: GetServerSidePropsResult<T1>,
-    result2: GetServerSidePropsResult<T2>,
+  result1: GetServerSidePropsResult<T1>,
+  result2: GetServerSidePropsResult<T2>,
 ): GetServerSidePropsResult<T1 & T2> {
   // Check for redirect responses (return the first one found)
   if ('redirect' in result1) return result1;

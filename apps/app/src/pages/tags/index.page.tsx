@@ -1,12 +1,15 @@
-import type { ReactNode, JSX } from 'react';
-import React, { useState, useCallback } from 'react';
-
-import { isPermalink, isUserPage, isUsersTopPage } from '@growi/core/dist/utils/page-path-utils';
-import { LoadingSpinner } from '@growi/ui/dist/components';
+import type { JSX, ReactNode } from 'react';
+import React, { useCallback, useState } from 'react';
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
-import { useTranslation } from 'next-i18next';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
+import {
+  isPermalink,
+  isUserPage,
+  isUsersTopPage,
+} from '@growi/core/dist/utils/page-path-utils';
+import { LoadingSpinner } from '@growi/ui/dist/components';
+import { useTranslation } from 'next-i18next';
 
 import { BasicLayout } from '~/components/Layout/BasicLayout';
 import { GroundGlassBar } from '~/components/Navbar/GroundGlassBar';
@@ -14,25 +17,31 @@ import type { CrowiRequest } from '~/interfaces/crowi-request';
 import type { IDataTagCount } from '~/interfaces/tag';
 import { useSWRxTagsList } from '~/stores/tag';
 
-
 import type { NextPageWithLayout } from '../_app.page';
 import type { BasicLayoutConfigurationProps } from '../basic-layout-page';
 import { getServerSideBasicLayoutProps } from '../basic-layout-page';
 import { useHydrateBasicLayoutConfigurationAtoms } from '../basic-layout-page/hydrate';
 import type { CommonEachProps, CommonInitialProps } from '../common-props';
-import { getServerSideCommonEachProps, getServerSideCommonInitialProps, getServerSideI18nProps } from '../common-props';
+import {
+  getServerSideCommonEachProps,
+  getServerSideCommonInitialProps,
+  getServerSideI18nProps,
+} from '../common-props';
 import { useCustomTitle } from '../utils/page-title-customization';
 import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 
-
 const PAGING_LIMIT = 10;
 
+const TagList = dynamic(() => import('~/client/components/TagList'), {
+  ssr: false,
+});
+const TagCloudBox = dynamic(() => import('~/client/components/TagCloudBox'), {
+  ssr: false,
+});
 
-const TagList = dynamic(() => import('~/client/components/TagList'), { ssr: false });
-const TagCloudBox = dynamic(() => import('~/client/components/TagCloudBox'), { ssr: false });
-
-
-type Props = CommonInitialProps & CommonEachProps & BasicLayoutConfigurationProps;
+type Props = CommonInitialProps &
+  CommonEachProps &
+  BasicLayoutConfigurationProps;
 
 const TagPage: NextPageWithLayout<Props> = (props: Props) => {
   const { t } = useTranslation();
@@ -67,32 +76,26 @@ const TagPage: NextPageWithLayout<Props> = (props: Props) => {
 
         <div className="main ps-sidebar" data-testid="tags-page">
           <div className="container-lg wide-gutter-x-lg">
-
-            <h2 className="sticky-top py-1">
-              {`${t('Tags')}(${totalCount})`}
-            </h2>
+            <h2 className="sticky-top py-1">{`${t('Tags')}(${totalCount})`}</h2>
 
             <div className="px-3 mb-5 text-center">
               <TagCloudBox tags={tagData} minSize={20} />
             </div>
-            { isLoading
-              ? (
-                <div className="text-muted text-center">
-                  <LoadingSpinner className="mt-3 fs-3" />
-                </div>
-              )
-              : (
-                <div data-testid="grw-tags-list">
-                  <TagList
-                    tagData={tagData}
-                    totalTags={totalCount}
-                    activePage={activePage}
-                    onChangePage={setOffsetByPageNumber}
-                    pagingLimit={PAGING_LIMIT}
-                  />
-                </div>
-              )
-            }
+            {isLoading ? (
+              <div className="text-muted text-center">
+                <LoadingSpinner className="mt-3 fs-3" />
+              </div>
+            ) : (
+              <div data-testid="grw-tags-list">
+                <TagList
+                  tagData={tagData}
+                  totalTags={totalCount}
+                  activePage={activePage}
+                  onChangePage={setOffsetByPageNumber}
+                  pagingLimit={PAGING_LIMIT}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -101,30 +104,36 @@ const TagPage: NextPageWithLayout<Props> = (props: Props) => {
 };
 
 type LayoutProps = Props & {
-  children?: ReactNode
-}
+  children?: ReactNode;
+};
 
 const Layout = ({ children, ...props }: LayoutProps): JSX.Element => {
-  useHydrateBasicLayoutConfigurationAtoms(props.searchConfig, props.sidebarConfig, props.userUISettings);
+  useHydrateBasicLayoutConfigurationAtoms(
+    props.searchConfig,
+    props.sidebarConfig,
+    props.userUISettings,
+  );
 
   return <BasicLayout>{children}</BasicLayout>;
 };
 
 TagPage.getLayout = function getLayout(page) {
-  return (
-    <Layout {...page.props}>
-      {page}
-    </Layout>
-  );
+  return <Layout {...page.props}>{page}</Layout>;
 };
 
-export const getServerSideProps: GetServerSideProps = async(context: GetServerSidePropsContext) => {
+export const getServerSideProps: GetServerSideProps = async (
+  context: GetServerSidePropsContext,
+) => {
   const req: CrowiRequest = context.req as CrowiRequest;
 
   // redirect to the page the user was on before moving to the Login Page
   if (req.headers.referer != null) {
     const urlBeforeLogin = new URL(req.headers.referer);
-    if (isPermalink(urlBeforeLogin.pathname) || isUserPage(urlBeforeLogin.pathname) || isUsersTopPage(urlBeforeLogin.pathname)) {
+    if (
+      isPermalink(urlBeforeLogin.pathname) ||
+      isUserPage(urlBeforeLogin.pathname) ||
+      isUsersTopPage(urlBeforeLogin.pathname)
+    ) {
       req.session.redirectTo = urlBeforeLogin.href;
     }
   }
@@ -141,9 +150,13 @@ export const getServerSideProps: GetServerSideProps = async(context: GetServerSi
     getServerSideI18nProps(context, ['translation']),
   ]);
 
-  return mergeGetServerSidePropsResults(commonInitialResult,
-    mergeGetServerSidePropsResults(commonEachResult,
-      mergeGetServerSidePropsResults(basicLayoutResult, i18nPropsResult)));
+  return mergeGetServerSidePropsResults(
+    commonInitialResult,
+    mergeGetServerSidePropsResults(
+      commonEachResult,
+      mergeGetServerSidePropsResults(basicLayoutResult, i18nPropsResult),
+    ),
+  );
 };
 
 export default TagPage;

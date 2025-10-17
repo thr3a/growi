@@ -4,7 +4,9 @@ import type { CrowiRequest } from '~/interfaces/crowi-request';
 
 import type { SearchConfigurationProps } from '../types';
 
-export const getServerSideSearchConfigurationProps: GetServerSideProps<SearchConfigurationProps> = async(context: GetServerSidePropsContext) => {
+export const getServerSideSearchConfigurationProps: GetServerSideProps<
+  SearchConfigurationProps
+> = async (context: GetServerSidePropsContext) => {
   const req: CrowiRequest = context.req as CrowiRequest;
   const { crowi } = req;
   const { configManager, searchService } = crowi;
@@ -14,7 +16,9 @@ export const getServerSideSearchConfigurationProps: GetServerSideProps<SearchCon
       searchConfig: {
         isSearchServiceConfigured: searchService.isConfigured,
         isSearchServiceReachable: searchService.isReachable,
-        isSearchScopeChildrenAsDefault: configManager.getConfig('customize:isSearchScopeChildrenAsDefault'),
+        isSearchScopeChildrenAsDefault: configManager.getConfig(
+          'customize:isSearchScopeChildrenAsDefault',
+        ),
       },
     },
   };

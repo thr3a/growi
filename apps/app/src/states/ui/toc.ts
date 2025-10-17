@@ -1,5 +1,5 @@
-import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { type RefObject, useCallback, useEffect, useState } from 'react';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
 import type { HtmlElementNode } from 'rehype-toc';
 
 import type { generateTocOptions } from '~/client/services/renderer/renderer';

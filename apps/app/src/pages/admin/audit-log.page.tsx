@@ -1,34 +1,49 @@
-import { useHydrateAtoms } from 'jotai/utils';
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
 import dynamic from 'next/dynamic';
+import { useHydrateAtoms } from 'jotai/utils';
 
 import type { SupportedActionType } from '~/interfaces/activity';
 import type { CrowiRequest } from '~/interfaces/crowi-request';
-import { activityExpirationSecondsAtom, auditLogAvailableActionsAtom, auditLogEnabledAtom } from '~/states/server-configurations';
+import {
+  activityExpirationSecondsAtom,
+  auditLogAvailableActionsAtom,
+  auditLogEnabledAtom,
+} from '~/states/server-configurations';
 
 import type { NextPageWithLayout } from '../_app.page';
 import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
-
 import type { AdminCommonProps } from './_shared';
-import { createAdminPageLayout, getServerSideAdminCommonProps } from './_shared';
+import {
+  createAdminPageLayout,
+  getServerSideAdminCommonProps,
+} from './_shared';
 
-const AuditLogManagement = dynamic(() => import('~/client/components/Admin/AuditLogManagement').then(mod => mod.AuditLogManagement), { ssr: false });
+const AuditLogManagement = dynamic(
+  () =>
+    import('~/client/components/Admin/AuditLogManagement').then(
+      (mod) => mod.AuditLogManagement,
+    ),
+  { ssr: false },
+);
 
 type PageProps = {
-  auditLogEnabled: boolean,
-  activityExpirationSeconds: number,
-  auditLogAvailableActions: SupportedActionType[],
+  auditLogEnabled: boolean;
+  activityExpirationSeconds: number;
+  auditLogAvailableActions: SupportedActionType[];
 };
 
 type Props = AdminCommonProps & PageProps;
 
 const AdminAuditLogPage: NextPageWithLayout<Props> = (props: Props) => {
   // hydrate
-  useHydrateAtoms([
-    [auditLogEnabledAtom, props.auditLogEnabled],
-    [activityExpirationSecondsAtom, props.activityExpirationSeconds],
-    [auditLogAvailableActionsAtom, props.auditLogAvailableActions],
-  ], { dangerouslyForceHydrate: true });
+  useHydrateAtoms(
+    [
+      [auditLogEnabledAtom, props.auditLogEnabled],
+      [activityExpirationSecondsAtom, props.activityExpirationSeconds],
+      [auditLogAvailableActionsAtom, props.auditLogAvailableActions],
+    ],
+    { dangerouslyForceHydrate: true },
+  );
 
   return <AuditLogManagement />;
 };
@@ -39,7 +54,9 @@ AdminAuditLogPage.getLayout = createAdminPageLayout<Props>({
 });
 
 // Extend common SSR to inject audit log specific server configs
-export const getServerSideProps: GetServerSideProps<Props> = async(context: GetServerSidePropsContext) => {
+export const getServerSideProps: GetServerSideProps<Props> = async (
+  context: GetServerSidePropsContext,
+) => {
   const baseResult = await getServerSideAdminCommonProps(context);
 
   const req: CrowiRequest = context.req as CrowiRequest;
@@ -50,7 +67,9 @@ export const getServerSideProps: GetServerSideProps<Props> = async(context: GetS
   const auditLogPropsFragment = {
     props: {
       auditLogEnabled: configManager.getConfig('app:auditLogEnabled'),
-      activityExpirationSeconds: configManager.getConfig('app:activityExpirationSeconds'),
+      activityExpirationSeconds: configManager.getConfig(
+        'app:activityExpirationSeconds',
+      ),
       auditLogAvailableActions: activityService.getAvailableActions(false),
     },
   } satisfies { props: PageProps };

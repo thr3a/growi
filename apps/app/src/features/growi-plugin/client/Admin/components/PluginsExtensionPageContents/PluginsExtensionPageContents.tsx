@@ -1,6 +1,6 @@
+import type { JSX } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'next-i18next';
-import type { JSX } from 'react';
 import { Spinner } from 'reactstrap';
 
 import { usePluginDeleteModalActions } from '../../states/modal/plugin-delete';

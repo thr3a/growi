@@ -1,6 +1,6 @@
+import { type JSX, useState } from 'react';
 import dynamic from 'next/dynamic';
 import withLoadingProps from 'next-dynamic-loading-props';
-import { type JSX, useState } from 'react';
 import { useIsomorphicLayoutEffect } from 'usehooks-ts';
 
 import type { PagePathNavLayoutProps } from '../PagePathNav';

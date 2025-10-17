@@ -1,6 +1,6 @@
-import { returnPathForURL } from '@growi/core/dist/utils/path-utils';
-import { useRouter } from 'next/router';
 import { type JSX, useCallback } from 'react';
+import { useRouter } from 'next/router';
+import { returnPathForURL } from '@growi/core/dist/utils/path-utils';
 import { useTranslation } from 'react-i18next';
 
 import {

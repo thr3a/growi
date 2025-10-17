@@ -1,6 +1,6 @@
+import { useCallback } from 'react';
 import type { IAttachmentHasId } from '@growi/core';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { useCallback } from 'react';
 
 type Remove = (body: { attachment_id: string }) => Promise<void>;
 

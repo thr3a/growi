@@ -1,12 +1,17 @@
 import React from 'react';
-
-import { isPermalink, isUserPage, isUsersTopPage } from '@growi/core/dist/utils/page-path-utils';
 import type {
-  NextPage, GetServerSideProps, GetServerSidePropsContext,
+  GetServerSideProps,
+  GetServerSidePropsContext,
+  NextPage,
 } from 'next';
-import { useTranslation } from 'next-i18next';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
+import {
+  isPermalink,
+  isUserPage,
+  isUsersTopPage,
+} from '@growi/core/dist/utils/page-path-utils';
+import { useTranslation } from 'next-i18next';
 
 import { NoLoginLayout } from '~/components/Layout/NoLoginLayout';
 import type { CrowiRequest } from '~/interfaces/crowi-request';
@@ -15,28 +20,33 @@ import { IExternalAuthProviderType } from '~/interfaces/external-auth-provider';
 import type { RegistrationMode } from '~/interfaces/registration-mode';
 
 import type { CommonEachProps, CommonInitialProps } from '../common-props';
-import { getServerSideCommonEachProps, getServerSideCommonInitialProps, getServerSideI18nProps } from '../common-props';
+import {
+  getServerSideCommonEachProps,
+  getServerSideCommonInitialProps,
+  getServerSideI18nProps,
+} from '../common-props';
 import { useCustomTitle } from '../utils/page-title-customization';
 import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 
 import styles from './index.module.scss';
 
-
-const LoginForm = dynamic(() => import('~/client/components/LoginForm').then(mod => mod.LoginForm), { ssr: false });
-
+const LoginForm = dynamic(
+  () => import('~/client/components/LoginForm').then((mod) => mod.LoginForm),
+  { ssr: false },
+);
 
 type ServerConfigurationProps = {
-  registrationMode: RegistrationMode,
-  isMailerSetup: boolean,
-  enabledExternalAuthType: IExternalAuthProviderType[],
-  registrationWhitelist: string[],
-  isLocalStrategySetup: boolean,
-  isLdapStrategySetup: boolean,
-  isLdapSetupFailed: boolean,
-  isPasswordResetEnabled: boolean,
-  isEmailAuthenticationEnabled: boolean,
-  externalAccountLoginError?: IExternalAccountLoginError,
-  minPasswordLength: number,
+  registrationMode: RegistrationMode;
+  isMailerSetup: boolean;
+  enabledExternalAuthType: IExternalAuthProviderType[];
+  registrationWhitelist: string[];
+  isLocalStrategySetup: boolean;
+  isLdapStrategySetup: boolean;
+  isLdapSetupFailed: boolean;
+  isPasswordResetEnabled: boolean;
+  isEmailAuthenticationEnabled: boolean;
+  externalAccountLoginError?: IExternalAccountLoginError;
+  minPasswordLength: number;
 };
 
 type Props = CommonInitialProps & CommonEachProps & ServerConfigurationProps;
@@ -69,43 +79,66 @@ const LoginPage: NextPage<Props> = (props: Props) => {
   );
 };
 
-
-const getServerSideConfigurationProps: GetServerSideProps<ServerConfigurationProps> = async(context: GetServerSidePropsContext) => {
+const getServerSideConfigurationProps: GetServerSideProps<
+  ServerConfigurationProps
+> = async (context: GetServerSidePropsContext) => {
   const req: CrowiRequest = context.req as CrowiRequest;
   const { crowi } = req;
-  const {
-    configManager, mailService, passportService,
-  } = crowi;
+  const { configManager, mailService, passportService } = crowi;
 
   return {
     props: {
       enabledExternalAuthType: [
-        configManager.getConfig('security:passport-google:isEnabled') === true ? IExternalAuthProviderType.google : undefined,
-        configManager.getConfig('security:passport-github:isEnabled') === true ? IExternalAuthProviderType.github : undefined,
-        configManager.getConfig('security:passport-saml:isEnabled') === true ? IExternalAuthProviderType.saml : undefined,
-        configManager.getConfig('security:passport-oidc:isEnabled') === true ? IExternalAuthProviderType.oidc : undefined,
-      ].filter((authType): authType is Exclude<typeof authType, undefined> => authType != null),
-      isPasswordResetEnabled: configManager.getConfig('security:passport-local:isPasswordResetEnabled'),
+        configManager.getConfig('security:passport-google:isEnabled') === true
+          ? IExternalAuthProviderType.google
+          : undefined,
+        configManager.getConfig('security:passport-github:isEnabled') === true
+          ? IExternalAuthProviderType.github
+          : undefined,
+        configManager.getConfig('security:passport-saml:isEnabled') === true
+          ? IExternalAuthProviderType.saml
+          : undefined,
+        configManager.getConfig('security:passport-oidc:isEnabled') === true
+          ? IExternalAuthProviderType.oidc
+          : undefined,
+      ].filter(
+        (authType): authType is Exclude<typeof authType, undefined> =>
+          authType != null,
+      ),
+      isPasswordResetEnabled: configManager.getConfig(
+        'security:passport-local:isPasswordResetEnabled',
+      ),
       isMailerSetup: mailService.isMailerSetup,
       isLocalStrategySetup: passportService.isLocalStrategySetup,
       isLdapStrategySetup: passportService.isLdapStrategySetup,
-      isLdapSetupFailed: configManager.getConfig('security:passport-ldap:isEnabled') && !passportService.isLdapStrategySetup,
-      registrationWhitelist: configManager.getConfig('security:registrationWhitelist'),
-      isEmailAuthenticationEnabled: configManager.getConfig('security:passport-local:isEmailAuthenticationEnabled'),
+      isLdapSetupFailed:
+        configManager.getConfig('security:passport-ldap:isEnabled') &&
+        !passportService.isLdapStrategySetup,
+      registrationWhitelist: configManager.getConfig(
+        'security:registrationWhitelist',
+      ),
+      isEmailAuthenticationEnabled: configManager.getConfig(
+        'security:passport-local:isEmailAuthenticationEnabled',
+      ),
       registrationMode: configManager.getConfig('security:registrationMode'),
       minPasswordLength: configManager.getConfig('app:minPasswordLength'),
-
     },
   };
 };
 
-export const getServerSideProps: GetServerSideProps = async(context: GetServerSidePropsContext) => {
+export const getServerSideProps: GetServerSideProps = async (
+  context: GetServerSidePropsContext,
+) => {
   const req: CrowiRequest = context.req as CrowiRequest;
 
   // redirect to the page the user was on before moving to the Login Page
   if (req.headers.referer != null) {
     const urlBeforeLogin = new URL(req.headers.referer);
-    if (isPermalink(urlBeforeLogin.pathname) || isUserPage(urlBeforeLogin.pathname) || isUsersTopPage(urlBeforeLogin.pathname)) {
+    if (
+      isPermalink(urlBeforeLogin.pathname) ||
+      isUserPage(urlBeforeLogin.pathname) ||
+      isUsersTopPage(urlBeforeLogin.pathname)
+    ) {
       req.session.redirectTo = urlBeforeLogin.href;
     }
   }
@@ -122,9 +155,13 @@ export const getServerSideProps: GetServerSideProps = async(context: GetServerSi
     getServerSideI18nProps(context, ['translation']),
   ]);
 
-  return mergeGetServerSidePropsResults(commonInitialResult,
-    mergeGetServerSidePropsResults(commonEachResult,
-      mergeGetServerSidePropsResults(serverConfigResult, i18nPropsResult)));
+  return mergeGetServerSidePropsResults(
+    commonInitialResult,
+    mergeGetServerSidePropsResults(
+      commonEachResult,
+      mergeGetServerSidePropsResults(serverConfigResult, i18nPropsResult),
+    ),
+  );
 };
 
 export default LoginPage;

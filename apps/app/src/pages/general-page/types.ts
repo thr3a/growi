@@ -1,15 +1,21 @@
 import type {
-  IDataWithRequiredMeta, IPageInfoExt, IPageNotFoundInfo, IPagePopulatedToShowRevision,
+  IDataWithRequiredMeta,
+  IPageInfoExt,
+  IPageNotFoundInfo,
+  IPagePopulatedToShowRevision,
 } from '@growi/core';
 
 import type { RendererConfig } from '~/interfaces/services/renderer';
 import type { PageDocument } from '~/server/models/page';
 
-export type IPageToShowRevisionWithMeta = IDataWithRequiredMeta<IPagePopulatedToShowRevision & PageDocument, IPageInfoExt>;
+export type IPageToShowRevisionWithMeta = IDataWithRequiredMeta<
+  IPagePopulatedToShowRevision & PageDocument,
+  IPageInfoExt
+>;
 
 export type RendererConfigProps = {
-  rendererConfig: RendererConfig,
-}
+  rendererConfig: RendererConfig;
+};
 
 export type ServerConfigurationProps = {
   serverConfig: {
@@ -34,15 +40,19 @@ export type ServerConfigurationProps = {
     isBulkExportPagesEnabled: boolean;
     isPdfBulkExportEnabled: boolean;
     isLocalAccountRegistrationEnabled: boolean;
-  },
-}
+  };
+};
 
 // Do not include CommonEachProps for multi stage
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type GeneralPageEachProps = {};
 
 // Do not include CommonEachProps for multi stage
-export type GeneralPageInitialProps = RendererConfigProps & ServerConfigurationProps & {
-  pageWithMeta: IPageToShowRevisionWithMeta | IDataWithRequiredMeta<null, IPageNotFoundInfo> | null,
-  skipSSR?: boolean,
-}
+export type GeneralPageInitialProps = RendererConfigProps &
+  ServerConfigurationProps & {
+    pageWithMeta:
+      | IPageToShowRevisionWithMeta
+      | IDataWithRequiredMeta<null, IPageNotFoundInfo>
+      | null;
+    skipSSR?: boolean;
+  };

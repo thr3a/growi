@@ -24,20 +24,15 @@
       "!**/package.json",
       "!apps/app/src/styles/prebuilt",
       "!apps/app/tmp",
-      "!apps/pdf-converter/specs",
       "!apps/slackbot-proxy/src/public/bootstrap",
       "!packages/pdf-converter-client/src/index.ts",
       "!packages/pdf-converter-client/specs",
       "!apps/app/playwright",
       "!apps/app/src/client",
       "!apps/app/src/features/openai",
-      "!apps/app/src/pages",
       "!apps/app/src/server",
       "!apps/app/src/services",
-      "!apps/app/src/stores",
-      "!apps/app/src/styles",
-      "!apps/app/test-with-vite",
-      "!apps/app/tmp"
+      "!apps/app/src/stores"
     ]
   },
   "formatter": {
@@ -47,7 +42,24 @@
   "assist": {
     "actions": {
       "source": {
-        "organizeImports": "on"
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              ["react", "react/**"],
+              ["next", "next/**"],
+              [":NODE:", ":PACKAGE:"],
+              ":BLANK_LINE:",
+              ["@/**", "^/**"],
+              ":BLANK_LINE:",
+              "~/**",
+              ":BLANK_LINE:",
+              [":PATH:", "!**/*.css", "!**/*.scss"],
+              ":BLANK_LINE:",
+              ["**/*.css", "**/*.scss"]
+            ]
+          }
+        }
       }
     }
   },

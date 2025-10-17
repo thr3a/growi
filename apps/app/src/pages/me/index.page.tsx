@@ -1,12 +1,9 @@
-import React, { type ReactNode, useMemo, type JSX } from 'react';
-
-import type {
-  GetServerSideProps, GetServerSidePropsContext,
-} from 'next';
-import { useTranslation } from 'next-i18next';
+import React, { type JSX, type ReactNode, useMemo } from 'react';
+import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'next-i18next';
 
 import { BasicLayout } from '~/components/Layout/BasicLayout';
 import { GroundGlassBar } from '~/components/Navbar/GroundGlassBar';
@@ -21,24 +18,32 @@ import loggerFactory from '~/utils/logger';
 import type { NextPageWithLayout } from '../_app.page';
 import type { CommonEachProps, CommonInitialProps } from '../common-props';
 import {
-  getServerSideCommonEachProps, getServerSideCommonInitialProps, getServerSideI18nProps,
+  getServerSideCommonEachProps,
+  getServerSideCommonInitialProps,
+  getServerSideI18nProps,
 } from '../common-props';
-
 import type { ServerConfigurationProps } from './types';
 import { useHydrateServerConfigurationAtoms } from './use-hydrate-server-configurations';
 
-
 const logger = loggerFactory('growi:pages:me');
 
-
-const PersonalSettings = dynamic(() => import('~/client/components/Me/PersonalSettings'), { ssr: false });
+const PersonalSettings = dynamic(
+  () => import('~/client/components/Me/PersonalSettings'),
+  { ssr: false },
+);
 // const MyDraftList = dynamic(() => import('~/components/MyDraftList/MyDraftList'), { ssr: false });
 const InAppNotificationPage = dynamic(
-  () => import('~/client/components/InAppNotification/InAppNotificationPage').then(mod => mod.InAppNotificationPage), { ssr: false },
+  () =>
+    import('~/client/components/InAppNotification/InAppNotificationPage').then(
+      (mod) => mod.InAppNotificationPage,
+    ),
+  { ssr: false },
 );
 
-
-type Props = CommonInitialProps & CommonEachProps & BasicLayoutConfigurationProps & ServerConfigurationProps;
+type Props = CommonInitialProps &
+  CommonEachProps &
+  BasicLayoutConfigurationProps &
+  ServerConfigurationProps;
 
 const MePage: NextPageWithLayout<Props> = (props: Props) => {
   useHydrateServerConfigurationAtoms(props.serverConfig);
@@ -46,7 +51,9 @@ const MePage: NextPageWithLayout<Props> = (props: Props) => {
   const router = useRouter();
   const { t } = useTranslation(['translation', 'commons']);
   const { path } = router.query;
-  const pagePathKeys: string[] = Array.isArray(path) ? path : ['personal-settings'];
+  const pagePathKeys: string[] = Array.isArray(path)
+    ? path
+    : ['personal-settings'];
 
   const mePagesMap = useMemo(() => {
     return {
@@ -65,7 +72,10 @@ const MePage: NextPageWithLayout<Props> = (props: Props) => {
     };
   }, [t]);
 
-  const getTargetPageToRender = (pagesMap, keys): {title: string, component: JSX.Element} => {
+  const getTargetPageToRender = (
+    pagesMap,
+    keys,
+  ): { title: string; component: JSX.Element } => {
     return keys.reduce((pagesMap, key) => {
       const page = pagesMap[key];
       if (page == null) {
@@ -97,11 +107,9 @@ const MePage: NextPageWithLayout<Props> = (props: Props) => {
 
         <div className="main ps-sidebar">
           <div className="container-lg wide-gutter-x-lg">
-
-            <h1 className="sticky-top py-2 fs-3">{ targetPage.title }</h1>
+            <h1 className="sticky-top py-2 fs-3">{targetPage.title}</h1>
 
             {targetPage.component}
-
           </div>
         </div>
       </div>
@@ -109,26 +117,27 @@ const MePage: NextPageWithLayout<Props> = (props: Props) => {
   );
 };
 
-
 type LayoutProps = Props & {
-  children?: ReactNode
-}
+  children?: ReactNode;
+};
 
 const Layout = ({ children, ...props }: LayoutProps): JSX.Element => {
-  useHydrateBasicLayoutConfigurationAtoms(props.searchConfig, props.sidebarConfig, props.userUISettings);
-
-  return (
-    <BasicLayout>
-      {children}
-    </BasicLayout>
+  useHydrateBasicLayoutConfigurationAtoms(
+    props.searchConfig,
+    props.sidebarConfig,
+    props.userUISettings,
   );
+
+  return <BasicLayout>{children}</BasicLayout>;
 };
 
 MePage.getLayout = function getLayout(page) {
   return <Layout {...page.props}>{page}</Layout>;
 };
 
-const getServerSideConfigurationProps: GetServerSideProps<ServerConfigurationProps> = async(context: GetServerSidePropsContext) => {
+const getServerSideConfigurationProps: GetServerSideProps<
+  ServerConfigurationProps
+> = async (context: GetServerSidePropsContext) => {
   const req: CrowiRequest = context.req as CrowiRequest;
   const { crowi } = req;
   const { configManager } = crowi;
@@ -136,14 +145,20 @@ const getServerSideConfigurationProps: GetServerSideProps<ServerConfigurationPro
   return {
     props: {
       serverConfig: {
-        registrationWhitelist: configManager.getConfig('security:registrationWhitelist'),
-        showPageLimitationXL: configManager.getConfig('customize:showPageLimitationXL'),
+        registrationWhitelist: configManager.getConfig(
+          'security:registrationWhitelist',
+        ),
+        showPageLimitationXL: configManager.getConfig(
+          'customize:showPageLimitationXL',
+        ),
       },
     },
   };
 };
 
-export const getServerSideProps: GetServerSideProps = async(context: GetServerSidePropsContext) => {
+export const getServerSideProps: GetServerSideProps = async (
+  context: GetServerSidePropsContext,
+) => {
   const [
     commonInitialResult,
     commonEachResult,
@@ -155,13 +170,21 @@ export const getServerSideProps: GetServerSideProps = async(context: GetServerSi
     getServerSideCommonEachProps(context),
     getServerSideBasicLayoutProps(context),
     getServerSideConfigurationProps(context),
-    getServerSideI18nProps(context, ['translation', 'admin'], { preloadAllLang: true }),
+    getServerSideI18nProps(context, ['translation', 'admin'], {
+      preloadAllLang: true,
+    }),
   ]);
 
-  return mergeGetServerSidePropsResults(commonInitialResult,
-    mergeGetServerSidePropsResults(commonEachResult,
-      mergeGetServerSidePropsResults(basicLayoutResult,
-        mergeGetServerSidePropsResults(serverConfigResult, i18nPropsResult))));
+  return mergeGetServerSidePropsResults(
+    commonInitialResult,
+    mergeGetServerSidePropsResults(
+      commonEachResult,
+      mergeGetServerSidePropsResults(
+        basicLayoutResult,
+        mergeGetServerSidePropsResults(serverConfigResult, i18nPropsResult),
+      ),
+    ),
+  );
 };
 
 export default MePage;
