@@ -50,6 +50,7 @@ module.exports = {
     'src/stores-universal/**',
     'src/interfaces/**',
     'src/utils/**',
+    'src/components/**',
     'src/services/**',
     'src/states/**',
   ],

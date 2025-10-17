@@ -1,54 +1,93 @@
-import {
-  useEffect, useMemo, useRef, memo, type JSX,
-} from 'react';
-
 import { isUsersHomepage } from '@growi/core/dist/utils/page-path-utils';
 import { useSlidesByFrontmatter } from '@growi/presentation/dist/services';
-import dynamic from 'next/dynamic';
+import { type JSX, useEffect, useMemo, useRef } from 'react';
 
 import { PagePathNavTitle } from '~/components/Common/PagePathNavTitle';
 import type { RendererConfig } from '~/interfaces/services/renderer';
 import { useShouldExpandContent } from '~/services/layout/use-should-expand-content';
 import { generateSSRViewOptions } from '~/services/renderer/renderer';
 import {
-  useIsForbidden, useIsIdenticalPath, useIsNotCreatable, useCurrentPageData, useCurrentPageId, usePageNotFound,
+  useCurrentPageData,
+  useCurrentPageId,
+  useIsForbidden,
+  useIsIdenticalPath,
+  useIsNotCreatable,
+  usePageNotFound,
 } from '~/states/page';
 import { useViewOptions } from '~/stores/renderer';
 
 import { UserInfo } from '../User/UserInfo';
-
 import { PageAlerts } from './PageAlerts/PageAlerts';
 import { PageContentFooter } from './PageContentFooter';
 import { PageViewLayout } from './PageViewLayout';
 import RevisionRenderer from './RevisionRenderer';
 
-
-const NotCreatablePage = dynamic(() => import('~/client/components/NotCreatablePage').then(mod => mod.NotCreatablePage), { ssr: false });
-const ForbiddenPage = dynamic(() => import('~/client/components/ForbiddenPage'), { ssr: false });
-const NotFoundPage = dynamic(() => import('~/client/components/NotFoundPage'), { ssr: false });
-const PageSideContents = dynamic(() => import('~/client/components/PageSideContents').then(mod => mod.PageSideContents), { ssr: false });
-const PageContentsUtilities = dynamic(() => import('~/client/components/Page/PageContentsUtilities').then(mod => mod.PageContentsUtilities), { ssr: false });
-const Comments = dynamic(() => import('~/client/components/Comments').then(mod => mod.Comments), { ssr: false });
-const UsersHomepageFooter = dynamic(() => import('~/client/components/UsersHomepageFooter')
-  .then(mod => mod.UsersHomepageFooter), { ssr: false });
-const IdenticalPathPage = dynamic(() => import('~/client/components/IdenticalPathPage').then(mod => mod.IdenticalPathPage), { ssr: false });
-const SlideRenderer = dynamic(() => import('~/client/components/Page/SlideRenderer').then(mod => mod.SlideRenderer), { ssr: false });
-
+const NotCreatablePage = dynamic(
+  () =>
+    import('~/client/components/NotCreatablePage').then(
+      (mod) => mod.NotCreatablePage,
+    ),
+  { ssr: false },
+);
+const ForbiddenPage = dynamic(
+  () => import('~/client/components/ForbiddenPage'),
+  { ssr: false },
+);
+const NotFoundPage = dynamic(() => import('~/client/components/NotFoundPage'), {
+  ssr: false,
+});
+const PageSideContents = dynamic(
+  () =>
+    import('~/client/components/PageSideContents').then(
+      (mod) => mod.PageSideContents,
+    ),
+  { ssr: false },
+);
+const PageContentsUtilities = dynamic(
+  () =>
+    import('~/client/components/Page/PageContentsUtilities').then(
+      (mod) => mod.PageContentsUtilities,
+    ),
+  { ssr: false },
+);
+const Comments = dynamic(
+  () => import('~/client/components/Comments').then((mod) => mod.Comments),
+  { ssr: false },
+);
+const UsersHomepageFooter = dynamic(
+  () =>
+    import('~/client/components/UsersHomepageFooter').then(
+      (mod) => mod.UsersHomepageFooter,
+    ),
+  { ssr: false },
+);
+const IdenticalPathPage = dynamic(
+  () =>
+    import('~/client/components/IdenticalPathPage').then(
+      (mod) => mod.IdenticalPathPage,
+    ),
+  { ssr: false },
+);
+const SlideRenderer = dynamic(
+  () =>
+    import('~/client/components/Page/SlideRenderer').then(
+      (mod) => mod.SlideRenderer,
+    ),
+  { ssr: false },
+);
 
 type Props = {
-  pagePath: string,
-  rendererConfig: RendererConfig,
-  className?: string,
-}
+  pagePath: string;
+  rendererConfig: RendererConfig;
+  className?: string;
+};
 
 export const PageView = memo((props: Props): JSX.Element => {
   const renderStartTime = performance.now();
 
   const commentsContainerRef = useRef<HTMLDivElement>(null);
 
-  const {
-    pagePath, rendererConfig, className,
-  } = props;
+  const { pagePath, rendererConfig, className } = props;
 
   const currentPageId = useCurrentPageId();
   const isIdenticalPathPage = useIsIdenticalPath();
@@ -73,10 +112,11 @@ export const PageView = memo((props: Props): JSX.Element => {
 
   const shouldExpandContent = useShouldExpandContent(page);
 
-
   const markdown = page?.revision?.body;
-  const isSlide = useSlidesByFrontmatter(markdown, rendererConfig.isEnabledMarp);
-
+  const isSlide = useSlidesByFrontmatter(
+    markdown,
+    rendererConfig.isEnabledMarp,
+  );
 
   // ***************************  Auto Scroll  ***************************
   useEffect(() => {
@@ -100,7 +140,9 @@ export const PageView = memo((props: Props): JSX.Element => {
       return;
     }
 
-    const contentContainer = document.getElementById('page-view-content-container');
+    const contentContainer = document.getElementById(
+      'page-view-content-container',
+    );
     if (contentContainer == null) return;
 
     const targetId = decodeURIComponent(hash.slice(1));
@@ -137,26 +179,28 @@ export const PageView = memo((props: Props): JSX.Element => {
     }
   }, [isForbidden, isIdenticalPathPage, isNotCreatable]);
 
-  const headerContents = <PagePathNavTitle pageId={page?._id} pagePath={pagePath} isWipPage={page?.wip} />;
+  const headerContents = (
+    <PagePathNavTitle
+      pageId={page?._id}
+      pagePath={pagePath}
+      isWipPage={page?.wip}
+    />
+  );
 
-  const sideContents = !isNotFound && !isNotCreatable
-    ? (
-      <PageSideContents page={page} />
-    )
-    : null;
+  const sideContents =
+    !isNotFound && !isNotCreatable ? <PageSideContents page={page} /> : null;
 
-  const footerContents = !isIdenticalPathPage && !isNotFound
-    ? (
+  const footerContents =
+    !isIdenticalPathPage && !isNotFound ? (
       <>
-        {(isUsersHomepagePath && page.creator != null) && (
+        {isUsersHomepagePath && page.creator != null && (
           <UsersHomepageFooter creatorId={page.creator._id} />
         )}
         <PageContentFooter page={page} />
       </>
-    )
-    : null;
+    ) : null;
 
-  const Contents = () => {
+  const Contents = useCallback(() => {
     const contentsRenderStartTime = performance.now();
     console.log('[PAGEVIEW-DEBUG] Contents component render started:', {
       isNotFound,
@@ -173,7 +217,8 @@ export const PageView = memo((props: Props): JSX.Element => {
     }
 
     const markdown = page.revision.body;
-    const rendererOptions = viewOptions ?? generateSSRViewOptions(rendererConfig, pagePath);
+    const rendererOptions =
+      viewOptions ?? generateSSRViewOptions(rendererConfig, pagePath);
 
     console.log('[PAGEVIEW-DEBUG] Rendering page content:', {
       markdownLength: markdown?.length,
@@ -187,13 +232,16 @@ export const PageView = memo((props: Props): JSX.Element => {
         <PageContentsUtilities />
 
         <div className="flex-expand-vert justify-content-between">
+          {isSlide != null ? (
+            <SlideRenderer marp={isSlide.marp} markdown={markdown} />
+          ) : (
+            <RevisionRenderer
+              rendererOptions={rendererOptions}
+              markdown={markdown}
+            />
+          )}
 
-          { isSlide != null
-            ? <SlideRenderer marp={isSlide.marp} markdown={markdown} />
-            : <RevisionRenderer rendererOptions={rendererOptions} markdown={markdown} />
-          }
-
-          { !isIdenticalPathPage && !isNotFound && (
+          {!isIdenticalPathPage && !isNotFound && (
             <div id="comments-container" ref={commentsContainerRef}>
               <Comments
                 pageId={page._id}
@@ -201,11 +249,20 @@ export const PageView = memo((props: Props): JSX.Element => {
                 revision={page.revision}
               />
             </div>
-          ) }
+          )}
         </div>
       </>
     );
-  };
+  }, [
+    isNotFound,
+    page?.revision,
+    page?._id,
+    rendererConfig,
+    pagePath,
+    viewOptions,
+    isSlide,
+    isIdenticalPathPage,
+  ]);
 
   // DEBUG: Log final render completion time
   const renderEndTime = performance.now();
@@ -230,13 +287,14 @@ export const PageView = memo((props: Props): JSX.Element => {
       {specialContents}
       {specialContents == null && (
         <>
-          {(isUsersHomepagePath && page?.creator != null) && <UserInfo author={page.creator} />}
+          {isUsersHomepagePath && page?.creator != null && (
+            <UserInfo author={page.creator} />
+          )}
           <div id="page-view-content-container" className="flex-expand-vert">
             <Contents />
           </div>
         </>
       )}
-
     </PageViewLayout>
   );
 });
