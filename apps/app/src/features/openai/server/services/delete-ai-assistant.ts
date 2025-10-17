@@ -6,7 +6,6 @@ import loggerFactory from '~/utils/logger';
 import type { AiAssistantDocument } from '../models/ai-assistant';
 import AiAssistantModel from '../models/ai-assistant';
 import ThreadRelationModel from '../models/thread-relation';
-
 import { isAiEnabled } from './is-ai-enabled';
 import { getOpenaiService } from './openai';
 

@@ -4,7 +4,6 @@ import { Types } from 'mongoose';
 
 import { ThreadType } from '../../../../interfaces/thread-relation';
 import ThreadRelation from '../../../models/thread-relation';
-
 import {
   MAX_DAYS_UNTIL_EXPIRATION,
   normalizeExpiredAtForThreadRelations,

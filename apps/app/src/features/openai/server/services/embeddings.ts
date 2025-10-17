@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-
 import type { OpenAI } from 'openai';
 
 import { openaiClient } from './client';

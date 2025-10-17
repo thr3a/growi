@@ -2,6 +2,7 @@ import type { IUserHasId } from '@growi/core';
 import { SCOPE } from '@growi/core/dist/interfaces';
 import { ErrorV3 } from '@growi/core/dist/models';
 import type { Request, RequestHandler } from 'express';
+
 import type Crowi from '~/server/crowi';
 import { accessTokenParser } from '~/server/middlewares/access-token-parser';
 import { apiV3FormValidator } from '~/server/middlewares/apiv3-form-validator';
@@ -10,7 +11,6 @@ import loggerFactory from '~/utils/logger';
 
 import type { UpsertAiAssistantData } from '../../interfaces/ai-assistant';
 import { getOpenaiService } from '../services/openai';
-
 import { certifyAiService } from './middlewares/certify-ai-service';
 import { upsertAiAssistantValidator } from './middlewares/upsert-ai-assistant-validator';
 

@@ -1,5 +1,4 @@
 import { OpenaiServiceType } from '../../../interfaces/ai';
-
 import { AzureOpenaiClientDelegator } from './azure-openai-client-delegator';
 import type { IOpenaiClientDelegator } from './interfaces';
 import { OpenaiClientDelegator } from './openai-client-delegator';

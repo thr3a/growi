@@ -14,7 +14,6 @@ import { ThreadType } from '../../interfaces/thread-relation';
 import type { ThreadRelationDocument } from '../models/thread-relation';
 import ThreadRelationModel from '../models/thread-relation';
 import { getOpenaiService } from '../services/openai';
-
 import { certifyAiService } from './middlewares/certify-ai-service';
 
 const logger = loggerFactory('growi:routes:apiv3:openai:get-recent-threads');

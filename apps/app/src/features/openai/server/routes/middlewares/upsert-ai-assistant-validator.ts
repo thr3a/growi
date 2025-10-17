@@ -1,5 +1,6 @@
 import { GroupType } from '@growi/core';
 import { body, type ValidationChain } from 'express-validator';
+
 import {
   AiAssistantAccessScope,
   AiAssistantShareScope,

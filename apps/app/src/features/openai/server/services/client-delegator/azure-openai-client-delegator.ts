@@ -8,7 +8,6 @@ import type { Stream } from 'openai/streaming';
 import type { Uploadable } from 'openai/uploads';
 
 import type { MessageListParams } from '../../../interfaces/message';
-
 import type { IOpenaiClientDelegator } from './interfaces';
 
 export class AzureOpenaiClientDelegator implements IOpenaiClientDelegator {
