@@ -1,4 +1,5 @@
-import { type JSX, memo, useMemo } from 'react';
+import { type JSX, memo, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { useSlidesByFrontmatter } from '@growi/presentation/dist/services';
 
 import { PagePathNavTitle } from '~/components/Common/PagePathNavTitle';
