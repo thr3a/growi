@@ -1,27 +1,42 @@
-import React, { useState, useCallback, useMemo } from 'react';
-
+import type { FC } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import PropTypes from 'prop-types';
 import {
   Modal, ModalHeader, ModalBody, ModalFooter,
 } from 'reactstrap';
 
 import { apiPost } from '~/client/util/apiv1-client';
+import type { PutBackPageModalStatus } from '~/states/ui/modal/put-back-page';
 import { usePutBackPageModalActions, usePutBackPageModalStatus } from '~/states/ui/modal/put-back-page';
 import { mutateAllPageInfo } from '~/stores/page';
 
 import ApiErrorMessageList from '../PageManagement/ApiErrorMessageList';
 
-const PutBackPageModalSubstance = ({ pageDataToRevert, closePutBackPageModal }) => {
+type ApiError = {
+  data?: string;
+};
+
+type ApiResponse = {
+  page: {
+    path: string;
+  };
+};
+
+type PutBackPageModalSubstanceProps = {
+  pageDataToRevert: PutBackPageModalStatus & { page: NonNullable<PutBackPageModalStatus['page']> };
+  closePutBackPageModal: () => void;
+};
+
+const PutBackPageModalSubstance: FC<PutBackPageModalSubstanceProps> = ({ pageDataToRevert, closePutBackPageModal }) => {
   const { t } = useTranslation();
 
   const { page } = pageDataToRevert;
   const { pageId, path } = page;
   const onPutBacked = pageDataToRevert.opts?.onPutBacked;
 
-  const [errs, setErrs] = useState(null);
-  const [targetPath, setTargetPath] = useState(null);
+  const [errs, setErrs] = useState<ApiError[] | null>(null);
+  const [targetPath, setTargetPath] = useState<string | null>(null);
 
   const [isPutbackRecursively, setIsPutbackRecursively] = useState(true);
 
@@ -29,7 +44,7 @@ const PutBackPageModalSubstance = ({ pageDataToRevert, closePutBackPageModal }) 
     setIsPutbackRecursively(!isPutbackRecursively);
   }, [isPutbackRecursively]);
 
-  const putbackPageButtonHandler = useCallback(async () => {
+  const putbackPageButtonHandler = useCallback(async() => {
     setErrs(null);
 
     try {
@@ -37,7 +52,7 @@ const PutBackPageModalSubstance = ({ pageDataToRevert, closePutBackPageModal }) 
       // If is it not true, Request value must be `null`.
       const recursively = isPutbackRecursively ? true : null;
 
-      const response = await apiPost('/pages.revertRemove', {
+      const response = await apiPost<ApiResponse>('/pages.revertRemove', {
         page_id: pageId,
         recursively,
       });
@@ -49,8 +64,8 @@ const PutBackPageModalSubstance = ({ pageDataToRevert, closePutBackPageModal }) 
       closePutBackPageModal();
     }
     catch (err) {
-      setTargetPath(err.data);
-      setErrs([err]);
+      setTargetPath((err as ApiError).data ?? null);
+      setErrs([err as ApiError]);
     }
   }, [pageId, isPutbackRecursively, onPutBacked, closePutBackPageModal]);
 
@@ -113,33 +128,24 @@ const PutBackPageModalSubstance = ({ pageDataToRevert, closePutBackPageModal }) 
   );
 };
 
-PutBackPageModalSubstance.propTypes = {
-  pageDataToRevert: PropTypes.shape({
-    page: PropTypes.shape({
-      pageId: PropTypes.string,
-      path: PropTypes.string,
-    }),
-    opts: PropTypes.shape({
-      onPutBacked: PropTypes.func,
-    }),
-  }).isRequired,
-  closePutBackPageModal: PropTypes.func.isRequired,
-};
-
-const PutBackPageModal = () => {
+const PutBackPageModal: FC = () => {
   const pageDataToRevert = usePutBackPageModalStatus();
   const { close: closePutBackPageModal } = usePutBackPageModalActions();
-  const { isOpened } = pageDataToRevert;
+  const { isOpened, page } = pageDataToRevert;
 
   const closeModalHandler = useCallback(() => {
     closePutBackPageModal();
   }, [closePutBackPageModal]);
 
+  if (page == null) {
+    return <></>;
+  }
+
   return (
     <Modal isOpen={isOpened} toggle={closeModalHandler} data-testid="put-back-page-modal">
       {isOpened && (
         <PutBackPageModalSubstance
-          pageDataToRevert={pageDataToRevert}
+          pageDataToRevert={{ ...pageDataToRevert, page }}
           closePutBackPageModal={closePutBackPageModal}
         />
       )}
