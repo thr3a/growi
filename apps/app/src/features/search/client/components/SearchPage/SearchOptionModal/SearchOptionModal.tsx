@@ -11,7 +11,7 @@ type Props = {
   onIncludeTrashPagesSwitched?: (isChecked: boolean) => void;
 };
 
-const SearchOptionModal: FC<Props> = (props: Props) => {
+export const SearchOptionModal: FC<Props> = (props: Props) => {
   const { t } = useTranslation('');
 
   const {
@@ -88,5 +88,3 @@ const SearchOptionModal: FC<Props> = (props: Props) => {
     </Modal>
   );
 };
-
-export default SearchOptionModal;
