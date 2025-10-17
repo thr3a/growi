@@ -14,7 +14,7 @@ type Props = {
 };
 
 export const NoLoginLayout = ({ children, className }: Props): JSX.Element => {
-  const { data: appTitle } = useAppTitle();
+  const appTitle = useAppTitle();
 
   const classNames: string[] = [''];
   if (className != null) {
