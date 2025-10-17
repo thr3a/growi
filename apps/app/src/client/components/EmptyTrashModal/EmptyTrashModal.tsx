@@ -10,7 +10,7 @@ import {
 import { apiv3Delete } from '~/client/util/apiv3-client';
 import { useEmptyTrashModalStatus, useEmptyTrashModalActions } from '~/states/ui/modal/empty-trash';
 
-import ApiErrorMessageList from './PageManagement/ApiErrorMessageList';
+import ApiErrorMessageList from '../PageManagement/ApiErrorMessageList';
 
 /**
  * EmptyTrashModalSubstance - Presentation component (all logic here)
@@ -98,7 +98,7 @@ const EmptyTrashModalSubstance = ({
 /**
  * EmptyTrashModal - Container component (lightweight, always rendered)
  */
-const EmptyTrashModal: FC = () => {
+export const EmptyTrashModal: FC = () => {
   const { isOpened, pages, opts } = useEmptyTrashModalStatus();
   const { close: closeModal } = useEmptyTrashModalActions();
 
@@ -115,5 +115,3 @@ const EmptyTrashModal: FC = () => {
     </Modal>
   );
 };
-
-export default EmptyTrashModal;
