@@ -84,13 +84,13 @@ export const useSWRINFxRecentlyUpdated = (
 };
 
 export const mutateRecentlyUpdated = async (): Promise<undefined> => {
-  [true, false].forEach((includeWipPage) =>
+  [true, false].forEach((includeWipPage) => {
     mutate(
       unstable_serialize((pageIndex, previousPageData) =>
         getRecentlyUpdatedKey(pageIndex, previousPageData, includeWipPage),
       ),
-    ),
-  );
+    );
+  });
   return;
 };
 

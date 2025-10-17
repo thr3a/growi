@@ -130,7 +130,7 @@ export const useSWRxCurrentPage = (
         revalidate: false,
       });
     }
-  }, [initialData, key, shouldMutate]);
+  }, [initialData, shouldMutate]);
 
   return useSWR(key, null, {
     keepPreviousData: true,
