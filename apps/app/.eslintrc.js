@@ -50,6 +50,7 @@ module.exports = {
     'src/interfaces/**',
     'src/utils/**',
     'src/services/**',
+    'src/stores/**',
   ],
   settings: {
     // resolve path aliases by eslint-import-resolver-typescript
