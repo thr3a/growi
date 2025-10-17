@@ -5,7 +5,7 @@ import {
   Button, Modal, ModalHeader, ModalBody, ModalFooter,
 } from 'reactstrap';
 
-import type { AiAssistantHasId } from '../../../../interfaces/ai-assistant';
+import type { AiAssistantHasId } from '../../../../../interfaces/ai-assistant';
 
 export type DeleteAiAssistantModalProps = {
   isShown: boolean;

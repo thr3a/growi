@@ -2,10 +2,9 @@
 
 ## 📊 進捗状況サマリー (2025-10-17更新)
 
-**実装完了**: 23/46モーダル (50%) 🎉
+**実装完了**: 25/46モーダル (54%) 🎉
 
 **残り作業**: 
-- モーダル最適化: 2個（中優先度）
 - PageAlerts最適化: 4個
 - **合計目標**: 29/48 = **60%完了**（クラスコンポーネント2個、非モーダル、admin専用等を除く）
 
@@ -55,7 +54,7 @@ BasicLayout (常にレンダリング)
 
 ---
 
-## ✅ 完了済みモーダル (23個)
+## ✅ 完了済みモーダル (25個)
 
 ### 高頻度モーダル (0/2 - 意図的にスキップ) ⏭️
 - ⏭️ SearchModal (192行) - 検索機能、初期ロード維持
@@ -69,7 +68,7 @@ BasicLayout (常にレンダリング)
 - ✅ DescendantsPageListModal (2025-10-16) - ケースC
 - ✅ PageDeleteModal (2025-10-16) - ケースA
 
-### 低頻度モーダル (17/38完了)
+### 低頻度モーダル (19/38完了)
 
 **Session 1完了 (6個)** ✅:
 - ✅ DrawioModal (2025-10-16) - ケースC
@@ -92,37 +91,15 @@ BasicLayout (常にレンダリング)
 - ✅ CreateTemplateModal (2025-10-17) - ケースB
 - ✅ DeleteCommentModal (2025-10-17) - ケースB
 
+**Session 3完了 (2個)** ✅:
+- ✅ SearchOptionModal (2025-10-17) - ケースA, SearchPage配下
+- ✅ DeleteAiAssistantModal (2025-10-17) - ケースC, AiAssistantSidebar配下
+
 ---
 
 ## 🔄 残りの最適化対象
 
-### 🔴 Session 3: 高優先度モーダル（1個）
-
-1. **SearchOptionModal** (92行) ⭐ 最優先
-   - **場所**: `features/search/client/components/SearchPage/`
-   - **呼び出し**: SearchPage (dynamic(), 中頻度) → SearchControl → SearchOptionModal
-   - **状態**: Props-based (`isOpen`)、`isFileterOptionModalShown`
-   - **ケース**: Case B
-   - **効果**: SearchPage利用時の不要なレンダリング防止
-
-**予想時間**: 約5-10分
-
----
-
-### 🟡 Session 4: 中優先度モーダル（1個）
-
-2. **DeleteAiAssistantModal** (90行)
-   - **場所**: `features/openai/client/components/AiAssistant/Sidebar/`
-   - **呼び出し**: BasicLayout → AiAssistantSidebar (dynamic()) → DeleteAiAssistantModal
-   - **状態**: Props-based
-   - **ケース**: Case B（既にContainer-Presentation分離済み）
-   - **効果**: AiAssistantSidebar使用時の不要なレンダリング防止
-
-**予想時間**: 約5-10分
-
----
-
-### 🔵 Session 5: PageAlerts最適化（4個）
+### 🔵 Session 4: PageAlerts最適化（4個）
 
 PageAlertsは`BasicLayout → PageView → PageAlerts`経由で全ページ常時レンダリング。
 既にNext.js `dynamic()`使用だが、getLayoutパターンでは初期ロードされる問題。
@@ -150,7 +127,7 @@ PageAlertsは`BasicLayout → PageView → PageAlerts`経由で全ページ常�
 
 ---
 
-## ⏭️ 最適化不要/スキップ（23個）
+## ⏭️ 最適化不要/スキップ（21個）
 
 ### 非モーダルコンポーネント（1個）
 - ❌ **ShowShortcutsModal** (35行) - 実体はモーダルではなくホットキートリガーのみ
@@ -188,43 +165,41 @@ PageAlertsは`BasicLayout → PageView → PageAlerts`経由で全ページ常�
 - PasswordResetModal (228行) - Users
 - ConfirmModal (74行) - App
 
-### 高頻度モーダル（2個）
-- ⏭️ **SearchModal** (192行) - 検索機能、初期ロード維持
-- ⏭️ **PageCreateModal** (319行) - ページ作成、初期ロード維持
-
 ---
 
 ## 📈 最適化進捗チャート
 
 ```
-完了済み: ████████████████████████████████████████████████  23/46 (50%)
-残り:     ██                                                2/46 (4%)
-スキップ:  █████████                                         9/46 (20%)
-対象外:   ██                                                2/46 (4%)
-不要:     ██████████                                       10/46 (22%)
+完了済み: ██████████████████████████████████████████████████████  25/46 (54%)
+残り:     
+スキップ:  ████████                                                8/46 (17%)
+対象外:   ██                                                      2/46 (4%)
+不要:     ███████████                                            11/46 (24%)
 ```
 
 **次のマイルストーン**:
-- Session 3完了後: 24/46 (52%)
-- Session 4完了後: 25/46 (54%)
 - PageAlerts完了後: 25モーダル + 4 PageAlerts = **29/48 (60%)**
 
 ---
 
 ## 🎯 次のアクション
 
-### 即座に開始可能: Session 3
+### 即座に開始可能: Session 4 (PageAlerts最適化)
 
 **対象**:
-1. SearchOptionModal (92行) - 現在の分析対象、Case B
+1. TrashPageAlert - ゴミ箱ページ専用
+2. FixPageGrantAlert - 412行、最重要
+3. PageRedirectedAlert - リダイレクト時のみ
+4. FullTextSearchNotCoverAlert - 長文ページのみ
 
-**所要時間**: 約5-10分
+**所要時間**: 約40-60分
 
 **完了後の効果**:
-- SearchPage利用時の不要レンダリング削減
-- 進捗: 23 → 24/46 (52%)
+- 全ページの初期ロード時の不要なレンダリング削減
+- 特にFixPageGrantAlertの大規模バンドル削減
+- 進捗: 25 → 29/48 (60%)
 
-**次のステップ**: Session 4（DeleteAiAssistantModal）
+**次のステップ**: V3最適化完了 🎉
 
 ---
 
