@@ -1,13 +1,23 @@
 import type { JSX, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 
+// eslint-disable-next-line no-restricted-imports
+import { DeleteBookmarkFolderModalLazyLoaded } from '~/client/components/DeleteBookmarkFolderModal';
 import { GrantedGroupsInheritanceSelectModalLazyLoaded } from '~/client/components/GrantedGroupsInheritanceSelectModal';
 import { PageAccessoriesModalLazyLoaded } from '~/client/components/PageAccessoriesModal';
+// eslint-disable-next-line no-restricted-imports
+import { DeleteAttachmentModalLazyLoaded } from '~/client/components/PageAttachment';
 import { PageDeleteModalLazyLoaded } from '~/client/components/PageDeleteModal';
 import { PageDuplicateModalLazyLoaded } from '~/client/components/PageDuplicateModal';
 import { PagePresentationModalLazyLoaded } from '~/client/components/PagePresentationModal';
 import { PageRenameModalLazyLoaded } from '~/client/components/PageRenameModal';
+// eslint-disable-next-line no-restricted-imports
+import { PageSelectModalLazyLoaded } from '~/client/components/PageSelectModal';
+// eslint-disable-next-line no-restricted-imports
+import { PutBackPageModalLazyLoaded } from '~/client/components/PutbackPageModal';
 import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
+// eslint-disable-next-line no-restricted-imports
+import { AiAssistantManagementModalLazyLoaded } from '~/features/openai/client/components/AiAssistant/AiAssistantManagementModal';
 import { PageBulkExportSelectModalLazyLoaded } from '~/features/page-bulk-export/client/components';
 
 import { RawLayout } from './RawLayout';
@@ -36,13 +46,6 @@ const AlertSiteUrlUndefined = dynamic(
     ),
   { ssr: false },
 );
-const DeleteAttachmentModal = dynamic(
-  () =>
-    import('~/client/components/PageAttachment/DeleteAttachmentModal').then(
-      (mod) => mod.DeleteAttachmentModal,
-    ),
-  { ssr: false },
-);
 const HotkeysManager = dynamic(
   () => import('~/client/components/Hotkeys/HotkeysManager'),
   { ssr: false },
@@ -58,38 +61,13 @@ const SystemVersion = dynamic(
   () => import('~/client/components/SystemVersion'),
   { ssr: false },
 );
-const PutbackPageModal = dynamic(
-  () => import('~/client/components/PutbackPageModal'),
-  { ssr: false },
-);
 // Page modals
 const PageCreateModal = dynamic(
   () => import('~/client/components/PageCreateModal'),
   { ssr: false },
 );
-const DeleteBookmarkFolderModal = dynamic(
-  () =>
-    import('~/client/components/DeleteBookmarkFolderModal').then(
-      (mod) => mod.DeleteBookmarkFolderModal,
-    ),
-  { ssr: false },
-);
 const SearchModal = dynamic(
   () => import('~/features/search/client/components/SearchModal'),
-  { ssr: false },
-);
-const AiAssistantManagementModal = dynamic(
-  () =>
-    import(
-      '~/features/openai/client/components/AiAssistant/AiAssistantManagementModal/AiAssistantManagementModal'
-    ).then((mod) => mod.AiAssistantManagementModal),
-  { ssr: false },
-);
-const PageSelectModal = dynamic(
-  () =>
-    import('~/client/components/PageSelectModal/PageSelectModal').then(
-      (mod) => mod.PageSelectModal,
-    ),
   { ssr: false },
 );
 
@@ -123,11 +101,11 @@ export const BasicLayout = ({ children, className }: Props): JSX.Element => {
       <PageDeleteModalLazyLoaded />
       <PageRenameModalLazyLoaded />
       <PageAccessoriesModalLazyLoaded />
-      <DeleteAttachmentModal />
-      <DeleteBookmarkFolderModal />
-      <PutbackPageModal />
-      <PageSelectModal />
-      <AiAssistantManagementModal />
+      <DeleteAttachmentModalLazyLoaded />
+      <DeleteBookmarkFolderModalLazyLoaded />
+      <PutBackPageModalLazyLoaded />
+      <PageSelectModalLazyLoaded />
+      <AiAssistantManagementModalLazyLoaded />
 
       <PagePresentationModalLazyLoaded />
       <HotkeysManager />

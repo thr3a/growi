@@ -11,7 +11,7 @@ import { apiPost } from '~/client/util/apiv1-client';
 import { usePutBackPageModalActions, usePutBackPageModalStatus } from '~/states/ui/modal/put-back-page';
 import { mutateAllPageInfo } from '~/stores/page';
 
-import ApiErrorMessageList from './PageManagement/ApiErrorMessageList';
+import ApiErrorMessageList from '../PageManagement/ApiErrorMessageList';
 
 const PutBackPageModalSubstance = ({ pageDataToRevert, closePutBackPageModal }) => {
   const { t } = useTranslation();
@@ -147,4 +147,4 @@ const PutBackPageModal = () => {
   );
 };
 
-export default PutBackPageModal;
+export { PutBackPageModal };
