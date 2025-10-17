@@ -52,6 +52,7 @@ module.exports = {
     'src/utils/**',
     'src/components/**',
     'src/services/**',
+    'src/pages/**',
     'src/states/**',
   ],
   settings: {

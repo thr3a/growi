@@ -1,7 +1,8 @@
-import { GroupType, PageGrant } from '@growi/core';
 import { type JSX, useCallback, useEffect, useState } from 'react';
+import { GroupType, PageGrant } from '@growi/core';
 import { useTranslation } from 'react-i18next';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
+
 import {
   type IPageGrantData,
   UserGroupPageGrantStatus,

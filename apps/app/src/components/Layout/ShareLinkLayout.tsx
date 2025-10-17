@@ -1,6 +1,6 @@
-import dynamic from 'next/dynamic';
 import type { JSX, ReactNode } from 'react';
 import React from 'react';
+import dynamic from 'next/dynamic';
 
 import { RawLayout } from './RawLayout';
 

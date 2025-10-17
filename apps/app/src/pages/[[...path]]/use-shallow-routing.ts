@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
-
-import { isClient } from '@growi/core/dist/utils';
 import { useRouter } from 'next/router';
+import { isClient } from '@growi/core/dist/utils';
 
 import type { CommonEachProps } from '../common-props';
 
@@ -25,7 +24,9 @@ export const useShallowRouting = (props: CommonEachProps): void => {
     // Only update if URLs actually differ
     if (currentURL !== props.currentPathname) {
       const { search, hash } = window.location;
-      router.replace(`${props.currentPathname}${search}${hash}`, undefined, { shallow: true });
+      router.replace(`${props.currentPathname}${search}${hash}`, undefined, {
+        shallow: true,
+      });
     }
 
     // Update reference for next comparison

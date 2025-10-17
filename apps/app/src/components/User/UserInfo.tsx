@@ -1,6 +1,6 @@
+import React, { type JSX } from 'react';
 import type { IUserHasId } from '@growi/core';
 import { UserPicture } from '@growi/ui/dist/components';
-import React, { type JSX } from 'react';
 
 import styles from './UserInfo.module.scss';
 

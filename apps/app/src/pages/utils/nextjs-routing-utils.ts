@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-
+import type { GetServerSidePropsContext } from 'next';
 import Cookies from 'js-cookie';
-import { type GetServerSidePropsContext } from 'next';
 
 const COOKIE_NAME = 'nextjsRoutingPage';
 
-export const useNextjsRoutingPageRegister = (nextjsRoutingPage: string | undefined): void => {
+export const useNextjsRoutingPageRegister = (
+  nextjsRoutingPage: string | undefined,
+): void => {
   useEffect(() => {
     if (nextjsRoutingPage == null) {
       Cookies.remove(COOKIE_NAME);
@@ -21,9 +22,13 @@ export const NextjsRoutingType = {
   SAME_ROUTE: 'same-route',
   FROM_OUTSIDE: 'from-outside',
 } as const;
-export type NextjsRoutingType = (typeof NextjsRoutingType)[keyof typeof NextjsRoutingType];
+export type NextjsRoutingType =
+  (typeof NextjsRoutingType)[keyof typeof NextjsRoutingType];
 
-export const detectNextjsRoutingType = (context: GetServerSidePropsContext, previousRoutingPage: string): NextjsRoutingType => {
+export const detectNextjsRoutingType = (
+  context: GetServerSidePropsContext,
+  previousRoutingPage: string,
+): NextjsRoutingType => {
   const isCSR = !!context.req.headers['x-nextjs-data'];
 
   if (!isCSR) {
@@ -38,5 +43,4 @@ export const detectNextjsRoutingType = (context: GetServerSidePropsContext, prev
   }
 
   return NextjsRoutingType.FROM_OUTSIDE;
-
 };

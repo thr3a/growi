@@ -1,19 +1,19 @@
 import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 
 import {
-  getServerSideI18nProps, getServerSideCommonInitialProps,
+  getServerSideCommonInitialProps,
+  getServerSideI18nProps,
 } from '../../common-props';
 import {
+  getActivityAction,
   getServerSideGeneralPageProps,
   getServerSideRendererConfigProps,
-  getActivityAction, isValidGeneralPageInitialProps,
+  isValidGeneralPageInitialProps,
 } from '../../general-page';
 import { addActivity } from '../../utils/activity';
 import { mergeGetServerSidePropsResults } from '../../utils/server-side-props';
-
 import { getPageDataForInitial } from './page-data-props';
 import type { Stage2InitialProps } from './types';
-
 
 const basisProps = {
   props: {
@@ -23,9 +23,9 @@ const basisProps = {
   },
 };
 
-export async function getServerSidePropsForInitial(context: GetServerSidePropsContext):
-    Promise<GetServerSidePropsResult<Stage2InitialProps>> {
-
+export async function getServerSidePropsForInitial(
+  context: GetServerSidePropsContext,
+): Promise<GetServerSidePropsResult<Stage2InitialProps>> {
   const [
     commonInitialResult,
     generalPageResult,
@@ -41,11 +41,19 @@ export async function getServerSidePropsForInitial(context: GetServerSidePropsCo
   ]);
 
   // Merge all results in a type-safe manner (using sequential merging)
-  const mergedResult = mergeGetServerSidePropsResults(commonInitialResult,
-    mergeGetServerSidePropsResults(generalPageResult,
-      mergeGetServerSidePropsResults(rendererConfigResult,
-        mergeGetServerSidePropsResults(i18nPropsResult,
-          mergeGetServerSidePropsResults(pageDataResult, basisProps)))));
+  const mergedResult = mergeGetServerSidePropsResults(
+    commonInitialResult,
+    mergeGetServerSidePropsResults(
+      generalPageResult,
+      mergeGetServerSidePropsResults(
+        rendererConfigResult,
+        mergeGetServerSidePropsResults(
+          i18nPropsResult,
+          mergeGetServerSidePropsResults(pageDataResult, basisProps),
+        ),
+      ),
+    ),
+  );
 
   // Check for early return (redirect/notFound)
   if ('redirect' in mergedResult || 'notFound' in mergedResult) {

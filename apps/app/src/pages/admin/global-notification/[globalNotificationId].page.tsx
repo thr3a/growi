@@ -1,46 +1,63 @@
 import { useEffect } from 'react';
-
-import { objectIdUtils } from '@growi/core/dist/utils';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
+import { objectIdUtils } from '@growi/core/dist/utils';
 
 import type { NextPageWithLayout } from '../../_app.page';
 import type { AdminCommonProps } from '../_shared';
-import { createAdminPageLayout, getServerSideAdminCommonProps } from '../_shared';
+import {
+  createAdminPageLayout,
+  getServerSideAdminCommonProps,
+} from '../_shared';
 
-const ManageGlobalNotification = dynamic(() => import('~/client/components/Admin/Notification/ManageGlobalNotification'), { ssr: false });
+const ManageGlobalNotification = dynamic(
+  () =>
+    import('~/client/components/Admin/Notification/ManageGlobalNotification'),
+  { ssr: false },
+);
 
 type Props = AdminCommonProps;
 
 const AdminGlobalNotificationDetailPage: NextPageWithLayout<Props> = () => {
   const router = useRouter();
   const { globalNotificationId } = router.query;
-  const currentGlobalNotificationId = Array.isArray(globalNotificationId) ? globalNotificationId[0] : globalNotificationId;
+  const currentGlobalNotificationId = Array.isArray(globalNotificationId)
+    ? globalNotificationId[0]
+    : globalNotificationId;
 
   useEffect(() => {
-    const toastErrorPromise = import('~/client/util/toastr').then(mod => mod.toastError);
+    const toastErrorPromise = import('~/client/util/toastr').then(
+      (mod) => mod.toastError,
+    );
     if (globalNotificationId == null) {
       router.push('/admin/notification');
       return;
     }
-    if (currentGlobalNotificationId != null && !objectIdUtils.isValidObjectId(currentGlobalNotificationId)) {
-      (async() => {
+    if (
+      currentGlobalNotificationId != null &&
+      !objectIdUtils.isValidObjectId(currentGlobalNotificationId)
+    ) {
+      (async () => {
         (await toastErrorPromise)('Invalid notification id');
         router.push('/admin/global-notification/new');
       })();
     }
   }, [currentGlobalNotificationId, globalNotificationId, router]);
 
-  return (currentGlobalNotificationId != null && router.isReady)
-    ? <ManageGlobalNotification globalNotificationId={currentGlobalNotificationId} />
-    : null;
+  return currentGlobalNotificationId != null && router.isReady ? (
+    <ManageGlobalNotification
+      globalNotificationId={currentGlobalNotificationId}
+    />
+  ) : null;
 };
 
 AdminGlobalNotificationDetailPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('external_notification.external_notification'),
   containerFactories: [
-    async() => {
-      const AdminNotificationContainer = (await import('~/client/services/AdminNotificationContainer')).default;
+    async () => {
+      const AdminNotificationContainer = (
+        await import('~/client/services/AdminNotificationContainer')
+      ).default;
       return new AdminNotificationContainer();
     },
   ],

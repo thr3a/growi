@@ -1,6 +1,6 @@
+import type { JSX } from 'react';
 import { DevidedPagePath } from '@growi/core/dist/models';
 import { useTranslation } from 'next-i18next';
-import type { JSX } from 'react';
 
 import { useCurrentPagePath } from '~/states/page';
 

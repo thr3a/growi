@@ -1,5 +1,5 @@
-import { PagePathLabel, UserPicture } from '@growi/ui/dist/components';
 import { type JSX, useCallback } from 'react';
+import { PagePathLabel, UserPicture } from '@growi/ui/dist/components';
 import { useDebounce } from 'usehooks-ts';
 
 import { useSWRxSearch } from '~/stores/search';

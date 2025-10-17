@@ -1,7 +1,7 @@
-import { getIdForRef } from '@growi/core';
-import type { IPage } from '@growi/core';
-import type { model } from 'mongoose';
 import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
+import type { IPage } from '@growi/core';
+import { getIdForRef } from '@growi/core';
+import type { model } from 'mongoose';
 
 import type { CrowiRequest } from '~/interfaces/crowi-request';
 import type { IShareLink } from '~/interfaces/share-link';
@@ -10,14 +10,13 @@ import type { ShareLinkModel } from '~/server/models/share-link';
 
 import type { ShareLinkPageStatesProps } from './types';
 
-
 let mongooseModel: typeof model;
 let Page: PageModel;
 let ShareLink: ShareLinkModel;
 
-export const getPageDataForInitial = async(context: GetServerSidePropsContext):
-    Promise<GetServerSidePropsResult<ShareLinkPageStatesProps>> => {
-
+export const getPageDataForInitial = async (
+  context: GetServerSidePropsContext,
+): Promise<GetServerSidePropsResult<ShareLinkPageStatesProps>> => {
   const req = context.req as CrowiRequest;
   const { crowi, params } = req;
 
@@ -31,7 +30,9 @@ export const getPageDataForInitial = async(context: GetServerSidePropsContext):
     ShareLink = mongooseModel<IShareLink, ShareLinkModel>('ShareLink');
   }
 
-  const shareLink = await ShareLink.findOne({ _id: params.linkId }).populate('relatedPage');
+  const shareLink = await ShareLink.findOne({ _id: params.linkId }).populate(
+    'relatedPage',
+  );
 
   // not found
   if (shareLink == null) {
@@ -58,7 +59,9 @@ export const getPageDataForInitial = async(context: GetServerSidePropsContext):
   }
 
   // retrieve Page
-  const relatedPage = await Page.findOne({ _id: getIdForRef(shareLink.relatedPage) });
+  const relatedPage = await Page.findOne({
+    _id: getIdForRef(shareLink.relatedPage),
+  });
 
   // not found
   if (relatedPage == null) {
@@ -73,11 +76,16 @@ export const getPageDataForInitial = async(context: GetServerSidePropsContext):
   }
 
   // Handle existing page
-  const ssrMaxRevisionBodyLength = crowi.configManager.getConfig('app:ssrMaxRevisionBodyLength');
+  const ssrMaxRevisionBodyLength = crowi.configManager.getConfig(
+    'app:ssrMaxRevisionBodyLength',
+  );
 
   // Check if SSR should be skipped
-  const latestRevisionBodyLength = await relatedPage.getLatestRevisionBodyLength();
-  const skipSSR = latestRevisionBodyLength != null && ssrMaxRevisionBodyLength < latestRevisionBodyLength;
+  const latestRevisionBodyLength =
+    await relatedPage.getLatestRevisionBodyLength();
+  const skipSSR =
+    latestRevisionBodyLength != null &&
+    ssrMaxRevisionBodyLength < latestRevisionBodyLength;
 
   const populatedPage = await relatedPage.populateDataToShowRevision(skipSSR);
 

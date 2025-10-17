@@ -1,9 +1,9 @@
-import type { IPageToDeleteWithMeta, IPageToRenameWithMeta } from '@growi/core';
-import { getIdStringForRef } from '@growi/core';
-import dynamic from 'next/dynamic';
-import { useTranslation } from 'next-i18next';
 import type { FC, JSX } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import type { IPageToDeleteWithMeta, IPageToRenameWithMeta } from '@growi/core';
+import { getIdStringForRef } from '@growi/core';
+import { useTranslation } from 'next-i18next';
 import { animateScroll } from 'react-scroll';
 import { DropdownItem } from 'reactstrap';
 import { debounce } from 'throttle-debounce';

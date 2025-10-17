@@ -1,6 +1,6 @@
+import { type JSX, useEffect, useMemo, useRef } from 'react';
 import { isUsersHomepage } from '@growi/core/dist/utils/page-path-utils';
 import { useSlidesByFrontmatter } from '@growi/presentation/dist/services';
-import { type JSX, useEffect, useMemo, useRef } from 'react';
 
 import { PagePathNavTitle } from '~/components/Common/PagePathNavTitle';
 import type { RendererConfig } from '~/interfaces/services/renderer';

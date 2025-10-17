@@ -1,8 +1,8 @@
 import { useHydrateAtoms } from 'jotai/utils';
 
 import {
-  showPageLimitationXLAtom,
   registrationWhitelistAtom,
+  showPageLimitationXLAtom,
 } from '~/states/server-configurations';
 
 import type { ServerConfigurationProps } from './types';
@@ -12,11 +12,15 @@ import type { ServerConfigurationProps } from './types';
  * This should be called early in the app component to ensure atoms are properly initialized before rendering
  */
 export const useHydrateServerConfigurationAtoms = (
-    serverConfig: ServerConfigurationProps['serverConfig'] | undefined,
+  serverConfig: ServerConfigurationProps['serverConfig'] | undefined,
 ): void => {
   // Hydrate server configuration atoms with server-side data
-  useHydrateAtoms(serverConfig == null ? [] : [
-    [showPageLimitationXLAtom, serverConfig.showPageLimitationXL],
-    [registrationWhitelistAtom, serverConfig.registrationWhitelist],
-  ]);
+  useHydrateAtoms(
+    serverConfig == null
+      ? []
+      : [
+          [showPageLimitationXLAtom, serverConfig.showPageLimitationXL],
+          [registrationWhitelistAtom, serverConfig.registrationWhitelist],
+        ],
+  );
 };

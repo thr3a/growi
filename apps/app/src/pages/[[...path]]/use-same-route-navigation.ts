@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-
 import { useRouter } from 'next/router';
 
 import { useFetchCurrentPage } from '~/states/page';
@@ -18,7 +17,7 @@ export const useSameRouteNavigation = (): void => {
 
   // useEffect to trigger data fetching when the path changes
   useEffect(() => {
-    const fetch = async() => {
+    const fetch = async () => {
       const pageData = await fetchCurrentPage({ path: router.asPath });
       if (pageData?.revision?.body != null) {
         setEditingMarkdown(pageData.revision.body);

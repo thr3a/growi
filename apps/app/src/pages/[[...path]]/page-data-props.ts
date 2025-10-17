@@ -1,24 +1,31 @@
-import assert from 'assert';
-
-import type {
-  IDataWithRequiredMeta, IPage, IPageNotFoundInfo, IUser,
-} from '@growi/core/dist/interfaces';
-import {
-  isIPageInfo,
-  isIPageNotFoundInfo,
-} from '@growi/core/dist/interfaces';
-import { isPermalink as _isPermalink, isTopPage } from '@growi/core/dist/utils/page-path-utils';
-import { removeHeadingSlash } from '@growi/core/dist/utils/path-utils';
-import type { model, HydratedDocument } from 'mongoose';
 import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
+import type {
+  IDataWithRequiredMeta,
+  IPage,
+  IPageNotFoundInfo,
+  IUser,
+} from '@growi/core/dist/interfaces';
+import { isIPageInfo, isIPageNotFoundInfo } from '@growi/core/dist/interfaces';
+import {
+  isPermalink as _isPermalink,
+  isTopPage,
+} from '@growi/core/dist/utils/page-path-utils';
+import { removeHeadingSlash } from '@growi/core/dist/utils/path-utils';
+import assert from 'assert';
+import type { HydratedDocument, model } from 'mongoose';
 
 import type { CrowiRequest } from '~/interfaces/crowi-request';
 import type { PageModel } from '~/server/models/page';
-import type { IPageRedirect, PageRedirectModel } from '~/server/models/page-redirect';
+import type {
+  IPageRedirect,
+  PageRedirectModel,
+} from '~/server/models/page-redirect';
 
 import type { CommonEachProps } from '../common-props';
-import type { GeneralPageInitialProps, IPageToShowRevisionWithMeta } from '../general-page';
-
+import type {
+  GeneralPageInitialProps,
+  IPageToShowRevisionWithMeta,
+} from '../general-page';
 import type { EachProps } from './types';
 
 // Utility to resolve path, redirect, and identical path page check
@@ -40,13 +47,15 @@ async function initModels(): Promise<void> {
     Page = mongooseModel<IPage, PageModel>('Page');
   }
   if (PageRedirect == null) {
-    PageRedirect = mongooseModel<IPageRedirect, PageRedirectModel>('PageRedirect');
+    PageRedirect = mongooseModel<IPageRedirect, PageRedirectModel>(
+      'PageRedirect',
+    );
   }
 }
 
 async function resolvePathAndCheckIdentical(
-    path: string,
-    user: IUser | undefined,
+  path: string,
+  user: IUser | undefined,
 ): Promise<PathResolutionResult> {
   await initModels();
 
@@ -61,7 +70,12 @@ async function resolvePathAndCheckIdentical(
       resolvedPagePath = chains.end.toPath;
       redirectFrom = chains.start.fromPath;
     }
-    const multiplePagesCount = await Page.countByPathAndViewer(resolvedPagePath, user, null, true);
+    const multiplePagesCount = await Page.countByPathAndViewer(
+      resolvedPagePath,
+      user,
+      null,
+      true,
+    );
     isIdenticalPathPage = multiplePagesCount > 1;
   }
   return { resolvedPagePath, isIdenticalPathPage, redirectFrom };
@@ -72,9 +86,9 @@ async function resolvePathAndCheckIdentical(
  * @returns Final pathname to be used in the URL
  */
 function resolveFinalizedPathname(
-    pagePath: string,
-    page: HydratedDocument<IPage> | null | undefined,
-    isPermalink: boolean,
+  pagePath: string,
+  page: HydratedDocument<IPage> | null | undefined,
+  isPermalink: boolean,
 ): string {
   let finalPathname = pagePath;
 
@@ -95,30 +109,37 @@ function resolveFinalizedPathname(
   return finalPathname;
 }
 
-
 // Page data retrieval for initial load - returns GetServerSidePropsResult
 export async function getPageDataForInitial(
-    context: GetServerSidePropsContext,
-): Promise<GetServerSidePropsResult<
-  Pick<GeneralPageInitialProps, 'pageWithMeta' | 'skipSSR'> &
-  Pick<EachProps, 'currentPathname' | 'isIdenticalPathPage' | 'redirectFrom'>
->> {
+  context: GetServerSidePropsContext,
+): Promise<
+  GetServerSidePropsResult<
+    Pick<GeneralPageInitialProps, 'pageWithMeta' | 'skipSSR'> &
+      Pick<
+        EachProps,
+        'currentPathname' | 'isIdenticalPathPage' | 'redirectFrom'
+      >
+  >
+> {
   const req: CrowiRequest = context.req as CrowiRequest;
   const { crowi, user } = req;
   const { revisionId } = req.query;
 
   // Parse path from URL
   let { path: pathFromQuery } = context.query;
-  pathFromQuery = pathFromQuery != null ? pathFromQuery as string[] : [];
+  pathFromQuery = pathFromQuery != null ? (pathFromQuery as string[]) : [];
   let pathFromUrl = `/${pathFromQuery.join('/')}`;
   pathFromUrl = pathFromUrl === '//' ? '/' : pathFromUrl;
 
   const { pageService, configManager } = crowi;
 
-  const pageId = _isPermalink(pathFromUrl) ? removeHeadingSlash(pathFromUrl) : null;
+  const pageId = _isPermalink(pathFromUrl)
+    ? removeHeadingSlash(pathFromUrl)
+    : null;
   const isPermalink = _isPermalink(pathFromUrl);
 
-  const { resolvedPagePath, isIdenticalPathPage, redirectFrom } = await resolvePathAndCheckIdentical(pathFromUrl, user);
+  const { resolvedPagePath, isIdenticalPathPage, redirectFrom } =
+    await resolvePathAndCheckIdentical(pathFromUrl, user);
 
   if (isIdenticalPathPage) {
     return {
@@ -133,10 +154,18 @@ export async function getPageDataForInitial(
   }
 
   // Get full page data
-  const pageWithMeta = await pageService.findPageAndMetaDataByViewer(pageId, resolvedPagePath, user);
+  const pageWithMeta = await pageService.findPageAndMetaDataByViewer(
+    pageId,
+    resolvedPagePath,
+    user,
+  );
 
   // Handle URL conversion
-  const currentPathname = resolveFinalizedPathname(resolvedPagePath, pageWithMeta.data, isPermalink);
+  const currentPathname = resolveFinalizedPathname(
+    resolvedPagePath,
+    pageWithMeta.data,
+    isPermalink,
+  );
 
   // When the page exists
   if (pageWithMeta.data != null) {
@@ -171,11 +200,15 @@ export async function getPageDataForInitial(
 
     // Handle existing page with valid meta that is not IPageNotFoundInfo
     page.initLatestRevisionField(revisionId);
-    const ssrMaxRevisionBodyLength = configManager.getConfig('app:ssrMaxRevisionBodyLength');
+    const ssrMaxRevisionBodyLength = configManager.getConfig(
+      'app:ssrMaxRevisionBodyLength',
+    );
 
     // Check if SSR should be skipped
     const latestRevisionBodyLength = await page.getLatestRevisionBodyLength();
-    const skipSSR = latestRevisionBodyLength != null && ssrMaxRevisionBodyLength < latestRevisionBodyLength;
+    const skipSSR =
+      latestRevisionBodyLength != null &&
+      ssrMaxRevisionBodyLength < latestRevisionBodyLength;
 
     const populatedPage = await page.populateDataToShowRevision(skipSSR);
 
@@ -194,14 +227,20 @@ export async function getPageDataForInitial(
   }
 
   // type assertion
-  assert(isIPageNotFoundInfo(pageWithMeta.meta), 'meta should be IPageNotFoundInfo when data is null');
+  assert(
+    isIPageNotFoundInfo(pageWithMeta.meta),
+    'meta should be IPageNotFoundInfo when data is null',
+  );
 
   // Handle the case where the page does not exist
   return {
     props: {
       currentPathname: resolvedPagePath,
       isIdenticalPathPage: false,
-      pageWithMeta: pageWithMeta satisfies IDataWithRequiredMeta<null, IPageNotFoundInfo>,
+      pageWithMeta: pageWithMeta satisfies IDataWithRequiredMeta<
+        null,
+        IPageNotFoundInfo
+      >,
       skipSSR: false,
       redirectFrom,
     },
@@ -210,19 +249,27 @@ export async function getPageDataForInitial(
 
 // Page data retrieval for same-route navigation
 export async function getPageDataForSameRoute(
-    context: GetServerSidePropsContext,
-): Promise<GetServerSidePropsResult<
+  context: GetServerSidePropsContext,
+): Promise<
+  GetServerSidePropsResult<
     Pick<CommonEachProps, 'currentPathname'> &
-    Pick<EachProps, 'currentPathname' | 'isIdenticalPathPage' | 'redirectFrom'>
->> {
+      Pick<
+        EachProps,
+        'currentPathname' | 'isIdenticalPathPage' | 'redirectFrom'
+      >
+  >
+> {
   const req: CrowiRequest = context.req as CrowiRequest;
   const { user } = req;
 
-  const pathname = decodeURIComponent(context.resolvedUrl?.split('?')[0] ?? '/');
+  const pathname = decodeURIComponent(
+    context.resolvedUrl?.split('?')[0] ?? '/',
+  );
   const pageId = _isPermalink(pathname) ? removeHeadingSlash(pathname) : null;
   const isPermalink = _isPermalink(pathname);
 
-  const { resolvedPagePath, isIdenticalPathPage, redirectFrom } = await resolvePathAndCheckIdentical(pathname, user);
+  const { resolvedPagePath, isIdenticalPathPage, redirectFrom } =
+    await resolvePathAndCheckIdentical(pathname, user);
 
   if (isIdenticalPathPage) {
     return {
@@ -239,7 +286,11 @@ export async function getPageDataForSameRoute(
     isPermalink ? { _id: pageId } : { path: resolvedPagePath },
   ).exec();
 
-  const currentPathname = resolveFinalizedPathname(resolvedPagePath, basicPageInfo, isPermalink);
+  const currentPathname = resolveFinalizedPathname(
+    resolvedPagePath,
+    basicPageInfo,
+    isPermalink,
+  );
 
   return {
     props: {

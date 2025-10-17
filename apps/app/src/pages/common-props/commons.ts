@@ -1,5 +1,5 @@
-import type { ColorScheme, IUserHasId } from '@growi/core';
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
+import type { ColorScheme, IUserHasId } from '@growi/core';
 
 import type { CrowiRequest } from '~/interfaces/crowi-request';
 import { getGrowiVersion } from '~/utils/growi-version';
@@ -7,30 +7,37 @@ import loggerFactory from '~/utils/logger';
 
 const logger = loggerFactory('growi:pages:common-props:commons');
 
-
 export type CommonInitialProps = {
-  isNextjsRoutingTypeInitial: true,
-  appTitle: string,
-  siteUrl: string | undefined,
-  siteUrlWithEmptyValueWarn: string,
-  confidential: string,
-  growiVersion: string,
-  isDefaultLogo: boolean,
-  customTitleTemplate: string,
-  growiCloudUri: string | undefined,
-  growiAppIdForGrowiCloud: number | undefined,
-  forcedColorScheme?: ColorScheme,
+  isNextjsRoutingTypeInitial: true;
+  appTitle: string;
+  siteUrl: string | undefined;
+  siteUrlWithEmptyValueWarn: string;
+  confidential: string;
+  growiVersion: string;
+  isDefaultLogo: boolean;
+  customTitleTemplate: string;
+  growiCloudUri: string | undefined;
+  growiAppIdForGrowiCloud: number | undefined;
+  forcedColorScheme?: ColorScheme;
 };
 
-export const getServerSideCommonInitialProps: GetServerSideProps<CommonInitialProps> = async(context: GetServerSidePropsContext) => {
+export const getServerSideCommonInitialProps: GetServerSideProps<
+  CommonInitialProps
+> = async (context: GetServerSidePropsContext) => {
   const req = context.req as CrowiRequest;
   const { crowi } = req;
   const {
-    appService, configManager, attachmentService, customizeService, growiInfoService,
+    appService,
+    configManager,
+    attachmentService,
+    customizeService,
+    growiInfoService,
   } = crowi;
 
   const isCustomizedLogoUploaded = await attachmentService.isBrandLogoExist();
-  const isDefaultLogo = crowi.configManager.getConfig('customize:isDefaultLogo') || !isCustomizedLogoUploaded;
+  const isDefaultLogo =
+    crowi.configManager.getConfig('customize:isDefaultLogo') ||
+    !isCustomizedLogoUploaded;
   const forcedColorScheme = crowi.customizeService.forcedColorScheme;
 
   return {
@@ -44,13 +51,17 @@ export const getServerSideCommonInitialProps: GetServerSideProps<CommonInitialPr
       isDefaultLogo,
       customTitleTemplate: customizeService.customTitleTemplate,
       growiCloudUri: configManager.getConfig('app:growiCloudUri'),
-      growiAppIdForGrowiCloud: configManager.getConfig('app:growiAppIdForCloud'),
+      growiAppIdForGrowiCloud: configManager.getConfig(
+        'app:growiAppIdForCloud',
+      ),
       forcedColorScheme,
     },
   };
 };
 
-export const isCommonInitialProps = (props: unknown): props is CommonInitialProps => {
+export const isCommonInitialProps = (
+  props: unknown,
+): props is CommonInitialProps => {
   if (typeof props !== 'object' || props === null) {
     logger.warn('isCommonInitialProps: props is not an object or is null');
     return false;
@@ -60,7 +71,10 @@ export const isCommonInitialProps = (props: unknown): props is CommonInitialProp
 
   // Essential properties validation
   if (p.isNextjsRoutingTypeInitial !== true) {
-    logger.warn('isCommonInitialProps: isNextjsRoutingTypeInitial is not true', { isNextjsRoutingTypeInitial: p.isNextjsRoutingTypeInitial });
+    logger.warn(
+      'isCommonInitialProps: isNextjsRoutingTypeInitial is not true',
+      { isNextjsRoutingTypeInitial: p.isNextjsRoutingTypeInitial },
+    );
     return false;
   }
 
@@ -68,21 +82,26 @@ export const isCommonInitialProps = (props: unknown): props is CommonInitialProp
 };
 
 export type CommonEachProps = {
-  currentPathname: string,
-  nextjsRoutingPage?: string, // must be set by each page
-  currentUser?: IUserHasId,
-  csrfToken: string,
-  isMaintenanceMode: boolean,
-  redirectDestination?: string | null,
+  currentPathname: string;
+  nextjsRoutingPage?: string; // must be set by each page
+  currentUser?: IUserHasId;
+  csrfToken: string;
+  isMaintenanceMode: boolean;
+  redirectDestination?: string | null;
 };
 
 /**
  * Type guard for SameRouteEachProps validation
  * Lightweight validation for same-route navigation
  */
-function isValidCommonEachRouteProps(props: unknown, shouldContainNextjsRoutingPage = false): props is CommonEachProps {
+function isValidCommonEachRouteProps(
+  props: unknown,
+  shouldContainNextjsRoutingPage = false,
+): props is CommonEachProps {
   if (typeof props !== 'object' || props === null) {
-    logger.warn('isValidCommonEachRouteProps: props is not an object or is null');
+    logger.warn(
+      'isValidCommonEachRouteProps: props is not an object or is null',
+    );
     return false;
   }
 
@@ -90,31 +109,45 @@ function isValidCommonEachRouteProps(props: unknown, shouldContainNextjsRoutingP
 
   // Essential properties validation
   if (shouldContainNextjsRoutingPage) {
-    if (typeof p.nextjsRoutingPage !== 'string' && p.nextjsRoutingPage !== undefined) {
-      logger.warn('isValidCommonEachRouteProps: nextjsRoutingPage is not a string or null', { nextjsRoutingPage: p.nextjsRoutingPage });
+    if (
+      typeof p.nextjsRoutingPage !== 'string' &&
+      p.nextjsRoutingPage !== undefined
+    ) {
+      logger.warn(
+        'isValidCommonEachRouteProps: nextjsRoutingPage is not a string or null',
+        { nextjsRoutingPage: p.nextjsRoutingPage },
+      );
       return false;
     }
   }
   if (typeof p.currentPathname !== 'string') {
-    logger.warn('isValidCommonEachRouteProps: currentPathname is not a string', { currentPathname: p.currentPathname });
+    logger.warn(
+      'isValidCommonEachRouteProps: currentPathname is not a string',
+      { currentPathname: p.currentPathname },
+    );
     return false;
   }
   if (typeof p.csrfToken !== 'string') {
-    logger.warn('isValidCommonEachRouteProps: csrfToken is not a string', { csrfToken: p.csrfToken });
+    logger.warn('isValidCommonEachRouteProps: csrfToken is not a string', {
+      csrfToken: p.csrfToken,
+    });
     return false;
   }
   if (typeof p.isMaintenanceMode !== 'boolean') {
-    logger.warn('isValidCommonEachRouteProps: isMaintenanceMode is not a boolean', { isMaintenanceMode: p.isMaintenanceMode });
+    logger.warn(
+      'isValidCommonEachRouteProps: isMaintenanceMode is not a boolean',
+      { isMaintenanceMode: p.isMaintenanceMode },
+    );
     return false;
   }
 
   return true;
 }
 
-export const getServerSideCommonEachProps = async(
-    context: GetServerSidePropsContext, nextjsRoutingPage?: string,
+export const getServerSideCommonEachProps = async (
+  context: GetServerSidePropsContext,
+  nextjsRoutingPage?: string,
 ): ReturnType<GetServerSideProps<CommonEachProps>> => {
-
   const req = context.req as CrowiRequest;
   const { crowi, user } = req;
   const { appService } = crowi;
@@ -125,7 +158,7 @@ export const getServerSideCommonEachProps = async(
 
   const isMaintenanceMode = appService.isMaintenanceMode();
 
-  let currentUser;
+  let currentUser: IUserHasId | undefined;
   if (user != null) {
     currentUser = user.toObject();
   }
@@ -134,14 +167,15 @@ export const getServerSideCommonEachProps = async(
   let redirectDestination: string | null = null;
   if (!crowi.aclService.isGuestAllowedToRead() && currentUser == null) {
     redirectDestination = '/login';
-  }
-  else if (!isMaintenanceMode && currentPathname === '/maintenance') {
+  } else if (!isMaintenanceMode && currentPathname === '/maintenance') {
     redirectDestination = '/';
-  }
-  else if (isMaintenanceMode && !currentPathname.match('/admin/*') && !(currentPathname === '/maintenance')) {
+  } else if (
+    isMaintenanceMode &&
+    !currentPathname.match('/admin/*') &&
+    !(currentPathname === '/maintenance')
+  ) {
     redirectDestination = '/maintenance';
-  }
-  else {
+  } else {
     redirectDestination = null;
   }
 
@@ -154,7 +188,7 @@ export const getServerSideCommonEachProps = async(
     redirectDestination,
   };
 
-  const shouldContainNextjsRoutingPage = (nextjsRoutingPage != null);
+  const shouldContainNextjsRoutingPage = nextjsRoutingPage != null;
   if (!isValidCommonEachRouteProps(props, shouldContainNextjsRoutingPage)) {
     throw new Error('Invalid common each route props structure');
   }

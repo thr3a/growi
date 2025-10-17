@@ -21,8 +21,12 @@ export const getLangAtServerSide = (req: CrowiRequest): Lang => {
   const { user, headers } = req;
   const { configManager } = req.crowi;
 
-  return user == null ? detectLocaleFromBrowserAcceptLanguage(headers)
-    : (user.lang ?? configManager.getConfig('app:globalLang') ?? Lang.en_US) ?? Lang.en_US;
+  return user == null
+    ? detectLocaleFromBrowserAcceptLanguage(headers)
+    : (user.lang ??
+        configManager.getConfig('app:globalLang') ??
+        Lang.en_US ??
+        Lang.en_US);
 };
 
 // use this function to get locale for html lang attribute

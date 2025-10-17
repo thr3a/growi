@@ -1,28 +1,32 @@
-import type { ReactNode, JSX } from 'react';
+import type { JSX, ReactNode } from 'react';
 import React from 'react';
-
-import { useAtomValue } from 'jotai';
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
+import { useAtomValue } from 'jotai';
 
 import { ShareLinkLayout } from '~/components/Layout/ShareLinkLayout';
 import { DrawioViewerScript } from '~/components/Script/DrawioViewerScript';
 import { ShareLinkPageView } from '~/components/ShareLinkPageView';
 import type { CommonEachProps } from '~/pages/common-props';
 import { getServerSideCommonEachProps } from '~/pages/common-props';
-import { NextjsRoutingType, detectNextjsRoutingType } from '~/pages/utils/nextjs-routing-utils';
+import {
+  detectNextjsRoutingType,
+  NextjsRoutingType,
+} from '~/pages/utils/nextjs-routing-utils';
 import { useCustomTitleForPage } from '~/pages/utils/page-title-customization';
 import { mergeGetServerSidePropsResults } from '~/pages/utils/server-side-props';
 import { useCurrentPageData, useCurrentPagePath } from '~/states/page';
 import { useHydratePageAtoms } from '~/states/page/hydrate';
-import { disableLinkSharingAtom, useRendererConfig } from '~/states/server-configurations';
+import {
+  disableLinkSharingAtom,
+  useRendererConfig,
+} from '~/states/server-configurations';
 
 import type { NextPageWithLayout } from '../../_app.page';
 import { useInitialCSRFetch } from '../../general-page';
 import { useHydrateGeneralPageConfigurationAtoms } from '../../general-page/hydrate';
 import { registerPageToShowRevisionWithMeta } from '../../general-page/superjson';
-
 import { NEXT_JS_ROUTING_PAGE } from './consts';
 import { getServerSidePropsForInitial } from './server-side-props';
 import type { InitialProps } from './types';
@@ -30,18 +34,20 @@ import type { InitialProps } from './types';
 // call superjson custom register
 registerPageToShowRevisionWithMeta();
 
-
-const GrowiContextualSubNavigation = dynamic(() => import('~/client/components/Navbar/GrowiContextualSubNavigation'), { ssr: false });
-
+const GrowiContextualSubNavigation = dynamic(
+  () => import('~/client/components/Navbar/GrowiContextualSubNavigation'),
+  { ssr: false },
+);
 
 type Props = CommonEachProps | InitialProps;
 
 const isInitialProps = (props: Props): props is InitialProps => {
-  return 'isNextjsRoutingTypeInitial' in props && props.isNextjsRoutingTypeInitial;
+  return (
+    'isNextjsRoutingTypeInitial' in props && props.isNextjsRoutingTypeInitial
+  );
 };
 
 const SharedPage: NextPageWithLayout<Props> = (props: Props) => {
-
   // Initialize Jotai atoms with initial data - must be called unconditionally
   const pageData = isInitialProps(props) ? props.page : undefined;
   const shareLink = isInitialProps(props) ? props.shareLink : undefined;
@@ -75,7 +81,6 @@ const SharedPage: NextPageWithLayout<Props> = (props: Props) => {
       </Head>
 
       <div className="dynamic-layout-root justify-content-between">
-
         <GrowiContextualSubNavigation currentPage={currentPage} />
 
         <ShareLinkPageView
@@ -85,20 +90,22 @@ const SharedPage: NextPageWithLayout<Props> = (props: Props) => {
           isExpired={isExpired}
           disableLinkSharing={isLinkSharingDisabled}
         />
-
       </div>
     </>
   );
 };
 
 type LayoutProps = Props & {
-  children?: ReactNode
-}
+  children?: ReactNode;
+};
 
 const Layout = ({ children, ...props }: LayoutProps): JSX.Element => {
   // Hydrate sidebar atoms with server-side data - must be called unconditionally
   const initialProps = isInitialProps(props) ? props : undefined;
-  useHydrateGeneralPageConfigurationAtoms(initialProps?.serverConfig, initialProps?.rendererConfig);
+  useHydrateGeneralPageConfigurationAtoms(
+    initialProps?.serverConfig,
+    initialProps?.rendererConfig,
+  );
 
   return <ShareLinkLayout>{children}</ShareLinkLayout>;
 };
@@ -107,9 +114,7 @@ SharedPage.getLayout = function getLayout(page) {
   return (
     <>
       <DrawioViewerScript drawioUri={page.props.rendererConfig.drawioUri} />
-      <Layout {...page.props}>
-        {page}
-      </Layout>
+      <Layout {...page.props}>{page}</Layout>
     </>
   );
 };
@@ -133,14 +138,22 @@ const emptyProps = {
   props: {},
 };
 
-export const getServerSideProps: GetServerSideProps<Props> = async(context: GetServerSidePropsContext) => {
+export const getServerSideProps: GetServerSideProps<Props> = async (
+  context: GetServerSidePropsContext,
+) => {
   //
   // STAGE 1
   //
 
-  const commonEachPropsResult = await getServerSideCommonEachProps(context, NEXT_JS_ROUTING_PAGE);
+  const commonEachPropsResult = await getServerSideCommonEachProps(
+    context,
+    NEXT_JS_ROUTING_PAGE,
+  );
   // Handle early return cases (redirect/notFound)
-  if ('redirect' in commonEachPropsResult || 'notFound' in commonEachPropsResult) {
+  if (
+    'redirect' in commonEachPropsResult ||
+    'notFound' in commonEachPropsResult
+  ) {
     return commonEachPropsResult;
   }
   const commonEachProps = await commonEachPropsResult.props;
@@ -160,15 +173,18 @@ export const getServerSideProps: GetServerSideProps<Props> = async(context: GetS
   //
 
   // detect Next.js routing type
-  const nextjsRoutingType = detectNextjsRoutingType(context, NEXT_JS_ROUTING_PAGE);
+  const nextjsRoutingType = detectNextjsRoutingType(
+    context,
+    NEXT_JS_ROUTING_PAGE,
+  );
 
   // Merge all results in a type-safe manner (using sequential merging)
-  return mergeGetServerSidePropsResults(commonEachPropsResult, (
-    (nextjsRoutingType === NextjsRoutingType.INITIAL)
+  return mergeGetServerSidePropsResults(
+    commonEachPropsResult,
+    nextjsRoutingType === NextjsRoutingType.INITIAL
       ? await getServerSidePropsForInitial(context)
-      : emptyProps
-  ));
-
+      : emptyProps,
+  );
 };
 
 export default SharedPage;

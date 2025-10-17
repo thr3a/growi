@@ -1,7 +1,3 @@
-import { LoadingSpinner } from '@growi/ui/dist/components';
-import { useAtomValue } from 'jotai';
-import dynamic from 'next/dynamic';
-import { useTranslation } from 'next-i18next';
 import type React from 'react';
 import type { ForwardRefRenderFunction, JSX } from 'react';
 import {
@@ -11,6 +7,10 @@ import {
   useRef,
   useState,
 } from 'react';
+import dynamic from 'next/dynamic';
+import { LoadingSpinner } from '@growi/ui/dist/components';
+import { useAtomValue } from 'jotai';
+import { useTranslation } from 'next-i18next';
 
 import type { ForceHideMenuItems } from '~/client/components/Common/Dropdown/PageItemControl';
 import type { ISelectableAll } from '~/client/interfaces/selectable-all';
@@ -28,10 +28,12 @@ import {
 } from '~/states/server-configurations';
 import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
 import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
-import styles from './SearchPageBase.module.scss';
+
 // Do not import with next/dynamic
 // see: https://github.com/growilabs/growi/pull/7923
 import { SearchResultList } from './SearchResultList';
+
+import styles from './SearchPageBase.module.scss';
 
 // https://regex101.com/r/brrkBu/1
 const highlightKeywordsSplitter = /"[^"]+"|[^\u{20}\u{3000}]+/gu;

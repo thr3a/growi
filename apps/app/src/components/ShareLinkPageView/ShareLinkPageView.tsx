@@ -1,5 +1,5 @@
-import { useSlidesByFrontmatter } from '@growi/presentation/dist/services';
 import { type JSX, memo, useMemo } from 'react';
+import { useSlidesByFrontmatter } from '@growi/presentation/dist/services';
 
 import { PagePathNavTitle } from '~/components/Common/PagePathNavTitle';
 import type { RendererConfig } from '~/interfaces/services/renderer';

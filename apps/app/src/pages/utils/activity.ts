@@ -1,9 +1,12 @@
 import type { GetServerSidePropsContext } from 'next';
 
-import { type SupportedActionType } from '~/interfaces/activity';
+import type { SupportedActionType } from '~/interfaces/activity';
 import type { CrowiRequest } from '~/interfaces/crowi-request';
 
-export const addActivity = async(context: GetServerSidePropsContext, action: SupportedActionType): Promise<void> => {
+export const addActivity = async (
+  context: GetServerSidePropsContext,
+  action: SupportedActionType,
+): Promise<void> => {
   const req = context.req as CrowiRequest;
 
   const parameters = {

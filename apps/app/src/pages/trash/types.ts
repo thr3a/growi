@@ -1,5 +1,5 @@
 export type ServerConfigurationProps = {
   serverConfig: {
-    showPageLimitationXL: number,
-  },
-}
+    showPageLimitationXL: number;
+  };
+};

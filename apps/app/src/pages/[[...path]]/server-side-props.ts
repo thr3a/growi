@@ -2,21 +2,23 @@ import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 
 import { getServerSideBasicLayoutProps } from '../basic-layout-page';
 import {
-  getServerSideI18nProps, getServerSideCommonInitialProps,
+  getServerSideCommonInitialProps,
+  getServerSideI18nProps,
 } from '../common-props';
 import {
-  getServerSideRendererConfigProps,
   getActivityAction,
   getServerSideGeneralPageProps,
+  getServerSideRendererConfigProps,
 } from '../general-page';
 import { isValidGeneralPageInitialProps } from '../general-page/type-guards';
 import { addActivity } from '../utils/activity';
 import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
-
 import { NEXT_JS_ROUTING_PAGE } from './consts';
-import { getPageDataForInitial, getPageDataForSameRoute } from './page-data-props';
-import type { Stage2InitialProps, Stage2EachProps } from './types';
-
+import {
+  getPageDataForInitial,
+  getPageDataForSameRoute,
+} from './page-data-props';
+import type { Stage2EachProps, Stage2InitialProps } from './types';
 
 const nextjsRoutingProps = {
   props: {
@@ -24,8 +26,9 @@ const nextjsRoutingProps = {
   },
 };
 
-export async function getServerSidePropsForInitial(context: GetServerSidePropsContext):
-    Promise<GetServerSidePropsResult<Stage2InitialProps>> {
+export async function getServerSidePropsForInitial(
+  context: GetServerSidePropsContext,
+): Promise<GetServerSidePropsResult<Stage2InitialProps>> {
   const [
     commonInitialResult,
     basicLayoutResult,
@@ -43,12 +46,22 @@ export async function getServerSidePropsForInitial(context: GetServerSidePropsCo
   ]);
 
   // Merge all results in a type-safe manner (using sequential merging)
-  const mergedResult = mergeGetServerSidePropsResults(commonInitialResult,
-    mergeGetServerSidePropsResults(basicLayoutResult,
-      mergeGetServerSidePropsResults(generalPageResult,
-        mergeGetServerSidePropsResults(rendererConfigResult,
-          mergeGetServerSidePropsResults(i18nPropsResult,
-            mergeGetServerSidePropsResults(pageDataResult, nextjsRoutingProps))))));
+  const mergedResult = mergeGetServerSidePropsResults(
+    commonInitialResult,
+    mergeGetServerSidePropsResults(
+      basicLayoutResult,
+      mergeGetServerSidePropsResults(
+        generalPageResult,
+        mergeGetServerSidePropsResults(
+          rendererConfigResult,
+          mergeGetServerSidePropsResults(
+            i18nPropsResult,
+            mergeGetServerSidePropsResults(pageDataResult, nextjsRoutingProps),
+          ),
+        ),
+      ),
+    ),
+  );
 
   // Check for early return (redirect/notFound)
   if ('redirect' in mergedResult || 'notFound' in mergedResult) {
@@ -67,7 +80,9 @@ export async function getServerSidePropsForInitial(context: GetServerSidePropsCo
   return mergedResult;
 }
 
-export async function getServerSidePropsForSameRoute(context: GetServerSidePropsContext): Promise<GetServerSidePropsResult<Stage2EachProps>> {
+export async function getServerSidePropsForSameRoute(
+  context: GetServerSidePropsContext,
+): Promise<GetServerSidePropsResult<Stage2EachProps>> {
   // Get page data
   const result = await getPageDataForSameRoute(context);
 

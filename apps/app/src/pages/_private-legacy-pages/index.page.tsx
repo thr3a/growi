@@ -1,10 +1,8 @@
 import { useEffect } from 'react';
-
 import type { NextPage } from 'next';
-import { useTranslation } from 'next-i18next';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
+import { useTranslation } from 'next-i18next';
 
 import { DrawioViewerScript } from '~/components/Script/DrawioViewerScript';
 import { useSetSearchPage } from '~/states/context';
@@ -18,17 +16,24 @@ import type { CommonEachProps, CommonInitialProps } from '../common-props';
 import type { RendererConfigProps } from '../general-page';
 import { useCustomTitle } from '../utils/page-title-customization';
 
+const SearchResultLayout = dynamic(
+  () => import('~/components/Layout/SearchResultLayout'),
+  { ssr: false },
+);
 
-const SearchResultLayout = dynamic(() => import('~/components/Layout/SearchResultLayout'), { ssr: false });
-
-
-type Props = CommonInitialProps & CommonEachProps & BasicLayoutConfigurationProps & ServerConfigurationProps & RendererConfigProps;
+type Props = CommonInitialProps &
+  CommonEachProps &
+  BasicLayoutConfigurationProps &
+  ServerConfigurationProps &
+  RendererConfigProps;
 
 const PrivateLegacyPage: NextPage<Props> = (props: Props) => {
-  const router = useRouter();
   const { t } = useTranslation();
 
-  const PrivateLegacyPages = dynamic(() => import('~/features/search/client/components/PrivateLegacyPages'), { ssr: false });
+  const PrivateLegacyPages = dynamic(
+    () => import('~/features/search/client/components/PrivateLegacyPages'),
+    { ssr: false },
+  );
 
   // clear the cache for the current page
   //  in order to fix https://redmine.weseek.co.jp/issues/135811
@@ -36,7 +41,11 @@ const PrivateLegacyPage: NextPage<Props> = (props: Props) => {
   // useCurrentPathname('/_private-legacy-pages');
 
   // Hydrate server-side data
-  useHydrateBasicLayoutConfigurationAtoms(props.searchConfig, props.sidebarConfig, props.userUISettings);
+  useHydrateBasicLayoutConfigurationAtoms(
+    props.searchConfig,
+    props.sidebarConfig,
+    props.userUISettings,
+  );
   useHydrateServerConfigurationAtoms(props.serverConfig, props.rendererConfig);
 
   const setSearchPage = useSetSearchPage();
@@ -46,7 +55,7 @@ const PrivateLegacyPage: NextPage<Props> = (props: Props) => {
     setSearchPage(true);
     // cleanup
     return () => setSearchPage(false);
-  }, [router, setSearchPage]);
+  }, [setSearchPage]);
 
   const title = useCustomTitle(t('private_legacy_pages.title'));
 

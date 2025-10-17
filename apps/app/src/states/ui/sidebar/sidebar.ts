@@ -1,5 +1,5 @@
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { type RefObject, useCallback, useMemo } from 'react';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 
 import { scheduleToPut } from '~/client/services/user-ui-settings';
 import { SidebarContentsType, SidebarMode } from '~/interfaces/ui';

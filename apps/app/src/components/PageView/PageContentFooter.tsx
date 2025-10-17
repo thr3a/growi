@@ -1,6 +1,6 @@
-import type { IPage, IPagePopulatedToShowRevision } from '@growi/core';
-import dynamic from 'next/dynamic';
 import type { JSX } from 'react';
+import dynamic from 'next/dynamic';
+import type { IPage, IPagePopulatedToShowRevision } from '@growi/core';
 
 import styles from './PageContentFooter.module.scss';
 

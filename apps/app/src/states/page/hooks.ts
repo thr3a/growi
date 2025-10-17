@@ -1,10 +1,10 @@
+import { useCallback, useMemo } from 'react';
 import {
   isCreatablePage,
   isPermalink,
 } from '@growi/core/dist/utils/page-path-utils';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useAtomCallback } from 'jotai/utils';
-import { useCallback, useMemo } from 'react';
 
 import { useIsGuestUser, useIsReadOnlyUser } from '../context';
 import { useCurrentPathname } from '../global';

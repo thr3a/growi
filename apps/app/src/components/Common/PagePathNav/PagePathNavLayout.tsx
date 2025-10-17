@@ -1,5 +1,5 @@
-import dynamic from 'next/dynamic';
 import type { JSX, ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 
 import { usePageNotFound } from '~/states/page';
 

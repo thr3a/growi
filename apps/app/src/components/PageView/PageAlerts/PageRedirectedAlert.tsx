@@ -1,5 +1,5 @@
-import { useTranslation } from 'next-i18next';
 import React, { type JSX, useCallback, useState } from 'react';
+import { useTranslation } from 'next-i18next';
 
 import { useCurrentPagePath, useRedirectFrom } from '~/states/page';
 

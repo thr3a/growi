@@ -1,8 +1,11 @@
-import type { IDataWithMeta, IPageNotFoundInfo } from '@growi/core/dist/interfaces';
+import type {
+  IDataWithMeta,
+  IPageNotFoundInfo,
+} from '@growi/core/dist/interfaces';
 import { pagePathUtils } from '@growi/core/dist/utils';
 
-import { SupportedAction } from '~/interfaces/activity';
 import type { SupportedActionType } from '~/interfaces/activity';
+import { SupportedAction } from '~/interfaces/activity';
 
 import type { IPageToShowRevisionWithMeta } from './types';
 
@@ -10,7 +13,10 @@ export const getActivityAction = (props: {
   isNotCreatable: boolean;
   isForbidden: boolean;
   isNotFound: boolean;
-  pageWithMeta?: IPageToShowRevisionWithMeta | IDataWithMeta<null, IPageNotFoundInfo> | null;
+  pageWithMeta?:
+    | IPageToShowRevisionWithMeta
+    | IDataWithMeta<null, IPageNotFoundInfo>
+    | null;
 }): SupportedActionType => {
   if (props.isNotCreatable) {
     return SupportedAction.ACTION_PAGE_NOT_CREATABLE;

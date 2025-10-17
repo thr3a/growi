@@ -1,8 +1,6 @@
-
 import { useEffect } from 'react';
 
 import { useFetchCurrentPage } from '~/states/page';
-
 
 /**
  * useInitialCSRFetch
@@ -11,9 +9,7 @@ import { useFetchCurrentPage } from '~/states/page';
  *
  * @param shouldFetch - Whether SSR is skipped (from props)
  */
-export const useInitialCSRFetch = (
-    shouldFetch?: boolean,
-): void => {
+export const useInitialCSRFetch = (shouldFetch?: boolean): void => {
   const { fetchCurrentPage } = useFetchCurrentPage();
 
   useEffect(() => {

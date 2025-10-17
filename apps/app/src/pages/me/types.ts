@@ -1,6 +1,6 @@
 export type ServerConfigurationProps = {
   serverConfig: {
-    showPageLimitationXL: number,
-    registrationWhitelist: string[],
-  },
-}
+    showPageLimitationXL: number;
+    registrationWhitelist: string[];
+  };
+};

@@ -1,10 +1,10 @@
+import { useEffect } from 'react';
 import { Breakpoint } from '@growi/ui/dist/interfaces';
 import {
   addBreakpointListener,
   cleanupBreakpointListener,
 } from '@growi/ui/dist/utils';
 import { atom, useAtom } from 'jotai';
-import { useEffect } from 'react';
 
 // Device state atoms
 export const isDeviceLargerThanXlAtom = atom(false);
