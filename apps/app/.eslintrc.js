@@ -27,10 +27,14 @@ module.exports = {
     'test/integration/models/**',
     'test/integration/service/**',
     'test/integration/setup.js',
+    'test-with-vite/**',
+    'public/**',
     'bin/**',
     'config/**',
+    'src/styles/**',
     'src/linter-checker/**',
     'src/migrations/**',
+    'src/models/**',
     'src/features/callout/**',
     'src/features/comment/**',
     'src/features/templates/**',
@@ -49,6 +53,7 @@ module.exports = {
     'src/stores-universal/**',
     'src/interfaces/**',
     'src/utils/**',
+    'src/services/**',
   ],
   settings: {
     // resolve path aliases by eslint-import-resolver-typescript
@@ -57,10 +62,6 @@ module.exports = {
     },
   },
   rules: {
-    'no-restricted-imports': ['error', {
-      name: 'axios',
-      message: 'Please use src/utils/axios instead.',
-    }],
     '@typescript-eslint/no-var-requires': 'off',
 
     // set 'warn' temporarily -- 2021.08.02 Yuki Takei
