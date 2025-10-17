@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/style/noRestrictedImports: This file is an adapter for axios */
+
 import type { AxiosStatic } from 'axios';
 import axios from 'axios';
 

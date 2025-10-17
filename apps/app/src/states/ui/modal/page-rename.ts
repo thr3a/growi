@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
 import type { IPageToRenameWithMeta } from '@growi/core';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { useCallback } from 'react';
 
 import type { OnRenamedFunction } from '../../../interfaces/ui';
 

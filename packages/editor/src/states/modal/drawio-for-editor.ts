@@ -10,7 +10,8 @@ const drawioModalForEditorAtom = atom<DrawioModalForEditorState>({
   editorKey: undefined,
 });
 
-export const useDrawioModalForEditorStatus = () => useAtomValue(drawioModalForEditorAtom);
+export const useDrawioModalForEditorStatus = () =>
+  useAtomValue(drawioModalForEditorAtom);
 
 export const useDrawioModalForEditorActions = () => {
   const setModalState = useSetAtom(drawioModalForEditorAtom);

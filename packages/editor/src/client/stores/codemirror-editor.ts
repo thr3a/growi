@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useRef } from 'react';
-
 import { deepEquals } from '@growi/core/dist/utils';
-import type { ReactCodeMirrorProps, UseCodeMirror } from '@uiw/react-codemirror';
+import type {
+  ReactCodeMirrorProps,
+  UseCodeMirror,
+} from '@uiw/react-codemirror';
 import { atom, useAtom } from 'jotai';
 import { atomFamily } from 'jotai/utils';
+import { useEffect, useMemo, useRef } from 'react';
 import deepmerge from 'ts-deepmerge';
 
 import { type UseCodeMirrorEditor, useCodeMirrorEditor } from '../services';
@@ -17,7 +19,9 @@ const isValid = (u: UseCodeMirrorEditor) => {
 /**
  * Atom family to store CodeMirror editor instances by key
  */
-const codeMirrorEditorAtomFamily = atomFamily((_key: string) => atom<UseCodeMirrorEditor | null>(null));
+const codeMirrorEditorAtomFamily = atomFamily((_key: string) =>
+  atom<UseCodeMirrorEditor | null>(null),
+);
 
 /**
  * Result type for useCodeMirrorEditorIsolated hook
@@ -31,27 +35,31 @@ export type CodeMirrorEditorResult = {
  * Hook to manage isolated CodeMirror editor instances using Jotai
  */
 export const useCodeMirrorEditorIsolated = (
-    key: string | null, container?: HTMLDivElement | null, props?: ReactCodeMirrorProps,
+  key: string | null,
+  container?: HTMLDivElement | null,
+  props?: ReactCodeMirrorProps,
 ): CodeMirrorEditorResult => {
-
   const ref = useRef<UseCodeMirrorEditor | null>(null);
   const currentData = ref.current;
 
   // Use a default key if null is provided
   const atomKey = key ?? 'default';
-  const [storedData, setStoredData] = useAtom(codeMirrorEditorAtomFamily(atomKey));
+  const [storedData, setStoredData] = useAtom(
+    codeMirrorEditorAtomFamily(atomKey),
+  );
 
-  const mergedProps = useMemo<UseCodeMirror>(() => deepmerge(
-    { container },
-    props ?? {},
-  ), [container, props]);
+  const mergedProps = useMemo<UseCodeMirror>(
+    () => deepmerge({ container }, props ?? {}),
+    [container, props],
+  );
 
   const newData = useCodeMirrorEditor(mergedProps);
 
-  const shouldUpdate = key != null && container != null && (
-    currentData == null
-    || (isValid(newData) && !isDeepEquals(currentData, newData))
-  );
+  const shouldUpdate =
+    key != null &&
+    container != null &&
+    (currentData == null ||
+      (isValid(newData) && !isDeepEquals(currentData, newData)));
 
   // Update atom when data changes
   useEffect(() => {
@@ -62,6 +70,6 @@ export const useCodeMirrorEditorIsolated = (
   }, [shouldUpdate, newData, setStoredData]);
 
   return {
-    data: key != null ? storedData ?? undefined : undefined,
+    data: key != null ? (storedData ?? undefined) : undefined,
   };
 };

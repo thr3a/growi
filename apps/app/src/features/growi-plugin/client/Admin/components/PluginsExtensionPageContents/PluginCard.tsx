@@ -1,6 +1,6 @@
-import { type JSX, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'next-i18next';
+import { type JSX, useState } from 'react';
 
 import { apiv3Put } from '~/client/util/apiv3-client';
 import { toastError, toastSuccess } from '~/client/util/toastr';
@@ -21,6 +21,7 @@ export const PluginCard = (props: Props): JSX.Element => {
 
   const { t } = useTranslation('admin');
 
+  // biome-ignore lint/correctness/noNestedComponentDefinitions: ignore
   const PluginCardButton = (): JSX.Element => {
     const [_isEnabled, setIsEnabled] = useState<boolean>(isEnabled);
 
@@ -62,6 +63,7 @@ export const PluginCard = (props: Props): JSX.Element => {
     );
   };
 
+  // biome-ignore lint/correctness/noNestedComponentDefinitions: ignore
   const PluginDeleteButton = (): JSX.Element => {
     return (
       <div>

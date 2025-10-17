@@ -1,5 +1,3 @@
-import type { NextRouter } from 'next/router';
-import { useRouter } from 'next/router';
 import type {
   IPagePopulatedToShowRevision,
   IRevisionHasId,
@@ -9,13 +7,14 @@ import type {
   PageStatus,
 } from '@growi/core';
 import { renderHook, waitFor } from '@testing-library/react';
-// eslint-disable-next-line no-restricted-imports
+// biome-ignore lint/style/noRestrictedImports: import only types
 import type { AxiosResponse } from 'axios';
 import { createStore, Provider } from 'jotai';
+import type { NextRouter } from 'next/router';
+import { useRouter } from 'next/router';
 import { vi } from 'vitest';
 import { mockDeep } from 'vitest-mock-extended';
 
-// eslint-disable-next-line no-restricted-imports
 import * as apiv3Client from '~/client/util/apiv3-client';
 import { useFetchCurrentPage } from '~/states/page';
 import {

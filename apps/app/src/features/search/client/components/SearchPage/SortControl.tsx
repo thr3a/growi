@@ -1,5 +1,5 @@
-import type { FC } from 'react';
 import { useTranslation } from 'next-i18next';
+import type { FC } from 'react';
 
 import { SORT_AXIS, SORT_ORDER } from '~/interfaces/search';
 
