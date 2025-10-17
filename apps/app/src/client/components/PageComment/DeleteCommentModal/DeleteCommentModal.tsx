@@ -8,8 +8,8 @@ import {
   Button, Modal, ModalHeader, ModalBody, ModalFooter,
 } from 'reactstrap';
 
-import { Username } from '../../../components/User/Username';
-import type { ICommentHasId } from '../../../interfaces/comment';
+import { Username } from '~/components/User/Username';
+import type { ICommentHasId } from '~/interfaces/comment';
 
 import styles from './DeleteCommentModal.module.scss';
 
