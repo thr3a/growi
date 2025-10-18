@@ -30,8 +30,6 @@
       "!apps/app/playwright",
       "!apps/app/src/client",
       "!apps/app/src/features/openai",
-      "!apps/app/src/server/events",
-      "!apps/app/src/server/interfaces",
       "!apps/app/src/server/middlewares",
       "!apps/app/src/server/models",
       "!apps/app/src/server/routes",
