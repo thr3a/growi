@@ -10,12 +10,12 @@ export const isValidScope = (scope: Scope): boolean => {
     .split(':')
     .map((x) => (x === ALL_SIGN ? 'ALL' : x.toUpperCase()));
   let obj: any = SCOPE;
-  scopeParts.forEach((part) => {
+  for (const part of scopeParts) {
     if (obj[part] == null) {
       return false;
     }
     obj = obj[part];
-  });
+  }
   return obj === scope;
 };
 
