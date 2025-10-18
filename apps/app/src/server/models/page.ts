@@ -899,7 +899,7 @@ schema.statics.findTargetAndAncestorsByPathOrId = async function (
   user,
   userGroups,
 ): Promise<TargetAndAncestorsResult> {
-  let path;
+  let path: string;
   if (!hasSlash(pathOrId)) {
     const _id = pathOrId;
     const page = await this.findOne({ _id });
@@ -926,7 +926,9 @@ schema.statics.findTargetAndAncestorsByPathOrId = async function (
 
   // no same path pages
   const ancestorsMap = new Map<string, PageDocument>();
-  _targetAndAncestors.forEach((page) => ancestorsMap.set(page.path, page));
+  _targetAndAncestors.forEach((page) => {
+    ancestorsMap.set(page.path, page);
+  });
   const targetAndAncestors = Array.from(ancestorsMap.values());
   const rootPage = targetAndAncestors[targetAndAncestors.length - 1];
 
@@ -1027,6 +1029,7 @@ schema.statics.recountDescendantCount = async function (
         },
         sumOfDocsCount: {
           $sum: {
+            // biome-ignore lint/suspicious/noThenProperty: ignore
             $cond: { if: { $eq: ['$isEmpty', true] }, then: 0, else: 1 }, // exclude isEmpty true page from sumOfDocsCount
           },
         },

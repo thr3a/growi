@@ -58,8 +58,8 @@ schema.statics.generateOneTimeToken = () => {
 };
 
 schema.statics.createPasswordResetOrder = async function (email) {
-  let token;
-  let duplicateToken;
+  let token: string;
+  let duplicateToken: PasswordResetOrderDocument | null = null;
 
   do {
     token = this.generateOneTimeToken();

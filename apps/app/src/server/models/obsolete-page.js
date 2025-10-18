@@ -144,7 +144,7 @@ export const getPageSchema = (crowi) => {
     }
 
     // comparing ObjectId with string
-    // eslint-disable-next-line eqeqeq
+    // biome-ignore lint/suspicious/noDoubleEquals: ignore
     return this.latestRevision == this.revision._id.toString();
   };
 
@@ -175,7 +175,7 @@ export const getPageSchema = (crowi) => {
 
     const revision = this.latestRevision || this.revision._id;
     // comparing ObjectId with string
-    // eslint-disable-next-line eqeqeq
+    // biome-ignore lint/suspicious/noDoubleEquals: ignore
     if (revision != previousRevision) {
       return false;
     }

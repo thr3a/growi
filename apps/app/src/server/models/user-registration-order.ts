@@ -55,8 +55,8 @@ schema.statics.generateOneTimeToken = () => {
 };
 
 schema.statics.createUserRegistrationOrder = async function (email) {
-  let token;
-  let duplicateToken;
+  let token: string;
+  let duplicateToken: UserRegistrationOrderDocument | null = null;
 
   do {
     token = this.generateOneTimeToken();
