@@ -1,9 +1,14 @@
 import {
-  ACTION, ALL_SIGN, SCOPE, type Scope,
+  ACTION,
+  ALL_SIGN,
+  SCOPE,
+  type Scope,
 } from '@growi/core/dist/interfaces';
 
 export const isValidScope = (scope: Scope): boolean => {
-  const scopeParts = scope.split(':').map(x => (x === ALL_SIGN ? 'ALL' : x.toUpperCase()));
+  const scopeParts = scope
+    .split(':')
+    .map((x) => (x === ALL_SIGN ? 'ALL' : x.toUpperCase()));
   let obj: any = SCOPE;
   scopeParts.forEach((part) => {
     if (obj[part] == null) {
@@ -60,7 +65,7 @@ export const extractAllScope = (scope: Scope): Scope[] => {
     return [scope];
   }
   const result = [] as Scope[];
-  const scopeParts = scope.split(':').map(x => (x.toUpperCase()));
+  const scopeParts = scope.split(':').map((x) => x.toUpperCase());
   let obj: any = SCOPE;
   scopeParts.forEach((part) => {
     if (part === ALL_SIGN) {
@@ -71,9 +76,8 @@ export const extractAllScope = (scope: Scope): Scope[] => {
   getAllScopeValuesFromObj(obj).forEach((value) => {
     result.push(value);
   });
-  return result.filter(scope => !hasAllScope(scope));
+  return result.filter((scope) => !hasAllScope(scope));
 };
-
 
 /**
  * Extracts scopes from a given array of scopes

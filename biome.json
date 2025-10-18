@@ -34,7 +34,6 @@
       "!apps/app/src/server/models",
       "!apps/app/src/server/routes",
       "!apps/app/src/server/service",
-      "!apps/app/src/server/util",
       "!apps/app/src/services",
       "!apps/app/src/stores"
     ]
