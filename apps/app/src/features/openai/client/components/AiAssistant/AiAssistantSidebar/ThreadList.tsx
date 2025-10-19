@@ -53,7 +53,6 @@ export const ThreadList: React.FC = () => {
                 openChatHandler(thread);
               }}
               onMouseDown={(e) => {
-                // Prevent focus when clicking with mouse, but allow keyboard focus
                 e.preventDefault();
               }}
             >
