@@ -431,13 +431,7 @@ export const useEditorAssistant: UseEditorAssistant = () => {
         });
       });
     }
-  }, [
-    codeMirrorEditor,
-    detectedDiff,
-    isTextSelected,
-    selectedText,
-    yDocs?.secondaryDoc,
-  ]);
+  }, [detectedDiff, isTextSelected, yDocs?.secondaryDoc]);
 
   // Set detectedDiff to undefined after applying all detectedDiff to secondaryDoc
   useEffect(() => {

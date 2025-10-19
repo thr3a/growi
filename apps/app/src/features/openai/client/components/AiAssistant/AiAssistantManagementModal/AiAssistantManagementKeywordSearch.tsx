@@ -251,9 +251,9 @@ export const AiAssistantKeywordSearch = (props: Props): JSX.Element => {
               onClickMethodButton={removePage}
             />
           </SimpleBar>
-          <label className="form-text text-muted mt-2">
+          <span className="form-text text-muted mt-2">
             {t('modal_ai_assistant.can_add_later')}
-          </label>
+          </span>
         </div>
 
         <div className="d-flex justify-content-center mt-4">

@@ -74,17 +74,19 @@ export const ThreadList: React.FC = () => {
           swrInifiniteResponse={swrInifiniteThreads}
           isReachingEnd={isReachingEnd}
         >
-          {data != null &&
-            data
-              .flatMap((thread) => thread.paginateResult.docs)
-              .map((thread) => (
-                <li
-                  key={thread._id}
-                  role="button"
-                  className="list-group-item list-group-item-action border-0 d-flex align-items-center rounded-1"
+          {data
+            ?.flatMap((thread) => thread.paginateResult.docs)
+            .map((thread) => (
+              <li key={thread._id} className="list-group-item border-0 p-0">
+                <button
+                  type="button"
+                  className="btn btn-link list-group-item-action border-0 d-flex align-items-center rounded-1"
                   onClick={(e) => {
                     e.stopPropagation();
                     openChat(thread.aiAssistant, thread);
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
                   }}
                 >
                   <div>
@@ -97,7 +99,7 @@ export const ThreadList: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="grw-btn-actions opacity-0 d-flex justify-content-center ">
+                  <div className="grw-btn-actions opacity-0 d-flex justify-content-center">
                     <button
                       type="button"
                       className="btn btn-link text-secondary p-0"
@@ -114,8 +116,9 @@ export const ThreadList: React.FC = () => {
                       </span>
                     </button>
                   </div>
-                </li>
-              ))}
+                </button>
+              </li>
+            ))}
         </InfiniteScroll>
       </ul>
     </>

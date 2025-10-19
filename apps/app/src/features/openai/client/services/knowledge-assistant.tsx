@@ -211,6 +211,7 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
                     id="swSummaryMode"
                     type="checkbox"
                     role="switch"
+                    aria-checked={form.watch('summaryMode')}
                     className="form-check-input"
                     {...form.register('summaryMode')}
                     disabled={form.formState.isSubmitting || isGenerating}
@@ -218,10 +219,10 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
                   <label className="form-check-label" htmlFor="swSummaryMode">
                     {t('sidebar_ai_assistant.summary_mode_label')}
                   </label>
-                  <a
+                  <button
+                    type="button"
                     id="tooltipForHelpOfSummaryMode"
-                    role="button"
-                    className="ms-1"
+                    className="btn btn-link p-0 ms-1"
                   >
                     <span
                       className="material-symbols-outlined fs-6"
@@ -229,7 +230,7 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
                     >
                       help
                     </span>
-                  </a>
+                  </button>
                   <UncontrolledTooltip target="tooltipForHelpOfSummaryMode">
                     {t('sidebar_ai_assistant.summary_mode_help')}
                   </UncontrolledTooltip>
@@ -241,6 +242,7 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
                     id="swExtendedThinkingMode"
                     type="checkbox"
                     role="switch"
+                    aria-checked={form.watch('extendedThinkingMode')}
                     className="form-check-input"
                     {...form.register('extendedThinkingMode')}
                     disabled={form.formState.isSubmitting || isGenerating}
@@ -251,10 +253,10 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
                   >
                     {t('sidebar_ai_assistant.extended_thinking_mode_label')}
                   </label>
-                  <a
+                  <button
+                    type="button"
                     id="tooltipForHelpOfExtendedThinkingMode"
-                    role="button"
-                    className="ms-1"
+                    className="btn btn-link p-0 ms-1"
                   >
                     <span
                       className="material-symbols-outlined fs-6"
@@ -262,7 +264,7 @@ export const useKnowledgeAssistant: UseKnowledgeAssistant = () => {
                     >
                       help
                     </span>
-                  </a>
+                  </button>
                   <UncontrolledTooltip target="tooltipForHelpOfExtendedThinkingMode">
                     {t('sidebar_ai_assistant.extended_thinking_mode_help')}
                   </UncontrolledTooltip>

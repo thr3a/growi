@@ -45,11 +45,8 @@ const SelectablePageTree = memo(
       [onClickAddPageButton],
     );
 
-    const PageTreeItem = (props: TreeItemProps) => {
-      const { itemNode } = props;
-      const { page } = itemNode;
-
-      const SelectPageButton = () => {
+    const SelectPageButton = useCallback(
+      ({ page }: { page: IPageForItem }) => {
         return (
           <button
             type="button"
@@ -64,17 +61,28 @@ const SelectablePageTree = memo(
             </span>
           </button>
         );
-      };
+      },
+      [pageTreeItemClickHandler],
+    );
 
-      return (
-        <TreeItemLayout
-          {...props}
-          itemClass={PageTreeItem}
-          className="text-muted"
-          customHoveredEndComponents={[SelectPageButton]}
-        />
-      );
-    };
+    const PageTreeItem = useCallback(
+      (props: TreeItemProps) => {
+        const { itemNode } = props;
+        const { page } = itemNode;
+
+        return (
+          <TreeItemLayout
+            {...props}
+            itemClass={PageTreeItem}
+            className="text-muted"
+            customHoveredEndComponents={[
+              () => <SelectPageButton page={page} />,
+            ]}
+          />
+        );
+      },
+      [SelectPageButton],
+    );
 
     return (
       <div className="page-tree-item">
@@ -193,9 +201,9 @@ export const AiAssistantManagementPageTreeSelection = (
               onClickMethodButton={removePage}
             />
           </SimpleBar>
-          <label className="form-text text-muted mt-2">
+          <span className="form-text text-muted mt-2">
             {t('modal_ai_assistant.can_add_later')}
-          </label>
+          </span>
         </div>
 
         <div className="d-flex justify-content-center mt-4">

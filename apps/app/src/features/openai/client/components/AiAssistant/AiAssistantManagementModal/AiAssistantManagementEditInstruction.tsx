@@ -39,7 +39,7 @@ export const AiAssistantManagementEditInstruction = (
       <ModalBody className="p-4">
         <p
           className="text-secondary py-1"
-          // eslint-disable-next-line react/no-danger
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
           dangerouslySetInnerHTML={{
             __html: t('modal_ai_assistant.instructions.description'),
           }}

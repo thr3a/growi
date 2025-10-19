@@ -37,7 +37,7 @@ export const ShareScopeWarningModal = (props: Props): JSX.Element => {
       <ModalBody className="py-4 px-4">
         <p
           className="mb-4"
-          // eslint-disable-next-line react/no-danger
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
           dangerouslySetInnerHTML={{
             __html: t('share_scope_warning_modal.warning_message'),
           }}

@@ -37,7 +37,7 @@ export const AiAssistantManagementEditPages = (props: Props): JSX.Element => {
         <div className="px-4">
           <p
             className="text-secondary"
-            // eslint-disable-next-line react/no-danger
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
             dangerouslySetInnerHTML={{
               __html: t('modal_ai_assistant.edit_page_description', {
                 limitLearnablePageCountPerAssistant,

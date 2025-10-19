@@ -22,7 +22,7 @@ export const AiIntegrationDisableMode: FC = () => {
                 {t('ai_integration.ai_integration')}
               </h1>
               <h3
-                // eslint-disable-next-line react/no-danger
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
                 dangerouslySetInnerHTML={{
                   __html: t('ai_integration.disable_mode_explanation', {
                     documentationUrl,

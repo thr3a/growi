@@ -153,7 +153,6 @@ const AiAssistantManagementModalSubstance = (): JSX.Element => {
     aiAssistant?.grantedGroupsForAccessScope,
     aiAssistant?.grantedGroupsForShareScope,
     aiAssistant?.name,
-    aiAssistant?.pagePathPatterns,
     aiAssistant?.shareScope,
     shouldEdit,
   ]);

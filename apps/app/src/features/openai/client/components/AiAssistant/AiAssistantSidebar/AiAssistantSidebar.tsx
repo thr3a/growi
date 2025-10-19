@@ -553,7 +553,7 @@ const AiAssistantSidebarSubstance: React.FC<
                     {messageLogs.map((message) => (
                       <>
                         <MessageCard
-                          role={message.isUserMessage ? 'user' : 'assistant'}
+                          sender={message.isUserMessage ? 'user' : 'assistant'}
                           additionalItem={messageCardAdditionalItemForGeneratedMessage(
                             message.id,
                           )}
@@ -564,7 +564,7 @@ const AiAssistantSidebarSubstance: React.FC<
                     ))}
                     {generatingAnswerMessage != null && (
                       <MessageCard
-                        role="assistant"
+                        sender="assistant"
                         additionalItem={
                           messageCardAdditionalItemForGeneratingMessage
                         }

@@ -151,13 +151,14 @@ const EditablePagePath = memo((props: EditablePagePathProps): JSX.Element => {
           inputStyle={{ maxWidth: (editingContainerRect?.width ?? 0) - 10 }}
         />
       ) : (
-        <span
-          className={`page-path ${isEditable && !disablePagePaths.includes(page.path) ? 'page-path-editable' : ''}`}
+        <button
+          type="button"
+          className={`btn btn-link p-0 page-path ${isEditable && !disablePagePaths.includes(page.path) ? 'page-path-editable' : ''}`}
           onClick={() => handlePagePathClick(page)}
           title={page.path}
         >
           {page.path}
-        </span>
+        </button>
       )}
     </div>
   );

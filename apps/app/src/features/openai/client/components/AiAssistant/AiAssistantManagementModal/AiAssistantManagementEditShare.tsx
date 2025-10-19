@@ -66,7 +66,7 @@ export const AiAssistantManagementEditShare = (props: Props): JSX.Element => {
         selectedAccessScope !== AiAssistantAccessScope.OWNER
       );
     });
-  }, [isShared, selectedAccessScope, selectedShareScope]);
+  }, [selectedAccessScope, selectedShareScope]);
 
   const changeShareToggleHandler = useCallback(() => {
     setIsShared((prev) => {

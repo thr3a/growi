@@ -43,18 +43,27 @@ export const ThreadList: React.FC = () => {
       <ul className={`list-group ${moduleClass}`}>
         {threads.map((thread) => (
           <li
-            onClick={() => {
-              openChatHandler(thread);
-            }}
             key={thread._id}
-            role="button"
-            tabIndex={0}
-            className="d-flex align-items-center list-group-item list-group-item-action border-0 rounded-1 bg-body-tertiary mb-2"
+            className="list-group-item border-0 rounded-1 bg-body-tertiary mb-2"
           >
-            <div className="text-body-secondary">
-              <span className="material-symbols-outlined fs-5 me-2">chat</span>
-              <span className="flex-grow-1">{thread.title}</span>
-            </div>
+            <button
+              type="button"
+              className="btn btn-link d-flex align-items-center list-group-item-action border-0 rounded-1 p-0"
+              onClick={() => {
+                openChatHandler(thread);
+              }}
+              onMouseDown={(e) => {
+                // Prevent focus when clicking with mouse, but allow keyboard focus
+                e.preventDefault();
+              }}
+            >
+              <div className="text-body-secondary">
+                <span className="material-symbols-outlined fs-5 me-2">
+                  chat
+                </span>
+                <span className="flex-grow-1">{thread.title}</span>
+              </div>
+            </button>
           </li>
         ))}
       </ul>

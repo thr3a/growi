@@ -72,18 +72,18 @@ const AssistantMessageCard = ({
   );
 };
 
-type MessageCardRole = 'user' | 'assistant';
+type MessageSender = 'user' | 'assistant';
 
 type Props = {
-  role: MessageCardRole;
+  sender: MessageSender;
   children: string;
   additionalItem?: JSX.Element;
 };
 
 export const MessageCard = (props: Props): JSX.Element => {
-  const { role, children, additionalItem } = props;
+  const { sender, children, additionalItem } = props;
 
-  return role === 'user' ? (
+  return sender === 'user' ? (
     <UserMessageCard>{children}</UserMessageCard>
   ) : (
     <AssistantMessageCard additionalItem={additionalItem}>

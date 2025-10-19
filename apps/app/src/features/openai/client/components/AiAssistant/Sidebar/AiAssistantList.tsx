@@ -88,66 +88,74 @@ const AiAssistantItem: React.FC<AiAssistantItemProps> = ({
 
   return (
     <>
-      <li
-        onClick={(e) => {
-          e.stopPropagation();
-          openChatHandler(aiAssistant);
-        }}
-        role="button"
-        className="list-group-item list-group-item-action border-0 d-flex align-items-center rounded-1"
-      >
-        <div className="d-flex justify-content-center">
-          <span className="material-symbols-outlined fs-5">
-            {getShareScopeIcon(aiAssistant.shareScope, aiAssistant.accessScope)}
-          </span>
-        </div>
+      <li className="list-group-item border-0 p-0">
+        <button
+          type="button"
+          className="btn btn-link list-group-item-action border-0 d-flex align-items-center rounded-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            openChatHandler(aiAssistant);
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+          }}
+        >
+          <div className="d-flex justify-content-center">
+            <span className="material-symbols-outlined fs-5">
+              {getShareScopeIcon(
+                aiAssistant.shareScope,
+                aiAssistant.accessScope,
+              )}
+            </span>
+          </div>
 
-        <div className="grw-item-title ps-1">
-          <p className="text-truncate m-auto">{aiAssistant.name}</p>
-        </div>
+          <div className="grw-item-title ps-1">
+            <p className="text-truncate m-auto">{aiAssistant.name}</p>
+          </div>
 
-        <div className="grw-btn-actions opacity-0 d-flex justify-content-center">
-          {isPublicAiAssistantOperable && (
-            <button
-              type="button"
-              className="btn btn-link text-secondary p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDefaultAiAssistantHandler();
-              }}
-            >
-              <span
-                className={`material-symbols-outlined fs-5 ${aiAssistant.isDefault ? 'fill' : ''}`}
-              >
-                star
-              </span>
-            </button>
-          )}
-          {isOperable && (
-            <>
+          <div className="grw-btn-actions opacity-0 d-flex justify-content-center">
+            {isPublicAiAssistantOperable && (
               <button
                 type="button"
                 className="btn btn-link text-secondary p-0"
                 onClick={(e) => {
                   e.stopPropagation();
-                  openManagementModalHandler(aiAssistant);
+                  setDefaultAiAssistantHandler();
                 }}
               >
-                <span className="material-symbols-outlined fs-5">edit</span>
+                <span
+                  className={`material-symbols-outlined fs-5 ${aiAssistant.isDefault ? 'fill' : ''}`}
+                >
+                  star
+                </span>
               </button>
-              <button
-                type="button"
-                className="btn btn-link text-secondary p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteClick(aiAssistant);
-                }}
-              >
-                <span className="material-symbols-outlined fs-5">delete</span>
-              </button>
-            </>
-          )}
-        </div>
+            )}
+            {isOperable && (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-link text-secondary p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openManagementModalHandler(aiAssistant);
+                  }}
+                >
+                  <span className="material-symbols-outlined fs-5">edit</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-link text-secondary p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteClick(aiAssistant);
+                  }}
+                >
+                  <span className="material-symbols-outlined fs-5">delete</span>
+                </button>
+              </>
+            )}
+          </div>
+        </button>
       </li>
     </>
   );
