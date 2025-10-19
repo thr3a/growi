@@ -64,7 +64,10 @@ const factory = (crowi) => {
   };
 
   bookmarkSchema.statics.add = async function (page, user) {
-    const newBookmark = new this({ page, user });
+    // biome-ignore lint/complexity/noUselessThisAlias: ignore
+    const Bookmark = this;
+
+    const newBookmark = new Bookmark({ page, user });
 
     try {
       const bookmark = await newBookmark.save();
@@ -86,8 +89,11 @@ const factory = (crowi) => {
    * @param {string} pageId
    */
   bookmarkSchema.statics.removeBookmarksByPageId = async function (pageId) {
+    // biome-ignore lint/complexity/noUselessThisAlias: ignore
+    const Bookmark = this;
+
     try {
-      const data = await this.remove({ page: pageId });
+      const data = await Bookmark.remove({ page: pageId });
       bookmarkEvent.emit('delete', pageId);
       return data;
     } catch (err) {
@@ -97,8 +103,11 @@ const factory = (crowi) => {
   };
 
   bookmarkSchema.statics.removeBookmark = async function (pageId, user) {
+    // biome-ignore lint/complexity/noUselessThisAlias: ignore
+    const Bookmark = this;
+
     try {
-      const data = await this.findOneAndRemove({ page: pageId, user });
+      const data = await Bookmark.findOneAndRemove({ page: pageId, user });
       bookmarkEvent.emit('delete', pageId);
       return data;
     } catch (err) {

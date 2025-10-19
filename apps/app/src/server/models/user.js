@@ -521,10 +521,12 @@ const factory = (crowi) => {
   };
 
   userSchema.statics.countListByStatus = async function (status) {
+    // biome-ignore lint/complexity/noUselessThisAlias: ignore
+    const User = this;
     const conditions = { status };
 
     // TODO count は非推奨。mongoose のバージョンアップ後に countDocuments に変更する。
-    return this.count(conditions);
+    return User.count(conditions);
   };
 
   userSchema.statics.isRegisterableUsername = async function (username) {
@@ -548,17 +550,19 @@ const factory = (crowi) => {
   };
 
   userSchema.statics.isRegisterable = function (email, username, callback) {
+    // biome-ignore lint/complexity/noUselessThisAlias: ignore
+    const User = this;
     let emailUsable = true;
     let usernameUsable = true;
 
     // username check
-    this.findOne({ username }, (err, userData) => {
+    User.findOne({ username }, (err, userData) => {
       if (userData) {
         usernameUsable = false;
       }
 
       // email check
-      this.findOne({ email }, (err, userData) => {
+      User.findOne({ email }, (err, userData) => {
         if (userData) {
           emailUsable = false;
         }
@@ -590,7 +594,9 @@ const factory = (crowi) => {
   };
 
   userSchema.statics.createUserByEmail = async function (email) {
-    const newUser = new this();
+    // biome-ignore lint/complexity/noUselessThisAlias: ignore
+    const User = this;
+    const newUser = new User();
 
     /* eslint-disable newline-per-chained-call */
     const tmpUsername = `temp_${Math.random().toString(36).slice(-16)}`;
@@ -622,8 +628,11 @@ const factory = (crowi) => {
   };
 
   userSchema.statics.createUsersByEmailList = async function (emailList) {
+    // biome-ignore lint/complexity/noUselessThisAlias: ignore
+    const User = this;
+
     // check exists and get list of try to create
-    const existingUserList = await this.find({
+    const existingUserList = await User.find({
       email: { $in: emailList },
       userStatus: { $ne: STATUS_DELETED },
     });
@@ -663,11 +672,13 @@ const factory = (crowi) => {
     status,
     callback,
   ) {
-    const newUser = new this();
+    // biome-ignore lint/complexity/noUselessThisAlias: ignore
+    const User = this;
+    const newUser = new User();
 
     // check user upper limit
     const isUserCountExceedsUpperLimit =
-      await this.isUserCountExceedsUpperLimit();
+      await User.isUserCountExceedsUpperLimit();
     if (isUserCountExceedsUpperLimit) {
       const err = new UserUpperLimitException();
       return callback(err);
@@ -751,8 +762,11 @@ const factory = (crowi) => {
     lang,
     status,
   ) {
+    // biome-ignore lint/complexity/noUselessThisAlias: ignore
+    const User = this;
+
     return new Promise((resolve, reject) => {
-      this.createUserByEmailAndPasswordAndStatus(
+      User.createUserByEmailAndPasswordAndStatus(
         name,
         username,
         email,

@@ -85,6 +85,9 @@ attachmentSchema.statics.createWithoutSave = function (
   fileSize: number,
   attachmentType: AttachmentType,
 ) {
+  // biome-ignore lint/complexity/noUselessThisAlias: ignore
+  const Attachment = this;
+
   const extname = path.extname(originalName);
   let fileName = generateFileHash(originalName);
   if (extname.length > 1) {
@@ -92,7 +95,7 @@ attachmentSchema.statics.createWithoutSave = function (
     fileName = `${fileName}${extname}`;
   }
 
-  const attachment = new this();
+  const attachment = new Attachment();
   attachment.page = pageId;
   attachment.creator = user._id;
   attachment.originalName = originalName;
