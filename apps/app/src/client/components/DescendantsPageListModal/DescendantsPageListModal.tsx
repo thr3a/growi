@@ -139,7 +139,6 @@ export const DescendantsPageListModal = (): React.JSX.Element => {
   const [isWindowExpanded, setIsWindowExpanded] = useState(false);
   const status = useDescendantsPageListModalStatus();
   const { close } = useDescendantsPageListModalActions();
-  const isOpened = status?.isOpened ?? false;
 
   const handleExpandedChange = useCallback((isExpanded: boolean) => {
     setIsWindowExpanded(isExpanded);
@@ -148,12 +147,12 @@ export const DescendantsPageListModal = (): React.JSX.Element => {
   return (
     <Modal
       size="xl"
-      isOpen={isOpened}
+      isOpen={status.isOpened}
       toggle={close}
       data-testid="descendants-page-list-modal"
       className={`grw-descendants-page-list-modal ${styles['grw-descendants-page-list-modal']} ${isWindowExpanded ? 'grw-modal-expanded' : ''}`}
     >
-      {isOpened && (
+      {status.isOpened && (
         <DescendantsPageListModalSubstance
           path={status?.path}
           closeModal={close}

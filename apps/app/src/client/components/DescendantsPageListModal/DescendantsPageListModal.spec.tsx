@@ -14,15 +14,30 @@ vi.mock('next/router', () => ({
   }),
 }));
 
-vi.mock('~/stores/modal', () => ({
-  useDescendantsPageListModal: vi.fn().mockReturnValue({
-    data: { isOpened: true },
+vi.mock('~/states/ui/modal/descendants-page-list', () => ({
+  useDescendantsPageListModalStatus: vi.fn().mockReturnValue({
+    isOpened: true,
+    path: '/test/path',
+  }),
+  useDescendantsPageListModalActions: vi.fn().mockReturnValue({
     close: mockClose,
   }),
 }));
 
 vi.mock('~/states/ui/device', () => ({
   useDeviceLargerThanLg,
+}));
+
+vi.mock('~/states/context', () => ({
+  useIsSharedUser: vi.fn().mockReturnValue(false),
+}));
+
+vi.mock('../DescendantsPageList', () => ({
+  DescendantsPageList: () => <div data-testid="descendants-page-list">DescendantsPageList</div>,
+}));
+
+vi.mock('../PageTimeline', () => ({
+  PageTimeline: () => <div data-testid="page-timeline">PageTimeline</div>,
 }));
 
 describe('DescendantsPageListModal.tsx', () => {
