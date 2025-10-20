@@ -1,9 +1,7 @@
-import React, { useCallback, useMemo } from 'react';
-
+import type React from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Modal, ModalHeader, ModalBody, ModalFooter,
-} from 'reactstrap';
+import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 
 import type { SelectablePage } from '../../../../interfaces/selectable-page';
 
@@ -21,7 +19,6 @@ const ShareScopeWarningModalSubstance = ({
   closeModal,
   onSubmit,
 }: ShareScopeWarningModalSubstanceProps): React.JSX.Element => {
-
   const { t } = useTranslation();
 
   const upsertAiAssistantHandler = useCallback(() => {
@@ -31,10 +28,8 @@ const ShareScopeWarningModalSubstance = ({
 
   // Memoize selected pages list
   const selectedPagesList = useMemo(() => {
-    return selectedPages.map(selectedPage => (
-      <code key={selectedPage.path}>
-        {selectedPage.path}
-      </code>
+    return selectedPages.map((selectedPage) => (
+      <code key={selectedPage.path}>{selectedPage.path}</code>
     ));
   }, [selectedPages]);
 
@@ -42,26 +37,32 @@ const ShareScopeWarningModalSubstance = ({
     <div>
       <ModalHeader toggle={closeModal}>
         <div className="d-flex align-items-center">
-          <span className="material-symbols-outlined text-warning me-2 fs-4">warning</span>
-          <span className="text-warning fw-bold">{t('share_scope_warning_modal.header_title')}</span>
+          <span className="material-symbols-outlined text-warning me-2 fs-4">
+            warning
+          </span>
+          <span className="text-warning fw-bold">
+            {t('share_scope_warning_modal.header_title')}
+          </span>
         </div>
       </ModalHeader>
 
       <ModalBody className="py-4 px-4">
         <p
           className="mb-4"
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: t('share_scope_warning_modal.warning_message') }}
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: ignore
+          dangerouslySetInnerHTML={{
+            __html: t('share_scope_warning_modal.warning_message'),
+          }}
         />
 
         <div className="mb-4">
-          <p className="mb-2 text-secondary">{t('share_scope_warning_modal.selected_pages_label')}</p>
+          <p className="mb-2 text-secondary">
+            {t('share_scope_warning_modal.selected_pages_label')}
+          </p>
           {selectedPagesList}
         </div>
 
-        <p>
-          {t('share_scope_warning_modal.confirmation_message')}
-        </p>
+        <p>{t('share_scope_warning_modal.confirmation_message')}</p>
       </ModalBody>
 
       <ModalFooter>
@@ -96,12 +97,7 @@ type Props = {
 };
 
 export const ShareScopeWarningModal = (props: Props): React.JSX.Element => {
-  const {
-    isOpen,
-    selectedPages,
-    closeModal,
-    onSubmit,
-  } = props;
+  const { isOpen, selectedPages, closeModal, onSubmit } = props;
 
   return (
     <Modal size="lg" isOpen={isOpen} toggle={closeModal}>

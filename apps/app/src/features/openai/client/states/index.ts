@@ -1,3 +1,12 @@
-export { useIsEnableUnifiedMergeView, useUnifiedMergeViewActions } from './unified-merge-view';
-export { useAiAssistantSidebarStatus, useAiAssistantSidebarActions } from './ai-assistant-sidebar';
-export type { AiAssistantSidebarStatus, AiAssistantSidebarActions } from './ai-assistant-sidebar';
+export type {
+  AiAssistantSidebarActions,
+  AiAssistantSidebarStatus,
+} from './ai-assistant-sidebar';
+export {
+  useAiAssistantSidebarActions,
+  useAiAssistantSidebarStatus,
+} from './ai-assistant-sidebar';
+export {
+  useIsEnableUnifiedMergeView,
+  useUnifiedMergeViewActions,
+} from './unified-merge-view';

@@ -1,5 +1,4 @@
-import React, { useCallback, useMemo, type JSX } from 'react';
-
+import React, { type JSX, useCallback, useMemo } from 'react';
 import { useAtomValue } from 'jotai';
 import { useTranslation } from 'react-i18next';
 
@@ -22,8 +21,11 @@ const OpenDefaultAiAssistantButtonSubstance = (): JSX.Element => {
       return null;
     }
 
-    const allAiAssistants = [...aiAssistantData.myAiAssistants, ...aiAssistantData.teamAiAssistants];
-    return allAiAssistants.find(aiAssistant => aiAssistant.isDefault);
+    const allAiAssistants = [
+      ...aiAssistantData.myAiAssistants,
+      ...aiAssistantData.teamAiAssistants,
+    ];
+    return allAiAssistants.find((aiAssistant) => aiAssistant.isDefault);
   }, [aiAssistantData]);
 
   const openDefaultAiAssistantButtonClickHandler = useCallback(() => {
@@ -36,13 +38,18 @@ const OpenDefaultAiAssistantButtonSubstance = (): JSX.Element => {
 
   return (
     <NotAvailableForGuest>
-      <NotAvailable isDisabled={defaultAiAssistant == null} title={t('default_ai_assistant.not_set')}>
+      <NotAvailable
+        isDisabled={defaultAiAssistant == null}
+        title={t('default_ai_assistant.not_set')}
+      >
         <button
           type="button"
           className={`btn btn-search ${styles['btn-open-default-ai-assistant']}`}
           onClick={openDefaultAiAssistantButtonClickHandler}
         >
-          <span className="growi-custom-icons fs-4 align-middle lh-1">ai_assistant</span>
+          <span className="growi-custom-icons fs-4 align-middle lh-1">
+            ai_assistant
+          </span>
         </button>
       </NotAvailable>
     </NotAvailableForGuest>

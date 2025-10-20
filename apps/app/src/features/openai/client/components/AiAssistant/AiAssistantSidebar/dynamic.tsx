@@ -11,7 +11,10 @@ export const AiAssistantSidebarLazyLoaded: FC = memo(() => {
 
   const ComponentToRender = useLazyLoader(
     'ai-assistant-sidebar',
-    () => import('./AiAssistantSidebar').then(mod => ({ default: mod.AiAssistantSidebar })),
+    () =>
+      import('./AiAssistantSidebar').then((mod) => ({
+        default: mod.AiAssistantSidebar,
+      })),
     isOpened,
   );
 

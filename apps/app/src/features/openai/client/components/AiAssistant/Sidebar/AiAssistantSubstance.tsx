@@ -1,12 +1,13 @@
 import React, { type JSX, useCallback } from 'react';
-
 import { useTranslation } from 'react-i18next';
 
-import { useAiAssistantSidebarStatus, useAiAssistantSidebarActions } from '../../../states';
+import {
+  useAiAssistantSidebarActions,
+  useAiAssistantSidebarStatus,
+} from '../../../states';
 import { useAiAssistantManagementModalActions } from '../../../states/modal/ai-assistant-management';
 import { useSWRxAiAssistants } from '../../../stores/ai-assistant';
 import { useSWRINFxRecentThreads } from '../../../stores/thread';
-
 import { AiAssistantList } from './AiAssistantList';
 import { ThreadList } from './ThreadList';
 
@@ -20,17 +21,30 @@ export const AiAssistantContent = (): JSX.Element => {
   const aiAssistantSidebarData = useAiAssistantSidebarStatus();
   const { close: closeAiAssistantSidebar } = useAiAssistantSidebarActions();
   const { mutate: mutateRecentThreads } = useSWRINFxRecentThreads();
-  const { data: aiAssistants, mutate: mutateAiAssistants } = useSWRxAiAssistants();
+  const { data: aiAssistants, mutate: mutateAiAssistants } =
+    useSWRxAiAssistants();
 
-  const deleteAiAssistantHandler = useCallback(async(aiAssistantId: string) => {
-    await mutateAiAssistants();
-    await mutateRecentThreads();
+  const deleteAiAssistantHandler = useCallback(
+    async (aiAssistantId: string) => {
+      await mutateAiAssistants();
+      await mutateRecentThreads();
 
-    // If the sidebar is opened for the assistant being deleted, close it
-    if (aiAssistantSidebarData?.isOpened && aiAssistantSidebarData?.aiAssistantData?._id === aiAssistantId) {
-      closeAiAssistantSidebar();
-    }
-  }, [aiAssistantSidebarData?.aiAssistantData?._id, aiAssistantSidebarData?.isOpened, closeAiAssistantSidebar, mutateAiAssistants, mutateRecentThreads]);
+      // If the sidebar is opened for the assistant being deleted, close it
+      if (
+        aiAssistantSidebarData?.isOpened &&
+        aiAssistantSidebarData?.aiAssistantData?._id === aiAssistantId
+      ) {
+        closeAiAssistantSidebar();
+      }
+    },
+    [
+      aiAssistantSidebarData?.aiAssistantData?._id,
+      aiAssistantSidebarData?.isOpened,
+      closeAiAssistantSidebar,
+      mutateAiAssistants,
+      mutateRecentThreads,
+    ],
+  );
 
   return (
     <div className={moduleClass}>
@@ -40,7 +54,9 @@ export const AiAssistantContent = (): JSX.Element => {
         onClick={() => open()}
       >
         <span className="material-symbols-outlined fs-5 me-2">add</span>
-        <span className="fw-normal">{t('ai_assistant_substance.add_assistant')}</span>
+        <span className="fw-normal">
+          {t('ai_assistant_substance.add_assistant')}
+        </span>
       </button>
 
       <div className="d-flex flex-column gap-4">

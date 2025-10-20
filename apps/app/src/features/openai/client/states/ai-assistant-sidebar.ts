@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
-
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
-import { type AiAssistantHasId } from '../../interfaces/ai-assistant';
+import type { AiAssistantHasId } from '../../interfaces/ai-assistant';
 import type { IThreadRelationHasId } from '../../interfaces/thread-relation';
 
 /**
@@ -19,7 +18,10 @@ export type AiAssistantSidebarStatus = {
  * Type definition for AI Assistant Sidebar actions
  */
 export type AiAssistantSidebarActions = {
-  openChat: (aiAssistantData: AiAssistantHasId, threadData?: IThreadRelationHasId) => void;
+  openChat: (
+    aiAssistantData: AiAssistantHasId,
+    threadData?: IThreadRelationHasId,
+  ) => void;
   openEditor: () => void;
   close: () => void;
   refreshAiAssistantData: (aiAssistantData?: AiAssistantHasId) => void;
