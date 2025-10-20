@@ -24,17 +24,23 @@ const onDeletedHandler = (pathOrPathsToDelete) => {
   window.location.href = '/';
 };
 
-export const TrashPageAlert = (): JSX.Element => {
+type SubstanceProps = {
+  pageId: string;
+  pagePath: string;
+  revisionId: string;
+};
+
+const TrashPageAlertSubstance = (props: SubstanceProps): JSX.Element => {
   const { t } = useTranslation();
   const router = useRouter();
+  const { pageId, pagePath, revisionId } = props;
 
+  const pageData = useCurrentPageData();
   const isAbleToShowTrashPageManagementButtons =
     useIsAbleToShowTrashPageManagementButtons();
-  const pageData = useCurrentPageData();
-  const isTrashPage = useIsTrashPage();
-  const pageId = pageData?._id;
-  const pagePath = pageData?.path;
-  const { data: pageInfo } = useSWRxPageInfo(pageId ?? null);
+
+  // useSWRxPageInfo is executed only when Substance is rendered
+  const { data: pageInfo } = useSWRxPageInfo(pageId);
 
   const { open: openDeleteModal } = usePageDeleteModalActions();
   const { open: openPutBackPageModal } = usePutBackPageModalActions();
@@ -44,16 +50,10 @@ export const TrashPageAlert = (): JSX.Element => {
 
   const deleteUser = pageData?.deleteUser;
   const deletedAt = pageData?.deletedAt
-    ? format(new Date(pageData?.deletedAt), 'yyyy/MM/dd HH:mm')
+    ? format(new Date(pageData.deletedAt), 'yyyy/MM/dd HH:mm')
     : '';
-  const revisionId = pageData?.revision?._id;
-  const isEmptyPage = pageId == null || revisionId == null || pagePath == null;
 
   const openPutbackPageModalHandler = useCallback(() => {
-    // User cannot operate empty page.
-    if (isEmptyPage) {
-      return;
-    }
     const putBackedHandler = async () => {
       if (currentPagePath == null) {
         return;
@@ -76,7 +76,6 @@ export const TrashPageAlert = (): JSX.Element => {
       { onPutBacked: putBackedHandler },
     );
   }, [
-    isEmptyPage,
     openPutBackPageModal,
     pageId,
     pagePath,
@@ -86,10 +85,6 @@ export const TrashPageAlert = (): JSX.Element => {
   ]);
 
   const openPageDeleteModalHandler = useCallback(() => {
-    // User cannot operate empty page.
-    if (isEmptyPage) {
-      return;
-    }
     const pageToDelete = {
       data: {
         _id: pageId,
@@ -99,7 +94,7 @@ export const TrashPageAlert = (): JSX.Element => {
       meta: pageInfo,
     };
     openDeleteModal([pageToDelete], { onDeleted: onDeletedHandler });
-  }, [openDeleteModal, pageId, pageInfo, pagePath, revisionId, isEmptyPage]);
+  }, [openDeleteModal, pageId, pageInfo, pagePath, revisionId]);
 
   const renderTrashPageManagementButtons = useCallback(() => {
     return (
@@ -135,12 +130,6 @@ export const TrashPageAlert = (): JSX.Element => {
     t,
   ]);
 
-  // Show this alert only for non-empty pages in trash.
-  if (!isTrashPage || isEmptyPage) {
-    // biome-ignore lint/complexity/noUselessFragments: ignore
-    return <></>;
-  }
-
   return (
     <div
       className="alert alert-warning py-3 ps-4 d-flex flex-column flex-lg-row"
@@ -166,5 +155,32 @@ export const TrashPageAlert = (): JSX.Element => {
           renderTrashPageManagementButtons()}
       </div>
     </div>
+  );
+};
+
+export const TrashPageAlert = (): JSX.Element => {
+  const pageData = useCurrentPageData();
+  const isTrashPage = useIsTrashPage();
+  const pageId = pageData?._id;
+  const pagePath = pageData?.path;
+  const revisionId = pageData?.revision?._id;
+
+  // Lightweight condition checks in Container
+  const isEmptyPage = pageId == null || revisionId == null || pagePath == null;
+
+  // Show this alert only for non-empty pages in trash.
+  if (!isTrashPage || isEmptyPage) {
+    // biome-ignore lint/complexity/noUselessFragments: ignore
+    return <></>;
+  }
+
+  // Render Substance only when conditions are met
+  // useSWRxPageInfo will be executed only here
+  return (
+    <TrashPageAlertSubstance
+      pageId={pageId}
+      pagePath={pagePath}
+      revisionId={revisionId}
+    />
   );
 };
