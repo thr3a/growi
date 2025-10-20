@@ -1,6 +1,6 @@
+import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { AcceptedUploadFileType } from '@growi/core';
 import type { ReactCodeMirrorProps } from '@uiw/react-codemirror';
-import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import type {

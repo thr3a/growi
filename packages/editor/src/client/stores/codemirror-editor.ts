@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef } from 'react';
 import { deepEquals } from '@growi/core/dist/utils';
 import type {
   ReactCodeMirrorProps,
@@ -5,7 +6,6 @@ import type {
 } from '@uiw/react-codemirror';
 import { atom, useAtom } from 'jotai';
 import { atomFamily } from 'jotai/utils';
-import { useEffect, useMemo, useRef } from 'react';
 import deepmerge from 'ts-deepmerge';
 
 import { type UseCodeMirrorEditor, useCodeMirrorEditor } from '../services';

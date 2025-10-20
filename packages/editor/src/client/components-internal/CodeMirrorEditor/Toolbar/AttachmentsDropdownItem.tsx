@@ -1,5 +1,5 @@
-import type { AcceptedUploadFileType } from '@growi/core';
 import type { JSX, ReactNode } from 'react';
+import type { AcceptedUploadFileType } from '@growi/core';
 import { DropdownItem } from 'reactstrap';
 
 import { useFileDropzone } from '../../../services-internal';

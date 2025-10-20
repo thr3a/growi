@@ -1,5 +1,5 @@
-import type { EditorView } from '@codemirror/view';
 import { useCallback } from 'react';
+import type { EditorView } from '@codemirror/view';
 
 export type InsertText = (text: string) => void;
 
