@@ -2,8 +2,9 @@ import { type JSX, useEffect, useRef } from 'react';
 import Reveal from 'reveal.js';
 
 import type { PresentationOptions } from '../consts';
-import styles from './Presentation.module.scss';
 import { Slides } from './Slides';
+
+import styles from './Presentation.module.scss';
 
 const moduleClass = styles['grw-presentation'] ?? '';
 
@@ -43,7 +44,10 @@ export const Presentation = (props: PresentationProps): JSX.Element => {
     if (children == null || deckRef.current == null) {
       return;
     }
-    const deck = new Reveal(deckRef.current, { ...baseRevealOptions, ...revealOptions });
+    const deck = new Reveal(deckRef.current, {
+      ...baseRevealOptions,
+      ...revealOptions,
+    });
     deck.initialize().then(() => deck.slide(0)); // navigate to the first slide
 
     deck.on('ready', removeAllHiddenElements);
