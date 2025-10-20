@@ -1,7 +1,7 @@
 import type { JSX, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 
-// eslint-disable-next-line no-restricted-imports
+import { AlertSiteUrlUndefined } from '~/client/components/AlertSiteUrlUndefined';
 import { DeleteBookmarkFolderModalLazyLoaded } from '~/client/components/DeleteBookmarkFolderModal';
 import { GrantedGroupsInheritanceSelectModalLazyLoaded } from '~/client/components/GrantedGroupsInheritanceSelectModal';
 import { PageAccessoriesModalLazyLoaded } from '~/client/components/PageAccessoriesModal';
@@ -28,13 +28,6 @@ const Sidebar = dynamic(
   { ssr: false },
 );
 
-const AlertSiteUrlUndefined = dynamic(
-  () =>
-    import('~/client/components/AlertSiteUrlUndefined').then(
-      (mod) => mod.AlertSiteUrlUndefined,
-    ),
-  { ssr: false },
-);
 const HotkeysManager = dynamic(
   () => import('~/client/components/Hotkeys/HotkeysManager'),
   { ssr: false },
@@ -79,7 +72,7 @@ export const BasicLayout = ({ children, className }: Props): JSX.Element => {
           {children}
         </div>
 
-        <AiAssistantSidebar />
+        <AiAssistantSidebarLazyLoaded />
       </div>
 
       <GrowiNavbarBottom />
