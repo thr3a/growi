@@ -1,5 +1,5 @@
-import { type Nullable } from '@growi/core';
-import { withUtils, type SWRResponseWithUtils } from '@growi/core/dist/swr';
+import type { Nullable } from '@growi/core';
+import { type SWRResponseWithUtils, withUtils } from '@growi/core/dist/swr';
 import type { EditorSettings } from '@growi/editor';
 import useSWR, { type SWRResponse } from 'swr';
 import useSWRImmutable from 'swr/immutable';
@@ -10,23 +10,28 @@ import type { SlackChannels } from '~/interfaces/user-trigger-notification';
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 import { useCurrentUser } from '~/states/global';
 
-
 type EditorSettingsOperation = {
-  update: (updateData: Partial<EditorSettings>) => Promise<void>,
-}
+  update: (updateData: Partial<EditorSettings>) => Promise<void>;
+};
 
 // TODO: Enable localStorageMiddleware
 //   - Unabling localStorageMiddleware occurrs a flickering problem when loading theme.
 //   - see: https://github.com/growilabs/growi/pull/6781#discussion_r1000285786
-export const useEditorSettings = (): SWRResponseWithUtils<EditorSettingsOperation, EditorSettings, Error> => {
+export const useEditorSettings = (): SWRResponseWithUtils<
+  EditorSettingsOperation,
+  EditorSettings,
+  Error
+> => {
   const currentUser = useCurrentUser();
   const isGuestUser = useIsGuestUser();
   const isReadOnlyUser = useIsReadOnlyUser();
 
   const swrResult = useSWRImmutable(
-    (isGuestUser || isReadOnlyUser) ? null : ['/personal-setting/editor-settings', currentUser?.username],
+    isGuestUser || isReadOnlyUser
+      ? null
+      : ['/personal-setting/editor-settings', currentUser?.username],
     ([endpoint]) => {
-      return apiv3Get(endpoint).then(result => result.data);
+      return apiv3Get(endpoint).then((result) => result.data);
     },
     {
       // use: [localStorageMiddleware], // store to localStorage for initialization fastly
@@ -50,15 +55,19 @@ export const useEditorSettings = (): SWRResponseWithUtils<EditorSettingsOperatio
   });
 };
 
-
 /*
-* Slack Notification
-*/
-export const useSWRxSlackChannels = (currentPagePath: Nullable<string>): SWRResponse<string[], Error> => {
+ * Slack Notification
+ */
+export const useSWRxSlackChannels = (
+  currentPagePath: Nullable<string>,
+): SWRResponse<string[], Error> => {
   const shouldFetch: boolean = currentPagePath != null;
   return useSWR(
     shouldFetch ? ['/pages.updatePost', currentPagePath] : null,
-    ([endpoint, path]) => apiGet(endpoint, { path }).then((response: SlackChannels) => response.updatePost),
+    ([endpoint, path]) =>
+      apiGet(endpoint, { path }).then(
+        (response: SlackChannels) => response.updatePost,
+      ),
     {
       revalidateOnFocus: false,
       fallbackData: [''],

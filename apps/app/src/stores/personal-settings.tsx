@@ -1,30 +1,40 @@
 import { useCallback } from 'react';
-
-import type { HasObjectId, IExternalAccount, IUser } from '@growi/core/dist/interfaces';
+import type {
+  HasObjectId,
+  IExternalAccount,
+  IUser,
+} from '@growi/core/dist/interfaces';
 import { useTranslation } from 'next-i18next';
 import type { SWRConfiguration, SWRResponse } from 'swr';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 
 import type {
-  IResGenerateAccessToken, IResGetAccessToken, IAccessTokenInfo,
+  IAccessTokenInfo,
+  IResGenerateAccessToken,
+  IResGetAccessToken,
 } from '~/interfaces/access-token';
 import type { IExternalAuthProviderType } from '~/interfaces/external-auth-provider';
 import { useIsGuestUser } from '~/states/context';
 
 import {
-  apiv3Delete, apiv3Get, apiv3Put, apiv3Post,
+  apiv3Delete,
+  apiv3Get,
+  apiv3Post,
+  apiv3Put,
 } from '../client/util/apiv3-client';
 
-
-export const useSWRxPersonalSettings = (config?: SWRConfiguration): SWRResponse<IUser, Error> => {
+export const useSWRxPersonalSettings = (
+  config?: SWRConfiguration,
+): SWRResponse<IUser, Error> => {
   const isGuestUser = useIsGuestUser();
 
   const key = !isGuestUser ? '/personal-setting' : null;
 
   return useSWR(
     key,
-    endpoint => apiv3Get(endpoint).then(response => response.data.currentUser),
+    (endpoint) =>
+      apiv3Get(endpoint).then((response) => response.data.currentUser),
     config,
   );
 };
@@ -48,7 +58,10 @@ export const useUpdateBasicInfo = () => {
         slackMemberId: arg.slackMemberId,
       };
 
-      const response = await apiv3Put<{ currentUser: IUser }>('/personal-setting/', updateData);
+      const response = await apiv3Put<{ currentUser: IUser }>(
+        '/personal-setting/',
+        updateData,
+      );
       i18n.changeLanguage(updateData.lang);
       return response.data.currentUser;
     },
@@ -65,8 +78,11 @@ export const useUpdateBasicInfo = () => {
 export const useAssociateLdapAccount = () => {
   return useSWRMutation(
     '/personal-setting',
-    async (_key, { arg }: { arg: { username: string, password: string } }) => {
-      const response = await apiv3Put<{ currentUser: IUser }>('/personal-setting/associate-ldap', arg);
+    async (_key, { arg }: { arg: { username: string; password: string } }) => {
+      const response = await apiv3Put<{ currentUser: IUser }>(
+        '/personal-setting/associate-ldap',
+        arg,
+      );
       return response.data.currentUser;
     },
     {
@@ -82,8 +98,18 @@ export const useAssociateLdapAccount = () => {
 export const useDisassociateLdapAccount = () => {
   return useSWRMutation(
     '/personal-setting',
-    async (_key, { arg }: { arg: { providerType: IExternalAuthProviderType, accountId: string } }) => {
-      const response = await apiv3Put<{ currentUser: IUser }>('/personal-setting/disassociate-ldap', arg);
+    async (
+      _key,
+      {
+        arg,
+      }: {
+        arg: { providerType: IExternalAuthProviderType; accountId: string };
+      },
+    ) => {
+      const response = await apiv3Put<{ currentUser: IUser }>(
+        '/personal-setting/disassociate-ldap',
+        arg,
+      );
       return response.data.currentUser;
     },
     {
@@ -93,35 +119,44 @@ export const useDisassociateLdapAccount = () => {
   );
 };
 
-export const useSWRxPersonalExternalAccounts = (): SWRResponse<(IExternalAccount<IExternalAuthProviderType> & HasObjectId)[], Error> => {
-  return useSWR(
-    '/personal-setting/external-accounts',
-    endpoint => apiv3Get(endpoint).then(response => response.data.externalAccounts),
+export const useSWRxPersonalExternalAccounts = (): SWRResponse<
+  (IExternalAccount<IExternalAuthProviderType> & HasObjectId)[],
+  Error
+> => {
+  return useSWR('/personal-setting/external-accounts', (endpoint) =>
+    apiv3Get(endpoint).then((response) => response.data.externalAccounts),
   );
 };
 
-
 interface IAccessTokenOption {
-  generateAccessToken: (info: IAccessTokenInfo) => Promise<IResGenerateAccessToken>,
-  deleteAccessToken: (tokenId: string) => Promise<void>,
-  deleteAllAccessTokens: (userId: string) => Promise<void>,
+  generateAccessToken: (
+    info: IAccessTokenInfo,
+  ) => Promise<IResGenerateAccessToken>;
+  deleteAccessToken: (tokenId: string) => Promise<void>;
+  deleteAllAccessTokens: (userId: string) => Promise<void>;
 }
 
-export const useSWRxAccessToken = (): SWRResponse< IResGetAccessToken[] | null, Error> & IAccessTokenOption => {
-  const generateAccessToken = useCallback(async(info) => {
-    const res = await apiv3Post<IResGenerateAccessToken>('/personal-setting/access-token', info);
+export const useSWRxAccessToken = (): SWRResponse<
+  IResGetAccessToken[] | null,
+  Error
+> &
+  IAccessTokenOption => {
+  const generateAccessToken = useCallback(async (info) => {
+    const res = await apiv3Post<IResGenerateAccessToken>(
+      '/personal-setting/access-token',
+      info,
+    );
     return res.data;
   }, []);
-  const deleteAccessToken = useCallback(async(tokenId: string) => {
+  const deleteAccessToken = useCallback(async (tokenId: string) => {
     await apiv3Delete('/personal-setting/access-token', { tokenId });
   }, []);
-  const deleteAllAccessTokens = useCallback(async() => {
+  const deleteAllAccessTokens = useCallback(async () => {
     await apiv3Delete('/personal-setting/access-token/all');
   }, []);
 
-  const swrResult = useSWR(
-    '/personal-setting/access-token',
-    endpoint => apiv3Get(endpoint).then(response => response.data.accessTokens),
+  const swrResult = useSWR('/personal-setting/access-token', (endpoint) =>
+    apiv3Get(endpoint).then((response) => response.data.accessTokens),
   );
 
   return {
@@ -130,5 +165,4 @@ export const useSWRxAccessToken = (): SWRResponse< IResGetAccessToken[] | null, 
     deleteAccessToken,
     deleteAllAccessTokens,
   };
-
 };
