@@ -2,24 +2,18 @@ import type { JSX } from 'react';
 import { useAtomValue } from 'jotai';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentPageData } from '~/states/page';
 import { elasticsearchMaxBodyLengthToIndexAtom } from '~/states/server-configurations';
 
-export const FullTextSearchNotCoverAlert = (): JSX.Element => {
+export type FullTextSearchNotCoverAlertProps = {
+  isActive: boolean;
+};
+
+export const FullTextSearchNotCoverAlert = ({ isActive }: FullTextSearchNotCoverAlertProps): JSX.Element => {
   const { t } = useTranslation();
+  const elasticsearchMaxBodyLengthToIndex = useAtomValue(elasticsearchMaxBodyLengthToIndexAtom);
 
-  const elasticsearchMaxBodyLengthToIndex = useAtomValue(
-    elasticsearchMaxBodyLengthToIndexAtom,
-  );
-  const data = useCurrentPageData();
-
-  const markdownLength = data?.revision?.body?.length;
-
-  if (
-    markdownLength == null ||
-    elasticsearchMaxBodyLengthToIndex == null ||
-    markdownLength <= elasticsearchMaxBodyLengthToIndex
-  ) {
+  // Display condition is controlled by the isActive prop from dynamic.tsx
+  if (!isActive) {
     // biome-ignore lint/complexity/noUselessFragments: ignore
     return <></>;
   }
