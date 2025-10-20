@@ -1,5 +1,5 @@
-import { AcceptedUploadFileType } from '@growi/core';
 import { type JSX, useState } from 'react';
+import { AcceptedUploadFileType } from '@growi/core';
 import {
   Dropdown,
   DropdownItem,
@@ -9,8 +9,9 @@ import {
 
 import type { GlobalCodeMirrorEditorKey } from '../../../../consts';
 import { AttachmentsDropdownItem } from './AttachmentsDropdownItem';
-import styles from './AttachmentsDropup.module.scss';
 import { LinkEditButton } from './LinkEditButton';
+
+import styles from './AttachmentsDropup.module.scss';
 
 const btnAttachmentToggleClass = styles['btn-attachment-toggle'];
 

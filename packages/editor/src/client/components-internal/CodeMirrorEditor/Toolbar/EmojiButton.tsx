@@ -1,6 +1,6 @@
+import { type CSSProperties, type JSX, useCallback, useState } from 'react';
 import emojiData from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
-import { type CSSProperties, type JSX, useCallback, useState } from 'react';
 import { Modal } from 'reactstrap';
 
 import { useResolvedTheme } from '../../../../states/ui/resolved-theme';
