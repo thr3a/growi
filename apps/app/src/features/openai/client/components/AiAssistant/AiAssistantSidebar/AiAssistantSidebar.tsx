@@ -45,8 +45,6 @@ type AiAssistantSidebarSubstanceProps = {
   aiAssistantData?: AiAssistantHasId;
   threadData?: IThreadRelationHasId;
   onCloseButtonClicked?: () => void;
-  onNewThreadCreated?: (thread: IThreadRelationHasId) => void;
-  onMessageReceived?: () => void;
 }
 
 const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = (props: AiAssistantSidebarSubstanceProps) => {
@@ -55,8 +53,6 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
     aiAssistantData,
     threadData,
     onCloseButtonClicked,
-    onNewThreadCreated,
-    onMessageReceived,
   } = props;
 
   // States
@@ -68,6 +64,26 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
   // Hooks
   const { t } = useTranslation();
   const growiCloudUri = useGrowiCloudUri();
+
+  // useSWRxThreads is executed only when Substance is rendered
+  const { data: threads, mutate: mutateThreads } = useSWRxThreads(aiAssistantData?._id);
+  const { refreshThreadData } = useAiAssistantSidebarActions();
+
+  // refresh thread data when the data is changed
+  useEffect(() => {
+    if (threads == null) {
+      return;
+    }
+
+    const currentThread = threads.find(t => t.threadId === threadData?.threadId);
+    if (currentThread != null) {
+      refreshThreadData(currentThread);
+    }
+  }, [threads, refreshThreadData, threadData?.threadId]);
+
+  const newThreadCreatedHandler = useCallback((thread: IThreadRelationHasId): void => {
+    refreshThreadData(thread);
+  }, [refreshThreadData]);
 
   const {
     createThread: createThreadForKnowledgeAssistant,
@@ -192,7 +208,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
 
         threadId = newThread.threadId;
 
-        onNewThreadCreated?.(newThread);
+        newThreadCreatedHandler(newThread);
       }
       catch (err) {
         logger.error(err.toString());
@@ -244,7 +260,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
           });
 
           // refresh thread data
-          onMessageReceived?.();
+          mutateThreads();
           return;
         }
 
@@ -331,7 +347,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
     }
 
     // eslint-disable-next-line max-len
-  }, [isGenerating, messageLogs, resetForm, threadData?.threadId, createThread, onNewThreadCreated, t, postMessage, form, onMessageReceived, processMessageForKnowledgeAssistant, processMessageForEditorAssistant, growiCloudUri]);
+  }, [isGenerating, messageLogs, resetForm, threadData?.threadId, createThread, newThreadCreatedHandler, t, postMessage, form, mutateThreads, processMessageForKnowledgeAssistant, processMessageForEditorAssistant, growiCloudUri]);
 
   const submit = useCallback((data: FormData) => {
     if (isEditorAssistant) {
@@ -546,7 +562,7 @@ const AiAssistantSidebarSubstance: React.FC<AiAssistantSidebarSubstanceProps> = 
 
 export const AiAssistantSidebar: FC = memo((): JSX.Element => {
   const aiAssistantSidebarData = useAiAssistantSidebarStatus();
-  const { close: closeAiAssistantSidebar, refreshThreadData } = useAiAssistantSidebarActions();
+  const { close: closeAiAssistantSidebar } = useAiAssistantSidebarActions();
   const { disable: disableUnifiedMergeView } = useUnifiedMergeViewActions();
 
   const aiAssistantData = aiAssistantSidebarData?.aiAssistantData;
@@ -554,31 +570,14 @@ export const AiAssistantSidebar: FC = memo((): JSX.Element => {
   const isOpened = aiAssistantSidebarData?.isOpened;
   const isEditorAssistant = aiAssistantSidebarData?.isEditorAssistant ?? false;
 
-  const { data: threads, mutate: mutateThreads } = useSWRxThreads(aiAssistantData?._id);
-
-  const newThreadCreatedHandler = useCallback((thread: IThreadRelationHasId): void => {
-    refreshThreadData(thread);
-  }, [refreshThreadData]);
-
   useEffect(() => {
     if (!aiAssistantSidebarData?.isOpened) {
       disableUnifiedMergeView();
     }
   }, [aiAssistantSidebarData?.isOpened, disableUnifiedMergeView]);
 
-  // refresh thread data when the data is changed
-  useEffect(() => {
-    if (threads == null) {
-      return;
-    }
-
-    const currentThread = threads.find(t => t.threadId === threadData?.threadId);
-    if (currentThread != null) {
-      refreshThreadData(currentThread);
-    }
-  }, [threads, refreshThreadData, threadData?.threadId]);
-
   if (!isOpened) {
+    // biome-ignore lint/complexity/noUselessFragments: ignore
     return <></>;
   }
 
@@ -591,8 +590,6 @@ export const AiAssistantSidebar: FC = memo((): JSX.Element => {
         isEditorAssistant={isEditorAssistant}
         threadData={threadData}
         aiAssistantData={aiAssistantData}
-        onMessageReceived={mutateThreads}
-        onNewThreadCreated={newThreadCreatedHandler}
         onCloseButtonClicked={closeAiAssistantSidebar}
       />
     </div>

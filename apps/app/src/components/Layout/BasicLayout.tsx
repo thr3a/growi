@@ -5,32 +5,21 @@ import dynamic from 'next/dynamic';
 import { DeleteBookmarkFolderModalLazyLoaded } from '~/client/components/DeleteBookmarkFolderModal';
 import { GrantedGroupsInheritanceSelectModalLazyLoaded } from '~/client/components/GrantedGroupsInheritanceSelectModal';
 import { PageAccessoriesModalLazyLoaded } from '~/client/components/PageAccessoriesModal';
-// eslint-disable-next-line no-restricted-imports
 import { DeleteAttachmentModalLazyLoaded } from '~/client/components/PageAttachment';
 import { PageDeleteModalLazyLoaded } from '~/client/components/PageDeleteModal';
 import { PageDuplicateModalLazyLoaded } from '~/client/components/PageDuplicateModal';
 import { PagePresentationModalLazyLoaded } from '~/client/components/PagePresentationModal';
 import { PageRenameModalLazyLoaded } from '~/client/components/PageRenameModal';
-// eslint-disable-next-line no-restricted-imports
 import { PageSelectModalLazyLoaded } from '~/client/components/PageSelectModal';
-// eslint-disable-next-line no-restricted-imports
 import { PutBackPageModalLazyLoaded } from '~/client/components/PutbackPageModal';
 import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
-// eslint-disable-next-line no-restricted-imports
 import { AiAssistantManagementModalLazyLoaded } from '~/features/openai/client/components/AiAssistant/AiAssistantManagementModal';
+import { AiAssistantSidebarLazyLoaded } from '~/features/openai/client/components/AiAssistant/AiAssistantSidebar/dynamic';
 import { PageBulkExportSelectModalLazyLoaded } from '~/features/page-bulk-export/client/components';
 
 import { RawLayout } from './RawLayout';
 
 import styles from './BasicLayout.module.scss';
-
-const AiAssistantSidebar = dynamic(
-  () =>
-    import(
-      '~/features/openai/client/components/AiAssistant/AiAssistantSidebar/AiAssistantSidebar'
-    ).then((mod) => mod.AiAssistantSidebar),
-  { ssr: false },
-);
 
 const moduleClass = styles['grw-basic-layout'] ?? '';
 
