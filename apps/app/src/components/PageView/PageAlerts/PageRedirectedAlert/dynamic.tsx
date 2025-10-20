@@ -9,7 +9,10 @@ export const PageRedirectedAlertLazyLoaded = (): JSX.Element => {
 
   const PageRedirectedAlert = useLazyLoader<Record<string, unknown>>(
     'page-redirected-alert',
-    () => import('./PageRedirectedAlert').then((mod) => ({ default: mod.PageRedirectedAlert })),
+    () =>
+      import('./PageRedirectedAlert').then((mod) => ({
+        default: mod.PageRedirectedAlert,
+      })),
     isActive,
   );
 

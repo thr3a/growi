@@ -8,7 +8,10 @@ export const TrashPageAlertLazyLoaded = (): JSX.Element => {
 
   const TrashPageAlert = useLazyLoader<Record<string, unknown>>(
     'trash-page-alert',
-    () => import('./TrashPageAlert').then((mod) => ({ default: mod.TrashPageAlert })),
+    () =>
+      import('./TrashPageAlert').then((mod) => ({
+        default: mod.TrashPageAlert,
+      })),
     isTrashPage,
   );
 

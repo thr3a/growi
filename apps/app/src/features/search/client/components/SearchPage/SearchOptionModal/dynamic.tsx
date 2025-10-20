@@ -11,12 +11,17 @@ type SearchOptionModalProps = {
   onIncludeTrashPagesSwitched?: (isChecked: boolean) => void;
 };
 
-export const SearchOptionModalLazyLoaded = (props: SearchOptionModalProps): JSX.Element => {
+export const SearchOptionModalLazyLoaded = (
+  props: SearchOptionModalProps,
+): JSX.Element => {
   const { isOpen } = props;
 
   const SearchOptionModal = useLazyLoader<SearchOptionModalProps>(
     'search-option-modal',
-    () => import('./SearchOptionModal').then(mod => ({ default: mod.SearchOptionModal })),
+    () =>
+      import('./SearchOptionModal').then((mod) => ({
+        default: mod.SearchOptionModal,
+      })),
     isOpen,
   );
 

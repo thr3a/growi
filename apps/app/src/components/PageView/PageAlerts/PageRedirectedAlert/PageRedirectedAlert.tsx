@@ -20,9 +20,8 @@ const PageRedirectedAlertSubstance = React.memo(
         return;
       }
       try {
-        const unlink = (
-          await import('~/client/services/page-operation')
-        ).unlink;
+        const unlink = (await import('~/client/services/page-operation'))
+          .unlink;
         await unlink(currentPagePath);
         setIsUnlinked(true);
       } catch (err) {
@@ -42,9 +41,8 @@ const PageRedirectedAlertSubstance = React.memo(
     return (
       <div className="alert alert-pink d-edit-none py-3 px-4 d-flex align-items-center justify-content-between">
         <span>
-          <strong>{t('Redirected')}:</strong>{' '}
-          {t('page_page.notice.redirected')} <code>{redirectFrom}</code>{' '}
-          {t('page_page.notice.redirected_period')}
+          <strong>{t('Redirected')}:</strong> {t('page_page.notice.redirected')}{' '}
+          <code>{redirectFrom}</code> {t('page_page.notice.redirected_period')}
         </span>
         <button
           type="button"

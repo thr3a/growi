@@ -8,9 +8,13 @@ export type FullTextSearchNotCoverAlertProps = {
   isActive: boolean;
 };
 
-export const FullTextSearchNotCoverAlert = ({ isActive }: FullTextSearchNotCoverAlertProps): JSX.Element => {
+export const FullTextSearchNotCoverAlert = ({
+  isActive,
+}: FullTextSearchNotCoverAlertProps): JSX.Element => {
   const { t } = useTranslation();
-  const elasticsearchMaxBodyLengthToIndex = useAtomValue(elasticsearchMaxBodyLengthToIndexAtom);
+  const elasticsearchMaxBodyLengthToIndex = useAtomValue(
+    elasticsearchMaxBodyLengthToIndexAtom,
+  );
 
   // Display condition is controlled by the isActive prop from dynamic.tsx
   if (!isActive) {
