@@ -215,7 +215,7 @@ module.exports = (crowi: Crowi) => {
       const { meta } = pageWithMeta;
 
       // not found or forbidden
-      if (page == null && (pages == null || pages.length === 0)) {
+      if (isIPageNotFoundInfo(meta) || (Array.isArray(pages) && pages.length === 0)) {
         if (isIPageNotFoundInfo(meta) && meta.isForbidden) {
           return res.apiv3Err(new ErrorV3('Page is forbidden', 'page-is-forbidden', undefined, meta), 403);
         }

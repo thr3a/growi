@@ -86,6 +86,7 @@ export type IPageHasId = IPage & HasObjectId;
 export type IPageNotFoundInfo = {
   isNotFound: true;
   isForbidden: boolean;
+  isEmpty?: true;
 };
 
 export type IPageInfo = {
@@ -132,8 +133,7 @@ export const isIPageNotFoundInfo = (
   return (
     pageInfo != null &&
     pageInfo instanceof Object &&
-    pageInfo.isNotFound === true &&
-    !('isEmpty' in pageInfo)
+    pageInfo.isNotFound === true
   );
 };
 
