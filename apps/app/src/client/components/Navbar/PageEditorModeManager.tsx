@@ -74,7 +74,7 @@ export const PageEditorModeManager = (props: Props): JSX.Element => {
   const { isCreating, create } = useCreatePage();
 
   const editButtonClickedHandler = useCallback(async () => {
-    if (isNotFound == null || isNotFound === false) {
+    if (isNotFound === false) {
       setEditorMode(EditorMode.Editor);
       return;
     }
