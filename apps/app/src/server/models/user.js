@@ -124,10 +124,9 @@ const factory = (crowi) => {
     let password = '';
     const len = 12;
 
-    const randomBytes = crypto.randomBytes(len);
     for (let i = 0; i < len; i++) {
-      const randomPoz = randomBytes[i] % chars.length;
-      password += chars.substring(randomPoz, randomPoz + 1);
+      const randomIndex = crypto.randomInt(0, chars.length);
+      password += chars[randomIndex];
     }
 
     return password;
