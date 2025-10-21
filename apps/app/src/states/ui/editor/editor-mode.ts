@@ -40,12 +40,10 @@ export const editorModeAtom = atom(
 
 export const useEditorMode = (): UseEditorModeReturn => {
   const isEditable = useIsEditable();
-  const isNotFound = usePageNotFound();
   const [editorMode, setEditorModeRaw] = useAtom(editorModeAtom);
 
   // Check if editor mode should be prevented
-  const preventModeEditor =
-    !isEditable || isNotFound === undefined || isNotFound === true;
+  const preventModeEditor = !isEditable;
 
   // Ensure View mode when editing is not allowed
   const finalMode = preventModeEditor ? EditorMode.View : editorMode;

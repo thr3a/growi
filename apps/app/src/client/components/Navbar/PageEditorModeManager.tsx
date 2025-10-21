@@ -74,11 +74,12 @@ export const PageEditorModeManager = (props: Props): JSX.Element => {
   const { isCreating, create } = useCreatePage();
 
   const editButtonClickedHandler = useCallback(async () => {
-    if (isNotFound === false) {
+    if (!isNotFound) {
       setEditorMode(EditorMode.Editor);
       return;
     }
 
+    // Create a new page if it does not exist and transit to the editor mode
     try {
       const parentPath = path != null ? getParentPath(path) : undefined; // does not have to exist
       await create(
@@ -86,6 +87,8 @@ export const PageEditorModeManager = (props: Props): JSX.Element => {
           path, parentPath, wip: shouldCreateWipPage(path), origin: Origin.View,
         },
       );
+
+      setEditorMode(EditorMode.Editor);
     }
     catch (err) {
       toastError(t('toaster.create_failed', { target: path }));
