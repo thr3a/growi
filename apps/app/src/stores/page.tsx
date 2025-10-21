@@ -1,19 +1,23 @@
 import { useEffect, useMemo } from 'react';
-import type {
-  IPageInfo,
-  IPageInfoForEntity,
-  IPageInfoForOperation,
-  IPagePopulatedToShowRevision,
-  IRevision,
-  IRevisionHasId,
-  Nullable,
-  Ref,
-  SWRInfinitePageRevisionsResponse,
+import {
+  type IPageInfo,
+  type IPageInfoForEntity,
+  type IPageInfoForOperation,
+  type IPageNotFoundInfo,
+  type IPagePopulatedToShowRevision,
+  type IRevision,
+  type IRevisionHasId,
+  isIPageNotFoundInfo,
+  type Nullable,
+  type Ref,
+  type SWRInfinitePageRevisionsResponse,
 } from '@growi/core';
 import useSWR, { mutate, type SWRConfiguration, type SWRResponse } from 'swr';
 import useSWRImmutable from 'swr/immutable';
 import useSWRInfinite, { type SWRInfiniteResponse } from 'swr/infinite';
 import useSWRMutation, { type SWRMutationResponse } from 'swr/mutation';
+
+import type { ErrorV3 } from '^/../../packages/core/dist/models';
 
 import { apiGet } from '~/client/util/apiv1-client';
 import { apiv3Get } from '~/client/util/apiv3-client';
@@ -25,17 +29,16 @@ import type {
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 import { usePageNotFound } from '~/states/page';
 import { useShareLinkId } from '~/states/page/hooks';
-import type { AxiosResponse } from '~/utils/axios';
 
 import type { IPageTagsInfo } from '../interfaces/tag';
 
-const getPageApiErrorHandler = (errs: AxiosResponse[]) => {
+const getPageApiErrorHandler = (errs: ErrorV3<IPageNotFoundInfo>[]) => {
   if (!Array.isArray(errs)) {
     throw Error('error is not array');
   }
 
-  const statusCode = errs[0].status;
-  if (statusCode === 403 || statusCode === 404) {
+  const { args } = errs[0];
+  if (isIPageNotFoundInfo(args)) {
     // for NotFoundPage
     return null;
   }
