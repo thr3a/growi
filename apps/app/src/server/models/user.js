@@ -124,8 +124,9 @@ const factory = (crowi) => {
     let password = '';
     const len = 12;
 
+    const randomBytes = crypto.randomBytes(len);
     for (let i = 0; i < len; i++) {
-      const randomPoz = Math.floor(Math.random() * chars.length);
+      const randomPoz = randomBytes[i] % chars.length;
       password += chars.substring(randomPoz, randomPoz + 1);
     }
 
@@ -567,8 +568,8 @@ const factory = (crowi) => {
     const newUser = new User();
 
     /* eslint-disable newline-per-chained-call */
-    const tmpUsername = `temp_${Math.random().toString(36).slice(-16)}`;
-    const password = Math.random().toString(36).slice(-16);
+    const tmpUsername = `temp_${crypto.randomBytes(8).toString('hex')}`;
+    const password = crypto.randomBytes(12).toString('hex');
     /* eslint-enable newline-per-chained-call */
 
     newUser.username = tmpUsername;
