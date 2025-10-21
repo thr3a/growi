@@ -14,7 +14,7 @@ import { PageSelectModalLazyLoaded } from '~/client/components/PageSelectModal';
 import { PutBackPageModalLazyLoaded } from '~/client/components/PutbackPageModal';
 import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 import { AiAssistantManagementModalLazyLoaded } from '~/features/openai/client/components/AiAssistant/AiAssistantManagementModal';
-import { AiAssistantSidebarLazyLoaded } from '~/features/openai/client/components/AiAssistant/AiAssistantSidebar/dynamic';
+import { AiAssistantSidebarLazyLoaded } from '~/features/openai/client/components/AiAssistant/AiAssistantSidebar';
 import { PageBulkExportSelectModalLazyLoaded } from '~/features/page-bulk-export/client/components';
 
 import { RawLayout } from './RawLayout';
