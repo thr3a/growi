@@ -9,6 +9,7 @@ import {
 } from './_shared';
 
 const ExportArchiveDataPage = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/Admin/ExportArchiveDataPage'),
   { ssr: false },
 );
@@ -23,9 +24,9 @@ AdminExportDataArchivePage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('export_management.export_archive_data'),
   containerFactories: [
     async () => {
-      const AdminAppContainer = (
-        await import('~/client/services/AdminAppContainer')
-      ).default;
+      const AdminAppContainer =
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
+        (await import('~/client/services/AdminAppContainer')).default;
       return new AdminAppContainer();
     },
   ],

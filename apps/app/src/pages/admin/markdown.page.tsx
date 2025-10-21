@@ -10,6 +10,7 @@ import {
 
 const MarkDownSettingContents = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/Admin/MarkdownSetting/MarkDownSettingContents'),
   { ssr: false },
 );
@@ -24,9 +25,9 @@ AdminMarkdownPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('markdown_settings.markdown_settings'),
   containerFactories: [
     async () => {
-      const AdminMarkDownContainer = (
-        await import('~/client/services/AdminMarkDownContainer')
-      ).default;
+      const AdminMarkDownContainer =
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
+        (await import('~/client/services/AdminMarkDownContainer')).default;
       return new AdminMarkDownContainer();
     },
   ],

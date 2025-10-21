@@ -59,6 +59,7 @@ const TrashPageAlertSubstance = (props: SubstanceProps): JSX.Element => {
         return;
       }
       try {
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
         const unlink = (await import('~/client/services/page-operation'))
           .unlink;
         unlink(currentPagePath);
@@ -67,6 +68,7 @@ const TrashPageAlertSubstance = (props: SubstanceProps): JSX.Element => {
         fetchCurrentPage();
         mutateRecentlyUpdated();
       } catch (err) {
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
         const toastError = (await import('~/client/util/toastr')).toastError;
         toastError(err);
       }

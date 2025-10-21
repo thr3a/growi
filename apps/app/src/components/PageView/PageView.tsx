@@ -23,6 +23,7 @@ import { PageContentFooter } from './PageContentFooter';
 import { PageViewLayout } from './PageViewLayout';
 import RevisionRenderer from './RevisionRenderer';
 
+// biome-ignore-start lint/style/noRestrictedImports: no-problem dynamic import
 const NotCreatablePage = dynamic(
   () =>
     import('~/client/components/NotCreatablePage').then(
@@ -76,6 +77,7 @@ const SlideRenderer = dynamic(
     ),
   { ssr: false },
 );
+// biome-ignore-end lint/style/noRestrictedImports: no-problem dynamic import
 
 type Props = {
   pagePath: string;

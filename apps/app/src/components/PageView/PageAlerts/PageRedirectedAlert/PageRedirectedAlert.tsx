@@ -20,11 +20,13 @@ const PageRedirectedAlertSubstance = React.memo(
         return;
       }
       try {
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
         const unlink = (await import('~/client/services/page-operation'))
           .unlink;
         await unlink(currentPagePath);
         setIsUnlinked(true);
       } catch (err) {
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
         const toastError = (await import('~/client/util/toastr')).toastError;
         toastError(err);
       }

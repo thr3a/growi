@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 import { usePageDeleteModalStatus } from '~/states/ui/modal/page-delete';
 
 type PageDeleteModalProps = Record<string, unknown>;

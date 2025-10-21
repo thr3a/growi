@@ -7,20 +7,17 @@ import Head from 'next/head';
 import { isClient } from '@growi/core/dist/utils';
 import EventEmitter from 'events';
 
-// eslint-disable-next-line no-restricted-imports
+// biome-ignore-start lint/style/noRestrictedImports: no-problem lazy loaded components
 import { DescendantsPageListModalLazyLoaded } from '~/client/components/DescendantsPageListModal';
-// eslint-disable-next-line no-restricted-imports
 import { ConflictDiffModalLazyLoaded } from '~/client/components/PageEditor/ConflictDiffModal';
-// eslint-disable-next-line no-restricted-imports
 import { DrawioModalLazyLoaded } from '~/client/components/PageEditor/DrawioModal';
-// eslint-disable-next-line no-restricted-imports
 import { HandsontableModalLazyLoaded } from '~/client/components/PageEditor/HandsontableModal';
-// eslint-disable-next-line no-restricted-imports
 import { LinkEditModalLazyLoaded } from '~/client/components/PageEditor/LinkEditModal';
-// eslint-disable-next-line no-restricted-imports
 import { TagEditModalLazyLoaded } from '~/client/components/PageTags/TagEditModal';
-// eslint-disable-next-line no-restricted-imports
 import { TemplateModalLazyLoaded } from '~/client/components/TemplateModal';
+
+// biome-ignore-end lint/style/noRestrictedImports: no-problem lazy loaded components
+
 import { BasicLayout } from '~/components/Layout/BasicLayout';
 import { PageView } from '~/components/PageView/PageView';
 import { DrawioViewerScript } from '~/components/Script/DrawioViewerScript';
@@ -63,11 +60,11 @@ declare global {
   var globalEmitter: EventEmitter;
 }
 
+// biome-ignore-start lint/style/noRestrictedImports: no-problem dynamic import
 const GrowiContextualSubNavigation = dynamic(
   () => import('~/client/components/Navbar/GrowiContextualSubNavigation'),
   { ssr: false },
 );
-
 const GrowiPluginsActivator = dynamic(
   () =>
     import(
@@ -75,7 +72,6 @@ const GrowiPluginsActivator = dynamic(
     ).then((mod) => mod.GrowiPluginsActivator),
   { ssr: false },
 );
-
 const DisplaySwitcher = dynamic(
   () =>
     import('~/client/components/Page/DisplaySwitcher').then(
@@ -90,12 +86,10 @@ const PageStatusAlert = dynamic(
     ),
   { ssr: false },
 );
-
 const UnsavedAlertDialog = dynamic(
   () => import('~/client/components/UnsavedAlertDialog'),
   { ssr: false },
 );
-
 const EditablePageEffects = dynamic(
   () =>
     import('~/client/components/Page/EditablePageEffects').then(
@@ -103,6 +97,7 @@ const EditablePageEffects = dynamic(
     ),
   { ssr: false },
 );
+// biome-ignore-end lint/style/noRestrictedImports: no-problem dynamic import
 
 type Props = EachProps | InitialProps;
 

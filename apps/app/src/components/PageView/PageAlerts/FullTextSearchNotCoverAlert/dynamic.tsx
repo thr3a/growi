@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import { useAtomValue } from 'jotai';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 import { useCurrentPageData } from '~/states/page';
 import { elasticsearchMaxBodyLengthToIndexAtom } from '~/states/server-configurations';
 

@@ -15,6 +15,7 @@ import {
 
 const UserGroupPage = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/Admin/UserGroup/UserGroupPage').then(
       (mod) => mod.UserGroupPage,
     ),

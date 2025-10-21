@@ -24,6 +24,7 @@ import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 
 const CompleteUserRegistrationForm = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/CompleteUserRegistrationForm').then(
       (mod) => mod.CompleteUserRegistrationForm,
     ),

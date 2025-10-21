@@ -10,6 +10,7 @@ import {
 const LegacySlackIntegration = dynamic(
   () =>
     import(
+      // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
       '~/client/components/Admin/LegacySlackIntegration/LegacySlackIntegration'
     ),
   { ssr: false },
@@ -25,9 +26,10 @@ AdminLegacySlackIntegrationPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('slack_integration_legacy.slack_integration_legacy'),
   containerFactories: [
     async () => {
-      const AdminSlackIntegrationLegacyContainer = (
-        await import('~/client/services/AdminSlackIntegrationLegacyContainer')
-      ).default;
+      const AdminSlackIntegrationLegacyContainer =
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
+        (await import('~/client/services/AdminSlackIntegrationLegacyContainer'))
+          .default;
       return new AdminSlackIntegrationLegacyContainer();
     },
   ],

@@ -1,11 +1,7 @@
-import React from 'react';
-
 import { renderHook, waitFor } from '@testing-library/react';
-import {
-  describe, it, expect, vi, beforeEach,
-} from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useLazyLoader, clearComponentCache } from './use-lazy-loader';
+import { clearComponentCache, useLazyLoader } from './use-lazy-loader';
 
 describe('useLazyLoader', () => {
   beforeEach(() => {
@@ -21,7 +17,9 @@ describe('useLazyLoader', () => {
       const mockImport = vi.fn().mockResolvedValue({ default: MockComponent });
 
       // Act
-      const { result } = renderHook(() => useLazyLoader('test-key', mockImport, true));
+      const { result } = renderHook(() =>
+        useLazyLoader('test-key', mockImport, true),
+      );
 
       // Assert
       await waitFor(() => {
@@ -35,7 +33,9 @@ describe('useLazyLoader', () => {
       const mockImport = vi.fn();
 
       // Act
-      const { result } = renderHook(() => useLazyLoader('test-key', mockImport, false));
+      const { result } = renderHook(() =>
+        useLazyLoader('test-key', mockImport, false),
+      );
 
       // Assert
       expect(result.current).toBeNull();
@@ -48,7 +48,9 @@ describe('useLazyLoader', () => {
       const mockImport = vi.fn().mockResolvedValue({ default: MockComponent });
 
       // Act
-      const { result } = renderHook(() => useLazyLoader('async-key', mockImport, true));
+      const { result } = renderHook(() =>
+        useLazyLoader('async-key', mockImport, true),
+      );
 
       // Assert - Initially null
       expect(result.current).toBeNull();
@@ -67,14 +69,18 @@ describe('useLazyLoader', () => {
       const mockImport = vi.fn().mockResolvedValue({ default: MockComponent });
 
       // Act - First call
-      const { result: result1 } = renderHook(() => useLazyLoader('cached-key', mockImport, true));
+      const { result: result1 } = renderHook(() =>
+        useLazyLoader('cached-key', mockImport, true),
+      );
 
       await waitFor(() => {
         expect(result1.current).toBe(MockComponent);
       });
 
       // Act - Second call with same key
-      const { result: result2 } = renderHook(() => useLazyLoader('cached-key', mockImport, true));
+      const { result: result2 } = renderHook(() =>
+        useLazyLoader('cached-key', mockImport, true),
+      );
 
       await waitFor(() => {
         expect(result2.current).toBe(MockComponent);
@@ -92,9 +98,13 @@ describe('useLazyLoader', () => {
       const mockImport2 = vi.fn().mockResolvedValue({ default: Component2 });
 
       // Act
-      const { result: result1 } = renderHook(() => useLazyLoader('key1', mockImport1, true));
+      const { result: result1 } = renderHook(() =>
+        useLazyLoader('key1', mockImport1, true),
+      );
 
-      const { result: result2 } = renderHook(() => useLazyLoader('key2', mockImport2, true));
+      const { result: result2 } = renderHook(() =>
+        useLazyLoader('key2', mockImport2, true),
+      );
 
       // Assert
       await waitFor(() => {
@@ -191,11 +201,17 @@ describe('useLazyLoader', () => {
       const mockImport3 = vi.fn().mockResolvedValue({ default: Component3 });
 
       // Act
-      const { result: result1 } = renderHook(() => useLazyLoader('multi-key1', mockImport1, true));
+      const { result: result1 } = renderHook(() =>
+        useLazyLoader('multi-key1', mockImport1, true),
+      );
 
-      const { result: result2 } = renderHook(() => useLazyLoader('multi-key2', mockImport2, true));
+      const { result: result2 } = renderHook(() =>
+        useLazyLoader('multi-key2', mockImport2, true),
+      );
 
-      const { result: result3 } = renderHook(() => useLazyLoader('multi-key3', mockImport3, false));
+      const { result: result3 } = renderHook(() =>
+        useLazyLoader('multi-key3', mockImport3, false),
+      );
 
       // Assert
       await waitFor(() => {
@@ -215,9 +231,13 @@ describe('useLazyLoader', () => {
       const mockImport = vi.fn().mockResolvedValue({ default: MockComponent });
 
       // Act - Render two hooks with same key simultaneously
-      const { result: result1 } = renderHook(() => useLazyLoader('concurrent-key', mockImport, true));
+      const { result: result1 } = renderHook(() =>
+        useLazyLoader('concurrent-key', mockImport, true),
+      );
 
-      const { result: result2 } = renderHook(() => useLazyLoader('concurrent-key', mockImport, true));
+      const { result: result2 } = renderHook(() =>
+        useLazyLoader('concurrent-key', mockImport, true),
+      );
 
       // Assert - Both should resolve to same component
       await waitFor(() => {
@@ -233,12 +253,16 @@ describe('useLazyLoader', () => {
   describe('Error handling', () => {
     it('should handle import failure gracefully', async () => {
       // Arrange
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       const mockError = new Error('Import failed');
       const mockImport = vi.fn().mockRejectedValue(mockError);
 
       // Act
-      const { result } = renderHook(() => useLazyLoader('error-key', mockImport, true));
+      const { result } = renderHook(() =>
+        useLazyLoader('error-key', mockImport, true),
+      );
 
       // Assert - Should remain null on error
       expect(result.current).toBeNull();
@@ -267,10 +291,14 @@ describe('useLazyLoader', () => {
           {title}: {count}
         </div>
       );
-      const mockImport = vi.fn().mockResolvedValue({ default: MockComponentWithProps });
+      const mockImport = vi
+        .fn()
+        .mockResolvedValue({ default: MockComponentWithProps });
 
       // Act
-      const { result } = renderHook(() => useLazyLoader<TestProps>('typed-key', mockImport, true));
+      const { result } = renderHook(() =>
+        useLazyLoader<TestProps>('typed-key', mockImport, true),
+      );
 
       // Assert
       await waitFor(() => {
@@ -303,14 +331,18 @@ describe('useLazyLoader', () => {
       const mockImport2 = vi.fn().mockResolvedValue({ default: Component2 });
 
       // Act - First hook with Component1
-      const { result: result1 } = renderHook(() => useLazyLoader('duplicate-key', mockImport1, true));
+      const { result: result1 } = renderHook(() =>
+        useLazyLoader('duplicate-key', mockImport1, true),
+      );
 
       await waitFor(() => {
         expect(result1.current).toBe(Component1);
       });
 
       // Act - Second hook with same key but different import function
-      const { result: result2 } = renderHook(() => useLazyLoader('duplicate-key', mockImport2, true));
+      const { result: result2 } = renderHook(() =>
+        useLazyLoader('duplicate-key', mockImport2, true),
+      );
 
       await waitFor(() => {
         expect(result2.current).toBe(Component1); // Should still get Component1 from cache
@@ -323,11 +355,15 @@ describe('useLazyLoader', () => {
 
     it('should handle import function returning null', async () => {
       // Arrange
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       const mockImport = vi.fn().mockResolvedValue(null);
 
       // Act
-      const { result } = renderHook(() => useLazyLoader('null-key', mockImport, true));
+      const { result } = renderHook(() =>
+        useLazyLoader('null-key', mockImport, true),
+      );
 
       // Assert - Should remain null
       await waitFor(() => {
@@ -335,7 +371,7 @@ describe('useLazyLoader', () => {
       });
 
       // Wait a bit to ensure state update attempts have been processed
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Component should be null since the import resolved to null
       expect(result.current).toBeNull();
@@ -348,11 +384,17 @@ describe('useLazyLoader', () => {
 
     it('should handle import function returning object without default property', async () => {
       // Arrange
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-      const mockImport = vi.fn().mockResolvedValue({ notDefault: () => <div>Wrong</div> });
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      const mockImport = vi
+        .fn()
+        .mockResolvedValue({ notDefault: () => <div>Wrong</div> });
 
       // Act
-      const { result } = renderHook(() => useLazyLoader('no-default-key', mockImport, true));
+      const { result } = renderHook(() =>
+        useLazyLoader('no-default-key', mockImport, true),
+      );
 
       // Assert - Should remain null since there's no default export
       await waitFor(() => {
@@ -360,7 +402,7 @@ describe('useLazyLoader', () => {
       });
 
       // Wait a bit to ensure state update attempts have been processed
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(result.current).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -399,7 +441,9 @@ describe('useLazyLoader', () => {
 
     it('should not call import function when isActive is false initially and remains false', async () => {
       // Arrange
-      const mockImport = vi.fn().mockResolvedValue({ default: () => <div>Test</div> });
+      const mockImport = vi
+        .fn()
+        .mockResolvedValue({ default: () => <div>Test</div> });
 
       // Act
       const { result, rerender } = renderHook(
@@ -413,7 +457,7 @@ describe('useLazyLoader', () => {
       rerender({ isActive: false });
 
       // Wait a bit to ensure no async operations are triggered
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Assert
       expect(result.current).toBeNull();

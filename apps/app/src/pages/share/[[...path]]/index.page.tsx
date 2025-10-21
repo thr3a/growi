@@ -35,6 +35,7 @@ import type { InitialProps } from './types';
 registerPageToShowRevisionWithMeta();
 
 const GrowiContextualSubNavigation = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/Navbar/GrowiContextualSubNavigation'),
   { ssr: false },
 );

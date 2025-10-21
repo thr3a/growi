@@ -16,6 +16,7 @@ import {
 const AiIntegration = dynamic(
   () =>
     import(
+      // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
       '~/features/openai/client/components/AiIntegration/AiIntegration'
     ).then((mod) => mod.AiIntegration),
   { ssr: false },
@@ -23,6 +24,7 @@ const AiIntegration = dynamic(
 const AiIntegrationDisableMode = dynamic(
   () =>
     import(
+      // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
       '~/features/openai/client/components/AiIntegration/AiIntegrationDisableMode'
     ).then((mod) => mod.AiIntegrationDisableMode),
   { ssr: false },

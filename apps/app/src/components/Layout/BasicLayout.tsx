@@ -1,6 +1,7 @@
 import type { JSX, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 
+// biome-ignore-start lint/style/noRestrictedImports: no-problem lazy loaded components
 import { AlertSiteUrlUndefined } from '~/client/components/AlertSiteUrlUndefined';
 import { DeleteBookmarkFolderModalLazyLoaded } from '~/client/components/DeleteBookmarkFolderModal';
 import { GrantedGroupsInheritanceSelectModalLazyLoaded } from '~/client/components/GrantedGroupsInheritanceSelectModal';
@@ -17,12 +18,15 @@ import { AiAssistantManagementModalLazyLoaded } from '~/features/openai/client/c
 import { AiAssistantSidebarLazyLoaded } from '~/features/openai/client/components/AiAssistant/AiAssistantSidebar';
 import { PageBulkExportSelectModalLazyLoaded } from '~/features/page-bulk-export/client/components';
 
+// biome-ignore-end lint/style/noRestrictedImports: no-problem lazy loaded components
+
 import { RawLayout } from './RawLayout';
 
 import styles from './BasicLayout.module.scss';
 
 const moduleClass = styles['grw-basic-layout'] ?? '';
 
+// biome-ignore-start lint/style/noRestrictedImports: no-problem dynamic import
 const Sidebar = dynamic(
   () => import('~/client/components/Sidebar').then((mod) => mod.Sidebar),
   { ssr: false },
@@ -52,6 +56,7 @@ const SearchModal = dynamic(
   () => import('~/features/search/client/components/SearchModal'),
   { ssr: false },
 );
+// biome-ignore-end lint/style/noRestrictedImports: no-problem dynamic import
 
 type Props = {
   children?: ReactNode;

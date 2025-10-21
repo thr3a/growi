@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 import { usePresentationModalStatus } from '~/states/ui/modal/page-presentation';
 
 type PagePresentationModalProps = Record<string, unknown>;

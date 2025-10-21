@@ -8,6 +8,7 @@ import {
 } from '../_shared';
 
 const ManageExternalAccount = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/Admin/ManageExternalAccount'),
   { ssr: false },
 );
@@ -22,9 +23,10 @@ AdminExternalAccountsPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('user_management.external_account'),
   containerFactories: [
     async () => {
-      const AdminExternalAccountsContainer = (
-        await import('~/client/services/AdminExternalAccountsContainer')
-      ).default;
+      const AdminExternalAccountsContainer =
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
+        (await import('~/client/services/AdminExternalAccountsContainer'))
+          .default;
       return new AdminExternalAccountsContainer();
     },
   ],

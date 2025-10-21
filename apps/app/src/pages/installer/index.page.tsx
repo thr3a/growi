@@ -20,6 +20,7 @@ import {
 import { useCustomTitle } from '../utils/page-title-customization';
 import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 
+// biome-ignore-start lint/style/noRestrictedImports: no-problem dynamic import
 const InstallerForm = dynamic(
   () => import('~/client/components/InstallerForm'),
   { ssr: false },
@@ -32,6 +33,7 @@ const CustomNavAndContents = dynamic(
   () => import('~/client/components/CustomNavigation/CustomNavAndContents'),
   { ssr: false },
 );
+// biome-ignore-end lint/style/noRestrictedImports: no-problem dynamic import
 
 type ServerConfigurationProps = {
   minPasswordLength: number;

@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 import { useCurrentUser } from '~/states/global';
 import { useCurrentPageData, usePageNotFound } from '~/states/page';
 import { useSWRxCurrentGrantData } from '~/stores/page';

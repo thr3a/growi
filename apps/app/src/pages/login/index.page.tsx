@@ -31,6 +31,7 @@ import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 import styles from './index.module.scss';
 
 const LoginForm = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/LoginForm').then((mod) => mod.LoginForm),
   { ssr: false },
 );

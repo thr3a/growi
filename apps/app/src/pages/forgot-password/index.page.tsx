@@ -1,4 +1,3 @@
-import React from 'react';
 import type {
   GetServerSideProps,
   GetServerSidePropsContext,
@@ -20,6 +19,7 @@ import type { ServerConfigurationProps } from './types';
 import { useHydrateServerConfigurationAtoms } from './use-hydrate-server-configurations';
 
 const PasswordResetRequestForm = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/PasswordResetRequestForm'),
   { ssr: false },
 );

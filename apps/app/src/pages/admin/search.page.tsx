@@ -20,6 +20,7 @@ import {
 
 const FullTextSearchManagement = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/Admin/FullTextSearchManagement').then(
       (mod) => mod.FullTextSearchManagement,
     ),

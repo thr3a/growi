@@ -28,12 +28,14 @@ import { useHydrateServerConfigurationAtoms } from './use-hydrate-server-configu
 const logger = loggerFactory('growi:pages:me');
 
 const PersonalSettings = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/Me/PersonalSettings'),
   { ssr: false },
 );
 // const MyDraftList = dynamic(() => import('~/components/MyDraftList/MyDraftList'), { ssr: false });
 const InAppNotificationPage = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/InAppNotification/InAppNotificationPage').then(
       (mod) => mod.InAppNotificationPage,
     ),

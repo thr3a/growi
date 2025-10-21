@@ -10,6 +10,7 @@ import {
 
 const PluginsExtensionPageContents = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/features/growi-plugin/client/Admin/components').then(
       (mod) => mod.PluginsExtensionPageContents,
     ),
@@ -26,9 +27,9 @@ AdminAppPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('plugins.plugins'),
   containerFactories: [
     async () => {
-      const AdminAppContainer = (
-        await import('~/client/services/AdminAppContainer')
-      ).default;
+      const AdminAppContainer =
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
+        (await import('~/client/services/AdminAppContainer')).default;
       return new AdminAppContainer();
     },
   ],

@@ -12,6 +12,7 @@ import {
 
 const ManageGlobalNotification = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/Admin/Notification/ManageGlobalNotification'),
   { ssr: false },
 );
@@ -26,6 +27,7 @@ const AdminGlobalNotificationDetailPage: NextPageWithLayout<Props> = () => {
     : globalNotificationId;
 
   useEffect(() => {
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     const toastErrorPromise = import('~/client/util/toastr').then(
       (mod) => mod.toastError,
     );
@@ -55,9 +57,9 @@ AdminGlobalNotificationDetailPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('external_notification.external_notification'),
   containerFactories: [
     async () => {
-      const AdminNotificationContainer = (
-        await import('~/client/services/AdminNotificationContainer')
-      ).default;
+      const AdminNotificationContainer =
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
+        (await import('~/client/services/AdminNotificationContainer')).default;
       return new AdminNotificationContainer();
     },
   ],

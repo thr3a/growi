@@ -9,6 +9,7 @@ import {
 } from './_shared';
 
 const AppSettingsPageContents = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/Admin/App/AppSettingsPageContents'),
   { ssr: false },
 );
@@ -23,9 +24,9 @@ AdminAppPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('headers.app_settings', { ns: 'commons' }),
   containerFactories: [
     async () => {
-      const AdminAppContainer = (
-        await import('~/client/services/AdminAppContainer')
-      ).default;
+      const AdminAppContainer =
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
+        (await import('~/client/services/AdminAppContainer')).default;
       return new AdminAppContainer();
     },
   ],

@@ -12,6 +12,7 @@ const AdminLayout = dynamic(() => import('~/components/Layout/AdminLayout'), {
 });
 const ForbiddenPage = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/Admin/ForbiddenPage').then(
       (mod) => mod.ForbiddenPage,
     ),

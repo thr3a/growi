@@ -9,6 +9,7 @@ import {
 } from './_shared';
 
 const DataImportPageContents = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/Admin/ImportData/ImportDataPageContents'),
   { ssr: false },
 );
@@ -23,9 +24,9 @@ AdminDataImportPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('importer_management.import_data'),
   containerFactories: [
     async () => {
-      const AdminImportContainer = (
-        await import('~/client/services/AdminImportContainer')
-      ).default;
+      const AdminImportContainer =
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
+        (await import('~/client/services/AdminImportContainer')).default;
       return new AdminImportContainer();
     },
   ],

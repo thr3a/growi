@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useLazyLoader } from '../../util/use-lazy-loader';
+import { useLazyLoader } from '../../../components/utils/use-lazy-loader';
 
 type CreateTemplateModalProps = {
   path: string;

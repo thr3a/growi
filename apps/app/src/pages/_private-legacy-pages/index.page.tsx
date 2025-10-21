@@ -31,6 +31,7 @@ const PrivateLegacyPage: NextPage<Props> = (props: Props) => {
   const { t } = useTranslation();
 
   const PrivateLegacyPages = dynamic(
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     () => import('~/features/search/client/components/PrivateLegacyPages'),
     { ssr: false },
   );

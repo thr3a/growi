@@ -15,6 +15,7 @@ import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 
 const Maintenance = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/Maintenance').then((mod) => mod.Maintenance),
   { ssr: false },
 );

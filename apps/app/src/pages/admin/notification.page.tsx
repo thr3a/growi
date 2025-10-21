@@ -9,6 +9,7 @@ import {
 } from './_shared';
 
 const NotificationSetting = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/Admin/Notification/NotificationSetting'),
   { ssr: false },
 );
@@ -23,9 +24,9 @@ AdminExternalNotificationPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('external_notification.external_notification'),
   containerFactories: [
     async () => {
-      const AdminNotificationContainer = (
-        await import('~/client/services/AdminNotificationContainer')
-      ).default;
+      const AdminNotificationContainer =
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
+        (await import('~/client/services/AdminNotificationContainer')).default;
       return new AdminNotificationContainer();
     },
   ],

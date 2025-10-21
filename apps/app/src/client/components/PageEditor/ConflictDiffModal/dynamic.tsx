@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 import { useConflictDiffModalStatus } from '~/states/ui/modal/conflict-diff';
 
 type ConflictDiffModalProps = Record<string, unknown>;

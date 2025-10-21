@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { memo } from 'react';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 
 import { useAiAssistantSidebarStatus } from '../../../states';
 

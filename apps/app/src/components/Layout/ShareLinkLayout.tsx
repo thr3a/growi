@@ -1,12 +1,12 @@
 import type { JSX, ReactNode } from 'react';
-import React from 'react';
 import dynamic from 'next/dynamic';
 
-// eslint-disable-next-line no-restricted-imports
+// biome-ignore lint/style/noRestrictedImports: no-problem lazy loaded components
 import { ShortcutsModalLazyLoaded } from '~/client/components/ShortcutsModal';
 
 import { RawLayout } from './RawLayout';
 
+// biome-ignore-start lint/style/noRestrictedImports: no-problem dynamic import
 const PageCreateModal = dynamic(
   () => import('~/client/components/PageCreateModal'),
   { ssr: false },
@@ -22,6 +22,7 @@ const SystemVersion = dynamic(
   () => import('~/client/components/SystemVersion'),
   { ssr: false },
 );
+// biome-ignore-end lint/style/noRestrictedImports: no-problem dynamic import
 
 type Props = {
   children?: ReactNode;

@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 type ComponentModule<T> = { default: React.ComponentType<T> };
 
@@ -55,9 +55,11 @@ export const useLazyLoader = <T extends Record<string, unknown>>(
   importFn: () => Promise<{ default: React.ComponentType<T> }>,
   isActive: boolean,
 ): React.ComponentType<T> | null => {
-  const [Component, setComponent] = useState<React.ComponentType<T> | null>(null);
+  const [Component, setComponent] = useState<React.ComponentType<T> | null>(
+    null,
+  );
 
-  const memoizedImportFn = useCallback(importFn, [importFn, importKey]);
+  const memoizedImportFn = useCallback(importFn, []);
 
   useEffect(() => {
     if (isActive && !Component) {
@@ -65,15 +67,19 @@ export const useLazyLoader = <T extends Record<string, unknown>>(
         .then((mod) => {
           if (mod?.default) {
             setComponent(() => mod.default);
-          }
-          else {
+          } else {
             // eslint-disable-next-line no-console
-            console.error(`Failed to load component with key "${importKey}": Module or default export is missing`);
+            console.error(
+              `Failed to load component with key "${importKey}": Module or default export is missing`,
+            );
           }
         })
         .catch((error) => {
           // eslint-disable-next-line no-console
-          console.error(`Failed to load component with key "${importKey}":`, error);
+          console.error(
+            `Failed to load component with key "${importKey}":`,
+            error,
+          );
         });
     }
   }, [isActive, Component, importKey, memoizedImportFn]);

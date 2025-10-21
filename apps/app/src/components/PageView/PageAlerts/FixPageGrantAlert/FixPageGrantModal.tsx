@@ -79,6 +79,7 @@ export const FixPageGrantModal = (props: ModalProps): JSX.Element => {
     close();
 
     try {
+      // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
       const apiv3Put = (await import('~/client/util/apiv3-client')).apiv3Put;
       await apiv3Put(`/page/${pageId}/grant`, {
         grant: selectedGrant,
@@ -90,9 +91,11 @@ export const FixPageGrantModal = (props: ModalProps): JSX.Element => {
             : null,
       });
 
+      // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
       const toastSuccess = (await import('~/client/util/toastr')).toastSuccess;
       toastSuccess(t('Successfully updated'));
     } catch {
+      // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
       const toastError = (await import('~/client/util/toastr')).toastError;
       toastError(t('Failed to update'));
     }

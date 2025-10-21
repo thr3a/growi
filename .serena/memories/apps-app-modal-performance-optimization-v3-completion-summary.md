@@ -128,7 +128,7 @@ apps/app/.../[ComponentName]/
 **dynamic.tsx**:
 ```tsx
 import type { JSX } from 'react';
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 import { useShortcutsModalStatus } from '~/states/ui/modal/shortcuts';
 
 export const ShortcutsModalLazyLoaded = (): JSX.Element => {
@@ -297,7 +297,7 @@ AiAssistantSidebar/
 ```tsx
 import type { FC } from 'react';
 import { memo } from 'react';
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 import { useAiAssistantSidebarStatus } from '../../../states';
 
 export const AiAssistantSidebarLazyLoaded: FC = memo(() => {

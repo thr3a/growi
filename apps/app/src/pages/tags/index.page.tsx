@@ -32,12 +32,14 @@ import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 
 const PAGING_LIMIT = 10;
 
+// biome-ignore-start lint/style/noRestrictedImports: no-problem dynamic import
 const TagList = dynamic(() => import('~/client/components/TagList'), {
   ssr: false,
 });
 const TagCloudBox = dynamic(() => import('~/client/components/TagCloudBox'), {
   ssr: false,
 });
+// biome-ignore-end lint/style/noRestrictedImports: no-problem dynamic import
 
 type Props = CommonInitialProps &
   CommonEachProps &

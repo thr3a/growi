@@ -8,6 +8,7 @@ import {
 
 const AdminNotFoundPage = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/Admin/NotFoundPage').then(
       (mod) => mod.AdminNotFoundPage,
     ),

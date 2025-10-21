@@ -23,6 +23,7 @@ import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 
 const InvitedForm = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/InvitedForm').then((mod) => mod.InvitedForm),
   { ssr: false },
 );

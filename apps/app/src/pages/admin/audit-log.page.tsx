@@ -20,6 +20,7 @@ import {
 
 const AuditLogManagement = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/Admin/AuditLogManagement').then(
       (mod) => mod.AuditLogManagement,
     ),

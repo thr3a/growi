@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import { useLinkEditModalStatus } from '@growi/editor/dist/states/modal/link-edit';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 
 type LinkEditModalProps = Record<string, unknown>;
 

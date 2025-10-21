@@ -15,6 +15,7 @@ import {
 } from './_shared';
 
 const CustomizeSettingContents = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/Admin/Customize/Customize'),
   { ssr: false },
 );
@@ -47,6 +48,7 @@ AdminCustomizeSettingsPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('customize_settings.customize_settings'),
   containerFactories: [
     async () => {
+      // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
       const C = (await import('~/client/services/AdminCustomizeContainer'))
         .default;
       return new C();

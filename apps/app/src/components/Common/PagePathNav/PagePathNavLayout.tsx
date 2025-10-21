@@ -25,6 +25,7 @@ type Props = PagePathNavLayoutProps & {
 
 const CopyDropdown = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/Common/CopyDropdown').then(
       (mod) => mod.CopyDropdown,
     ),

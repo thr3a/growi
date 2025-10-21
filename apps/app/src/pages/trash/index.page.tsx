@@ -8,6 +8,7 @@ import {
   isUsersTopPage,
 } from '@growi/core/dist/utils/page-path-utils';
 
+// biome-ignore lint/style/noRestrictedImports: no-problem lazy loaded components
 import { EmptyTrashModalLazyLoaded } from '~/client/components/EmptyTrashModal';
 import { PagePathNavTitle } from '~/components/Common/PagePathNavTitle';
 import { BasicLayout } from '~/components/Layout/BasicLayout';
@@ -32,6 +33,7 @@ import { useHydrateServerConfigurationAtoms } from './use-hydrate-server-configu
 
 const TrashPageList = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/TrashPageList').then(
       (mod) => mod.TrashPageList,
     ),

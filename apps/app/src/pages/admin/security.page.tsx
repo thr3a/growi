@@ -15,6 +15,7 @@ import {
 } from './_shared';
 
 const SecurityManagement = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/Admin/Security/SecurityManagement'),
   { ssr: false },
 );
@@ -37,6 +38,7 @@ const AdminSecuritySettingsPage: NextPageWithLayout<Props> = (props: Props) => {
   return <SecurityManagement />;
 };
 
+// biome-ignore-start lint/style/noRestrictedImports: no-problem dynamic import
 AdminSecuritySettingsPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('security_settings.security_settings'),
   containerFactories: [
@@ -84,6 +86,7 @@ AdminSecuritySettingsPage.getLayout = createAdminPageLayout<Props>({
     },
   ],
 });
+// biome-ignore-end lint/style/noRestrictedImports: no-problem dynamic import
 
 export const getServerSideProps: GetServerSideProps<Props> = async (
   context: GetServerSidePropsContext,

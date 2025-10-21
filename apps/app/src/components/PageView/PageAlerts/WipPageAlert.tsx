@@ -16,6 +16,7 @@ export const WipPageAlert = (): JSX.Element => {
     }
 
     try {
+      // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
       const publish = (await import('~/client/services/page-operation'))
         .publish;
       await publish(pageId);
@@ -30,9 +31,11 @@ export const WipPageAlert = (): JSX.Element => {
         .mutateRecentlyUpdated;
       await mutateRecentlyUpdated();
 
+      // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
       const toastSuccess = (await import('~/client/util/toastr')).toastSuccess;
       toastSuccess(t('wip_page.success_publish_page'));
     } catch {
+      // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
       const toastError = (await import('~/client/util/toastr')).toastError;
       toastError(t('wip_page.fail_publish_page'));
     }

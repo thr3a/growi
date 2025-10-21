@@ -23,6 +23,7 @@ type Props = CommonInitialProps &
   };
 
 const PasswordResetExecutionForm = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/PasswordResetExecutionForm'),
   { ssr: false },
 );

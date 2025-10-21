@@ -9,6 +9,7 @@ import {
 } from './_shared';
 
 const G2GDataTransferPage = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/Admin/G2GDataTransfer'),
   { ssr: false },
 );
@@ -23,9 +24,9 @@ DataTransferPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('g2g_data_transfer.data_transfer', { ns: 'commons' }),
   containerFactories: [
     async () => {
-      const AdminAppContainer = (
-        await import('~/client/services/AdminAppContainer')
-      ).default;
+      const AdminAppContainer =
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
+        (await import('~/client/services/AdminAppContainer')).default;
       return new AdminAppContainer();
     },
   ],

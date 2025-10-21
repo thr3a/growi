@@ -13,6 +13,7 @@ import {
 
 const SlackIntegration = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/client/components/Admin/SlackIntegration/SlackIntegration').then(
       (mod) => mod.SlackIntegration,
     ),

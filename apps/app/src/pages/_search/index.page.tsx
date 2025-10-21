@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
 
 import { DrawioViewerScript } from '~/components/Script/DrawioViewerScript';
@@ -23,6 +22,7 @@ const SearchResultLayout = dynamic(
 );
 const SearchPage = dynamic(
   () =>
+    // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
     import('~/features/search/client/components/SearchPage').then(
       (mod) => mod.SearchPage,
     ),

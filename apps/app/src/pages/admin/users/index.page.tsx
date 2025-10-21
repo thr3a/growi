@@ -14,6 +14,7 @@ import {
 } from '../_shared';
 
 const UserManagement = dynamic(
+  // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
   () => import('~/client/components/Admin/UserManagement'),
   { ssr: false },
 );
@@ -33,9 +34,9 @@ AdminUserManagementPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('user_management.user_management'),
   containerFactories: [
     async () => {
-      const AdminUsersContainer = (
-        await import('~/client/services/AdminUsersContainer')
-      ).default;
+      const AdminUsersContainer =
+        // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
+        (await import('~/client/services/AdminUsersContainer')).default;
       return new AdminUsersContainer();
     },
   ],

@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 import { useDescendantsPageListModalStatus } from '~/states/ui/modal/descendants-page-list';
 
 type DescendantsPageListModalProps = Record<string, unknown>;

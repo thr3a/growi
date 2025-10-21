@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import { useTemplateModalStatus } from '@growi/editor';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 
 type TemplateModalProps = Record<string, unknown>;
 

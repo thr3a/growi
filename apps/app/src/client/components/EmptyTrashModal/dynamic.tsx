@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import { useEmptyTrashModalStatus } from '~/states/ui/modal/empty-trash';
 
-import { useLazyLoader } from '../../util/use-lazy-loader';
+import { useLazyLoader } from '../../../components/utils/use-lazy-loader';
 
 type EmptyTrashModalProps = Record<string, unknown>;
 

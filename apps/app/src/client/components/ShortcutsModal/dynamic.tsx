@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 import { useShortcutsModalStatus } from '~/states/ui/modal/shortcuts';
 
 type ShortcutsModalProps = Record<string, unknown>;

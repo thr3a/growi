@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 import { usePutBackPageModalStatus } from '~/states/ui/modal/put-back-page';
 
 type PutBackPageModalProps = Record<string, unknown>;

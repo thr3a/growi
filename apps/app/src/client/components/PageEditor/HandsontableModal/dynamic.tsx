@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import { useHandsontableModalForEditorStatus } from '@growi/editor';
 
-import { useLazyLoader } from '~/client/util/use-lazy-loader';
+import { useLazyLoader } from '~/components/utils/use-lazy-loader';
 import { useHandsontableModalStatus } from '~/states/ui/modal/handsontable';
 
 type HandsontableModalProps = Record<string, unknown>;
