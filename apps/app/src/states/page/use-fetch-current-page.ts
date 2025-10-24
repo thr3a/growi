@@ -31,6 +31,7 @@ type FetchPageArgs = {
   path?: string;
   pageId?: string;
   revisionId?: string;
+  force?: true;
 };
 
 /**
@@ -66,6 +67,10 @@ const shouldUseCachedData = (
   currentPageData: IPagePopulatedToShowRevision | undefined,
   decodedPathname?: string,
 ): boolean => {
+  if (args?.force === true) {
+    return false;
+  }
+
   // Guard clause to prevent unnecessary fetching by pageId
   if (args?.pageId != null && args.pageId === currentPageId) {
     return true;
@@ -220,6 +225,7 @@ export const useFetchCurrentPage = (): {
           set(pageNotFoundAtom, false);
           set(isForbiddenAtom, false);
 
+          console.log({ newData });
           return newData;
         } catch (err) {
           if (!Array.isArray(err) || err.length === 0) {

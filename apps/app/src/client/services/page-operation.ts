@@ -107,7 +107,7 @@ export const useUpdateStateAfterSave = (pageId: string|undefined|null, opts?: Up
   return useCallback(async() => {
     if (pageId == null) { return }
 
-    const updatedPage = await fetchCurrentPage({ pageId });
+    const updatedPage = await fetchCurrentPage({ pageId, force: true });
 
     if (updatedPage == null || updatedPage.revision == null) { return }
 

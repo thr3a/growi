@@ -65,7 +65,7 @@ const TrashPageAlertSubstance = (props: SubstanceProps): JSX.Element => {
         unlink(currentPagePath);
 
         router.push(`/${pageId}`);
-        fetchCurrentPage();
+        fetchCurrentPage({ force: true });
         mutateRecentlyUpdated();
       } catch (err) {
         // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import

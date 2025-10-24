@@ -146,7 +146,7 @@ export const BookmarkItem = (props: Props): JSX.Element => {
         mutateAllPageInfo();
         bookmarkFolderTreeMutation();
         router.push(`/${pageId}`);
-        fetchCurrentPage();
+        fetchCurrentPage({ force: true });
         toastSuccess(t('page_has_been_reverted', { path }));
       }
       catch (err) {

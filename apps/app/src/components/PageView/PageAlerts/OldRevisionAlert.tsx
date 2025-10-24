@@ -24,7 +24,7 @@ export const OldRevisionAlert = (): JSX.Element => {
 
     const url = returnPathForURL(page.path, page._id);
     await router.push(url);
-    fetchCurrentPage();
+    fetchCurrentPage({ force: true });
   }, [fetchCurrentPage, page, router]);
 
   if (page == null || isOldRevisionPage) {

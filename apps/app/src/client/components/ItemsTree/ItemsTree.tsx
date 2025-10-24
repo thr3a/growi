@@ -88,7 +88,7 @@ export const ItemsTree = (props: ItemsTreeProps): JSX.Element => {
     mutatePageList();
 
     if (currentPagePath === fromPath || currentPagePath === toPath) {
-      fetchCurrentPage();
+      fetchCurrentPage({ force: true });
     }
   }, [currentPagePath, fetchCurrentPage]);
 
@@ -124,7 +124,7 @@ export const ItemsTree = (props: ItemsTreeProps): JSX.Element => {
       mutateAllPageInfo();
 
       if (currentPagePath === pathOrPathsToDelete) {
-        fetchCurrentPage();
+        fetchCurrentPage({ force: true });
         router.push(isCompletely ? path.dirname(pathOrPathsToDelete) : `/trash${pathOrPathsToDelete}`);
       }
     };

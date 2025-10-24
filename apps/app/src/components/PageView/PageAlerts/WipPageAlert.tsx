@@ -21,7 +21,7 @@ export const WipPageAlert = (): JSX.Element => {
         .publish;
       await publish(pageId);
 
-      await fetchCurrentPage();
+      await fetchCurrentPage({ force: true });
 
       const mutatePageTree = (await import('~/stores/page-listing'))
         .mutatePageTree;

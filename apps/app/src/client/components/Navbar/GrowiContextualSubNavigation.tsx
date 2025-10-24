@@ -305,7 +305,7 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
 
   const renameItemClickedHandler = useCallback(async (page: IPageToRenameWithMeta<IPageInfoForEntity>) => {
     const renamedHandler: OnRenamedFunction = () => {
-      fetchCurrentPage();
+      fetchCurrentPage({ force: true });
       mutatePageInfo();
       mutatePageTree();
       mutateRecentlyUpdated();
@@ -329,7 +329,7 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
         router.push(currentPathname);
       }
 
-      fetchCurrentPage();
+      fetchCurrentPage({ force: true });
       mutatePageInfo();
       mutatePageTree();
       mutateRecentlyUpdated();

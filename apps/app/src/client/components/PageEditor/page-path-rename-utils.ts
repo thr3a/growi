@@ -37,7 +37,7 @@ export const usePagePathRenameHandler = (
       setIsUntitledPage(false);
 
       if (currentPage.path === fromPath || currentPage.path === toPath) {
-        fetchCurrentPage();
+        fetchCurrentPage({ force: true });
       }
     };
 

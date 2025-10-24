@@ -202,6 +202,124 @@ describe('useFetchCurrentPage - Integration Test', () => {
     expect(mockedApiv3Get).not.toHaveBeenCalled();
   });
 
+  it('should force re-fetch even if target path is the same when force: true is set', async () => {
+    // Arrange: Current state is set
+    const currentPageData = createPageDataMock(
+      'page1',
+      '/same/path',
+      'old content',
+    );
+    store.set(currentPageIdAtom, currentPageData._id);
+    store.set(currentPageDataAtom, currentPageData);
+
+    // Arrange: API returns updated data
+    const updatedPageData = createPageDataMock(
+      'page1',
+      '/same/path',
+      'updated content',
+    );
+    mockedApiv3Get.mockResolvedValue(mockApiResponse(updatedPageData));
+
+    // Act
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({ path: '/same/path', force: true });
+
+    // Assert
+    await waitFor(() => {
+      // 1. API should be called despite same path
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.objectContaining({ path: '/same/path' }),
+      );
+
+      // 2. Atoms should be updated with new data
+      const pageData = store.get(currentPageDataAtom);
+      expect(pageData).toEqual(updatedPageData);
+      expect(pageData?.revision?.body).toBe('updated content');
+      expect(store.get(pageLoadingAtom)).toBe(false);
+    });
+  });
+
+  it('should force re-fetch even if target pageId is the same when force: true is set', async () => {
+    // Arrange: Current state is set with pageId
+    const currentPageData = createPageDataMock(
+      'pageId123',
+      '/some/path',
+      'old content',
+    );
+    store.set(currentPageIdAtom, currentPageData._id);
+    store.set(currentPageDataAtom, currentPageData);
+
+    // Arrange: API returns updated data
+    const updatedPageData = createPageDataMock(
+      'pageId123',
+      '/some/path',
+      'refreshed content',
+    );
+    mockedApiv3Get.mockResolvedValue(mockApiResponse(updatedPageData));
+
+    // Act
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({ pageId: 'pageId123', force: true });
+
+    // Assert
+    await waitFor(() => {
+      // 1. API should be called despite same pageId
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.objectContaining({ pageId: 'pageId123' }),
+      );
+
+      // 2. Atoms should be updated with new data
+      const pageData = store.get(currentPageDataAtom);
+      expect(pageData).toEqual(updatedPageData);
+      expect(pageData?.revision?.body).toBe('refreshed content');
+      expect(store.get(pageLoadingAtom)).toBe(false);
+    });
+  });
+
+  it('should force re-fetch for permalink path when force: true is set', async () => {
+    // Arrange: Current state with permalink
+    const permalinkId = '58a4569921a8424d00a1aa0e';
+    const currentPageData = createPageDataMock(
+      permalinkId,
+      '/actual/path',
+      'old content',
+    );
+    store.set(currentPageIdAtom, permalinkId);
+    store.set(currentPageDataAtom, currentPageData);
+
+    // Arrange: API returns updated data
+    const updatedPageData = createPageDataMock(
+      permalinkId,
+      '/actual/path',
+      'force refreshed content',
+    );
+    mockedApiv3Get.mockResolvedValue(mockApiResponse(updatedPageData));
+
+    // Act
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({
+      path: `/${permalinkId}`,
+      force: true,
+    });
+
+    // Assert
+    await waitFor(() => {
+      // 1. API should be called despite cached permalink
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.objectContaining({ pageId: permalinkId }),
+      );
+
+      // 2. Atoms should be updated with new data
+      const pageData = store.get(currentPageDataAtom);
+      expect(pageData).toEqual(updatedPageData);
+      expect(pageData?.revision?.body).toBe('force refreshed content');
+      expect(store.get(pageLoadingAtom)).toBe(false);
+    });
+  });
+
   it('should handle fetching the root page', async () => {
     // Arrange: Start on a regular page
     const regularPageData = createPageDataMock(
