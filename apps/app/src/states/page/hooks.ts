@@ -102,8 +102,9 @@ export const useIsRevisionOutdated = (): boolean =>
  * Computed hook for checking if current page is creatable
  */
 export const useIsNotCreatable = (): boolean => {
+  const isNotFound = useAtomValue(pageNotFoundAtom);
   const pagePath = useCurrentPagePath();
-  return pagePath == null ? true : !isCreatablePage(pagePath);
+  return isNotFound && (pagePath == null ? true : !isCreatablePage(pagePath));
 };
 
 /**
