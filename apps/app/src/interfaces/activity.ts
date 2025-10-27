@@ -1,4 +1,10 @@
-import type { HasObjectId, IUser, Ref } from '@growi/core';
+import type {
+  HasObjectId,
+  IPageHasId,
+  IUser,
+  IUserHasId,
+  Ref,
+} from '@growi/core';
 import type { PaginateResult } from './mongoose-utils';
 
 // Model
@@ -575,8 +581,10 @@ export const ActivityLogActions = {
   ACTION_PAGE_RENAME,
   ACTION_PAGE_DUPLICATE,
   ACTION_PAGE_DELETE,
+  ACTION_PAGE_REVERT,
   ACTION_COMMENT_CREATE,
   ACTION_COMMENT_UPDATE,
+  ACTION_COMMENT_REMOVE,
   ACTION_ATTACHMENT_ADD,
 } as const;
 
@@ -657,7 +665,8 @@ export type SupportedActionType =
   (typeof SupportedAction)[keyof typeof SupportedAction];
 export type SupportedActionCategoryType =
   (typeof SupportedActionCategory)[keyof typeof SupportedActionCategory];
-
+export type SupportedActivityActionType =
+  (typeof ActivityLogActions)[keyof typeof ActivityLogActions];
 export type ISnapshot = Partial<Pick<IUser, 'username'>>;
 
 export type IActivity = {
@@ -671,6 +680,11 @@ export type IActivity = {
   action: SupportedActionType;
   createdAt: Date;
   snapshot?: ISnapshot;
+};
+
+export type ActivityWithPageTarget = IActivityHasId & {
+  target: IPageHasId;
+  user: IUserHasId;
 };
 
 export type IActivityHasId = IActivity & HasObjectId;
