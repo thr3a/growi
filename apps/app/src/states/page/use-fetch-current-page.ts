@@ -71,25 +71,33 @@ const shouldUseCachedData = (
     return false;
   }
 
+  if (args?.revisionId != null) {
+    if (args.revisionId !== currentPageData?.revision?._id) {
+      return false;
+    }
+  }
+
   // Guard clause to prevent unnecessary fetching by pageId
-  if (args?.pageId != null && args.pageId === currentPageId) {
-    return true;
+  if (args?.pageId != null) {
+    if (args.pageId !== currentPageId) {
+      return false;
+    }
   }
 
   // Guard clause to prevent unnecessary fetching by path
   if (decodedPathname != null) {
     if (
       isPermalink(decodedPathname) &&
-      removeHeadingSlash(decodedPathname) === currentPageId
+      removeHeadingSlash(decodedPathname) !== currentPageId
     ) {
-      return true;
+      return false;
     }
-    if (decodedPathname === currentPageData?.path) {
-      return true;
+    if (decodedPathname !== currentPageData?.path) {
+      return false;
     }
   }
 
-  return false;
+  return true;
 };
 
 type BuildApiParamsArgs = {
@@ -120,7 +128,9 @@ const buildApiParams = ({
     pageId?: string;
     revisionId?: string;
     shareLinkId?: string;
-  } = {};
+  } = {
+    revisionId: fetchPageArgs?.revisionId,
+  };
 
   if (shareLinkId != null) {
     params.shareLinkId = shareLinkId;
@@ -225,7 +235,6 @@ export const useFetchCurrentPage = (): {
           set(pageNotFoundAtom, false);
           set(isForbiddenAtom, false);
 
-          console.log({ newData });
           return newData;
         } catch (err) {
           if (!Array.isArray(err) || err.length === 0) {

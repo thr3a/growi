@@ -202,6 +202,134 @@ describe('useFetchCurrentPage - Integration Test', () => {
     expect(mockedApiv3Get).not.toHaveBeenCalled();
   });
 
+  it('should not re-fetch if target pageId is the same as current', async () => {
+    // Arrange: Current state is set
+    const currentPageData = createPageDataMock(
+      'page123',
+      '/some/path',
+      'current content',
+    );
+    store.set(currentPageIdAtom, currentPageData._id);
+    store.set(currentPageDataAtom, currentPageData);
+
+    // Act
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({ pageId: 'page123' });
+
+    // Assert
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(mockedApiv3Get).not.toHaveBeenCalled();
+  });
+
+  it('should fetch when revisionId is different from current revision', async () => {
+    // Arrange: Current state with specific revision
+    const currentPageData = createPageDataMock(
+      'page1',
+      '/same/path',
+      'current content',
+    );
+    store.set(currentPageIdAtom, currentPageData._id);
+    store.set(currentPageDataAtom, currentPageData);
+
+    // Arrange: API returns different revision
+    const updatedPageData = createPageDataMock(
+      'page1',
+      '/same/path',
+      'updated content',
+    );
+    if (updatedPageData.revision) {
+      updatedPageData.revision._id = 'rev_different';
+    }
+    mockedApiv3Get.mockResolvedValue(mockApiResponse(updatedPageData));
+
+    // Act
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({
+      path: '/same/path',
+      revisionId: 'rev_different',
+    });
+
+    // Assert
+    await waitFor(() => {
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.objectContaining({
+          path: '/same/path',
+          revisionId: 'rev_different',
+        }),
+      );
+      expect(store.get(currentPageDataAtom)?.revision?._id).toBe(
+        'rev_different',
+      );
+    });
+  });
+
+  it('should not re-fetch if revisionId matches current revision', async () => {
+    // Arrange: Current state with specific revision
+    const currentPageData = createPageDataMock(
+      'page1',
+      '/same/path',
+      'current content',
+    );
+    const currentRevisionId = currentPageData.revision?._id;
+    store.set(currentPageIdAtom, currentPageData._id);
+    store.set(currentPageDataAtom, currentPageData);
+
+    // Act
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({
+      path: '/same/path',
+      revisionId: currentRevisionId,
+    });
+
+    // Assert
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(mockedApiv3Get).not.toHaveBeenCalled();
+  });
+
+  it('should fetch when path is same but revisionId is different', async () => {
+    // Arrange: Current state
+    const currentPageData = createPageDataMock(
+      'page1',
+      '/same/path',
+      'old content',
+    );
+    store.set(currentPageIdAtom, currentPageData._id);
+    store.set(currentPageDataAtom, currentPageData);
+
+    // Arrange: API returns old revision
+    const oldRevisionData = createPageDataMock(
+      'page1',
+      '/same/path',
+      'older content',
+    );
+    if (oldRevisionData.revision) {
+      oldRevisionData.revision._id = 'rev_old';
+    }
+    mockedApiv3Get.mockResolvedValue(mockApiResponse(oldRevisionData));
+
+    // Act
+    const { result } = renderHookWithProvider();
+    await result.current.fetchCurrentPage({
+      path: '/same/path',
+      revisionId: 'rev_old',
+    });
+
+    // Assert
+    await waitFor(() => {
+      expect(mockedApiv3Get).toHaveBeenCalledWith(
+        '/page',
+        expect.objectContaining({
+          path: '/same/path',
+          revisionId: 'rev_old',
+        }),
+      );
+      const pageData = store.get(currentPageDataAtom);
+      expect(pageData?.revision?._id).toBe('rev_old');
+      expect(pageData?.revision?.body).toBe('older content');
+    });
+  });
+
   it('should force re-fetch even if target path is the same when force: true is set', async () => {
     // Arrange: Current state is set
     const currentPageData = createPageDataMock(
