@@ -84,18 +84,6 @@ export const isRevisionOutdatedAtom = atom((get) => {
   return remoteRevisionId !== currentRevisionId;
 });
 
-export const setPageStatusAtom = atom(
-  null,
-  (get, set, status: { isNotFound?: boolean; isLatestRevision?: boolean }) => {
-    if (status.isNotFound !== undefined) {
-      set(pageNotFoundAtom, status.isNotFound);
-    }
-    if (status.isLatestRevision !== undefined) {
-      set(latestRevisionAtom, status.isLatestRevision);
-    }
-  },
-);
-
 // Update atoms for template and remote revision data
 export const setTemplateContentAtom = atom(
   null,
