@@ -1,7 +1,5 @@
-import type { ActivityWithPageTarget, SupportedActivityActionType } from '~/interfaces/activity';
+import type { ActivityHasUserId, SupportedActivityActionType } from '~/interfaces/activity';
 import { ActivityLogActions } from '~/interfaces/activity';
-
-import { PageListItemS } from '../PageList/PageListItemS';
 
 export const ActivityActionTranslationMap: Record<
   SupportedActivityActionType,
@@ -10,13 +8,12 @@ export const ActivityActionTranslationMap: Record<
   [ActivityLogActions.ACTION_PAGE_CREATE]: 'created a page',
   [ActivityLogActions.ACTION_PAGE_UPDATE]: 'updated a page',
   [ActivityLogActions.ACTION_PAGE_DELETE]: 'deleted a page',
+  [ActivityLogActions.ACTION_PAGE_DELETE_COMPLETELY]: 'deleted a page',
   [ActivityLogActions.ACTION_PAGE_RENAME]: 'renamed a page',
   [ActivityLogActions.ACTION_PAGE_REVERT]: 'reverted a page',
   [ActivityLogActions.ACTION_PAGE_DUPLICATE]: 'duplicated a page',
+  [ActivityLogActions.ACTION_PAGE_LIKE]: 'liked a page',
   [ActivityLogActions.ACTION_COMMENT_CREATE]: 'posted a comment',
-  [ActivityLogActions.ACTION_COMMENT_UPDATE]: 'edited a comment',
-  [ActivityLogActions.ACTION_COMMENT_REMOVE]: 'deleted a comment',
-  [ActivityLogActions.ACTION_ATTACHMENT_ADD]: 'added an attachment',
 };
 
 const translateAction = (action: SupportedActivityActionType): string => {
@@ -24,7 +21,7 @@ const translateAction = (action: SupportedActivityActionType): string => {
 };
 
 
-export const ActivityListItem = ({ activity }: { activity: ActivityWithPageTarget }): JSX.Element => {
+export const ActivityListItem = ({ activity }: { activity: ActivityHasUserId }): JSX.Element => {
   const username = activity.user?.username;
   const action = activity.action as SupportedActivityActionType;
   const date = new Date(activity.createdAt).toLocaleString();
@@ -34,8 +31,6 @@ export const ActivityListItem = ({ activity }: { activity: ActivityWithPageTarge
       <p className="text-muted small mb-1">
         {username} {translateAction(action)} on {date}
       </p>
-
-      <PageListItemS page={activity.target} />
     </div>
   );
 };
