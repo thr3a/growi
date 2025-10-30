@@ -173,8 +173,8 @@ function injectServerConfigurations(
     customAttrWhitelist:
       configManager.getConfig('markdown:rehypeSanitize:attributes') != null
         ? JSON.parse(
-          configManager.getConfig('markdown:rehypeSanitize:attributes'),
-        )
+            configManager.getConfig('markdown:rehypeSanitize:attributes'),
+          )
         : undefined,
     highlightJsStyleBorder: crowi.configManager.getConfig(
       'customize:highlightJsStyleBorder',

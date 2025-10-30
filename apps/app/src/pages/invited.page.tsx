@@ -13,10 +13,7 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
 import { NoLoginLayout } from '~/components/Layout/NoLoginLayout';
 import type { CrowiRequest } from '~/interfaces/crowi-request';
-import {
-  useCurrentPathname,
-  useCurrentUser,
-} from '~/stores-universal/context';
+import { useCurrentPathname, useCurrentUser } from '~/stores-universal/context';
 
 import type { CommonProps } from './utils/commons';
 import {

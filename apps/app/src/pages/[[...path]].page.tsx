@@ -784,7 +784,7 @@ function injectServerConfigurations(
   props.isLocalAccountRegistrationEnabled =
     passportService.isLocalStrategySetup &&
     configManager.getConfig('security:registrationMode') !==
-    RegistrationMode.CLOSED;
+      RegistrationMode.CLOSED;
 
   props.adminPreferredIndentSize = configManager.getConfig(
     'markdown:adminPreferredIndentSize',
@@ -833,8 +833,8 @@ function injectServerConfigurations(
     customAttrWhitelist:
       configManager.getConfig('markdown:rehypeSanitize:attributes') != null
         ? JSON.parse(
-          configManager.getConfig('markdown:rehypeSanitize:attributes'),
-        )
+            configManager.getConfig('markdown:rehypeSanitize:attributes'),
+          )
         : undefined,
     highlightJsStyleBorder: configManager.getConfig(
       'customize:highlightJsStyleBorder',
