@@ -14,7 +14,6 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { NoLoginLayout } from '~/components/Layout/NoLoginLayout';
 import type { CrowiRequest } from '~/interfaces/crowi-request';
 import {
-  useCsrfToken,
   useCurrentPathname,
   useCurrentUser,
 } from '~/stores-universal/context';
@@ -41,7 +40,6 @@ type Props = CommonProps & {
 const InvitedPage: NextPage<Props> = (props: Props) => {
   const { t } = useTranslation();
 
-  useCsrfToken(props.csrfToken);
   useCurrentPathname(props.currentPathname);
   useCurrentUser(props.currentUser);
 

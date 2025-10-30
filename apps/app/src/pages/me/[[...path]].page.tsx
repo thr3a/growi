@@ -13,7 +13,6 @@ import type { RendererConfig } from '~/interfaces/services/renderer';
 import type { ISidebarConfig } from '~/interfaces/sidebar-config';
 import { useCurrentPageId, useSWRxCurrentPage } from '~/stores/page';
 import {
-  useCsrfToken,
   useCurrentPathname,
   useCurrentUser,
   useGrowiCloudUri,
@@ -116,7 +115,6 @@ const MePage: NextPageWithLayout<Props> = (props: Props) => {
   useShowPageLimitationXL(props.showPageLimitationXL);
 
   // commons
-  useCsrfToken(props.csrfToken);
   useGrowiCloudUri(props.growiCloudUri);
 
   useCurrentUser(props.currentUser ?? null);
@@ -233,8 +231,8 @@ async function injectServerConfigurations(
     customAttrWhitelist:
       configManager.getConfig('markdown:rehypeSanitize:attributes') != null
         ? JSON.parse(
-            configManager.getConfig('markdown:rehypeSanitize:attributes'),
-          )
+          configManager.getConfig('markdown:rehypeSanitize:attributes'),
+        )
         : undefined,
     highlightJsStyleBorder: crowi.configManager.getConfig(
       'customize:highlightJsStyleBorder',
