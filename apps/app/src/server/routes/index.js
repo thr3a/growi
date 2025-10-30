@@ -141,7 +141,7 @@ module.exports = function(crowi, app) {
   apiV1Router.post('/comments.update'    , accessTokenParser([SCOPE.WRITE.FEATURES.PAGE], { acceptLegacy: true }), comment.api.validators.add(), loginRequiredStrictly , excludeReadOnlyUserIfCommentNotAllowed, addActivity, comment.api.update);
   apiV1Router.post('/comments.remove'    , accessTokenParser([SCOPE.WRITE.FEATURES.PAGE], { acceptLegacy: true }), loginRequiredStrictly , excludeReadOnlyUserIfCommentNotAllowed, addActivity, comment.api.remove);
 
-  apiV1Router.post('/attachments.uploadProfileImage'   , accessTokenParser([SCOPE.WRITE.FEATURES.ATTACHMENT], { acceptLegacy: true }), uploads.single('file'), accessTokenParser , loginRequiredStrictly , excludeReadOnlyUser, uploads.single('file'), autoReap, attachmentApi.uploadProfileImage);
+  apiV1Router.post('/attachments.uploadProfileImage'   , accessTokenParser([SCOPE.WRITE.FEATURES.ATTACHMENT], { acceptLegacy: true }), loginRequiredStrictly , excludeReadOnlyUser, uploads.single('file'), autoReap, attachmentApi.uploadProfileImage);
   apiV1Router.post('/attachments.remove'               , accessTokenParser([SCOPE.WRITE.FEATURES.ATTACHMENT], { acceptLegacy: true }), loginRequiredStrictly , excludeReadOnlyUser, addActivity ,attachmentApi.remove);
   apiV1Router.post('/attachments.removeProfileImage'   , accessTokenParser([SCOPE.WRITE.FEATURES.ATTACHMENT], { acceptLegacy: true }), loginRequiredStrictly , excludeReadOnlyUser, attachmentApi.removeProfileImage);
 
