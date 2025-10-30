@@ -2,15 +2,6 @@ import type { ColorScheme, IUserHasId } from '@growi/core';
 import { atom, useAtomValue } from 'jotai';
 
 /**
- * CSRF Token atom
- */
-const csrfTokenAtom = atom<string>('');
-/**
- * CSRF Token atom setter
- */
-export const useCsrfToken = () => useAtomValue(csrfTokenAtom);
-
-/**
  * App current pathname atom
  */
 const currentPathnameAtom = atom<string>('');
