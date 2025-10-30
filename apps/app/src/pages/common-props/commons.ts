@@ -85,7 +85,6 @@ export type CommonEachProps = {
   currentPathname: string;
   nextjsRoutingPage?: string; // must be set by each page
   currentUser?: IUserHasId;
-  csrfToken: string;
   isMaintenanceMode: boolean;
   redirectDestination?: string | null;
 };
@@ -125,12 +124,6 @@ function isValidCommonEachRouteProps(
       'isValidCommonEachRouteProps: currentPathname is not a string',
       { currentPathname: p.currentPathname },
     );
-    return false;
-  }
-  if (typeof p.csrfToken !== 'string') {
-    logger.warn('isValidCommonEachRouteProps: csrfToken is not a string', {
-      csrfToken: p.csrfToken,
-    });
     return false;
   }
   if (typeof p.isMaintenanceMode !== 'boolean') {
@@ -183,7 +176,6 @@ export const getServerSideCommonEachProps = async (
     currentPathname,
     nextjsRoutingPage,
     currentUser,
-    csrfToken: req.csrfToken(),
     isMaintenanceMode,
     redirectDestination,
   };

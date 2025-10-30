@@ -7,7 +7,6 @@ import { _atomsForHydration } from './global';
 const {
   appTitleAtom,
   confidentialAtom,
-  csrfTokenAtom,
   currentPathnameAtom,
   currentUserAtom,
   customTitleTemplateAtom,
@@ -66,7 +65,6 @@ export const useHydrateGlobalEachAtoms = (
   // Hydrate global atoms with server-side data
   useHydrateAtoms(
     [
-      [csrfTokenAtom, commonEachProps.csrfToken],
       [currentPathnameAtom, commonEachProps.currentPathname],
       [currentUserAtom, commonEachProps.currentUser],
       [isMaintenanceModeAtom, commonEachProps.isMaintenanceMode],

@@ -130,7 +130,6 @@ const forcedColorSchemeAtom = atom<ColorScheme | undefined>(undefined);
 export const useForcedColorScheme = () => useAtomValue(forcedColorSchemeAtom);
 
 export const _atomsForHydration = {
-  csrfTokenAtom,
   currentPathnameAtom,
   currentUserAtom,
   appTitleAtom,
