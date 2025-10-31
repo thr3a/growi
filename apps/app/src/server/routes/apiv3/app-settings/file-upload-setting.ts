@@ -51,14 +51,14 @@ type ResponseParams = BaseResponseParams | GcsResponseParams | AwsResponseParams
 const validator = {
   fileUploadSetting: [
     body('fileUploadType').isIn(['aws', 'gcs', 'local', 'gridfs', 'azure']),
-    body('gcsApiKeyJsonPath').trim(),
-    body('gcsBucket').trim(),
-    body('gcsUploadNamespace').trim(),
+    body('gcsApiKeyJsonPath').optional(),
+    body('gcsBucket').optional(),
+    body('gcsUploadNamespace').optional(),
     body('gcsReferenceFileWithRelayMode').if(value => value != null).isBoolean(),
-    body('s3Bucket').trim(),
+    body('s3Bucket').optional(),
     body('s3Region')
-      .trim()
-      .if(value => value !== '')
+      .optional()
+      .if(value => value !== '' && value != null)
       .custom(async(value) => {
         const { t } = await getTranslation();
         if (!/^[a-z]+-[a-z]+-\d+$/.test(value)) {
@@ -67,8 +67,8 @@ const validator = {
         return true;
       }),
     body('s3CustomEndpoint')
-      .trim()
-      .if(value => value !== '')
+      .optional()
+      .if(value => value !== '' && value != null)
       .custom(async(value) => {
         const { t } = await getTranslation();
         if (!/^(https?:\/\/[^/]+|)$/.test(value)) {
@@ -76,14 +76,14 @@ const validator = {
         }
         return true;
       }),
-    body('s3AccessKeyId').trim().if(value => value !== '').matches(/^[\da-zA-Z]+$/),
-    body('s3SecretAccessKey').trim(),
+    body('s3AccessKeyId').optional().if(value => value !== '' && value != null).matches(/^[\da-zA-Z]+$/),
+    body('s3SecretAccessKey').optional(),
     body('s3ReferenceFileWithRelayMode').if(value => value != null).isBoolean(),
-    body('azureTenantId').trim(),
-    body('azureClientId').trim(),
-    body('azureClientSecret').trim(),
-    body('azureStorageAccountName').trim(),
-    body('azureStorageStorageName').trim(),
+    body('azureTenantId').optional(),
+    body('azureClientId').optional(),
+    body('azureClientSecret').optional(),
+    body('azureStorageAccountName').optional(),
+    body('azureStorageStorageName').optional(),
     body('azureReferenceFileWithRelayMode').if(value => value != null).isBoolean(),
   ],
 };
@@ -163,15 +163,36 @@ module.exports = (crowi) => {
             'aws:referenceFileWithRelayMode': req.body.s3ReferenceFileWithRelayMode,
           },
           { skipPubsub: true });
+
+          // Update optional non-secret fields (can be removed if undefined)
           await configManager.updateConfigs({
             'aws:s3CustomEndpoint': toNonBlankStringOrUndefined(req.body.s3CustomEndpoint),
-            'aws:s3AccessKeyId': toNonBlankStringOrUndefined(req.body.s3AccessKeyId),
-            'aws:s3SecretAccessKey': toNonBlankStringOrUndefined(req.body.s3SecretAccessKey),
           },
           {
             skipPubsub: true,
             removeIfUndefined: true,
           });
+
+          // Update secret fields only if explicitly provided in request
+          if (req.body.s3AccessKeyId !== undefined) {
+            await configManager.updateConfigs({
+              'aws:s3AccessKeyId': toNonBlankStringOrUndefined(req.body.s3AccessKeyId),
+            },
+            {
+              skipPubsub: true,
+              removeIfUndefined: true,
+            });
+          }
+
+          if (req.body.s3SecretAccessKey !== undefined) {
+            await configManager.updateConfigs({
+              'aws:s3SecretAccessKey': toNonBlankStringOrUndefined(req.body.s3SecretAccessKey),
+            },
+            {
+              skipPubsub: true,
+              removeIfUndefined: true,
+            });
+          }
         }
         catch (err) {
           const msg = `Error occurred in updating AWS S3 settings: ${err.message}`;
@@ -187,12 +208,21 @@ module.exports = (crowi) => {
             'gcs:referenceFileWithRelayMode': req.body.gcsReferenceFileWithRelayMode,
           },
           { skipPubsub: true });
+
+          // Update optional non-secret fields (can be removed if undefined)
           await configManager.updateConfigs({
-            'gcs:apiKeyJsonPath': toNonBlankStringOrUndefined(req.body.gcsApiKeyJsonPath),
             'gcs:bucket': toNonBlankStringOrUndefined(req.body.gcsBucket),
             'gcs:uploadNamespace': toNonBlankStringOrUndefined(req.body.gcsUploadNamespace),
           },
           { skipPubsub: true, removeIfUndefined: true });
+
+          // Update secret fields only if explicitly provided in request
+          if (req.body.gcsApiKeyJsonPath !== undefined) {
+            await configManager.updateConfigs({
+              'gcs:apiKeyJsonPath': toNonBlankStringOrUndefined(req.body.gcsApiKeyJsonPath),
+            },
+            { skipPubsub: true, removeIfUndefined: true });
+          }
         }
         catch (err) {
           const msg = `Error occurred in updating GCS settings: ${err.message}`;
@@ -208,13 +238,21 @@ module.exports = (crowi) => {
             'azure:referenceFileWithRelayMode': req.body.azureReferenceFileWithRelayMode,
           },
           { skipPubsub: true });
+
+          // Update optional non-secret fields (can be removed if undefined)
           await configManager.updateConfigs({
             'azure:tenantId': toNonBlankStringOrUndefined(req.body.azureTenantId),
             'azure:clientId': toNonBlankStringOrUndefined(req.body.azureClientId),
-            'azure:clientSecret': toNonBlankStringOrUndefined(req.body.azureClientSecret),
             'azure:storageAccountName': toNonBlankStringOrUndefined(req.body.azureStorageAccountName),
             'azure:storageContainerName': toNonBlankStringOrUndefined(req.body.azureStorageContainerName),
           }, { skipPubsub: true, removeIfUndefined: true });
+
+          // Update secret fields only if explicitly provided in request
+          if (req.body.azureClientSecret !== undefined) {
+            await configManager.updateConfigs({
+              'azure:clientSecret': toNonBlankStringOrUndefined(req.body.azureClientSecret),
+            }, { skipPubsub: true, removeIfUndefined: true });
+          }
         }
         catch (err) {
           const msg = `Error occurred in updating Azure settings: ${err.message}`;

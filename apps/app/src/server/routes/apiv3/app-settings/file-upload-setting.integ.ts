@@ -32,9 +32,8 @@ describe('file-upload-setting route', () => {
   let app: express.Application;
   let crowiMock: Crowi;
 
-  beforeAll(async() => {
-
-    // Initialize configManager
+  beforeEach(async() => {
+    // Initialize configManager for each test
     const s2sMessagingServiceMock = mock<S2sMessagingService>();
     configManager.setS2sMessagingService(s2sMessagingServiceMock);
     await configManager.loadConfigs();
@@ -83,5 +82,40 @@ describe('file-upload-setting route', () => {
     expect(response.body.responseParams).toBeDefined();
     expect(response.body.responseParams.fileUploadType).toBe('local');
     expect(crowiMock.setUpFileUpload).toHaveBeenCalledWith(true);
+  });
+
+  it('should preserve existing s3SecretAccessKey when not included in request', async() => {
+    // Arrange: Set up existing secret in DB
+    const existingSecret = 'existing-secret-key-12345';
+    await configManager.updateConfigs({
+      'app:fileUploadType': 'aws',
+      'aws:s3SecretAccessKey': existingSecret,
+      'aws:s3Region': 'us-west-2',
+      'aws:s3Bucket': 'existing-bucket',
+    });
+    await configManager.loadConfigs(); // Reload configs after update
+
+    // Verify the secret was set
+    const secretBeforeUpdate = configManager.getConfig('aws:s3SecretAccessKey');
+    expect(secretBeforeUpdate).toBe(existingSecret);
+
+    // Act: Update AWS settings without including s3SecretAccessKey
+    const response = await request(app)
+      .put('/')
+      .send({
+        fileUploadType: 'aws',
+        s3Region: 'us-east-1',
+        s3Bucket: 'test-bucket',
+        s3ReferenceFileWithRelayMode: false,
+      })
+      .expect(200);
+
+    // Reload configs to get latest values
+    await configManager.loadConfigs();
+
+    // Assert: Secret should still exist in DB
+    const secretAfterUpdate = configManager.getConfig('aws:s3SecretAccessKey');
+    expect(secretAfterUpdate).toBe(existingSecret);
+    expect(response.body.responseParams.fileUploadType).toBe('aws');
   });
 });
