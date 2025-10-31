@@ -12,8 +12,8 @@ import { configManager } from '~/server/service/config-manager';
 import { getTranslation } from '~/server/service/i18next';
 import loggerFactory from '~/utils/logger';
 
-import { generateAddActivityMiddleware } from '../../middlewares/add-activity';
-import { apiV3FormValidator } from '../../middlewares/apiv3-form-validator';
+import { generateAddActivityMiddleware } from '../../../middlewares/add-activity';
+import { apiV3FormValidator } from '../../../middlewares/apiv3-form-validator';
 
 
 const logger = loggerFactory('growi:routes:apiv3:app-settings');
@@ -317,9 +317,9 @@ const router = express.Router();
  */
 /** @param {import('~/server/crowi').default} crowi Crowi instance */
 module.exports = (crowi) => {
-  const loginRequiredStrictly = require('../../middlewares/login-required')(crowi);
-  const adminRequired = require('../../middlewares/admin-required')(crowi);
-  const addActivity = generateAddActivityMiddleware(crowi);
+  const loginRequiredStrictly = require('../../../middlewares/login-required')(crowi);
+  const adminRequired = require('../../../middlewares/admin-required')(crowi);
+  const addActivity = generateAddActivityMiddleware();
 
   const activityEvent = crowi.event('activity');
 
@@ -474,8 +474,6 @@ module.exports = (crowi) => {
       envAzureClientSecret: configManager.getConfig('azure:clientSecret', ConfigSource.env),
       envAzureStorageAccountName: configManager.getConfig('azure:storageAccountName', ConfigSource.env),
       envAzureStorageContainerName: configManager.getConfig('azure:storageContainerName', ConfigSource.env),
-
-      isEnabledPlugins: configManager.getConfig('plugin:isEnabledPlugins'),
 
       isMaintenanceMode: configManager.getConfig('app:isMaintenanceMode'),
 
@@ -652,7 +650,13 @@ module.exports = (crowi) => {
     const smtpUser = configManager.getConfig('mail:smtpUser');
     const smtpPassword = configManager.getConfig('mail:smtpPassword');
 
-    const option = {
+    // Define the option object with possible 'auth' and 'secure' properties
+    const option: {
+      host: string | undefined;
+      port: string | undefined;
+      auth?: { user: string; pass: string };
+      secure?: boolean;
+    } = {
       host: smtpHost,
       port: smtpPort,
     };
@@ -662,7 +666,7 @@ module.exports = (crowi) => {
         pass: smtpPassword,
       };
     }
-    if (option.port === 465) {
+    if (option.port === '465') {
       option.secure = true;
     }
 

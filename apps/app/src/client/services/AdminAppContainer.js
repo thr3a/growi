@@ -73,8 +73,6 @@ export default class AdminAppContainer extends Container {
       envAzureStorageAccountName: '',
       envAzureStorageContainerName: '',
 
-      isEnabledPlugins: true,
-
       isMaintenanceMode: false,
 
       // TODO: remove this property when bulk export can be relased for cloud (https://redmine.weseek.co.jp/issues/163220)
@@ -150,7 +148,6 @@ export default class AdminAppContainer extends Container {
       envAzureStorageAccountName: appSettingsParams.envAzureStorageAccountName,
       envAzureStorageContainerName: appSettingsParams.envAzureStorageContainerName,
 
-      isEnabledPlugins: appSettingsParams.isEnabledPlugins,
       isMaintenanceMode: appSettingsParams.isMaintenanceMode,
 
       // TODO: remove this property when bulk export can be relased for cloud (https://redmine.weseek.co.jp/issues/163220)
