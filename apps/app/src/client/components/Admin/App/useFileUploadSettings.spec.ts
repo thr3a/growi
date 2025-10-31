@@ -52,8 +52,8 @@ function buildSettingsData(appSettingsParams: Record<string, any>): FileUploadSe
  * Helper function to build request params (mimics useFileUploadSettings updateSettings logic)
  */
 function buildRequestParams(
-  formData: FileUploadFormValues,
-  dirtyFields: Partial<Record<keyof FileUploadFormValues, boolean>>,
+    formData: FileUploadFormValues,
+    dirtyFields: Partial<Record<keyof FileUploadFormValues, boolean>>,
 ): Record<string, any> {
   const { fileUploadType } = formData;
 

@@ -135,5 +135,7 @@ export function useFileUploadSettings(): UseFileUploadSettingsReturn {
     }
   };
 
-  return { data, isLoading, error, updateSettings };
+  return {
+    data, isLoading, error, updateSettings,
+  };
 }
