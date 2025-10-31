@@ -1,9 +1,12 @@
+import { toNonBlankString } from '@growi/core/dist/interfaces';
+import type { Request } from 'express';
 import express from 'express';
 import mockRequire from 'mock-require';
 import request from 'supertest';
 import { mock } from 'vitest-mock-extended';
 
 import type Crowi from '~/server/crowi';
+import type { ApiV3Response } from '~/server/routes/apiv3/interfaces/apiv3-response';
 import { configManager } from '~/server/service/config-manager';
 import type { S2sMessagingService } from '~/server/service/s2s-messaging/base';
 
@@ -14,14 +17,14 @@ const mockActivityId = '507f1f77bcf86cd799439011';
 mockRequire.stopAll();
 
 mockRequire('~/server/middlewares/access-token-parser', {
-  accessTokenParser: () => (_req: any, _res: any, next: any) => next(),
+  accessTokenParser: () => (_req: Request, _res: ApiV3Response, next: () => void) => next(),
 });
 
-mockRequire('../../../middlewares/login-required', () => (_req: any, _res: any, next: any) => next());
-mockRequire('../../../middlewares/admin-required', () => (_req: any, _res: any, next: any) => next());
+mockRequire('../../../middlewares/login-required', () => (_req: Request, _res: ApiV3Response, next: () => void) => next());
+mockRequire('../../../middlewares/admin-required', () => (_req: Request, _res: ApiV3Response, next: () => void) => next());
 
 mockRequire('../../../middlewares/add-activity', {
-  generateAddActivityMiddleware: () => (_req: any, res: any, next: any) => {
+  generateAddActivityMiddleware: () => (_req: Request, res: ApiV3Response, next: () => void) => {
     res.locals = res.locals || {};
     res.locals.activity = { _id: mockActivityId };
     next();
@@ -55,8 +58,9 @@ describe('file-upload-setting route', () => {
 
     // Mock apiv3 response methods
     app.use((_req, res, next) => {
-      res.apiv3 = (data: any) => res.json(data);
-      res.apiv3Err = (error: any, statusCode = 500) => res.status(statusCode).json({ error });
+      const apiRes = res as ApiV3Response;
+      apiRes.apiv3 = data => res.json(data);
+      apiRes.apiv3Err = (error, statusCode = 500) => res.status(statusCode).json({ error });
       next();
     });
 
@@ -89,9 +93,9 @@ describe('file-upload-setting route', () => {
     const existingSecret = 'existing-secret-key-12345';
     await configManager.updateConfigs({
       'app:fileUploadType': 'aws',
-      'aws:s3SecretAccessKey': existingSecret,
-      'aws:s3Region': 'us-west-2',
-      'aws:s3Bucket': 'existing-bucket',
+      'aws:s3SecretAccessKey': toNonBlankString(existingSecret),
+      'aws:s3Region': toNonBlankString('us-west-2'),
+      'aws:s3Bucket': toNonBlankString('existing-bucket'),
     });
     await configManager.loadConfigs(); // Reload configs after update
 
