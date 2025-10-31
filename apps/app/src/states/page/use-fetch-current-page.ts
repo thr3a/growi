@@ -11,6 +11,7 @@ import { useAtomValue } from 'jotai';
 import { useAtomCallback } from 'jotai/utils';
 
 import { apiv3Get } from '~/client/util/apiv3-client';
+import { useSWRxPageInfo } from '~/stores/page';
 import loggerFactory from '~/utils/logger';
 
 import { useRevisionIdFromUrl } from '../context';
@@ -177,9 +178,12 @@ export const useFetchCurrentPage = (): {
 } => {
   const shareLinkId = useAtomValue(shareLinkIdAtom);
   const revisionIdFromUrl = useRevisionIdFromUrl();
+  const currentPageId = useAtomValue(currentPageIdAtom);
 
   const isLoading = useAtomValue(pageLoadingAtom);
   const error = useAtomValue(pageErrorAtom);
+
+  const { mutate: mutatePageInfo } = useSWRxPageInfo(currentPageId, shareLinkId);
 
   const fetchCurrentPage = useAtomCallback(
     useCallback(
@@ -234,6 +238,9 @@ export const useFetchCurrentPage = (): {
           set(pageNotFoundAtom, false);
           set(isForbiddenAtom, false);
 
+          // Mutate PageInfo to refetch latest metadata including latestRevisionId
+          mutatePageInfo();
+
           return newData;
         } catch (err) {
           if (!Array.isArray(err) || err.length === 0) {
@@ -260,7 +267,7 @@ export const useFetchCurrentPage = (): {
 
         return null;
       },
-      [shareLinkId, revisionIdFromUrl],
+      [shareLinkId, revisionIdFromUrl, mutatePageInfo],
     ),
   );
 
