@@ -11,7 +11,6 @@ import {
   currentPageDataAtom,
   currentPageIdAtom,
   isForbiddenAtom,
-  latestRevisionAtom,
   pageNotFoundAtom,
   redirectFromAtom,
   remoteRevisionBodyAtom,
@@ -31,7 +30,7 @@ import {
  * Data sources:
  * - page._id, page.revision -> Auto-extracted from IPagePopulatedToShowRevision
  * - remoteRevisionId, remoteRevisionBody -> Auto-extracted from page.revision
- * - templateTags, templateBody, isLatestRevision -> Explicitly provided via options
+ * - templateTags, templateBody -> Explicitly provided via options
  *
  * @example
  * // Basic usage
@@ -39,7 +38,6 @@ import {
  *
  * // With template data and custom flags
  * useHydratePageAtoms(pageWithMeta?.data, {
- *   isLatestRevision: false,
  *   templateTags: ['tag1', 'tag2'],
  *   templateBody: 'Template content'
  * });
@@ -49,7 +47,6 @@ export const useHydratePageAtoms = (
   pageMeta: IPageNotFoundInfo | IPageInfo | undefined,
   options?: {
     // always overwrited
-    isLatestRevision?: boolean;
     shareLinkId?: string;
     redirectFrom?: string;
     templateTags?: string[];
@@ -79,8 +76,6 @@ export const useHydratePageAtoms = (
   // always overwrited
   useHydrateAtoms(
     [
-      [latestRevisionAtom, options?.isLatestRevision ?? true],
-
       // ShareLink page state
       [shareLinkIdAtom, options?.shareLinkId],
 

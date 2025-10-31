@@ -13,7 +13,6 @@ export const currentPageDataAtom = atom<IPagePopulatedToShowRevision>();
 export const pageNotFoundAtom = atom(false);
 export const isIdenticalPathAtom = atom<boolean>(false);
 export const isForbiddenAtom = atom<boolean>(false);
-export const latestRevisionAtom = atom(true);
 
 // ShareLink page state atoms (internal)
 export const shareLinkIdAtom = atom<string>();

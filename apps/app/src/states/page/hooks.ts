@@ -17,7 +17,6 @@ import {
   isRevisionOutdatedAtom,
   isTrashPageAtom,
   isUntitledPageAtom,
-  latestRevisionAtom,
   pageNotFoundAtom,
   redirectFromAtom,
   remoteRevisionBodyAtom,
@@ -44,8 +43,6 @@ export const usePageNotFound = () => useAtomValue(pageNotFoundAtom);
 export const useIsIdenticalPath = () => useAtomValue(isIdenticalPathAtom);
 
 export const useIsForbidden = () => useAtomValue(isForbiddenAtom);
-
-export const useLatestRevision = () => useAtomValue(latestRevisionAtom);
 
 export const useShareLinkId = () => useAtomValue(shareLinkIdAtom);
 
