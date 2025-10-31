@@ -14,13 +14,11 @@ import {
   currentPagePathAtom,
   isForbiddenAtom,
   isIdenticalPathAtom,
-  isRevisionOutdatedAtom,
   isTrashPageAtom,
   isUntitledPageAtom,
   pageNotFoundAtom,
   redirectFromAtom,
   remoteRevisionBodyAtom,
-  remoteRevisionIdAtom,
   remoteRevisionLastUpdatedAtAtom,
   remoteRevisionLastUpdateUserAtom,
   shareLinkIdAtom,
@@ -51,8 +49,6 @@ export const useTemplateTags = () => useAtomValue(templateTagsAtom);
 export const useTemplateBody = () => useAtomValue(templateBodyAtom);
 
 // Remote revision hooks (replacements for stores/remote-latest-page.ts)
-export const useRemoteRevisionId = () => useAtomValue(remoteRevisionIdAtom);
-
 export const useRemoteRevisionBody = () => useAtomValue(remoteRevisionBodyAtom);
 
 export const useRemoteRevisionLastUpdateUser = () =>
@@ -87,13 +83,6 @@ export const useCurrentPagePath = (): string | undefined => {
  * Pure Jotai replacement for stores/page.tsx useIsTrashPage
  */
 export const useIsTrashPage = (): boolean => useAtomValue(isTrashPageAtom);
-
-/**
- * Check if current revision is outdated
- * Pure Jotai replacement for stores/page.tsx useIsRevisionOutdated
- */
-export const useIsRevisionOutdated = (): boolean =>
-  useAtomValue(isRevisionOutdatedAtom);
 
 /**
  * Computed hook for checking if current page is creatable

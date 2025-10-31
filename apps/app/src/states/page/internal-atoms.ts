@@ -61,7 +61,6 @@ export const isUntitledPageAtom = atom(
 );
 
 // Remote revision data atoms
-export const remoteRevisionIdAtom = atom<string>();
 export const remoteRevisionBodyAtom = atom<string>();
 export const remoteRevisionLastUpdateUserAtom = atom<IUserHasId>();
 export const remoteRevisionLastUpdatedAtAtom = atom<Date>();
@@ -72,21 +71,10 @@ export const isTrashPageAtom = atom((get) => {
   return pagePath != null ? pagePathUtils.isTrashPage(pagePath) : false;
 });
 
-export const isRevisionOutdatedAtom = atom((get) => {
-  const currentRevisionId = get(currentRevisionIdAtom);
-  const remoteRevisionId = get(remoteRevisionIdAtom);
-
-  if (currentRevisionId == null || remoteRevisionId == null) {
-    return false;
-  }
-
-  return remoteRevisionId !== currentRevisionId;
-});
-
 // Update atoms for template and remote revision data
 export const setTemplateContentAtom = atom(
   null,
-  (get, set, data: { tags?: string[]; body?: string }) => {
+  (_get, set, data: { tags?: string[]; body?: string }) => {
     if (data.tags !== undefined) {
       set(templateTagsAtom, data.tags);
     }
@@ -99,18 +87,14 @@ export const setTemplateContentAtom = atom(
 export const setRemoteRevisionDataAtom = atom(
   null,
   (
-    get,
+    _get,
     set,
     data: {
-      id?: string;
       body?: string;
       lastUpdateUser?: IUserHasId;
       lastUpdatedAt?: Date;
     },
   ) => {
-    if (data.id !== undefined) {
-      set(remoteRevisionIdAtom, data.id);
-    }
     if (data.body !== undefined) {
       set(remoteRevisionBodyAtom, data.body);
     }

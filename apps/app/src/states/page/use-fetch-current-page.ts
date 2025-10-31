@@ -13,6 +13,7 @@ import { useAtomCallback } from 'jotai/utils';
 import { apiv3Get } from '~/client/util/apiv3-client';
 import loggerFactory from '~/utils/logger';
 
+import { useRevisionIdFromUrl } from '../context';
 import {
   currentPageDataAtom,
   currentPageIdAtom,
@@ -21,7 +22,6 @@ import {
   pageLoadingAtom,
   pageNotFoundAtom,
   remoteRevisionBodyAtom,
-  remoteRevisionIdAtom,
   shareLinkIdAtom,
 } from './internal-atoms';
 
@@ -105,6 +105,7 @@ type BuildApiParamsArgs = {
   decodedPathname: string | undefined;
   currentPageId: string | undefined;
   shareLinkId: string | undefined;
+  revisionIdFromUrl: string | undefined;
 };
 type ApiParams = { params: Record<string, string>; shouldSkip: boolean };
 
@@ -116,21 +117,17 @@ const buildApiParams = ({
   decodedPathname,
   currentPageId,
   shareLinkId,
+  revisionIdFromUrl,
 }: BuildApiParamsArgs): ApiParams => {
-  const revisionId =
-    fetchPageArgs?.revisionId ??
-    (isClient()
-      ? new URLSearchParams(window.location.search).get('revisionId')
-      : undefined);
+  // Priority: explicit arg > URL query parameter
+  const revisionId = fetchPageArgs?.revisionId ?? revisionIdFromUrl;
 
   const params: {
     path?: string;
     pageId?: string;
     revisionId?: string;
     shareLinkId?: string;
-  } = {
-    revisionId: fetchPageArgs?.revisionId,
-  };
+  } = {};
 
   if (shareLinkId != null) {
     params.shareLinkId = shareLinkId;
@@ -179,6 +176,7 @@ export const useFetchCurrentPage = (): {
   error: Error | null;
 } => {
   const shareLinkId = useAtomValue(shareLinkIdAtom);
+  const revisionIdFromUrl = useRevisionIdFromUrl();
 
   const isLoading = useAtomValue(pageLoadingAtom);
   const error = useAtomValue(pageErrorAtom);
@@ -217,6 +215,7 @@ export const useFetchCurrentPage = (): {
           decodedPathname,
           currentPageId,
           shareLinkId,
+          revisionIdFromUrl,
         });
 
         if (shouldSkip) {
@@ -252,7 +251,6 @@ export const useFetchCurrentPage = (): {
               set(isForbiddenAtom, error.args.isForbidden ?? false);
               set(currentPageDataAtom, undefined);
               set(currentPageIdAtom, undefined);
-              set(remoteRevisionIdAtom, undefined);
               set(remoteRevisionBodyAtom, undefined);
             }
           }
@@ -262,7 +260,7 @@ export const useFetchCurrentPage = (): {
 
         return null;
       },
-      [shareLinkId],
+      [shareLinkId, revisionIdFromUrl],
     ),
   );
 

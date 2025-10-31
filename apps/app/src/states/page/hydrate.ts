@@ -14,7 +14,6 @@ import {
   pageNotFoundAtom,
   redirectFromAtom,
   remoteRevisionBodyAtom,
-  remoteRevisionIdAtom,
   shareLinkIdAtom,
   templateBodyAtom,
   templateTagsAtom,
@@ -29,7 +28,7 @@ import {
  *
  * Data sources:
  * - page._id, page.revision -> Auto-extracted from IPagePopulatedToShowRevision
- * - remoteRevisionId, remoteRevisionBody -> Auto-extracted from page.revision
+ * - remoteRevisionBody -> Auto-extracted from page.revision
  * - templateTags, templateBody -> Explicitly provided via options
  *
  * @example
@@ -68,8 +67,7 @@ export const useHydratePageAtoms = (
       isIPageNotFoundInfo(pageMeta) ? pageMeta.isForbidden : false,
     ],
 
-    // Remote revision data - auto-extracted from page.revision
-    [remoteRevisionIdAtom, page?.revision?._id],
+    // Remote revision data - used by ConflictDiffModal
     [remoteRevisionBodyAtom, page?.revision?.body],
   ]);
 

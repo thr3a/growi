@@ -26,7 +26,7 @@ import type {
   IRecordApplicableGrant,
   IResCurrentGrantData,
 } from '~/interfaces/page-grant';
-import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
+import { useIsGuestUser, useIsReadOnlyUser, useIsViewingSpecificRevision } from '~/states/context';
 import { useCurrentPageData, usePageNotFound } from '~/states/page';
 import { useShareLinkId } from '~/states/page/hooks';
 
@@ -188,6 +188,34 @@ export const useIsLatestRevision = (): SWRResponse<boolean, Error> => {
       return latestRevisionId === currentRevisionId;
     },
   );
+};
+
+/**
+ * Check if current revision is outdated and user should be notified to refetch
+ *
+ * Returns true when:
+ * - User is NOT intentionally viewing a specific (old) revision (no ?revisionId in URL)
+ * - AND the current page data is not the latest revision
+ *
+ * This indicates "new data is available, please refetch" rather than
+ * "you are viewing an old revision" (which is handled by useIsLatestRevision)
+ */
+export const useIsRevisionOutdated = (): boolean => {
+  const { data: isLatestRevision } = useIsLatestRevision();
+  const isViewingSpecificRevision = useIsViewingSpecificRevision();
+
+  // If user intentionally views a specific revision, don't show "outdated" alert
+  if (isViewingSpecificRevision) {
+    return false;
+  }
+
+  // If we can't determine yet, assume not outdated
+  if (isLatestRevision == null) {
+    return false;
+  }
+
+  // User expects latest, but it's not latest = outdated
+  return !isLatestRevision;
 };
 
 export const useSWRxPageRevision = (
