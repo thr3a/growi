@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Readable, Writable } from 'node:stream';
 import { pipeline as pipelinePromise } from 'node:stream/promises';
-
 import { OnInit } from '@tsed/common';
 import { Service } from '@tsed/di';
 import { Logger } from '@tsed/logger';
@@ -298,7 +297,7 @@ class PdfConvertService implements OnInit {
       maxConcurrency: this.maxConcurrency,
       workerCreationDelay: 10000,
       puppeteerOptions: {
-        // ref) https://github.com/weseek/growi/pull/10192
+        // ref) https://github.com/growilabs/growi/pull/10192
         args: ['--no-sandbox'],
       },
     });
