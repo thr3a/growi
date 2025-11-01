@@ -61,7 +61,8 @@ class GlobalNotificationSetting {
    * @param {string} id
    */
   static async enable(id) {
-    const setting = await GlobalNotificationSetting.findOne({ _id: id });
+    // biome-ignore lint/complexity/noThisInStatic: 'this' refers to the mongoose model here, not the class defined in this file
+    const setting = await this.findOne({ _id: id });
 
     setting.isEnabled = true;
     setting.save();
@@ -74,7 +75,8 @@ class GlobalNotificationSetting {
    * @param {string} id
    */
   static async disable(id) {
-    const setting = await GlobalNotificationSetting.findOne({ _id: id });
+    // biome-ignore lint/complexity/noThisInStatic: 'this' refers to the mongoose model here, not the class defined in this file
+    const setting = await this.findOne({ _id: id });
 
     setting.isEnabled = false;
     setting.save();
@@ -86,7 +88,8 @@ class GlobalNotificationSetting {
    * find all notification settings
    */
   static async findAll() {
-    const settings = await GlobalNotificationSetting.find().sort({
+    // biome-ignore lint/complexity/noThisInStatic: 'this' refers to the mongoose model here, not the class defined in this file
+    const settings = await this.find().sort({
       triggerPath: 1,
     });
 
@@ -101,7 +104,8 @@ class GlobalNotificationSetting {
   static async findSettingByPathAndEvent(event, path, type) {
     const pathsToMatch = generatePathsToMatch(path);
 
-    const settings = await GlobalNotificationSetting.find({
+    // biome-ignore lint/complexity/noThisInStatic: 'this' refers to the mongoose model here, not the class defined in this file
+    const settings = await this.find({
       triggerPath: { $in: pathsToMatch },
       triggerEvents: event,
       __t: type,

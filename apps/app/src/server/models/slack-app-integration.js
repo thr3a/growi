@@ -54,8 +54,8 @@ class SlackAppIntegration {
       );
       tokenGtoP = generateTokens[0];
       tokenPtoG = generateTokens[1];
-      // eslint-disable-next-line no-await-in-loop
-      duplicateTokens = await SlackAppIntegration.findOne({
+      // biome-ignore lint/complexity/noThisInStatic: 'this' refers to the mongoose model here, not the class defined in this file
+      duplicateTokens = await this.findOne({
         $or: [{ tokenGtoP }, { tokenPtoG }],
       });
     } while (duplicateTokens != null);
