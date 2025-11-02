@@ -1,5 +1,4 @@
 import path from 'node:path';
-
 import { expect, type Page } from '@playwright/test';
 
 const authFile = path.resolve(__dirname, '../.auth/admin.json');
