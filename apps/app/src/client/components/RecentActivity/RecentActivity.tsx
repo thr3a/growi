@@ -73,5 +73,4 @@ export const RecentActivity = (): JSX.Element => {
       />
     </div>
   );
-
 };
