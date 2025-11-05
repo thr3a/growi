@@ -8,19 +8,23 @@ import type { PaginateResult } from '~/interfaces/mongoose-utils';
 export const useSWRxRecentActivity = (
     limit?: number,
     offset?: number,
+    targetUserId?: string,
 ): SWRResponse<PaginateResult<IActivityHasId>, Error> => {
 
-  const key = ['/user-activities', limit, offset];
+  const shouldFetch = targetUserId && targetUserId.length > 0;
+  const key = shouldFetch ? ['/user-activities', limit, offset, targetUserId] : null;
 
   const fetcher = ([
     endpoint,
     limitParam,
     offsetParam,
+    targetUserIdParam,
   ]) => {
 
     const promise = apiv3Get<UserActivitiesResult>(endpoint, {
       limit: limitParam,
       offset: offsetParam,
+      targetUserId: targetUserIdParam,
     });
 
     return promise.then(result => result.data.serializedPaginationResult);

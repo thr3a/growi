@@ -27,6 +27,7 @@ const validator = {
     query('offset').optional().isInt().withMessage('page must be a number')
       .toInt(),
     query('searchFilter').optional().isString().withMessage('query must be a string'),
+    query('targetUserId').optional().isMongoId().withMessage('user ID must be a MongoDB ID'),
   ],
 };
 
@@ -34,6 +35,7 @@ interface StrictActivityQuery {
   limit?: number;
   offset?: number;
   searchFilter?: string;
+  targetUserId?: string;
 }
 
 type CustomRequest<
@@ -178,18 +180,19 @@ module.exports = (crowi: Crowi): Router => {
 
       const limit = req.query.limit || defaultLimit || 10;
       const offset = req.query.offset || 0;
+      let targetUserId = req.query.targetUserId;
 
-      const user = req.user;
-
-      if (!user || !user._id) {
-        logger.error('Authentication failure: req.user is missing after loginRequiredStrictly.');
-        return res.apiv3Err('Authentication failed.', 401);
+      if (typeof targetUserId !== 'string') {
+        targetUserId = req.user?._id;
       }
 
-      const userId = user._id;
+      if (!targetUserId) {
+        return res.apiv3Err('Target user ID is missing and authenticated user ID is unavailable.', 400);
+      }
+
 
       try {
-        const userObjectId = new Types.ObjectId(userId);
+        const userObjectId = new Types.ObjectId(targetUserId);
 
         const userActivityPipeline: PipelineStage[] = [
           {
