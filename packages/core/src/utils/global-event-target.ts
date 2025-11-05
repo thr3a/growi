@@ -1,5 +1,4 @@
 class GlobalEventTarget extends EventTarget {
-
   private static instance: GlobalEventTarget;
 
   static getInstance(): GlobalEventTarget {
@@ -8,7 +7,6 @@ class GlobalEventTarget extends EventTarget {
     }
     return GlobalEventTarget.instance;
   }
-
 }
 
 export const globalEventTarget = GlobalEventTarget.getInstance();
