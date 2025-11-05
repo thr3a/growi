@@ -10,7 +10,7 @@
 ### 主な成果
 
 1. ✅ `IPageInfoForEntity.latestRevisionId` を導入
-2. ✅ `useIsLatestRevision` を SWR ベースで実装（Jotai atom から脱却）
+2. ✅ `useSWRxIsLatestRevision` を SWR ベースで実装（Jotai atom から脱却）
 3. ✅ `remoteRevisionIdAtom` を完全削除（状態管理の簡素化）
 4. ✅ `useIsRevisionOutdated` の意味論を改善（「意図的な過去閲覧」を考慮）
 5. ✅ `useRevisionIdFromUrl` で URL パラメータ取得を一元化
@@ -43,12 +43,12 @@ const infoForEntity: Omit<IPageInfoForEntity, 'bookmarkCount'> = {
 
 ---
 
-### 2. `useIsLatestRevision` を SWR ベースで実装
+### 2. `useSWRxIsLatestRevision` を SWR ベースで実装
 
 **ファイル**: `stores/page.tsx:164-191`
 
 ```typescript
-export const useIsLatestRevision = (): SWRResponse<boolean, Error> => {
+export const useSWRxIsLatestRevision = (): SWRResponse<boolean, Error> => {
   const currentPage = useCurrentPageData();
   const pageId = currentPage?._id;
   const shareLinkId = useShareLinkId();
@@ -121,7 +121,7 @@ export const useIsViewingSpecificRevision = (): boolean => {
 
 ```typescript
 export const useIsRevisionOutdated = (): boolean => {
-  const { data: isLatestRevision } = useIsLatestRevision();
+  const { data: isLatestRevision } = useSWRxIsLatestRevision();
   const isViewingSpecificRevision = useIsViewingSpecificRevision();
 
   // If user intentionally views a specific revision, don't show "outdated" alert
@@ -239,7 +239,7 @@ export const useSetRemoteLatestPageData = (): SetRemoteLatestPageData => {
 1. **PageInfo (latestRevisionId) との同期がない**:
    - Socket.io 更新時に `remoteRevision*` atom は更新される
    - しかし `useSWRxPageInfo.data.latestRevisionId` は更新されない
-   - → `useIsLatestRevision()` と `useIsRevisionOutdated()` がリアルタイム更新を検知できない
+   - → `useSWRxIsLatestRevision()` と `useIsRevisionOutdated()` がリアルタイム更新を検知できない
 
 2. **用途が限定的**:
    - 主に ConflictDiffModal でリモートリビジョンの詳細を表示するために使用
@@ -327,7 +327,7 @@ export const useFetchCurrentPage = () => {
 **問題**:
 - Socket.io で他のユーザーがページを更新したとき、`useSWRxPageInfo` のキャッシュが更新されない
 - `latestRevisionId` が古いままになる
-- **重要**: `useIsLatestRevision()` と `useIsRevisionOutdated()` が正しく動作しない
+- **重要**: `useSWRxIsLatestRevision()` と `useIsRevisionOutdated()` が正しく動作しない
 
 **実装方針**:
 ```typescript
@@ -420,7 +420,7 @@ mutate(['/page/info', pageId, shareLinkId, isGuestUser], newData, options);
 └──────────────────────────────┘
         ↓
 ┌──────────────────────────────┐
-│ useIsLatestRevision()        │ ← SWR ベース、汎用的な状態確認
+│ useSWRxIsLatestRevision()        │ ← SWR ベース、汎用的な状態確認
 └──────────────────────────────┘
         ↓
 ┌──────────────────────────────┐

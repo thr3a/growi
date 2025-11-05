@@ -53,6 +53,7 @@ import {
 import type { EachProps, InitialProps } from './types';
 import { useSameRouteNavigation } from './use-same-route-navigation';
 import { useShallowRouting } from './use-shallow-routing';
+import { useSyncRevisionIdFromUrl } from './use-sync-revision-id-from-url';
 
 // call superjson custom register
 registerPageToShowRevisionWithMeta();
@@ -129,6 +130,9 @@ const Page: NextPageWithLayout<Props> = (props: Props) => {
   const currentPagePath = useCurrentPagePath();
   const rendererConfig = useRendererConfig();
   const setEditingMarkdown = useSetEditingMarkdown();
+
+  // Sync URL query parameter to atom
+  useSyncRevisionIdFromUrl();
 
   // setup socket.io
   useSetupGlobalSocket();

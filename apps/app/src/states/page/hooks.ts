@@ -21,6 +21,7 @@ import {
   remoteRevisionBodyAtom,
   remoteRevisionLastUpdatedAtAtom,
   remoteRevisionLastUpdateUserAtom,
+  revisionIdFromUrlAtom,
   shareLinkIdAtom,
   templateBodyAtom,
   templateTagsAtom,
@@ -47,6 +48,15 @@ export const useShareLinkId = () => useAtomValue(shareLinkIdAtom);
 export const useTemplateTags = () => useAtomValue(templateTagsAtom);
 
 export const useTemplateBody = () => useAtomValue(templateBodyAtom);
+
+/**
+ * Hook to get revisionId from URL query parameters
+ * Returns undefined if revisionId is not present in the URL
+ *
+ * This hook reads from the revisionIdFromUrlAtom which should be updated
+ * by the page component when router.query.revisionId changes
+ */
+export const useRevisionIdFromUrl = () => useAtomValue(revisionIdFromUrlAtom);
 
 // Remote revision hooks (replacements for stores/remote-latest-page.ts)
 export const useRemoteRevisionBody = () => useAtomValue(remoteRevisionBodyAtom);

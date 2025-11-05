@@ -17,6 +17,9 @@ export const isForbiddenAtom = atom<boolean>(false);
 // ShareLink page state atoms (internal)
 export const shareLinkIdAtom = atom<string>();
 
+// URL query parameter atoms (internal)
+export const revisionIdFromUrlAtom = atom<string | undefined>(undefined);
+
 // Fetch state atoms (internal)
 export const pageLoadingAtom = atom(false);
 export const pageErrorAtom = atom<Error | null>(null);
@@ -123,4 +126,8 @@ export const _atomsForDerivedAbilities = {
   shareLinkIdAtom,
   currentPageIdAtom,
   isTrashPageAtom,
+} as const;
+
+export const _atomsForSyncRevisionIdFromUrl = {
+  revisionIdFromUrlAtom,
 } as const;

@@ -6,7 +6,7 @@ import { throttle } from 'throttle-debounce';
 
 import { useShouldExpandContent } from '~/services/layout/use-should-expand-content';
 import { useCurrentPageData } from '~/states/page';
-import { useIsLatestRevision } from '~/stores/page';
+import { useSWRxIsLatestRevision } from '~/stores/page';
 import { usePreviewOptions } from '~/stores/renderer';
 
 import { EditorNavbar } from './EditorNavbar';
@@ -22,7 +22,7 @@ export const PageEditorReadOnly = react.memo(({ visibility }: Props): JSX.Elemen
 
   const currentPage = useCurrentPageData();
   const { data: rendererOptions } = usePreviewOptions();
-  const { data: isLatestRevision } = useIsLatestRevision();
+  const { data: isLatestRevision } = useSWRxIsLatestRevision();
   const shouldExpandContent = useShouldExpandContent(currentPage);
 
   const { scrollEditorHandler, scrollPreviewHandler } = useScrollSync(GlobalCodeMirrorEditorKey.READONLY, previewRef);

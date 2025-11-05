@@ -26,13 +26,12 @@ import type {
   IRecordApplicableGrant,
   IResCurrentGrantData,
 } from '~/interfaces/page-grant';
-import {
-  useIsGuestUser,
-  useIsReadOnlyUser,
-  useIsViewingSpecificRevision,
-} from '~/states/context';
+import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 import { useCurrentPageData, usePageNotFound } from '~/states/page';
-import { useShareLinkId } from '~/states/page/hooks';
+import {
+  useRevisionIdFromUrl,
+  useShareLinkId,
+} from '~/states/page/hooks';
 
 import type { IPageTagsInfo } from '../interfaces/tag';
 
@@ -165,7 +164,7 @@ export const useSWRMUTxPageInfo = (
  * - data: true - viewing the latest revision (or latestRevisionId not available)
  * - data: false - viewing an old revision
  */
-export const useIsLatestRevision = (): SWRResponse<boolean, Error> => {
+export const useSWRxIsLatestRevision = (): SWRResponse<boolean, Error> => {
   const currentPage = useCurrentPageData();
   const pageId = currentPage?._id;
   const shareLinkId = useShareLinkId();
@@ -206,14 +205,14 @@ export const useIsLatestRevision = (): SWRResponse<boolean, Error> => {
  * - AND the current page data is not the latest revision
  *
  * This indicates "new data is available, please refetch" rather than
- * "you are viewing an old revision" (which is handled by useIsLatestRevision)
+ * "you are viewing an old revision" (which is handled by useSWRxIsLatestRevision)
  */
 export const useIsRevisionOutdated = (): boolean => {
-  const { data: isLatestRevision } = useIsLatestRevision();
-  const isViewingSpecificRevision = useIsViewingSpecificRevision();
+  const { data: isLatestRevision } = useSWRxIsLatestRevision();
+  const revisionIdFromUrl = useRevisionIdFromUrl();
 
   // If user intentionally views a specific revision, don't show "outdated" alert
-  if (isViewingSpecificRevision) {
+  if (revisionIdFromUrl != null) {
     return false;
   }
 

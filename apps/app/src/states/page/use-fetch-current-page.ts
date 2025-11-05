@@ -14,7 +14,6 @@ import { apiv3Get } from '~/client/util/apiv3-client';
 import { useSWRxPageInfo } from '~/stores/page';
 import loggerFactory from '~/utils/logger';
 
-import { useRevisionIdFromUrl } from '../context';
 import {
   currentPageDataAtom,
   currentPageIdAtom,
@@ -23,6 +22,7 @@ import {
   pageLoadingAtom,
   pageNotFoundAtom,
   remoteRevisionBodyAtom,
+  revisionIdFromUrlAtom,
   shareLinkIdAtom,
 } from './internal-atoms';
 
@@ -177,7 +177,7 @@ export const useFetchCurrentPage = (): {
   error: Error | null;
 } => {
   const shareLinkId = useAtomValue(shareLinkIdAtom);
-  const revisionIdFromUrl = useRevisionIdFromUrl();
+  const revisionIdFromUrl = useAtomValue(revisionIdFromUrlAtom);
   const currentPageId = useAtomValue(currentPageIdAtom);
 
   const isLoading = useAtomValue(pageLoadingAtom);
