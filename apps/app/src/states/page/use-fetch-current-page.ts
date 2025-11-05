@@ -183,7 +183,10 @@ export const useFetchCurrentPage = (): {
   const isLoading = useAtomValue(pageLoadingAtom);
   const error = useAtomValue(pageErrorAtom);
 
-  const { mutate: mutatePageInfo } = useSWRxPageInfo(currentPageId, shareLinkId);
+  const { mutate: mutatePageInfo } = useSWRxPageInfo(
+    currentPageId,
+    shareLinkId,
+  );
 
   const fetchCurrentPage = useAtomCallback(
     useCallback(

@@ -26,7 +26,11 @@ import type {
   IRecordApplicableGrant,
   IResCurrentGrantData,
 } from '~/interfaces/page-grant';
-import { useIsGuestUser, useIsReadOnlyUser, useIsViewingSpecificRevision } from '~/states/context';
+import {
+  useIsGuestUser,
+  useIsReadOnlyUser,
+  useIsViewingSpecificRevision,
+} from '~/states/context';
 import { useCurrentPageData, usePageNotFound } from '~/states/page';
 import { useShareLinkId } from '~/states/page/hooks';
 
@@ -168,26 +172,30 @@ export const useIsLatestRevision = (): SWRResponse<boolean, Error> => {
   const { data: pageInfo } = useSWRxPageInfo(pageId, shareLinkId);
 
   // Extract latestRevisionId if available (only exists in IPageInfoForEntity)
-  const latestRevisionId = pageInfo && 'latestRevisionId' in pageInfo ? pageInfo.latestRevisionId : undefined;
+  const latestRevisionId =
+    pageInfo && 'latestRevisionId' in pageInfo
+      ? pageInfo.latestRevisionId
+      : undefined;
 
   const key = useMemo(() => {
     // Cannot determine without currentPage
     if (currentPage?.revision?._id == null) {
       return null;
     }
-    return ['isLatestRevision', currentPage.revision._id, latestRevisionId ?? null];
+    return [
+      'isLatestRevision',
+      currentPage.revision._id,
+      latestRevisionId ?? null,
+    ];
   }, [currentPage?.revision?._id, latestRevisionId]);
 
-  return useSWRImmutable(
-    key,
-    ([, currentRevisionId, latestRevisionId]) => {
-      // If latestRevisionId is not available, assume it's the latest
-      if (latestRevisionId == null) {
-        return true;
-      }
-      return latestRevisionId === currentRevisionId;
-    },
-  );
+  return useSWRImmutable(key, ([, currentRevisionId, latestRevisionId]) => {
+    // If latestRevisionId is not available, assume it's the latest
+    if (latestRevisionId == null) {
+      return true;
+    }
+    return latestRevisionId === currentRevisionId;
+  });
 };
 
 /**
