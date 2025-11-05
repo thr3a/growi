@@ -12,7 +12,6 @@ import type {
 } from '@growi/core';
 import { isIPageInfo } from '@growi/core';
 import { isClient, pagePathUtils, pathUtils } from '@growi/core/dist/utils';
-import EventEmitter from 'events';
 import ExtensibleCustomError from 'extensible-custom-error';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import superjson from 'superjson';
@@ -100,11 +99,6 @@ import {
   skipSSR,
   useInitSidebarConfig,
 } from './utils/commons';
-
-declare global {
-  // eslint-disable-next-line vars-on-top, no-var
-  var globalEmitter: EventEmitter;
-}
 
 const GrowiContextualSubNavigationSubstance = dynamic(
   () => import('~/client/components/Navbar/GrowiContextualSubNavigation'),
@@ -311,11 +305,6 @@ type Props = CommonProps & {
 };
 
 const Page: NextPageWithLayout<Props> = (props: Props) => {
-  // register global EventEmitter
-  if (isClient() && window.globalEmitter == null) {
-    window.globalEmitter = new EventEmitter();
-  }
-
   const router = useRouter();
 
   useCurrentUser(props.currentUser ?? null);

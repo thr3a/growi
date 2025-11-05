@@ -1,4 +1,3 @@
-import type EventEmitter from 'node:events';
 import type { ColorScheme, IUserHasId } from '@growi/core';
 import { AcceptedUploadFileType } from '@growi/core';
 import { useSWRStatic } from '@growi/core/dist/swr';
@@ -10,11 +9,6 @@ import type { SupportedActionType } from '~/interfaces/activity';
 import type { RendererConfig } from '~/interfaces/services/renderer';
 
 import { useContextSWR } from './use-context-swr';
-
-declare global {
-  // eslint-disable-next-line vars-on-top, no-var
-  var globalEmitter: EventEmitter;
-}
 
 type Nullable<T> = T | null;
 
