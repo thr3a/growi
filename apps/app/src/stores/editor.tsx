@@ -5,6 +5,7 @@ import {
   useSWRStatic,
   withUtils,
 } from '@growi/core/dist/swr';
+import { globalEventTarget } from '@growi/core/dist/utils';
 import type { EditorSettings } from '@growi/editor';
 import useSWR, { type SWRResponse } from 'swr';
 import useSWRImmutable from 'swr/immutable';
@@ -136,6 +137,10 @@ export const useIsEnabledUnsavedWarning = (): SWRResponse<boolean, Error> => {
   return useSWRStatic<boolean, Error>('isEnabledUnsavedWarning');
 };
 
+export type ReservedNextCaretLineEventDetail = {
+  lineNumber: number,
+}
+
 export const useReservedNextCaretLine = (
   initialData?: number,
 ): SWRResponse<number> => {
@@ -145,14 +150,14 @@ export const useReservedNextCaretLine = (
   const { mutate } = swrResponse;
 
   useEffect(() => {
-    const handler = (lineNumber: number) => {
-      mutate(lineNumber);
+    const handler = (evt: CustomEvent<ReservedNextCaretLineEventDetail>) => {
+      mutate(evt.detail.lineNumber);
     };
 
-    globalEmitter.on('reservedNextCaretLine', handler);
+    globalEventTarget.addEventListener('reservedNextCaretLine', handler);
 
     return function cleanup() {
-      globalEmitter.removeListener('reservedNextCaretLine', handler);
+      globalEventTarget.removeEventListener('reservedNextCaretLine', handler);
     };
   }, [mutate]);
 

@@ -1,8 +1,7 @@
 import { useCallback, useEffect } from 'react';
 
-import type EventEmitter from 'events';
-
 import { Origin } from '@growi/core';
+import { globalEventTarget } from '@growi/core/dist/utils';
 import type { DrawioEditByViewerProps } from '@growi/remark-drawio';
 
 import { replaceDrawioInMarkdown } from '~/client/components/Page/markdown-drawio-util-for-view';
@@ -15,12 +14,6 @@ import loggerFactory from '~/utils/logger';
 
 
 const logger = loggerFactory('growi:cli:side-effects:useDrawioModalLauncherForView');
-
-
-declare global {
-  // eslint-disable-next-line vars-on-top, no-var
-  var globalEmitter: EventEmitter;
-}
 
 
 export const useDrawioModalLauncherForView = (opts?: {
@@ -68,7 +61,7 @@ export const useDrawioModalLauncherForView = (opts?: {
       logger.error('failed to save', error);
       opts?.onSaveError?.(error);
     }
-  }, [closeConflictDiffModal, currentPage, opts, shareLinkId]);
+  }, [_updatePage, closeConflictDiffModal, currentPage, opts, shareLinkId]);
 
   // eslint-disable-next-line max-len
   const generateResolveConflictHandler = useCallback((revisionId: string, onConflict: (conflictData: RemoteRevisionData, newMarkdown: string) => void) => {
@@ -107,13 +100,14 @@ export const useDrawioModalLauncherForView = (opts?: {
       return;
     }
 
-    const handler = (data: DrawioEditByViewerProps) => {
+    const handler = (evt: CustomEvent<DrawioEditByViewerProps>) => {
+      const data = evt.detail;
       openDrawioModal(data.drawioMxFile, drawioMxFile => saveByDrawioModal(drawioMxFile, data.bol, data.eol));
     };
-    globalEmitter.on('launchDrawioModal', handler);
+    globalEventTarget.addEventListener('launchDrawioModal', handler);
 
     return function cleanup() {
-      globalEmitter.removeListener('launchDrawioModal', handler);
+      globalEventTarget.removeEventListener('launchDrawioModal', handler);
     };
   }, [openDrawioModal, saveByDrawioModal, shareLinkId]);
 };
