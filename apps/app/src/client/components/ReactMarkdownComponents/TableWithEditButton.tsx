@@ -1,9 +1,9 @@
 import React, { useCallback, type JSX } from 'react';
 
-import type EventEmitter from 'events';
-
+import { globalEventTarget } from '@growi/core/dist/utils';
 import type { Element } from 'hast';
 
+import type { LaunchHandsonTableModalEventDetail } from '~/client/interfaces/handsontable-modal';
 import { useCurrentPageYjsData } from '~/features/collaborative-editor/states';
 import { useIsGuestUser, useIsReadOnlyUser, useIsSharedUser } from '~/states/context';
 import { useShareLinkId } from '~/states/page/hooks';
@@ -11,10 +11,6 @@ import { useIsRevisionOutdated } from '~/stores/page';
 
 import styles from './TableWithEditButton.module.scss';
 
-declare global {
-  // eslint-disable-next-line vars-on-top, no-var
-  var globalEmitter: EventEmitter;
-}
 
 type TableWithEditButtonProps = {
   children: React.ReactNode,
@@ -32,11 +28,16 @@ const TableWithEditButtonNoMemorized = (props: TableWithEditButtonProps): JSX.El
   const isRevisionOutdated = useIsRevisionOutdated();
   const currentPageYjsData = useCurrentPageYjsData();
 
-  const bol = node.position?.start.line;
-  const eol = node.position?.end.line;
+  const bol = node.position?.start.line ?? 0;
+  const eol = node.position?.end.line ?? 0;
 
   const editButtonClickHandler = useCallback(() => {
-    globalEmitter.emit('launchHandsonTableModal', bol, eol);
+    globalEventTarget.dispatchEvent(new CustomEvent<LaunchHandsonTableModalEventDetail>('launchHandsonTableModal', {
+      detail: {
+        bol,
+        eol,
+      },
+    }));
   }, [bol, eol]);
 
   const isNoEditingUsers = currentPageYjsData?.awarenessStateSize == null || currentPageYjsData?.awarenessStateSize === 0;

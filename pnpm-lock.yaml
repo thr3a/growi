@@ -872,6 +872,9 @@ importers:
       '@types/react-stickynode':
         specifier: ^4.0.3
         version: 4.0.3
+      '@types/supertest':
+        specifier: ^6.0.3
+        version: 6.0.3
       '@types/testing-library__dom':
         specifier: ^7.5.0
         version: 7.5.0
@@ -1022,6 +1025,9 @@ importers:
       source-map-loader:
         specifier: ^4.0.1
         version: 4.0.2(webpack@5.92.1(@swc/core@1.10.7(@swc/helpers@0.5.15)))
+      supertest:
+        specifier: ^7.1.4
+        version: 7.1.4
       swagger2openapi:
         specifier: ^7.0.8
         version: 7.0.8(encoding@0.1.13)
