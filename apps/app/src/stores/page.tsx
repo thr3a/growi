@@ -28,10 +28,7 @@ import type {
 } from '~/interfaces/page-grant';
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 import { useCurrentPageData, usePageNotFound } from '~/states/page';
-import {
-  useRevisionIdFromUrl,
-  useShareLinkId,
-} from '~/states/page/hooks';
+import { useRevisionIdFromUrl, useShareLinkId } from '~/states/page/hooks';
 
 import type { IPageTagsInfo } from '../interfaces/tag';
 
