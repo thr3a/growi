@@ -138,8 +138,8 @@ export const useIsEnabledUnsavedWarning = (): SWRResponse<boolean, Error> => {
 };
 
 export type ReservedNextCaretLineEventDetail = {
-  lineNumber: number,
-}
+  lineNumber: number;
+};
 
 export const useReservedNextCaretLine = (
   initialData?: number,
