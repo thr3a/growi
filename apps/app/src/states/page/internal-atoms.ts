@@ -13,10 +13,12 @@ export const currentPageDataAtom = atom<IPagePopulatedToShowRevision>();
 export const pageNotFoundAtom = atom(false);
 export const isIdenticalPathAtom = atom<boolean>(false);
 export const isForbiddenAtom = atom<boolean>(false);
-export const latestRevisionAtom = atom(true);
 
 // ShareLink page state atoms (internal)
 export const shareLinkIdAtom = atom<string>();
+
+// URL query parameter atoms (internal)
+export const revisionIdFromUrlAtom = atom<string | undefined>(undefined);
 
 // Fetch state atoms (internal)
 export const pageLoadingAtom = atom(false);
@@ -62,7 +64,6 @@ export const isUntitledPageAtom = atom(
 );
 
 // Remote revision data atoms
-export const remoteRevisionIdAtom = atom<string>();
 export const remoteRevisionBodyAtom = atom<string>();
 export const remoteRevisionLastUpdateUserAtom = atom<IUserHasId>();
 export const remoteRevisionLastUpdatedAtAtom = atom<Date>();
@@ -73,21 +74,10 @@ export const isTrashPageAtom = atom((get) => {
   return pagePath != null ? pagePathUtils.isTrashPage(pagePath) : false;
 });
 
-export const isRevisionOutdatedAtom = atom((get) => {
-  const currentRevisionId = get(currentRevisionIdAtom);
-  const remoteRevisionId = get(remoteRevisionIdAtom);
-
-  if (currentRevisionId == null || remoteRevisionId == null) {
-    return false;
-  }
-
-  return remoteRevisionId !== currentRevisionId;
-});
-
 // Update atoms for template and remote revision data
 export const setTemplateContentAtom = atom(
   null,
-  (get, set, data: { tags?: string[]; body?: string }) => {
+  (_get, set, data: { tags?: string[]; body?: string }) => {
     if (data.tags !== undefined) {
       set(templateTagsAtom, data.tags);
     }
@@ -100,18 +90,14 @@ export const setTemplateContentAtom = atom(
 export const setRemoteRevisionDataAtom = atom(
   null,
   (
-    get,
+    _get,
     set,
     data: {
-      id?: string;
       body?: string;
       lastUpdateUser?: IUserHasId;
       lastUpdatedAt?: Date;
     },
   ) => {
-    if (data.id !== undefined) {
-      set(remoteRevisionIdAtom, data.id);
-    }
     if (data.body !== undefined) {
       set(remoteRevisionBodyAtom, data.body);
     }
@@ -140,4 +126,8 @@ export const _atomsForDerivedAbilities = {
   shareLinkIdAtom,
   currentPageIdAtom,
   isTrashPageAtom,
+} as const;
+
+export const _atomsForSyncRevisionIdFromUrl = {
+  revisionIdFromUrlAtom,
 } as const;

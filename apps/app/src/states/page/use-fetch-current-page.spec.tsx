@@ -25,8 +25,8 @@ import {
   pageLoadingAtom,
   pageNotFoundAtom,
   remoteRevisionBodyAtom,
-  remoteRevisionIdAtom,
 } from '~/states/page/internal-atoms';
+import { useSWRxPageInfo } from '~/stores/page';
 
 // Mock Next.js router
 const mockRouter = mockDeep<NextRouter>();
@@ -37,6 +37,13 @@ vi.mock('next/router', () => ({
 // Mock API client
 vi.mock('~/client/util/apiv3-client');
 const mockedApiv3Get = vi.spyOn(apiv3Client, 'apiv3Get');
+
+// Mock useSWRxPageInfo
+vi.mock('~/stores/page', () => ({
+  useSWRxPageInfo: vi.fn(),
+}));
+const mockedUseSWRxPageInfo = vi.mocked(useSWRxPageInfo);
+const mockMutatePageInfo = vi.fn();
 
 const mockUser: IUserHasId = {
   _id: 'user1',
@@ -133,6 +140,16 @@ describe('useFetchCurrentPage - Integration Test', () => {
     mockRouter.asPath = '/initial/path';
     mockRouter.pathname = '/[[...path]]';
     (useRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
+
+    // Mock useSWRxPageInfo to return a mutate function
+    mockMutatePageInfo.mockClear();
+    mockedUseSWRxPageInfo.mockReturnValue({
+      mutate: mockMutatePageInfo,
+      data: undefined,
+      error: undefined,
+      isLoading: false,
+      isValidating: false,
+    } as ReturnType<typeof useSWRxPageInfo>);
 
     // Default API response
     const defaultPageData = createPageDataMock(
@@ -736,10 +753,10 @@ describe('useFetchCurrentPage - Integration Test', () => {
     );
     store.set(currentPageIdAtom, existingPage._id);
     store.set(currentPageDataAtom, existingPage);
-    store.set(remoteRevisionIdAtom, 'rev_xxx');
     store.set(remoteRevisionBodyAtom, 'remote body');
 
     // Mock API rejection with ErrorV3 like object
+    // Note: error.args must have isNotFound property for isIPageNotFoundInfo check
     const notFoundError = {
       code: 'not_found',
       message: 'Page not found',
@@ -760,7 +777,6 @@ describe('useFetchCurrentPage - Integration Test', () => {
       });
       expect(store.get(currentPageDataAtom)).toBeUndefined();
       expect(store.get(currentPageIdAtom)).toBeUndefined();
-      expect(store.get(remoteRevisionIdAtom)).toBeUndefined();
       expect(store.get(remoteRevisionBodyAtom)).toBeUndefined();
     });
   });

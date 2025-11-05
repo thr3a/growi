@@ -6,8 +6,8 @@ import type { Element } from 'hast';
 import type { LaunchHandsonTableModalEventDetail } from '~/client/interfaces/handsontable-modal';
 import { useCurrentPageYjsData } from '~/features/collaborative-editor/states';
 import { useIsGuestUser, useIsReadOnlyUser, useIsSharedUser } from '~/states/context';
-import { useIsRevisionOutdated } from '~/states/page';
 import { useShareLinkId } from '~/states/page/hooks';
+import { useIsRevisionOutdated } from '~/stores/page';
 
 import styles from './TableWithEditButton.module.scss';
 
