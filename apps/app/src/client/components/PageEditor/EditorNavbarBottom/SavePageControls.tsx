@@ -2,9 +2,8 @@ import React, {
   useCallback, useState, useEffect, type JSX,
 } from 'react';
 
-import type EventEmitter from 'events';
-
 import { PageGrant } from '@growi/core';
+import { globalEventTarget } from '@growi/core/dist/utils';
 import { isTopPage, isUsersProtectedPages } from '@growi/core/dist/utils/page-path-utils';
 import { LoadingSpinner } from '@growi/ui/dist/components';
 import { useAtomValue } from 'jotai';
@@ -28,14 +27,9 @@ import loggerFactory from '~/utils/logger';
 
 import { NotAvailable } from '../../NotAvailable';
 import { SlackNotification } from '../../SlackNotification';
+import type { SaveOptions } from '../PageEditor';
 
 import { GrantSelector } from './GrantSelector';
-
-
-declare global {
-  // eslint-disable-next-line vars-on-top, no-var
-  var globalEmitter: EventEmitter;
-}
 
 
 const logger = loggerFactory('growi:SavePageControls');
@@ -48,25 +42,35 @@ const SavePageButton = (props: { slackChannels: string, isSlackEnabled?: boolean
   const [isSavePageModalShown, setIsSavePageModalShown] = useState<boolean>(false);
   const [selectedGrant] = useSelectedGrant();
 
-  const { slackChannels, isSlackEnabled, isDeviceLargerThanMd } = props;
+  const { slackChannels, isSlackEnabled = false, isDeviceLargerThanMd } = props;
 
   const isWaitingSaveProcessing = _isWaitingSaveProcessing === true; // ignore undefined
 
   const save = useCallback(async (): Promise<void> => {
     // save
-    globalEmitter.emit('saveAndReturnToView', { wip: false, slackChannels, isSlackEnabled });
+    globalEventTarget.dispatchEvent(new CustomEvent<SaveOptions>('saveAndReturnToView', {
+      detail: {
+        wip: false, slackChannels, isSlackEnabled,
+      },
+    }));
   }, [isSlackEnabled, slackChannels]);
 
   const saveAndOverwriteScopesOfDescendants = useCallback(() => {
     // save
-    globalEmitter.emit('saveAndReturnToView', {
-      wip: false, overwriteScopesOfDescendants: true, slackChannels, isSlackEnabled,
-    });
+    globalEventTarget.dispatchEvent(new CustomEvent<SaveOptions>('saveAndReturnToView', {
+      detail: {
+        wip: false, overwriteScopesOfDescendants: true, slackChannels, isSlackEnabled,
+      },
+    }));
   }, [isSlackEnabled, slackChannels]);
 
   const saveAndMakeWip = useCallback(() => {
     // save
-    globalEmitter.emit('saveAndReturnToView', { wip: true, slackChannels, isSlackEnabled });
+    globalEventTarget.dispatchEvent(new CustomEvent<SaveOptions>('saveAndReturnToView', {
+      detail: {
+        wip: true, slackChannels, isSlackEnabled,
+      },
+    }));
   }, [isSlackEnabled, slackChannels]);
 
   const labelSubmitButton = t('Update');

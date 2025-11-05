@@ -5,7 +5,6 @@ import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { isClient } from '@growi/core/dist/utils';
-import EventEmitter from 'events';
 
 // biome-ignore-start lint/style/noRestrictedImports: no-problem lazy loaded components
 import { DescendantsPageListModalLazyLoaded } from '~/client/components/DescendantsPageListModal';
@@ -55,11 +54,6 @@ import { useShallowRouting } from './use-shallow-routing';
 // call superjson custom register
 registerPageToShowRevisionWithMeta();
 
-declare global {
-  // eslint-disable-next-line vars-on-top, no-var
-  var globalEmitter: EventEmitter;
-}
-
 // biome-ignore-start lint/style/noRestrictedImports: no-problem dynamic import
 const GrowiContextualSubNavigation = dynamic(
   () => import('~/client/components/Navbar/GrowiContextualSubNavigation'),
@@ -108,11 +102,6 @@ const isInitialProps = (props: Props): props is InitialProps => {
 };
 
 const Page: NextPageWithLayout<Props> = (props: Props) => {
-  // register global EventEmitter
-  if (isClient() && window.globalEmitter == null) {
-    window.globalEmitter = new EventEmitter();
-  }
-
   // Initialize Jotai atoms with initial data - must be called unconditionally
   const pageData = isInitialProps(props) ? props.pageWithMeta?.data : undefined;
   const pageMeta = isInitialProps(props) ? props.pageWithMeta?.meta : undefined;

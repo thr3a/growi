@@ -1,7 +1,6 @@
 import React, { useCallback, useState, type JSX } from 'react';
 
-import type EventEmitter from 'events';
-
+import { globalEventTarget } from '@growi/core/dist/utils';
 import {
   DrawioViewer,
   type DrawioEditByViewerProps,
@@ -16,12 +15,6 @@ import { useShareLinkId } from '~/states/page/hooks';
 
 import '@growi/remark-drawio/dist/style.css';
 import styles from './DrawioViewerWithEditButton.module.scss';
-
-
-declare global {
-  // eslint-disable-next-line vars-on-top, no-var
-  var globalEmitter: EventEmitter;
-}
 
 
 export const DrawioViewerWithEditButton = React.memo((props: DrawioViewerProps): JSX.Element => {
@@ -40,10 +33,11 @@ export const DrawioViewerWithEditButton = React.memo((props: DrawioViewerProps):
   const [mxfile, setMxfile] = useState('');
 
   const editButtonClickHandler = useCallback(() => {
-    const data: DrawioEditByViewerProps = {
-      bol, eol, drawioMxFile: mxfile,
-    };
-    globalEmitter.emit('launchDrawioModal', data);
+    globalEventTarget.dispatchEvent(new CustomEvent<DrawioEditByViewerProps>('launchDrawioModal', {
+      detail: {
+        bol, eol, drawioMxFile: mxfile,
+      },
+    }));
   }, [bol, eol, mxfile]);
 
   const renderingStartHandler = useCallback(() => {

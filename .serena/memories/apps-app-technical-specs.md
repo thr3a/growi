@@ -11,7 +11,7 @@
 
 ## 状態管理
 - **Jotai** (推奨): `states/` - アトミック分離
-- **SWR**: データフェッチ・キャッシュ - `stores-universal/context.tsx`
+- **SWR**: `stores/` - データフェッチ・キャッシュ
 
 ## データベース
 - **Mongoose**: `server/models/` (スキーマ定義)

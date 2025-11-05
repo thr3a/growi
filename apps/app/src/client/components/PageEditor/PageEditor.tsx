@@ -3,12 +3,11 @@ import React, {
   useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
 
-import type EventEmitter from 'events';
 import nodePath from 'path';
 
 import { Origin } from '@growi/core';
 import type { IPageHasId } from '@growi/core/dist/interfaces';
-import { pathUtils } from '@growi/core/dist/utils';
+import { pathUtils, globalEventTarget } from '@growi/core/dist/utils';
 import { GlobalCodeMirrorEditorKey, useSetResolvedTheme } from '@growi/editor';
 import { CodeMirrorEditorMain } from '@growi/editor/dist/client/components/CodeMirrorEditorMain';
 import { useCodeMirrorEditorIsolated } from '@growi/editor/dist/client/stores/codemirror-editor';
@@ -65,11 +64,6 @@ import '@growi/editor/dist/style.css';
 
 const logger = loggerFactory('growi:PageEditor');
 
-
-declare global {
-  // eslint-disable-next-line vars-on-top, no-var
-  var globalEmitter: EventEmitter;
-}
 
 export type SaveOptions = {
   wip: boolean,
@@ -229,10 +223,10 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
     }
   }, [pageId, selectedGrant, mutateWaitingSaveProcessing, updatePage, mutateIsGrantNormalized, t]);
 
-  const saveAndReturnToViewHandler = useCallback(async (opts: SaveOptions) => {
+  const saveAndReturnToViewHandler = useCallback(async(evt: CustomEvent<SaveOptions>) => {
     const markdown = codeMirrorEditor?.getDocString();
     const revisionId = isRevisionIdRequiredForPageUpdate ? currentRevisionId : undefined;
-    const page = await save(revisionId, markdown, opts, onConflict);
+    const page = await save(revisionId, markdown, evt.detail, onConflict);
     if (page == null) {
       return;
     }
@@ -291,10 +285,10 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
 
   // set handler to save and return to View
   useEffect(() => {
-    globalEmitter.on('saveAndReturnToView', saveAndReturnToViewHandler);
+    globalEventTarget.addEventListener('saveAndReturnToView', saveAndReturnToViewHandler);
 
     return function cleanup() {
-      globalEmitter.removeListener('saveAndReturnToView', saveAndReturnToViewHandler);
+      globalEventTarget.removeEventListener('saveAndReturnToView', saveAndReturnToViewHandler);
     };
   }, [saveAndReturnToViewHandler]);
 
