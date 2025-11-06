@@ -50,6 +50,7 @@ export const CONFIG_KEYS = [
   'app:aiEnabled',
   'app:publishOpenAPI',
   'app:maxFileSize',
+  'app:fileUploadTimeout',
   'app:fileUploadTotalLimit',
   'app:fileUploadDisabled',
   'app:elasticsearchVersion',
@@ -326,6 +327,8 @@ export const CONFIG_KEYS = [
   'app:isBulkExportPagesEnabled',
   'env:useOnlyEnvVars:app:isBulkExportPagesEnabled',
 
+  // Access Token Settings
+  'accessToken:deletionCronExpression',
 ] as const;
 
 
@@ -427,13 +430,17 @@ export const CONFIG_DEFINITIONS = {
     envVarName: 'MAX_FILE_SIZE',
     defaultValue: Infinity,
   }),
+  'app:fileUploadTimeout': defineConfig<number>({
+    envVarName: 'FILE_UPLOAD_TIMEOUT',
+    defaultValue: 10 * 60 * 1000, // 10 minutes
+  }),
   'app:fileUploadTotalLimit': defineConfig<number>({
     envVarName: 'FILE_UPLOAD_TOTAL_LIMIT',
     defaultValue: Infinity,
   }),
-  'app:elasticsearchVersion': defineConfig<number>({
+  'app:elasticsearchVersion': defineConfig<7|8|9>({
     envVarName: 'ELASTICSEARCH_VERSION',
-    defaultValue: 8,
+    defaultValue: 9,
   }),
   'app:elasticsearchUri': defineConfig<string | undefined>({
     envVarName: 'ELASTICSEARCH_URI',
@@ -501,7 +508,7 @@ export const CONFIG_DEFINITIONS = {
   }),
   'app:deploymentType': defineConfig<GrowiDeploymentType>({
     envVarName: 'DEPLOYMENT_TYPE',
-    defaultValue: GrowiDeploymentType.others,
+    defaultValue: GrowiDeploymentType.node,
   }),
   'app:ssrMaxRevisionBodyLength': defineConfig<number>({
     envVarName: 'SSR_MAX_REVISION_BODY_LENGTH',
@@ -1289,6 +1296,12 @@ export const CONFIG_DEFINITIONS = {
   'env:useOnlyEnvVars:app:isBulkExportPagesEnabled': defineConfig<boolean>({
     envVarName: 'BULK_EXPORT_PAGES_ENABLED_USES_ONLY_ENV_VARS',
     defaultValue: false,
+  }),
+
+  // Access Token Settings
+  'accessToken:deletionCronExpression': defineConfig<string>({
+    envVarName: 'ACCESS_TOKEN_DELETION_CRON_EXPRESSION',
+    defaultValue: '0 15 * * *',
   }),
 } as const;
 

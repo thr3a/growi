@@ -1,4 +1,5 @@
 import type { IAttachment, IPage, IUser } from '@growi/core';
+import { SCOPE } from '@growi/core/dist/interfaces';
 import { serializeAttachmentSecurely } from '@growi/core/dist/models/serializers';
 import { OptionParser } from '@growi/core/dist/remark-plugins';
 import type { Request } from 'express';
@@ -61,7 +62,7 @@ function addDepthCondition(query, pagePath, optionsDepth) {
 
 type RequestWithUser = Request & { user: HydratedDocument<IUser> };
 
-const loginRequiredFallback = (req, res) => {
+const loginRequiredFallback = (_req, res) => {
   return res.status(403).send('login required');
 };
 
@@ -91,7 +92,7 @@ export const routesFactory = (crowi): any => {
    */
   router.get(
     '/ref',
-    accessTokenParser,
+    accessTokenParser([SCOPE.READ.FEATURES.PAGE], { acceptLegacy: true }),
     loginRequired,
     async (req: RequestWithUser, res) => {
       const user = req.user;
@@ -173,14 +174,15 @@ export const routesFactory = (crowi): any => {
    */
   router.get(
     '/refs',
-    accessTokenParser,
+    accessTokenParser([SCOPE.READ.FEATURES.PAGE], { acceptLegacy: true }),
     loginRequired,
     async (req: RequestWithUser, res) => {
       const user = req.user;
       const { prefix, pagePath } = req.query;
-      const options: Record<string, string | undefined> = JSON.parse(
-        req.query.options?.toString() ?? '',
-      );
+      const options: Record<string, string | undefined> =
+        typeof req.query.options === 'string'
+          ? JSON.parse(req.query.options)
+          : (req.query.options ?? {});
 
       // check either 'prefix' or 'pagePath ' is specified
       if (prefix == null && pagePath == null) {
@@ -202,7 +204,7 @@ export const routesFactory = (crowi): any => {
 
         try {
           regex = generateRegexp(regexOptionValue);
-        } catch (err) {
+        } catch {
           res.status(400).send("the 'regex' option is invalid as RegExp.");
           return;
         }
