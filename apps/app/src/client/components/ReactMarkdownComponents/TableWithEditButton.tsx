@@ -4,11 +4,10 @@ import { globalEventTarget } from '@growi/core/dist/utils';
 import type { Element } from 'hast';
 
 import type { LaunchHandsonTableModalEventDetail } from '~/client/interfaces/handsontable-modal';
-import {
-  useIsGuestUser, useIsReadOnlyUser, useIsSharedUser, useShareLinkId,
-} from '~/stores-universal/context';
+import { useCurrentPageYjsData } from '~/features/collaborative-editor/states';
+import { useIsGuestUser, useIsReadOnlyUser, useIsSharedUser } from '~/states/context';
+import { useShareLinkId } from '~/states/page/hooks';
 import { useIsRevisionOutdated } from '~/stores/page';
-import { useCurrentPageYjsData } from '~/stores/yjs';
 
 import styles from './TableWithEditButton.module.scss';
 
@@ -22,12 +21,12 @@ type TableWithEditButtonProps = {
 const TableWithEditButtonNoMemorized = (props: TableWithEditButtonProps): JSX.Element => {
   const { children, node, className } = props;
 
-  const { data: isGuestUser } = useIsGuestUser();
-  const { data: isReadOnlyUser } = useIsReadOnlyUser();
-  const { data: isSharedUser } = useIsSharedUser();
-  const { data: shareLinkId } = useShareLinkId();
-  const { data: isRevisionOutdated } = useIsRevisionOutdated();
-  const { data: currentPageYjsData } = useCurrentPageYjsData();
+  const isGuestUser = useIsGuestUser();
+  const isReadOnlyUser = useIsReadOnlyUser();
+  const isSharedUser = useIsSharedUser();
+  const shareLinkId = useShareLinkId();
+  const isRevisionOutdated = useIsRevisionOutdated();
+  const currentPageYjsData = useCurrentPageYjsData();
 
   const bol = node.position?.start.line ?? 0;
   const eol = node.position?.end.line ?? 0;

@@ -6,10 +6,11 @@ import type { DrawioEditByViewerProps } from '@growi/remark-drawio';
 
 import { replaceDrawioInMarkdown } from '~/client/components/Page/markdown-drawio-util-for-view';
 import { extractRemoteRevisionDataFromErrorObj, useUpdatePage } from '~/client/services/update-page';
-import { useShareLinkId } from '~/stores-universal/context';
-import { useConflictDiffModal, useDrawioModal } from '~/stores/modal';
-import { useSWRxCurrentPage } from '~/stores/page';
-import { type RemoteRevisionData, useSetRemoteLatestPageData } from '~/stores/remote-latest-page';
+import { useCurrentPageData, useSetRemoteLatestPageData } from '~/states/page';
+import type { RemoteRevisionData } from '~/states/page';
+import { useShareLinkId } from '~/states/page/hooks';
+import { useConflictDiffModalActions } from '~/states/ui/modal/conflict-diff';
+import { useDrawioModalActions } from '~/states/ui/modal/drawio';
 import loggerFactory from '~/utils/logger';
 
 
@@ -21,17 +22,17 @@ export const useDrawioModalLauncherForView = (opts?: {
   onSaveError?: (error: any) => void,
 }): void => {
 
-  const { data: shareLinkId } = useShareLinkId();
+  const shareLinkId = useShareLinkId();
 
-  const { data: currentPage } = useSWRxCurrentPage();
+  const currentPage = useCurrentPageData();
 
-  const { open: openDrawioModal } = useDrawioModal();
+  const { open: openDrawioModal } = useDrawioModalActions();
 
-  const { open: openConflictDiffModal, close: closeConflictDiffModal } = useConflictDiffModal();
+  const { open: openConflictDiffModal, close: closeConflictDiffModal } = useConflictDiffModalActions();
 
   const _updatePage = useUpdatePage();
 
-  const { setRemoteLatestPageData } = useSetRemoteLatestPageData();
+  const setRemoteLatestPageData = useSetRemoteLatestPageData();
 
   // eslint-disable-next-line max-len
   const updatePage = useCallback(async(revisionId:string, newMarkdown: string, onConflict: (conflictData: RemoteRevisionData, newMarkdown: string) => void) => {
