@@ -22,15 +22,15 @@ export const IconActivityTranslationMap: Record<
   SupportedActivityActionType,
   string
 > = {
-  [ActivityLogActions.ACTION_PAGE_CREATE]: '➕',
-  [ActivityLogActions.ACTION_PAGE_UPDATE]: '✏️',
-  [ActivityLogActions.ACTION_PAGE_DELETE]: '🗑️',
-  [ActivityLogActions.ACTION_PAGE_DELETE_COMPLETELY]: '❌',
-  [ActivityLogActions.ACTION_PAGE_RENAME]: '🏷️',
-  [ActivityLogActions.ACTION_PAGE_REVERT]: '⏪',
-  [ActivityLogActions.ACTION_PAGE_DUPLICATE]: '📄📄',
-  [ActivityLogActions.ACTION_PAGE_LIKE]: '❤️',
-  [ActivityLogActions.ACTION_COMMENT_CREATE]: '💬',
+  [ActivityLogActions.ACTION_PAGE_CREATE]: 'add_box',
+  [ActivityLogActions.ACTION_PAGE_UPDATE]: 'edit',
+  [ActivityLogActions.ACTION_PAGE_DELETE]: 'delete',
+  [ActivityLogActions.ACTION_PAGE_DELETE_COMPLETELY]: 'delete_forever',
+  [ActivityLogActions.ACTION_PAGE_RENAME]: 'label',
+  [ActivityLogActions.ACTION_PAGE_REVERT]: 'undo',
+  [ActivityLogActions.ACTION_PAGE_DUPLICATE]: 'content_copy',
+  [ActivityLogActions.ACTION_PAGE_LIKE]: 'favorite',
+  [ActivityLogActions.ACTION_COMMENT_CREATE]: 'comment',
 };
 
 const translateAction = (action: SupportedActivityActionType): string => {
@@ -38,7 +38,7 @@ const translateAction = (action: SupportedActivityActionType): string => {
 };
 
 const setIcon = (action: SupportedActivityActionType): string => {
-  return IconActivityTranslationMap[action] || 'performed an unknown action';
+  return IconActivityTranslationMap[action] || 'question_mark';
 };
 
 const calculateTimePassed = (date: Date): string => {
@@ -49,24 +49,18 @@ const calculateTimePassed = (date: Date): string => {
 
 
 export const ActivityListItem = ({ activity }: { activity: ActivityHasUserId }): JSX.Element => {
-  const username = activity.user?.username;
   const action = activity.action as SupportedActivityActionType;
 
   return (
     <div className="activity-row">
-      <p className="text-muted small mb-1">
-        {setIcon(action)}
+      <p className="mb-1">
+        <span className="material-symbols-outlined me-2">{setIcon(action)}</span>
 
-        <span className="text-gray-900 dark:text-white">
-          {username}
+        <span className="dark:text-white">
+          {' '}{translateAction(action)}
         </span>
 
-        <strong className="text-gray-900 dark:text-white">
-          {' '}{translateAction(action)}
-        </strong>
-
-        <span className="text-muted text-xs">
-          {' '}・{' '}
+        <span className="text-secondary small ms-3">
           {calculateTimePassed(activity.createdAt)}
         </span>
       </p>
