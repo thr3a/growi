@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'next-i18next';
-
+import { type Locale } from 'date-fns/locale';
+import { getLocale } from '~/server/util/locale-utils';
 import type { ActivityHasUserId, SupportedActivityActionType } from '~/interfaces/activity';
 import { ActivityLogActions } from '~/interfaces/activity';
 
@@ -43,15 +44,21 @@ const setIcon = (action: SupportedActivityActionType): string => {
   return IconActivityTranslationMap[action] || 'question_mark';
 };
 
-const calculateTimePassed = (date: Date): string => {
-  const timePassed = formatDistanceToNow(date, { addSuffix: true });
+const calculateTimePassed = (date: Date, locale: Locale): string => {
+  const timePassed = formatDistanceToNow(date, {
+    addSuffix: true,
+    locale,
+  });
 
   return timePassed;
 };
 
 
 export const ActivityListItem = ({ activity }: { activity: ActivityHasUserId }): JSX.Element => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLangCode = i18n.language;
+  const dateFnsLocale = getLocale(currentLangCode);
+
   const action = activity.action as SupportedActivityActionType;
   const keyToTranslate = translateAction(action);
   const fullKeyPath = `user_home_page.${keyToTranslate}`;
@@ -66,7 +73,7 @@ export const ActivityListItem = ({ activity }: { activity: ActivityHasUserId }):
         </span>
 
         <span className="text-secondary small ms-3">
-          {calculateTimePassed(activity.createdAt)}
+          {calculateTimePassed(activity.createdAt, dateFnsLocale)}
         </span>
       </p>
     </div>
