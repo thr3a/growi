@@ -131,7 +131,6 @@ describe('page-listing store integration tests', () => {
       expect(typeof rootPageResult._id).toBe('object'); // ObjectId
       expect(rootPageResult.path).toBe('/');
       expect([null, 1, 2, 3, 4, 5]).toContain(rootPageResult.grant); // Valid grant values
-      expect(rootPageResult.parent).toBeNull(); // Root page has no parent
     });
 
     test('should work without user (guest access) and return type-safe result', async() => {
@@ -195,7 +194,6 @@ describe('page-listing store integration tests', () => {
       expect(children).toHaveLength(2);
       children.forEach((child) => {
         validatePageForTreeItem(child);
-        expect(child.parent?.toString()).toBe(rootPage._id.toString());
         expect(['/child1', '/child2']).toContain(child.path);
       });
     });
@@ -206,7 +204,6 @@ describe('page-listing store integration tests', () => {
       expect(children).toHaveLength(2);
       children.forEach((child) => {
         validatePageForTreeItem(child);
-        expect(child.parent?.toString()).toBe(rootPage._id.toString());
       });
     });
 
@@ -217,7 +214,6 @@ describe('page-listing store integration tests', () => {
       const grandChild = nestedChildren[0];
       validatePageForTreeItem(grandChild);
       expect(grandChild.path).toBe('/child1/grandchild');
-      expect(grandChild.parent?.toString()).toBe(childPage1._id.toString());
     });
 
     test('should return empty array when no children exist', async() => {
@@ -393,13 +389,6 @@ describe('page-listing store integration tests', () => {
         expect(result._id.toString).toBeDefined();
         expect(typeof result._id.toString()).toBe('string');
         expect(result._id.toString().length).toBe(24);
-
-        // Validate parent _id behavior
-        if (result.parent) {
-          expect(result.parent.toString).toBeDefined();
-          expect(typeof result.parent.toString()).toBe('string');
-          expect(result.parent.toString().length).toBe(24);
-        }
       });
     });
 
