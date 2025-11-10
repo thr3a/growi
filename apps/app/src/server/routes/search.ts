@@ -6,7 +6,6 @@ import type Crowi from '../crowi';
 import UserGroupRelation from '../models/user-group-relation';
 import { isSearchError } from '../models/vo/search-error';
 
-
 const logger = loggerFactory('growi:routes:search');
 
 /**
@@ -37,7 +36,7 @@ const logger = loggerFactory('growi:routes:search');
  *           meta:
  *             $ref: '#/components/schemas/ElasticsearchResultMeta'
  */
-module.exports = function(crowi: Crowi, app) {
+module.exports = (crowi: Crowi, app) => {
   const ApiResponse = require('../util/apiResponse');
   const ApiPaginate = require('../util/apiPaginate');
 
@@ -110,17 +109,21 @@ module.exports = function(crowi: Crowi, app) {
    * @apiParam {String} offset
    * @apiParam {String} limit
    */
-  api.search = async function(req, res) {
+  api.search = async (req, res) => {
     const user = req.user;
     const {
-      q = null, nq = null, type = null, sort = null, order = null, vector = null,
+      q = null,
+      nq = null,
+      type = null,
+      sort = null,
+      order = null,
+      vector = null,
     } = req.query;
     let paginateOpts;
 
     try {
       paginateOpts = ApiPaginate.parseOptionsForElasticSearch(req.query);
-    }
-    catch (e) {
+    } catch (e) {
       res.json(ApiResponse.error(e));
     }
 
@@ -133,13 +136,22 @@ module.exports = function(crowi: Crowi, app) {
       return res.json(ApiResponse.error('SearchService is not reachable.'));
     }
 
-    const userGroups = user != null ? [
-      ...(await UserGroupRelation.findAllUserGroupIdsRelatedToUser(user)),
-      ...(await ExternalUserGroupRelation.findAllUserGroupIdsRelatedToUser(user)),
-    ] : null;
+    const userGroups =
+      user != null
+        ? [
+            ...(await UserGroupRelation.findAllUserGroupIdsRelatedToUser(user)),
+            ...(await ExternalUserGroupRelation.findAllUserGroupIdsRelatedToUser(
+              user,
+            )),
+          ]
+        : null;
 
     const searchOpts = {
-      ...paginateOpts, type, sort, order, vector,
+      ...paginateOpts,
+      type,
+      sort,
+      order,
+      vector,
     };
 
     let searchResult;
@@ -147,9 +159,14 @@ module.exports = function(crowi: Crowi, app) {
     try {
       const query = decodeURIComponent(q);
       const nqName = nq ?? decodeURIComponent(nq);
-      [searchResult, delegatorName] = await searchService.searchKeyword(query, nqName, user, userGroups, searchOpts);
-    }
-    catch (err) {
+      [searchResult, delegatorName] = await searchService.searchKeyword(
+        query,
+        nqName,
+        user,
+        userGroups,
+        searchOpts,
+      );
+    } catch (err) {
       logger.error('Failed to search', err);
 
       if (isSearchError(err)) {
@@ -162,15 +179,19 @@ module.exports = function(crowi: Crowi, app) {
 
     let result;
     try {
-      result = await searchService.formatSearchResult(searchResult, delegatorName, user, userGroups);
-    }
-    catch (err) {
+      result = await searchService.formatSearchResult(
+        searchResult,
+        delegatorName,
+        user,
+        userGroups,
+      );
+    } catch (err) {
       logger.error(err);
       return res.json(ApiResponse.error(err));
     }
 
     const parameters = {
-      ip:  req.ip,
+      ip: req.ip,
       endpoint: req.originalUrl,
       action: SupportedAction.ACTION_SEARCH_PAGE,
       user: req.user?._id,
