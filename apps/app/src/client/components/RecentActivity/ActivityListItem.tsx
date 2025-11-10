@@ -51,6 +51,7 @@ const calculateTimePassed = (date: Date): string => {
 
 
 export const ActivityListItem = ({ activity }: { activity: ActivityHasUserId }): JSX.Element => {
+  const { t } = useTranslation();
   const action = activity.action as SupportedActivityActionType;
   const keyToTranslate = translateAction(action);
   const fullKeyPath = `user_home_page.${keyToTranslate}`;
@@ -61,7 +62,7 @@ export const ActivityListItem = ({ activity }: { activity: ActivityHasUserId }):
         <span className="material-symbols-outlined me-2">{setIcon(action)}</span>
 
         <span className="dark:text-white">
-          {' '}{translateAction(action)}
+          {' '}{t(fullKeyPath)}
         </span>
 
         <span className="text-secondary small ms-3">
