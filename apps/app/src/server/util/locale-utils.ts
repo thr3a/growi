@@ -1,9 +1,7 @@
-import * as i18nextConfig from '^/config/i18next.config';
 import { Lang } from '@growi/core/dist/interfaces';
-import {
-  enUS, fr, ja, ko, type Locale, zhCN,
-} from 'date-fns/locale';
+import { enUS, fr, ja, ko, type Locale, zhCN } from 'date-fns/locale';
 import type { IncomingHttpHeaders } from 'http';
+import * as i18nextConfig from '^/config/i18next.config';
 
 const ACCEPT_LANG_MAP = {
   en: Lang.en_US,
