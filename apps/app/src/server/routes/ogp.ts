@@ -96,7 +96,7 @@ module.exports = (crowi: Crowi) => {
       return res.status(500).send(`error: ${err}`);
     }
 
-    let result;
+    let result: { data: any };
     try {
       result = await axios.post(
         ogpUri,

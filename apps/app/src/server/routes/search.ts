@@ -1,5 +1,9 @@
 import ExternalUserGroupRelation from '~/features/external-user-group/server/models/external-user-group-relation';
 import { SupportedAction } from '~/interfaces/activity';
+import type {
+  IFormattedSearchResult,
+  ISearchResult,
+} from '~/interfaces/search';
 import loggerFactory from '~/utils/logger';
 
 import type Crowi from '../crowi';
@@ -119,12 +123,12 @@ module.exports = (crowi: Crowi, app) => {
       order = null,
       vector = null,
     } = req.query;
-    let paginateOpts;
+    let paginateOpts: { limit: number; offset: number };
 
     try {
       paginateOpts = ApiPaginate.parseOptionsForElasticSearch(req.query);
     } catch (e) {
-      res.json(ApiResponse.error(e));
+      return res.json(ApiResponse.error(e));
     }
 
     if (q === null || q === '') {
@@ -154,7 +158,8 @@ module.exports = (crowi: Crowi, app) => {
       vector,
     };
 
-    let searchResult;
+    let searchResult: ISearchResult<unknown>;
+    // biome-ignore lint/suspicious/noImplicitAnyLet: ignore
     let delegatorName;
     try {
       const query = decodeURIComponent(q);
@@ -177,7 +182,7 @@ module.exports = (crowi: Crowi, app) => {
       return res.json(ApiResponse.error(err));
     }
 
-    let result;
+    let result: IFormattedSearchResult;
     try {
       result = await searchService.formatSearchResult(
         searchResult,

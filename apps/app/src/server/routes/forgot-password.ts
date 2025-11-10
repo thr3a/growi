@@ -28,11 +28,12 @@ export const checkForgotPasswordEnabledMiddlewareFactory = (
       logger.error(message);
 
       const statusCode = forApi ? 405 : 404;
-      return next(
+      next(
         createError(statusCode, message, {
           code: forgotPasswordErrorCode.PASSWORD_RESET_IS_UNAVAILABLE,
         }),
       );
+      return;
     }
 
     next();

@@ -43,7 +43,9 @@ module.exports = (crowi, app) => {
     const results = await Promise.allSettled(promises);
     results
       .filter((result) => result.status === 'rejected')
-      .forEach((result) => logger.error(result.reason));
+      .forEach((result) => {
+        logger.error(result.reason);
+      });
   }
 
   async function sendNotificationToAllAdmins(user) {
