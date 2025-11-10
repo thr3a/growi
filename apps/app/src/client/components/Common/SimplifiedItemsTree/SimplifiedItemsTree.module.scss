@@ -1,0 +1,26 @@
+.simplified-items-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.simplified-tree-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  &[aria-current='page'] {
+    font-weight: 600;
+    background-color: rgba(0, 123, 255, 0.1);
+  }
+}
+
+.item-path {
+  font-size: 14px;
+  color: inherit;
+}

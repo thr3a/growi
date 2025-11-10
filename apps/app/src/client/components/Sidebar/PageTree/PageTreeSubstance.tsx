@@ -13,8 +13,7 @@ import {
 } from '~/stores/page-listing';
 import loggerFactory from '~/utils/logger';
 
-import { ItemsTree } from '../../ItemsTree/ItemsTree';
-import { PageTreeItem } from '../PageTreeItem';
+import { SimplifiedItemsTree } from '../../Common/SimplifiedItemsTree';
 import { SidebarHeaderReloadButton } from '../SidebarHeaderReloadButton';
 
 import { PrivateLegacyPagesLink } from './PrivateLegacyPagesLink';
@@ -179,6 +178,7 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
 
   return (
     <div ref={rootElemRef} className="pt-4">
+      {/*
       <ItemsTree
         isEnableActions={!isGuestUser}
         isReadOnlyUser={!!isReadOnlyUser}
@@ -186,6 +186,10 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
         targetPath={path}
         targetPathOrId={targetPathOrId}
         CustomTreeItem={PageTreeItem}
+      />
+      */}
+      <SimplifiedItemsTree
+        targetPathOrId={targetPathOrId}
       />
 
       {!isGuestUser && !isReadOnlyUser && migrationStatus?.migratablePagesCount != null && migrationStatus.migratablePagesCount !== 0 && (
