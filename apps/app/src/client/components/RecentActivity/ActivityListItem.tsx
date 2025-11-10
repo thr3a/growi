@@ -1,5 +1,8 @@
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'next-i18next';
+import {
+  enUS, ja, fr, ko, zhCN, Locale
+} from 'date-fns/locale';
 
 import type { ActivityHasUserId, SupportedActivityActionType } from '~/interfaces/activity';
 import { ActivityLogActions } from '~/interfaces/activity';
@@ -35,6 +38,39 @@ export const IconActivityTranslationMap: Record<
   [ActivityLogActions.ACTION_COMMENT_CREATE]: 'comment',
 };
 
+const localeMap: Record<string, Locale | undefined> = {
+  en: enUS,
+  'en-US': enUS,
+  en_US: enUS,
+
+  ja,
+  'ja-JP': ja,
+  ja_JP: ja,
+
+  fr,
+  'fr-FR': fr,
+  fr_FR: fr,
+
+  ko,
+  'ko-KR': ko,
+  ko_KR: ko,
+
+  zh: zhCN,
+  'zh-CN': zhCN,
+  zh_CN: zhCN,
+};
+
+const getLocale = (langCode: string): Locale => {
+  let locale = localeMap[langCode];
+
+  if (!locale) {
+    const baseCode = langCode.split('-')[0];
+    locale = localeMap[baseCode];
+  }
+
+  return locale ?? enUS;
+};
+
 const translateAction = (action: SupportedActivityActionType): string => {
   return ActivityActionTranslationMap[action] || 'unknown_action';
 };
@@ -43,15 +79,21 @@ const setIcon = (action: SupportedActivityActionType): string => {
   return IconActivityTranslationMap[action] || 'question_mark';
 };
 
-const calculateTimePassed = (date: Date): string => {
-  const timePassed = formatDistanceToNow(date, { addSuffix: true });
+const calculateTimePassed = (date: Date, locale: Locale): string => {
+  const timePassed = formatDistanceToNow(date, {
+    addSuffix: true,
+    locale
+  });
 
   return timePassed;
 };
 
 
 export const ActivityListItem = ({ activity }: { activity: ActivityHasUserId }): JSX.Element => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLangCode = i18n.language;
+  const dateFnsLocale = getLocale(currentLangCode);
+
   const action = activity.action as SupportedActivityActionType;
   const keyToTranslate = translateAction(action);
   const fullKeyPath = `user_home_page.${keyToTranslate}`;
@@ -66,7 +108,7 @@ export const ActivityListItem = ({ activity }: { activity: ActivityHasUserId }):
         </span>
 
         <span className="text-secondary small ms-3">
-          {calculateTimePassed(activity.createdAt)}
+          {calculateTimePassed(activity.createdAt, dateFnsLocale)}
         </span>
       </p>
     </div>
