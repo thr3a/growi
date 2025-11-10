@@ -1,21 +1,23 @@
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from 'next-i18next';
 
 import type { ActivityHasUserId, SupportedActivityActionType } from '~/interfaces/activity';
 import { ActivityLogActions } from '~/interfaces/activity';
+
 
 export const ActivityActionTranslationMap: Record<
   SupportedActivityActionType,
   string
 > = {
-  [ActivityLogActions.ACTION_PAGE_CREATE]: 'created a page',
-  [ActivityLogActions.ACTION_PAGE_UPDATE]: 'updated a page',
-  [ActivityLogActions.ACTION_PAGE_DELETE]: 'deleted a page',
-  [ActivityLogActions.ACTION_PAGE_DELETE_COMPLETELY]: 'deleted a page',
-  [ActivityLogActions.ACTION_PAGE_RENAME]: 'renamed a page',
-  [ActivityLogActions.ACTION_PAGE_REVERT]: 'reverted a page',
-  [ActivityLogActions.ACTION_PAGE_DUPLICATE]: 'duplicated a page',
-  [ActivityLogActions.ACTION_PAGE_LIKE]: 'liked a page',
-  [ActivityLogActions.ACTION_COMMENT_CREATE]: 'posted a comment',
+  [ActivityLogActions.ACTION_PAGE_CREATE]: 'page_create',
+  [ActivityLogActions.ACTION_PAGE_UPDATE]: 'page_update',
+  [ActivityLogActions.ACTION_PAGE_DELETE]: 'page_delete',
+  [ActivityLogActions.ACTION_PAGE_DELETE_COMPLETELY]: 'page_delete_completely',
+  [ActivityLogActions.ACTION_PAGE_RENAME]: 'page_rename',
+  [ActivityLogActions.ACTION_PAGE_REVERT]: 'page_revert',
+  [ActivityLogActions.ACTION_PAGE_DUPLICATE]: 'page_duplicate',
+  [ActivityLogActions.ACTION_PAGE_LIKE]: 'page_like',
+  [ActivityLogActions.ACTION_COMMENT_CREATE]: 'comment_create',
 };
 
 export const IconActivityTranslationMap: Record<
@@ -50,6 +52,8 @@ const calculateTimePassed = (date: Date): string => {
 
 export const ActivityListItem = ({ activity }: { activity: ActivityHasUserId }): JSX.Element => {
   const action = activity.action as SupportedActivityActionType;
+  const keyToTranslate = translateAction(action);
+  const fullKeyPath = `user_home_page.${keyToTranslate}`;
 
   return (
     <div className="activity-row">
