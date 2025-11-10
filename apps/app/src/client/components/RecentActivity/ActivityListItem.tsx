@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'next-i18next';
 import {
-  enUS, ja, fr, ko, zhCN, Locale
+  enUS, ja, fr, ko, zhCN, Locale,
 } from 'date-fns/locale';
 
 import type { ActivityHasUserId, SupportedActivityActionType } from '~/interfaces/activity';
@@ -82,7 +82,7 @@ const setIcon = (action: SupportedActivityActionType): string => {
 const calculateTimePassed = (date: Date, locale: Locale): string => {
   const timePassed = formatDistanceToNow(date, {
     addSuffix: true,
-    locale
+    locale,
   });
 
   return timePassed;
