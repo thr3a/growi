@@ -24,15 +24,15 @@ export const IconActivityTranslationMap: Record<
   SupportedActivityActionType,
   string
 > = {
-  [ActivityLogActions.ACTION_PAGE_CREATE]: '➕',
-  [ActivityLogActions.ACTION_PAGE_UPDATE]: '✏️',
-  [ActivityLogActions.ACTION_PAGE_DELETE]: '🗑️',
-  [ActivityLogActions.ACTION_PAGE_DELETE_COMPLETELY]: '❌',
-  [ActivityLogActions.ACTION_PAGE_RENAME]: '🏷️',
-  [ActivityLogActions.ACTION_PAGE_REVERT]: '⏪',
-  [ActivityLogActions.ACTION_PAGE_DUPLICATE]: '📄📄',
-  [ActivityLogActions.ACTION_PAGE_LIKE]: '❤️',
-  [ActivityLogActions.ACTION_COMMENT_CREATE]: '💬',
+  [ActivityLogActions.ACTION_PAGE_CREATE]: 'add_box',
+  [ActivityLogActions.ACTION_PAGE_UPDATE]: 'edit',
+  [ActivityLogActions.ACTION_PAGE_DELETE]: 'delete',
+  [ActivityLogActions.ACTION_PAGE_DELETE_COMPLETELY]: 'delete_forever',
+  [ActivityLogActions.ACTION_PAGE_RENAME]: 'label',
+  [ActivityLogActions.ACTION_PAGE_REVERT]: 'undo',
+  [ActivityLogActions.ACTION_PAGE_DUPLICATE]: 'content_copy',
+  [ActivityLogActions.ACTION_PAGE_LIKE]: 'favorite',
+  [ActivityLogActions.ACTION_COMMENT_CREATE]: 'comment',
 };
 
 const translateAction = (action: SupportedActivityActionType): string => {
@@ -40,7 +40,7 @@ const translateAction = (action: SupportedActivityActionType): string => {
 };
 
 const setIcon = (action: SupportedActivityActionType): string => {
-  return IconActivityTranslationMap[action] || '';
+  return IconActivityTranslationMap[action] || 'question_mark';
 };
 
 const calculateTimePassed = (date: Date): string => {
@@ -51,23 +51,20 @@ const calculateTimePassed = (date: Date): string => {
 
 
 export const ActivityListItem = ({ activity }: { activity: ActivityHasUserId }): JSX.Element => {
-  const { t } = useTranslation();
-
   const action = activity.action as SupportedActivityActionType;
   const keyToTranslate = translateAction(action);
   const fullKeyPath = `user_home_page.${keyToTranslate}`;
 
   return (
     <div className="activity-row">
-      <p className="small mb-1">
-        {setIcon(action)}
+      <p className="mb-1">
+        <span className="material-symbols-outlined me-2">{setIcon(action)}</span>
 
-        <strong className="text-gray-900 dark:text-white">
-          {' '}{t(fullKeyPath)}
-        </strong>
+        <span className="dark:text-white">
+          {' '}{translateAction(action)}
+        </span>
 
-        <span className="text-secondary">
-          {' '}・{' '}
+        <span className="text-secondary small ms-3">
           {calculateTimePassed(activity.createdAt)}
         </span>
       </p>
