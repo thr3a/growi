@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'next-i18next';
 import { type Locale } from 'date-fns/locale';
-import { getLocale } from '~/client/util/date-local';
+import { getLocale } from '~/server/util/locale-utils';
 import type { ActivityHasUserId, SupportedActivityActionType } from '~/interfaces/activity';
 import { ActivityLogActions } from '~/interfaces/activity';
 
