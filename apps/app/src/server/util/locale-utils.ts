@@ -4,7 +4,6 @@ import type { IncomingHttpHeaders } from 'http';
 
 import * as i18nextConfig from '^/config/i18next.config';
 
-
 const ACCEPT_LANG_MAP = {
   en: Lang.en_US,
   ja: Lang.ja_JP,
@@ -50,7 +49,6 @@ export const getLocale = (langCode: string): Locale => {
 
   return locale ?? enUS;
 };
-
 
 /**
  * It return the first language that matches ACCEPT_LANG_MAP keys from sorted accept languages array
