@@ -1,10 +1,9 @@
-import { Lang } from '@growi/core/dist/interfaces';
-import type { IncomingHttpHeaders } from 'http';
-import { type Locale } from 'date-fns/locale';
-import {
-  enUS, ja, fr, ko, zhCN,
-} from 'date-fns/locale';
 import * as i18nextConfig from '^/config/i18next.config';
+import { Lang } from '@growi/core/dist/interfaces';
+import {
+  enUS, fr, ja, ko, type Locale, zhCN,
+} from 'date-fns/locale';
+import type { IncomingHttpHeaders } from 'http';
 
 const ACCEPT_LANG_MAP = {
   en: Lang.en_US,
@@ -13,20 +12,21 @@ const ACCEPT_LANG_MAP = {
   fr: Lang.fr_FR,
   ko: Lang.ko_KR,
 };
+
 const DATE_FNS_LOCALE_MAP: Record<string, Locale | undefined> = {
   en: enUS,
   'en-US': enUS,
   en_US: enUS,
 
-  ja,
+  ja: ja,
   'ja-JP': ja,
   ja_JP: ja,
 
-  fr,
+  fr: fr,
   'fr-FR': fr,
   fr_FR: fr,
 
-  ko,
+  ko: ko,
   'ko-KR': ko,
   ko_KR: ko,
 
@@ -34,6 +34,7 @@ const DATE_FNS_LOCALE_MAP: Record<string, Locale | undefined> = {
   'zh-CN': zhCN,
   zh_CN: zhCN,
 };
+
 /**
  * Gets the corresponding date-fns Locale object from an i18next language code.
  * @param langCode The i18n language code (e.g., 'ja_JP').
