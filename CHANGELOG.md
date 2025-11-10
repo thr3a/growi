@@ -1,8 +1,61 @@
 # Changelog
 
-## [Unreleased](https://github.com/growilabs/compare/v7.3.2...HEAD)
+## [Unreleased](https://github.com/growilabs/compare/v7.3.4...HEAD)
 
 *Please do not manually update this file. We've automated the process.*
+
+## [v7.3.4](https://github.com/growilabs/compare/v7.3.3...v7.3.4) - 2025-11-04
+
+### 🚀 Improvement
+
+* imprv: Admin form text input (#10401) @yuki-takei
+
+### 🐛 Bug Fixes
+
+* fix: Enable profile picture uploads for read only users (#10454) @miya
+* fix: CodeQL security issues: insecure randomness and unvalidated redirect (#10431) @[copilot-swe-agent[bot]](https://github.com/apps/copilot-swe-agent)
+* fix: CSRF protection by origin comparison (#10345) @yusa-bot
+
+### 🧰 Maintenance
+
+* support: Clean CSRF token storing hook (#10452) @yuki-takei
+* ci(deps): bump validator from 13.12.0 to 13.15.20 (#10445) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps-dev): bump vite from 5.4.20 to 5.4.21 (#10432) @[dependabot[bot]](https://github.com/apps/dependabot)
+* support: Configure biome for OpenAI feature client dir (#10422) @arafubeatbox
+* support: Configure biome for small dirs in app/src/server (#10417) @arafubeatbox
+* support: Configure biome for OpenAI feature exluding client dir (#10377) @arafubeatbox
+* support: Configure biome for app services/stores dir (#10411) @arafubeatbox
+* support: Configure biome for app pages dir (#10410) @arafubeatbox
+* support: Configure biome for app components dir (#10382) @arafubeatbox
+* support: Biome v2.2 and use noRestrictedImports instead of eslint(no-restricted-imports) (#10408) @yuki-takei
+* support: Apply Biome and organize imports (#10406) @yuki-takei
+
+## [v7.3.3](https://github.com/growilabs/compare/v7.3.2...v7.3.3) - 2025-10-15
+
+### 💎 Features
+
+* feat(otel): Page counts metrics (#10367) @Ryosei-Fukushima
+
+### 🚀 Improvement
+
+* imprv: Improve KnowledgeAssistant chat UI UX (#10355) @satof3
+* imprv: Guest user client performance by Socket.io event optimization (#10379) @yuki-takei
+* imprv: PageTree performance by page-listing API (#10362) @yuki-takei
+
+### 🐛 Bug Fixes
+
+* fix: Draw.io color mode (#10390) @miya
+* fix: Cannot update v4 format pages (#10378) @miya
+* fix: Bulk export cleanup and notification occasionally not working on job expire (#10366) @arafubeatbox
+
+### 🧰 Maintenance
+
+* support: Configure biome for app services dir (#10381) @arafubeatbox
+* support: Configure biome for app etc. dirs (#10380) @arafubeatbox
+* support: Configure biome for rate-limiter feature (#10376) @arafubeatbox
+* support: Configure biome for growi-plugin feature (#10309) @arafubeatbox
+* support: Service integration test biome migration (#10234) @arafubeatbox
+* support: Update axios (#10353) @arafubeatbox
 
 ## [v7.3.2](https://github.com/growilabs/compare/v7.3.1...v7.3.2) - 2025-09-29
 
