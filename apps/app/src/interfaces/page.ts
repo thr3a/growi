@@ -23,14 +23,7 @@ export type IPageForItem = Partial<
 
 export type IPageForTreeItem = Pick<
   IPageHasId,
-  | '_id'
-  | 'path'
-  | 'parent'
-  | 'descendantCount'
-  | 'revision'
-  | 'grant'
-  | 'isEmpty'
-  | 'wip'
+  '_id' | 'path' | 'descendantCount' | 'grant' | 'isEmpty' | 'wip'
 > & {
   processData?: IPageOperationProcessData;
 };

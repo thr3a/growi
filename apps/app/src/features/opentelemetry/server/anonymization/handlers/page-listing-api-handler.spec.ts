@@ -12,20 +12,22 @@ describe('pageListingApiModule', () => {
 
   describe('canHandle', () => {
     it.each`
-      description                           | url                                                  | expected
-      ${'ancestors-children endpoint'}      | ${'/_api/v3/page-listing/ancestors-children?path=/'} | ${true}
-      ${'children endpoint'}                | ${'/_api/v3/page-listing/children?path=/docs'}       | ${true}
-      ${'info endpoint'}                    | ${'/_api/v3/page-listing/info?path=/wiki'}           | ${true}
-      ${'ancestors-children without query'} | ${'/_api/v3/page-listing/ancestors-children'}        | ${true}
-      ${'children without query'}           | ${'/_api/v3/page-listing/children'}                  | ${true}
-      ${'info without query'}               | ${'/_api/v3/page-listing/info'}                      | ${true}
-      ${'other page-listing endpoint'}      | ${'/_api/v3/page-listing/other'}                     | ${false}
-      ${'different API version'}            | ${'/_api/v2/page-listing/children'}                  | ${false}
-      ${'non-page-listing API'}             | ${'/_api/v3/pages/list'}                             | ${false}
-      ${'regular page path'}                | ${'/page/path'}                                      | ${false}
-      ${'root path'}                        | ${'/'}                                               | ${false}
-      ${'empty URL'}                        | ${''}                                                | ${false}
-      ${'partial match'}                    | ${'/_api/v3/page-listing-other/children'}            | ${false}
+      description                           | url                                                         | expected
+      ${'ancestors-children endpoint'}      | ${'/_api/v3/page-listing/ancestors-children?path=/'}        | ${true}
+      ${'children endpoint'}                | ${'/_api/v3/page-listing/children?path=/docs'}              | ${true}
+      ${'info endpoint'}                    | ${'/_api/v3/page-listing/info?path=/wiki'}                  | ${true}
+      ${'item endpoint'}                    | ${'/_api/v3/page-listing/item?id=68b686d3984fce462ecc7c05'} | ${true}
+      ${'ancestors-children without query'} | ${'/_api/v3/page-listing/ancestors-children'}               | ${true}
+      ${'children without query'}           | ${'/_api/v3/page-listing/children'}                         | ${true}
+      ${'info without query'}               | ${'/_api/v3/page-listing/info'}                             | ${true}
+      ${'item without query'}               | ${'/_api/v3/page-listing/item'}                             | ${true}
+      ${'other page-listing endpoint'}      | ${'/_api/v3/page-listing/other'}                            | ${false}
+      ${'different API version'}            | ${'/_api/v2/page-listing/children'}                         | ${false}
+      ${'non-page-listing API'}             | ${'/_api/v3/pages/list'}                                    | ${false}
+      ${'regular page path'}                | ${'/page/path'}                                             | ${false}
+      ${'root path'}                        | ${'/'}                                                      | ${false}
+      ${'empty URL'}                        | ${''}                                                       | ${false}
+      ${'partial match'}                    | ${'/_api/v3/page-listing-other/children'}                   | ${false}
     `('should return $expected for $description: $url', ({ url, expected }) => {
       const result = pageListingApiModule.canHandle(url);
       expect(result).toBe(expected);

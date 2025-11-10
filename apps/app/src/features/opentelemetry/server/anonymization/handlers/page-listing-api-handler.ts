@@ -20,6 +20,7 @@ export const pageListingApiModule: AnonymizationModule = {
     return (
       url.includes('/_api/v3/page-listing/ancestors-children') ||
       url.includes('/_api/v3/page-listing/children') ||
+      url.includes('/_api/v3/page-listing/item') ||
       url.includes('/_api/v3/page-listing/info')
     );
     // Add other page-listing endpoints here as needed
@@ -39,6 +40,7 @@ export const pageListingApiModule: AnonymizationModule = {
     if (
       url.includes('/_api/v3/page-listing/ancestors-children') ||
       url.includes('/_api/v3/page-listing/children') ||
+      url.includes('/_api/v3/page-listing/item') ||
       url.includes('/_api/v3/page-listing/info')
     ) {
       const anonymizedUrl = anonymizeQueryParams(url, ['path']);

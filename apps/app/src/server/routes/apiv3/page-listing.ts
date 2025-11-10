@@ -161,6 +161,68 @@ const routerFactory = (crowi: Crowi): Router => {
   /**
    * @swagger
    *
+   * /page-listing/item:
+   *   get:
+   *     tags: [PageListing]
+   *     security:
+   *       - bearer: []
+   *       - accessTokenInQuery: []
+   *     summary: /page-listing/item
+   *     description: Get a single page item for tree display
+   *     parameters:
+   *       - name: id
+   *         in: query
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Page item data
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 item:
+   *                   $ref: '#/components/schemas/PageForTreeItem'
+   */
+  router.get('/item',
+    accessTokenParser([SCOPE.READ.FEATURES.PAGE], { acceptLegacy: true }),
+    loginRequired, validator.pageIdOrPathRequired, apiV3FormValidator, async(req: AuthorizedRequest, res: ApiV3Response) => {
+      const { id } = req.query;
+
+      if (id == null) {
+        return res.apiv3Err(new ErrorV3('id parameter is required'));
+      }
+
+      try {
+        const Page = mongoose.model<HydratedDocument<PageDocument>, PageModel>('Page');
+        const page = await Page.findByIdAndViewer(id as string, req.user, null, true);
+
+        if (page == null) {
+          return res.apiv3Err(new ErrorV3('Page not found'), 404);
+        }
+
+        const item: IPageForTreeItem = {
+          _id: page._id.toString(),
+          path: page.path,
+          descendantCount: page.descendantCount,
+          grant: page.grant,
+          isEmpty: page.isEmpty,
+          wip: page.wip ?? false,
+        };
+
+        return res.apiv3({ item });
+      }
+      catch (err) {
+        logger.error('Error occurred while fetching page item.', err);
+        return res.apiv3Err(new ErrorV3('Error occurred while fetching page item.'));
+      }
+    });
+
+  /**
+   * @swagger
+   *
    * /page-listing/info:
    *   get:
    *     tags: [PageListing]
