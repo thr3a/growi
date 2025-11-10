@@ -15,11 +15,21 @@ const ACCEPT_LANG_MAP = {
 };
 
 const DATE_FNS_LOCALE_MAP: Record<string, Locale | undefined> = {
-  'en': enUS, 'en-US': enUS, 'en_US': enUS,
-  'ja': ja, 'ja-JP': ja, 'ja_JP': ja,
-  'fr': fr, 'fr-FR': fr, 'fr_FR': fr,
-  'ko': ko, 'ko-KR': ko, 'ko_KR': ko,
-  'zh': zhCN, 'zh-CN': zhCN, 'zh_CN': zhCN,
+  'en': enUS,
+  'en-US': enUS,
+  'en_US': enUS,
+  'ja': ja,
+  'ja-JP': ja,
+  'ja_JP': ja,
+  'fr': fr,
+  'fr-FR': fr,
+  'fr_FR': fr,
+  'ko': ko,
+  'ko-KR': ko,
+  'ko_KR': ko,
+  'zh': zhCN,
+  'zh-CN': zhCN,
+  'zh_CN': zhCN,
 };
 
 /**
