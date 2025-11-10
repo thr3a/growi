@@ -7,11 +7,25 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 
 import { apiv3Get } from '~/client/util/apiv3-client';
 import type { IPageForTreeItem } from '~/interfaces/page';
+import { useSWRxRootPage } from '~/stores/page-listing';
 
 import { SimplifiedTreeItem } from './SimplifiedTreeItem';
 
 import styles from './SimplifiedItemsTree.module.scss';
 
+
+const ROOT_PAGE_VIRTUAL_ID = '__virtual_root__';
+
+function constructRootPageForVirtualRoot(rootPageId: string, allPagesCount: number): IPageForTreeItem {
+  return {
+    _id: rootPageId,
+    path: '/',
+    descendantCount: allPagesCount,
+    grant: 1,
+    isEmpty: false,
+    wip: false,
+  };
+}
 
 type Props = {
   targetPathOrId?: string | null;
@@ -20,37 +34,45 @@ type Props = {
 export const SimplifiedItemsTree: FC<Props> = ({ targetPathOrId }) => {
   const scrollElementRef = useRef<HTMLDivElement>(null);
 
+  const { data: rootPageResult } = useSWRxRootPage({ suspense: true });
+  const rootPage = rootPageResult?.rootPage;
+  const rootPageId = rootPage?._id ?? ROOT_PAGE_VIRTUAL_ID;
+  const allPagesCount = rootPage?.descendantCount ?? 0;
+
   const getItem = useCallback(async (itemId: string): Promise<IPageForTreeItem> => {
-    if (itemId === '/') {
-      const response = await apiv3Get<{ rootPage: IPageForTreeItem }>('/page-listing/root');
-      return response.data.rootPage;
+    // Virtual root (should rarely be called since it's provided by getChildrenWithData)
+    if (itemId === ROOT_PAGE_VIRTUAL_ID) {
+      return constructRootPageForVirtualRoot(rootPageId, allPagesCount);
     }
 
+    // For all pages (including root), use /page-listing/item endpoint
+    // Note: This should rarely be called thanks to getChildrenWithData caching
     const response = await apiv3Get<{ item: IPageForTreeItem }>('/page-listing/item', { id: itemId });
     return response.data.item;
-  }, []);
+  }, [allPagesCount, rootPageId]);
 
   const getChildrenWithData = useCallback(async (itemId: string) => {
-    if (itemId === '/') {
-      const rootResponse = await apiv3Get<{ rootPage: IPageForTreeItem }>('/page-listing/root');
-      const rootPageId = rootResponse.data.rootPage._id;
-      const childrenResponse = await apiv3Get<{ children: IPageForTreeItem[] }>('/page-listing/children', { id: rootPageId });
-      return childrenResponse.data.children.map(child => ({
-        id: child._id,
-        data: child,
-      }));
+    // Virtual root returns root page as its only child
+    // Use actual MongoDB _id as tree item ID to avoid duplicate API calls
+    if (itemId === ROOT_PAGE_VIRTUAL_ID) {
+      return [{
+        id: rootPageId,
+        data: constructRootPageForVirtualRoot(rootPageId, allPagesCount),
+      }];
     }
 
+    // For all pages (including root), fetch children using their _id
     const response = await apiv3Get<{ children: IPageForTreeItem[] }>('/page-listing/children', { id: itemId });
     return response.data.children.map(child => ({
       id: child._id,
       data: child,
     }));
-  }, []);
+  }, [allPagesCount, rootPageId]);
 
   const tree = useTree<IPageForTreeItem>({
-    rootItemId: '/',
-    getItemName: item => item.getItemData().path,
+    rootItemId: ROOT_PAGE_VIRTUAL_ID,
+    getItemName: item => item.getItemData().path || '/',
+    initialState: { expandedItems: [ROOT_PAGE_VIRTUAL_ID] },
     isItemFolder: item => item.getItemData().descendantCount > 0,
     createLoadingItemData: () => ({
       _id: '',
@@ -95,6 +117,12 @@ export const SimplifiedItemsTree: FC<Props> = ({ targetPathOrId }) => {
         {virtualizer.getVirtualItems().map((virtualItem) => {
           const item = items[virtualItem.index];
           const itemData = item.getItemData();
+
+          // Skip rendering virtual root
+          if (itemData._id === ROOT_PAGE_VIRTUAL_ID) {
+            return null;
+          }
+
           const isSelected = targetPathOrId === itemData._id || targetPathOrId === itemData.path;
           const props = item.getProps();
 
