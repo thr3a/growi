@@ -75,11 +75,9 @@ module.exports = (crowi, app) => {
     const { validationResult } = require('express-validator');
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res
-        .status(422)
-        .json({
-          errors: `${fileName} is invalid. Do not use path like '../'.`,
-        });
+      return res.status(422).json({
+        errors: `${fileName} is invalid. Do not use path like '../'.`,
+      });
     }
 
     try {

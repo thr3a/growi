@@ -30,7 +30,6 @@
       "!apps/app/src/client",
       "!apps/app/src/server/middlewares",
       "!apps/app/src/server/routes/apiv3",
-      "!apps/app/src/server/routes/attachment",
       "!apps/app/src/server/service"
     ]
   },
