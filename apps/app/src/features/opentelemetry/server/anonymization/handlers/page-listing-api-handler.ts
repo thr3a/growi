@@ -20,8 +20,7 @@ export const pageListingApiModule: AnonymizationModule = {
     return (
       url.includes('/_api/v3/page-listing/ancestors-children') ||
       url.includes('/_api/v3/page-listing/children') ||
-      url.includes('/_api/v3/page-listing/item') ||
-      url.includes('/_api/v3/page-listing/info')
+      url.includes('/_api/v3/page-listing/item')
     );
     // Add other page-listing endpoints here as needed
   },
@@ -40,8 +39,7 @@ export const pageListingApiModule: AnonymizationModule = {
     if (
       url.includes('/_api/v3/page-listing/ancestors-children') ||
       url.includes('/_api/v3/page-listing/children') ||
-      url.includes('/_api/v3/page-listing/item') ||
-      url.includes('/_api/v3/page-listing/info')
+      url.includes('/_api/v3/page-listing/item')
     ) {
       const anonymizedUrl = anonymizeQueryParams(url, ['path']);
       // Only set attributes if the URL was actually modified
