@@ -1,15 +1,17 @@
 import type { FC } from 'react';
 import { useCallback } from 'react';
 
-import type { IPageToDeleteWithMeta } from '@growi/core';
+import type { IPageToDeleteWithMeta } from '@growi/core/dist/interfaces';
+import { getIdStringForRef } from '@growi/core/dist/interfaces';
 import { pathUtils } from '@growi/core/dist/utils';
 import { useRouter } from 'next/router';
 
+import { ROOT_PAGE_VIRTUAL_ID } from '~/constants/page-tree';
 import type { IPageForItem } from '~/interfaces/page';
+import { useNotifyTreeUpdate } from '~/states/page-tree-update';
 import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
 import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 import { usePageDuplicateModalActions } from '~/states/ui/modal/page-duplicate';
-import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
 
 import type { TreeItemProps } from '../../TreeItem';
 import { TreeItemLayout } from '../../TreeItem';
@@ -40,24 +42,27 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
 
   const { open: openDuplicateModal } = usePageDuplicateModalActions();
   const { open: openDeleteModal } = usePageDeleteModalActions();
+  const { notifyItemsUpdated } = useNotifyTreeUpdate();
 
   const onClickDuplicateMenuItem = useCallback((page: IPageForPageDuplicateModal) => {
     openDuplicateModal(page, {
       onDuplicated: () => {
-        mutatePageTree();
-        mutateRecentlyUpdated();
+        // Notify headless-tree update
+        const parentId = item.parent != null ? getIdStringForRef(item.parent) : ROOT_PAGE_VIRTUAL_ID;
+        notifyItemsUpdated([parentId]);
       },
     });
-  }, [openDuplicateModal]);
+  }, [openDuplicateModal, notifyItemsUpdated, item.parent]);
 
   const onClickDeleteMenuItem = useCallback((page: IPageToDeleteWithMeta) => {
     openDeleteModal([page], {
       onDeleted: () => {
-        mutatePageTree();
-        mutateRecentlyUpdated();
+        // Notify headless-tree update
+        const parentId = item.parent != null ? getIdStringForRef(item.parent) : ROOT_PAGE_VIRTUAL_ID;
+        notifyItemsUpdated([parentId]);
       },
     });
-  }, [openDeleteModal]);
+  }, [openDeleteModal, item.parent, notifyItemsUpdated]);
 
   const { Control } = usePageItemControl();
 

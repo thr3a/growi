@@ -8,18 +8,18 @@ import { useTree } from '@headless-tree/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 import { apiv3Get } from '~/client/util/apiv3-client';
+import { ROOT_PAGE_VIRTUAL_ID } from '~/constants/page-tree';
 import type { IPageForTreeItem } from '~/interfaces/page';
+import { useTreeUpdateGeneration, useLastUpdatedItemIds } from '~/states/page-tree-update';
 import { useSWRxRootPage } from '~/stores/page-listing';
 
 import type { TreeItemProps } from '../TreeItem';
-
-
-const ROOT_PAGE_VIRTUAL_ID = '__virtual_root__';
 
 function constructRootPageForVirtualRoot(rootPageId: string, allPagesCount: number): IPageForTreeItem {
   return {
     _id: rootPageId,
     path: '/',
+    parent: null,
     descendantCount: allPagesCount,
     grant: 1,
     isEmpty: false,
@@ -104,6 +104,40 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     },
     features: [asyncDataLoaderFeature],
   });
+
+  // Extract getItemInstance for dependency array
+  const getItemInstance = tree.getItemInstance;
+
+  // Track local generation number
+  const [localGeneration, setLocalGeneration] = useState(1);
+  const globalGeneration = useTreeUpdateGeneration();
+  const lastUpdatedItemIds = useLastUpdatedItemIds();
+
+  // Refetch data when global generation is updated
+  useEffect(() => {
+    if (globalGeneration <= localGeneration) {
+      return; // Already up to date
+    }
+
+    // Determine update scope
+    const shouldUpdateAll = lastUpdatedItemIds.includes('*');
+
+    if (shouldUpdateAll) {
+      // Full tree update: refetch from root
+      const root = getItemInstance(ROOT_PAGE_VIRTUAL_ID);
+      root?.invalidateChildrenIds(true);
+    }
+    else {
+      // Partial update: refetch children of specified items
+      lastUpdatedItemIds.forEach((itemId) => {
+        const item = getItemInstance(itemId);
+        item?.invalidateChildrenIds(true);
+      });
+    }
+
+    // Update local generation
+    setLocalGeneration(globalGeneration);
+  }, [globalGeneration, localGeneration, lastUpdatedItemIds, getItemInstance]);
 
   const items = tree.getItems();
 
