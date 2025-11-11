@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useCallback } from 'react';
 
-import { pagePathUtils, pathUtils } from '@growi/core/dist/utils';
+import { pathUtils } from '@growi/core/dist/utils';
 import { useRouter } from 'next/router';
 
 import type { IPageForItem } from '~/interfaces/page';
@@ -34,15 +34,19 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
   const router = useRouter();
   const { Control } = usePageItemControl();
 
-  const handleClick = useCallback(() => {
-    if (item.path == null || item._id == null) return;
-    router.push(item.path);
-  }, [router, item.path, item._id]);
+  const itemSelectedHandler = useCallback((page: IPageForItem) => {
+    if (page.path == null || page._id == null) return;
 
-  const handleWheelClick = useCallback(() => {
-    if (item.path == null || item._id == null) return;
-    window.open(item.path, '_blank');
-  }, [item.path, item._id]);
+    const link = pathUtils.returnPathForURL(page.path, page._id);
+    router.push(link);
+  }, [router]);
+
+  const itemSelectedByWheelClickHandler = useCallback((page: IPageForItem) => {
+    if (page.path == null || page._id == null) return;
+
+    const url = pathUtils.returnPathForURL(page.path, page._id);
+    window.open(url, '_blank');
+  }, []);
 
   return (
     <TreeItemLayout
@@ -55,8 +59,8 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
       isWipPageShown={isWipPageShown}
       isEnableActions={isEnableActions}
       isReadOnlyUser={isReadOnlyUser}
-      onClick={handleClick}
-      onWheelClick={handleWheelClick}
+      onClick={itemSelectedHandler}
+      onWheelClick={itemSelectedByWheelClickHandler}
       onToggle={onToggle}
       customEndComponents={[CountBadgeForPageTreeItem]}
       customHoveredEndComponents={[Control]}
