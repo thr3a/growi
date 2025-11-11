@@ -35,14 +35,16 @@ type Props = {
   isWipPageShown?: boolean;
   isEnableActions?: boolean;
   isReadOnlyUser?: boolean;
+  scrollerElem?: HTMLElement | null;
 };
 
 export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   const {
-    targetPath, targetPathOrId, isWipPageShown = true, isEnableActions = false, isReadOnlyUser = false,
+    targetPath, targetPathOrId,
+    isWipPageShown = true, isEnableActions = false, isReadOnlyUser = false,
+    scrollerElem,
   } = props;
 
-  const scrollElementRef = useRef<HTMLDivElement>(null);
   const [, setRebuildTrigger] = useState(0);
 
   const { data: rootPageResult } = useSWRxRootPage({ suspense: true });
@@ -106,8 +108,8 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
 
   const virtualizer = useVirtualizer({
     count: items.length,
-    getScrollElement: () => scrollElementRef.current,
-    estimateSize: () => 36,
+    getScrollElement: () => scrollerElem ?? null,
+    estimateSize: () => 24,
     overscan: 5,
   });
 
@@ -129,73 +131,60 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   }, [targetPathOrId, items, virtualizer]);
 
   return (
-    <div
-      {...tree.getContainerProps()}
-      ref={scrollElementRef}
-      className={styles['simplified-items-tree']}
-      style={{ height: '100%', overflow: 'auto' }}
-    >
-      <div
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        {virtualizer.getVirtualItems().map((virtualItem) => {
-          const item = items[virtualItem.index];
-          const itemData = item.getItemData();
+    <>
+      {virtualizer.getVirtualItems().map((virtualItem) => {
+        const item = items[virtualItem.index];
+        const itemData = item.getItemData();
 
-          // Skip rendering virtual root
-          if (itemData._id === ROOT_PAGE_VIRTUAL_ID) {
-            return null;
-          }
+        // Skip rendering virtual root
+        if (itemData._id === ROOT_PAGE_VIRTUAL_ID) {
+          return null;
+        }
 
-          // Skip rendering WIP pages if not shown
-          if (!isWipPageShown && itemData.wip) {
-            return null;
-          }
+        // Skip rendering WIP pages if not shown
+        if (!isWipPageShown && itemData.wip) {
+          return null;
+        }
 
-          const isSelected = targetPathOrId === itemData._id || targetPathOrId === itemData.path;
-          const props = item.getProps();
+        const isSelected = targetPathOrId === itemData._id || targetPathOrId === itemData.path;
+        const props = item.getProps();
 
-          return (
-            <div
-              key={virtualItem.key}
-              data-index={virtualItem.index}
-              ref={(node) => {
-                virtualizer.measureElement(node);
-                if (node && props.ref) {
-                  (props.ref as (node: HTMLElement) => void)(node);
+        return (
+          <div
+            key={virtualItem.key}
+            data-index={virtualItem.index}
+            ref={(node) => {
+              virtualizer.measureElement(node);
+              if (node && props.ref) {
+                (props.ref as (node: HTMLElement) => void)(node);
+              }
+            }}
+          >
+            <SimplifiedTreeItem
+              item={itemData}
+              isSelected={isSelected}
+              level={item.getItemMeta().level}
+              isExpanded={item.isExpanded()}
+              isFolder={item.isFolder()}
+              targetPath={targetPath}
+              targetPathOrId={targetPathOrId}
+              isWipPageShown={isWipPageShown}
+              isEnableActions={isEnableActions}
+              isReadOnlyUser={isReadOnlyUser}
+              onToggle={() => {
+                if (item.isExpanded()) {
+                  item.collapse();
                 }
+                else {
+                  item.expand();
+                }
+                // Trigger re-render to show/hide children
+                setRebuildTrigger(prev => prev + 1);
               }}
-            >
-              <SimplifiedTreeItem
-                item={itemData}
-                isSelected={isSelected}
-                level={item.getItemMeta().level}
-                isExpanded={item.isExpanded()}
-                isFolder={item.isFolder()}
-                targetPath={targetPath}
-                targetPathOrId={targetPathOrId}
-                isWipPageShown={isWipPageShown}
-                isEnableActions={isEnableActions}
-                isReadOnlyUser={isReadOnlyUser}
-                onToggle={() => {
-                  if (item.isExpanded()) {
-                    item.collapse();
-                  }
-                  else {
-                    item.expand();
-                  }
-                  // Trigger re-render to show/hide children
-                  setRebuildTrigger(prev => prev + 1);
-                }}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </div>
+            />
+          </div>
+        );
+      })}
+    </>
   );
 };

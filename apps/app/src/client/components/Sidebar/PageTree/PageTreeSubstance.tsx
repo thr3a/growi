@@ -102,68 +102,7 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
   const targetPathOrId = targetId || currentPath;
   const path = currentPath || '/';
 
-  const { data: rootPageResult } = useSWRxRootPage({ suspense: true });
   const sidebarScrollerElem = useSidebarScrollerElem();
-  const [isInitialScrollCompleted, setIsInitialScrollCompleted] = useState(false);
-
-  const rootElemRef = useRef<HTMLDivElement>(null);
-
-  // ***************************  Scroll on init ***************************
-  const scrollOnInit = useCallback(() => {
-    const rootElement = rootElemRef.current;
-    const scrollElement = sidebarScrollerElem;
-
-    if (rootElement == null || scrollElement == null) {
-      return;
-    }
-
-    const scrollTargetElement = rootElement.querySelector<HTMLElement>('[aria-current]');
-
-    if (scrollTargetElement == null) {
-      return;
-    }
-
-    logger.debug('scrollOnInit has invoked');
-
-
-    // NOTE: could not use scrollIntoView
-    //  https://stackoverflow.com/questions/11039885/scrollintoview-causing-the-whole-page-to-move
-
-    // calculate the center point
-    const scrollTop = scrollTargetElement.offsetTop - scrollElement.getBoundingClientRect().height / 2;
-    scrollElement.scrollTo({ top: scrollTop });
-
-    setIsInitialScrollCompleted(true);
-  }, [sidebarScrollerElem]);
-
-  const scrollOnInitDebounced = useMemo(() => debounce(500, scrollOnInit), [scrollOnInit]);
-
-  useEffect(() => {
-    if (isInitialScrollCompleted || rootPageResult == null) {
-      return;
-    }
-
-    const rootElement = rootElemRef.current as HTMLElement | null;
-    if (rootElement == null) {
-      return;
-    }
-
-    const observerCallback = (mutationRecords: MutationRecord[]) => {
-      mutationRecords.forEach(() => scrollOnInitDebounced());
-    };
-
-    const observer = new MutationObserver(observerCallback);
-    observer.observe(rootElement, { childList: true, subtree: true });
-
-    // first call for the situation that all rendering is complete at this point
-    scrollOnInitDebounced();
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [isInitialScrollCompleted, scrollOnInitDebounced, rootPageResult]);
-  // *******************************  end  *******************************
-
 
   if (!migrationStatus?.isV5Compatible) {
     return <PageTreeUnavailable />;
@@ -177,7 +116,7 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
   }
 
   return (
-    <div ref={rootElemRef} className="pt-4">
+    <div className="pt-4">
       {/*
       <ItemsTree
         isEnableActions={!isGuestUser}
@@ -194,6 +133,7 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
         isWipPageShown={isWipPageShown}
         targetPath={path}
         targetPathOrId={targetPathOrId}
+        scrollerElem={sidebarScrollerElem}
       />
 
       {!isGuestUser && !isReadOnlyUser && migrationStatus?.migratablePagesCount != null && migrationStatus.migratablePagesCount !== 0 && (
