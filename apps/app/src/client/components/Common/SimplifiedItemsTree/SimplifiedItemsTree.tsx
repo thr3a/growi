@@ -1,5 +1,7 @@
 import type { FC } from 'react';
-import { useCallback, useRef, useState } from 'react';
+import {
+  useCallback, useEffect, useRef, useState,
+} from 'react';
 
 import { asyncDataLoaderFeature } from '@headless-tree/core';
 import { useTree } from '@headless-tree/react';
@@ -108,6 +110,23 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     estimateSize: () => 36,
     overscan: 5,
   });
+
+  // Scroll to selected item on mount or when targetPathOrId changes
+  useEffect(() => {
+    if (targetPathOrId == null) return;
+
+    const selectedIndex = items.findIndex((item) => {
+      const itemData = item.getItemData();
+      return itemData._id === targetPathOrId || itemData.path === targetPathOrId;
+    });
+
+    if (selectedIndex !== -1) {
+      // Use a small delay to ensure the virtualizer is ready
+      setTimeout(() => {
+        virtualizer.scrollToIndex(selectedIndex, { align: 'center', behavior: 'smooth' });
+      }, 100);
+    }
+  }, [targetPathOrId, items, virtualizer]);
 
   return (
     <div
