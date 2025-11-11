@@ -1,10 +1,7 @@
 import React, {
   useCallback,
-  useState,
   useEffect,
   useMemo,
-  type RefObject,
-  type RefCallback,
   type MouseEvent,
   type JSX,
 } from 'react';
@@ -12,9 +9,7 @@ import React, {
 import { addTrailingSlash } from '@growi/core/dist/utils/path-utils';
 
 import { usePageTreeDescCountMap } from '~/states/ui/page-tree-desc-count-map';
-import { useSWRxPageChildren } from '~/stores/page-listing';
 
-import { ItemNode } from './ItemNode';
 import { SimpleItemContent } from './SimpleItemContent';
 import type { TreeItemProps, TreeItemToolProps } from './interfaces';
 
@@ -26,29 +21,22 @@ const moduleClass = styles['tree-item-layout'] ?? '';
 
 type TreeItemLayoutProps = TreeItemProps & {
   className?: string,
-  itemRef?: RefObject<any> | RefCallback<any>,
   indentSize?: number,
+  onToggleOpen?: () => void,
 }
 
 export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
   const {
     className, itemClassName,
     indentSize = 10,
+    item: page,
     itemLevel: baseItemLevel = 1,
-    itemNode, targetPath, targetPathOrId, isOpen: _isOpen = false,
-    onRenamed, onClick, onClickDuplicateMenuItem, onClickDeleteMenuItem, onWheelClick,
+    targetPath, targetPathOrId, isOpen = false,
     isEnableActions, isReadOnlyUser, isWipPageShown = true,
-    itemRef, itemClass,
     showAlternativeContent,
+    onRenamed, onClick, onClickDuplicateMenuItem, onClickDeleteMenuItem, onWheelClick,
+    onToggleOpen,
   } = props;
-
-  const { page } = itemNode;
-
-  const [currentChildren, setCurrentChildren] = useState<ItemNode[]>([]);
-  const [isOpen, setIsOpen] = useState(_isOpen);
-
-  const { data } = useSWRxPageChildren(isOpen ? page._id : null);
-
 
   const itemClickHandler = useCallback((e: MouseEvent) => {
     // DO NOT handle the event when e.currentTarget and e.target is different
@@ -79,64 +67,35 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
   const descendantCount = getDescCount(page._id) || page.descendantCount || 0;
 
   // hasDescendants flag
-  const isChildrenLoaded = currentChildren?.length > 0;
-  const hasDescendants = descendantCount > 0 || isChildrenLoaded;
+  const hasDescendants = descendantCount > 0;
 
-  const hasChildren = useCallback((): boolean => {
-    return currentChildren != null && currentChildren.length > 0;
-  }, [currentChildren]);
-
-  const onClickLoadChildren = useCallback(() => {
-    setIsOpen(!isOpen);
-  }, [isOpen]);
-
+  // auto open if targetPath is descendant of this page
   useEffect(() => {
+    if (isOpen) return;
+
     const isPathToTarget = page.path != null
       && targetPath.startsWith(addTrailingSlash(page.path))
       && targetPath !== page.path; // Target Page does not need to be opened
-    if (isPathToTarget) setIsOpen(true);
-  }, [targetPath, page.path]);
 
-  /*
-   * When swr fetch succeeded
-   */
-  useEffect(() => {
-    if (isOpen && data != null) {
-      const newChildren = ItemNode.generateNodesFromPages(data.children);
-      setCurrentChildren(newChildren);
-    }
-  }, [data, isOpen, targetPathOrId]);
+    if (isPathToTarget) onToggleOpen?.();
+  }, [targetPath, page.path, isOpen, onToggleOpen]);
 
   const isSelected = useMemo(() => {
     return page._id === targetPathOrId || page.path === targetPathOrId;
   }, [page, targetPathOrId]);
 
-  const ItemClassFixed = itemClass ?? TreeItemLayout;
-
-  const baseProps: Omit<TreeItemProps, 'itemLevel' | 'itemNode'> = {
+  const toolProps: TreeItemToolProps = {
+    item: page,
+    itemLevel: baseItemLevel,
     isEnableActions,
     isReadOnlyUser,
-    isOpen: false,
-    isWipPageShown,
-    targetPath,
-    targetPathOrId,
     onRenamed,
     onClickDuplicateMenuItem,
     onClickDeleteMenuItem,
   };
 
-  const toolProps: TreeItemToolProps = {
-    ...baseProps,
-    itemLevel: baseItemLevel,
-    itemNode,
-    stateHandlers: {
-      setIsOpen,
-    },
-  };
-
   const EndComponents = props.customEndComponents;
   const HoveredEndComponents = props.customHoveredEndComponents;
-  const HeadObChildrenComponents = props.customHeadOfChildrenComponents;
   const AlternativeComponents = props.customAlternativeComponents;
 
   if (!isWipPageShown && page.wip) {
@@ -151,9 +110,10 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
       style={{ paddingLeft: `${baseItemLevel > 1 ? indentSize : 0}px` }}
     >
       <li
-        ref={itemRef}
         role="button"
-        className={`list-group-item list-group-item-action ${itemClassName}
+        className={`list-group-item list-group-item-action
+          ${isSelected ? 'active' : ''}
+          ${itemClassName ?? ''}
           border-0 py-0 ps-0 d-flex align-items-center rounded-1`}
         id={`grw-pagetree-list-${page._id}`}
         onClick={itemClickHandler}
@@ -166,7 +126,7 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
             <button
               type="button"
               className={`btn btn-triangle p-0 ${isOpen ? 'open' : ''}`}
-              onClick={onClickLoadChildren}
+              onClick={onToggleOpen}
             >
               <div className="d-flex justify-content-center">
                 <span className="material-symbols-outlined fs-5">arrow_right</span>
@@ -202,32 +162,6 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
         }
 
       </li>
-      {isOpen && (
-        <div className={`tree-item-layout-children level-${baseItemLevel + 1}`}>
-
-          {HeadObChildrenComponents?.map((HeadObChildrenContents, index) => (
-            // eslint-disable-next-line react/no-array-index-key
-            (<HeadObChildrenContents key={index} {...toolProps} itemLevel={baseItemLevel + 1} />)
-          ))}
-
-          {hasChildren() && currentChildren.map((node) => {
-            const itemProps = {
-              ...baseProps,
-              className,
-              itemLevel: baseItemLevel + 1,
-              itemNode: node,
-              itemClass,
-              itemClassName,
-              onClick,
-            };
-
-            return (
-              <ItemClassFixed key={node.page._id} {...itemProps} />
-            );
-          })}
-
-        </div>
-      )}
     </div>
   );
 };

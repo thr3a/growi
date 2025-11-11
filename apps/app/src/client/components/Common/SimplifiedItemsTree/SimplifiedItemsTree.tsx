@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { asyncDataLoaderFeature } from '@headless-tree/core';
 import { useTree } from '@headless-tree/react';
@@ -28,11 +28,20 @@ function constructRootPageForVirtualRoot(rootPageId: string, allPagesCount: numb
 }
 
 type Props = {
+  targetPath: string;
   targetPathOrId?: string | null;
+  isWipPageShown?: boolean;
+  isEnableActions?: boolean;
+  isReadOnlyUser?: boolean;
 };
 
-export const SimplifiedItemsTree: FC<Props> = ({ targetPathOrId }) => {
+export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
+  const {
+    targetPath, targetPathOrId, isWipPageShown = true, isEnableActions = false, isReadOnlyUser = false,
+  } = props;
+
   const scrollElementRef = useRef<HTMLDivElement>(null);
+  const [, setRebuildTrigger] = useState(0);
 
   const { data: rootPageResult } = useSWRxRootPage({ suspense: true });
   const rootPage = rootPageResult?.rootPage;
@@ -123,6 +132,11 @@ export const SimplifiedItemsTree: FC<Props> = ({ targetPathOrId }) => {
             return null;
           }
 
+          // Skip rendering WIP pages if not shown
+          if (!isWipPageShown && itemData.wip) {
+            return null;
+          }
+
           const isSelected = targetPathOrId === itemData._id || targetPathOrId === itemData.path;
           const props = item.getProps();
 
@@ -136,13 +150,6 @@ export const SimplifiedItemsTree: FC<Props> = ({ targetPathOrId }) => {
                   (props.ref as (node: HTMLElement) => void)(node);
                 }
               }}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                transform: `translateY(${virtualItem.start}px)`,
-              }}
             >
               <SimplifiedTreeItem
                 item={itemData}
@@ -150,6 +157,11 @@ export const SimplifiedItemsTree: FC<Props> = ({ targetPathOrId }) => {
                 level={item.getItemMeta().level}
                 isExpanded={item.isExpanded()}
                 isFolder={item.isFolder()}
+                targetPath={targetPath}
+                targetPathOrId={targetPathOrId}
+                isWipPageShown={isWipPageShown}
+                isEnableActions={isEnableActions}
+                isReadOnlyUser={isReadOnlyUser}
                 onToggle={() => {
                   if (item.isExpanded()) {
                     item.collapse();
@@ -157,6 +169,8 @@ export const SimplifiedItemsTree: FC<Props> = ({ targetPathOrId }) => {
                   else {
                     item.expand();
                   }
+                  // Trigger re-render to show/hide children
+                  setRebuildTrigger(prev => prev + 1);
                 }}
               />
             </div>

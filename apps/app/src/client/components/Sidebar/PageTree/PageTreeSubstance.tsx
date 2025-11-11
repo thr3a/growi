@@ -189,6 +189,10 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
       />
       */}
       <SimplifiedItemsTree
+        isEnableActions={!isGuestUser}
+        isReadOnlyUser={!!isReadOnlyUser}
+        isWipPageShown={isWipPageShown}
+        targetPath={path}
         targetPathOrId={targetPathOrId}
       />
 

@@ -3,11 +3,9 @@ import type { IPageToDeleteWithMeta } from '@growi/core';
 import type { IPageForItem } from '~/interfaces/page';
 import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 
-import type { ItemNode } from '../ItemNode';
-
 type TreeItemBaseProps = {
+  item: IPageForItem,
   itemLevel?: number,
-  itemNode: ItemNode,
   isEnableActions: boolean,
   isReadOnlyUser: boolean,
   onClickDuplicateMenuItem?(pageToDuplicate: IPageForPageDuplicateModal): void,
@@ -26,7 +24,6 @@ export type TreeItemProps = TreeItemBaseProps & {
   targetPathOrId?:string,
   isOpen?: boolean,
   isWipPageShown?: boolean,
-  itemClass?: React.FunctionComponent<TreeItemProps>,
   itemClassName?: string,
   customEndComponents?: Array<React.FunctionComponent<TreeItemToolProps>>,
   customHoveredEndComponents?: Array<React.FunctionComponent<TreeItemToolProps>>,

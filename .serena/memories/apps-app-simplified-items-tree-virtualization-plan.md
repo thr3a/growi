@@ -171,19 +171,23 @@ src/client/components/Common/SimplifiedItemsTree/
 
 **実装方針**: 既存実装よりも @headless-tree の機能を使って新規実装、APIは既存を使用
 
-6. **Drag and Drop**
+6. **Create**
+   - @headless-tree/core の renameFeature を活用
+   - 仮のノードを追加してから renameFeature によりページ名を入力、確定したら API を呼び出してページの実態を作成する
+
+7. **Drag and Drop**
    - @headless-tree/core の dragAndDropFeature を活用
    - 既存の移動API（mutation）を使用
    
-7. **Rename**
+8. **Rename**
    - @headless-tree/core の renameFeature を活用
    - 既存のrename API（mutation）を使用
    
-8. **Duplicate**
+9. **Duplicate**
    - SimplifiedTreeItem にDuplicateボタンの挙動を実装
    - 既存のduplicate API（mutation）を使用
    
-9. **Delete**
+10. **Delete**
    - SimplifiedTreeItem にDeleteボタンの挙動を実装
    - 既存のdelete API（mutation）を使用
 

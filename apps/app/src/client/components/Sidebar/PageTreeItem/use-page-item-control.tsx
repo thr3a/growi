@@ -39,12 +39,11 @@ export const usePageItemControl = (): UsePageItemControl => {
 
   const Control: FC<TreeItemToolProps> = (props) => {
     const {
-      itemNode,
+      item: page,
       isEnableActions,
       isReadOnlyUser,
       onClickDuplicateMenuItem, onClickDeleteMenuItem,
     } = props;
-    const { page } = itemNode;
 
     const { trigger: mutateCurrentUserBookmarks } = useSWRMUTxCurrentUserBookmarks();
     const { trigger: mutatePageInfo } = useSWRMUTxPageInfo(page._id ?? null);
@@ -135,8 +134,7 @@ export const usePageItemControl = (): UsePageItemControl => {
 
 
   const RenameInput: FC<TreeItemToolProps> = (props) => {
-    const { itemNode, onRenamed } = props;
-    const { page } = itemNode;
+    const { item: page, onRenamed } = props;
 
     const parentRef = useRef<HTMLDivElement>(null);
     const [parentRect] = useRect(parentRef);
