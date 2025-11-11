@@ -8,7 +8,7 @@ import { useRouter } from 'next/router';
 
 import { ROOT_PAGE_VIRTUAL_ID } from '~/constants/page-tree';
 import type { IPageForItem } from '~/interfaces/page';
-import { useNotifyTreeUpdate } from '~/states/page-tree-update';
+import { usePageTreeInformationUpdate } from '~/states/page-tree-update';
 import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
 import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 import { usePageDuplicateModalActions } from '~/states/ui/modal/page-duplicate';
@@ -42,27 +42,27 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
 
   const { open: openDuplicateModal } = usePageDuplicateModalActions();
   const { open: openDeleteModal } = usePageDeleteModalActions();
-  const { notifyItemsUpdated } = useNotifyTreeUpdate();
+  const { notifyUpdateItems } = usePageTreeInformationUpdate();
 
   const onClickDuplicateMenuItem = useCallback((page: IPageForPageDuplicateModal) => {
     openDuplicateModal(page, {
       onDuplicated: () => {
         // Notify headless-tree update
         const parentId = item.parent != null ? getIdStringForRef(item.parent) : ROOT_PAGE_VIRTUAL_ID;
-        notifyItemsUpdated([parentId]);
+        notifyUpdateItems([parentId]);
       },
     });
-  }, [openDuplicateModal, notifyItemsUpdated, item.parent]);
+  }, [openDuplicateModal, notifyUpdateItems, item.parent]);
 
   const onClickDeleteMenuItem = useCallback((page: IPageToDeleteWithMeta) => {
     openDeleteModal([page], {
       onDeleted: () => {
         // Notify headless-tree update
         const parentId = item.parent != null ? getIdStringForRef(item.parent) : ROOT_PAGE_VIRTUAL_ID;
-        notifyItemsUpdated([parentId]);
+        notifyUpdateItems([parentId]);
       },
     });
-  }, [openDeleteModal, item.parent, notifyItemsUpdated]);
+  }, [openDeleteModal, item.parent, notifyUpdateItems]);
 
   const { Control } = usePageItemControl();
 
