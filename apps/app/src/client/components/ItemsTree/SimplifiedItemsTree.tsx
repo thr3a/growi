@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import {
-  useCallback, useEffect, useRef, useState,
+  useCallback, useEffect, useState,
 } from 'react';
 
 import { asyncDataLoaderFeature } from '@headless-tree/core';
@@ -11,9 +11,7 @@ import { apiv3Get } from '~/client/util/apiv3-client';
 import type { IPageForTreeItem } from '~/interfaces/page';
 import { useSWRxRootPage } from '~/stores/page-listing';
 
-import { SimplifiedTreeItem } from './SimplifiedTreeItem';
-
-import styles from './SimplifiedItemsTree.module.scss';
+import type { TreeItemProps } from '../TreeItem';
 
 
 const ROOT_PAGE_VIRTUAL_ID = '__virtual_root__';
@@ -31,10 +29,12 @@ function constructRootPageForVirtualRoot(rootPageId: string, allPagesCount: numb
 
 type Props = {
   targetPath: string;
-  targetPathOrId?: string | null;
+  targetPathOrId?: string;
   isWipPageShown?: boolean;
   isEnableActions?: boolean;
   isReadOnlyUser?: boolean;
+  CustomTreeItem: React.FunctionComponent<TreeItemProps>
+  estimateTreeItemSize: () => number;
   scrollerElem?: HTMLElement | null;
 };
 
@@ -42,6 +42,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   const {
     targetPath, targetPathOrId,
     isWipPageShown = true, isEnableActions = false, isReadOnlyUser = false,
+    CustomTreeItem, estimateTreeItemSize,
     scrollerElem,
   } = props;
 
@@ -109,7 +110,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   const virtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => scrollerElem ?? null,
-    estimateSize: () => 24,
+    estimateSize: estimateTreeItemSize,
     overscan: 5,
   });
 
@@ -146,7 +147,6 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
           return null;
         }
 
-        const isSelected = targetPathOrId === itemData._id || targetPathOrId === itemData.path;
         const props = item.getProps();
 
         return (
@@ -160,12 +160,10 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
               }
             }}
           >
-            <SimplifiedTreeItem
+            <CustomTreeItem
               item={itemData}
-              isSelected={isSelected}
-              level={item.getItemMeta().level}
+              itemLevel={item.getItemMeta().level}
               isExpanded={item.isExpanded()}
-              isFolder={item.isFolder()}
               targetPath={targetPath}
               targetPathOrId={targetPathOrId}
               isWipPageShown={isWipPageShown}

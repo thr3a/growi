@@ -1,9 +1,8 @@
 import React, {
-  memo, useCallback, useEffect, useMemo, useRef, useState,
+  memo, useCallback,
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import { debounce } from 'throttle-debounce';
 
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 import { useCurrentPageId, useCurrentPagePath } from '~/states/page';
@@ -13,7 +12,8 @@ import {
 } from '~/stores/page-listing';
 import loggerFactory from '~/utils/logger';
 
-import { SimplifiedItemsTree } from '../../Common/SimplifiedItemsTree';
+import { SimplifiedItemsTree } from '../../ItemsTree';
+import { SimplifiedPageTreeItem, simplifiedPageTreeItemSize } from '../PageTreeItem';
 import { SidebarHeaderReloadButton } from '../SidebarHeaderReloadButton';
 
 import { PrivateLegacyPagesLink } from './PrivateLegacyPagesLink';
@@ -117,22 +117,14 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
 
   return (
     <div className="pt-4">
-      {/*
-      <ItemsTree
-        isEnableActions={!isGuestUser}
-        isReadOnlyUser={!!isReadOnlyUser}
-        isWipPageShown={isWipPageShown}
-        targetPath={path}
-        targetPathOrId={targetPathOrId}
-        CustomTreeItem={PageTreeItem}
-      />
-      */}
       <SimplifiedItemsTree
         isEnableActions={!isGuestUser}
         isReadOnlyUser={!!isReadOnlyUser}
         isWipPageShown={isWipPageShown}
         targetPath={path}
         targetPathOrId={targetPathOrId}
+        CustomTreeItem={SimplifiedPageTreeItem}
+        estimateTreeItemSize={() => simplifiedPageTreeItemSize}
         scrollerElem={sidebarScrollerElem}
       />
 

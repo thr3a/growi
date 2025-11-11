@@ -5,7 +5,7 @@ import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicat
 
 type TreeItemBaseProps = {
   item: IPageForItem,
-  itemLevel?: number,
+  itemLevel: number,
   isEnableActions: boolean,
   isReadOnlyUser: boolean,
   onClickDuplicateMenuItem?(pageToDuplicate: IPageForPageDuplicateModal): void,
@@ -20,16 +20,17 @@ export type TreeItemToolProps = TreeItemBaseProps & {
 };
 
 export type TreeItemProps = TreeItemBaseProps & {
-  targetPath: string,
-  targetPathOrId?:string,
-  isOpen?: boolean,
-  isWipPageShown?: boolean,
+  isExpanded: boolean;
+  targetPath: string;
+  targetPathOrId?: string | null;
+  isWipPageShown?: boolean;
   itemClassName?: string,
   customEndComponents?: Array<React.FunctionComponent<TreeItemToolProps>>,
   customHoveredEndComponents?: Array<React.FunctionComponent<TreeItemToolProps>>,
   customHeadOfChildrenComponents?: Array<React.FunctionComponent<TreeItemToolProps>>,
   showAlternativeContent?: boolean,
   customAlternativeComponents?: Array<React.FunctionComponent<TreeItemToolProps>>,
+  onToggle: () => void;
   onClick?(page: IPageForItem): void,
   onWheelClick?(page: IPageForItem): void,
 };

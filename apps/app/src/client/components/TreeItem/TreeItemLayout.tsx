@@ -22,7 +22,6 @@ const moduleClass = styles['tree-item-layout'] ?? '';
 type TreeItemLayoutProps = TreeItemProps & {
   className?: string,
   indentSize?: number,
-  onToggleOpen?: () => void,
 }
 
 export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
@@ -31,11 +30,11 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
     indentSize = 10,
     item: page,
     itemLevel: baseItemLevel = 1,
-    targetPath, targetPathOrId, isOpen = false,
+    targetPath, targetPathOrId, isExpanded = false,
     isEnableActions, isReadOnlyUser, isWipPageShown = true,
     showAlternativeContent,
     onRenamed, onClick, onClickDuplicateMenuItem, onClickDeleteMenuItem, onWheelClick,
-    onToggleOpen,
+    onToggle,
   } = props;
 
   const itemClickHandler = useCallback((e: MouseEvent) => {
@@ -71,14 +70,14 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
 
   // auto open if targetPath is descendant of this page
   useEffect(() => {
-    if (isOpen) return;
+    if (isExpanded) return;
 
     const isPathToTarget = page.path != null
       && targetPath.startsWith(addTrailingSlash(page.path))
       && targetPath !== page.path; // Target Page does not need to be opened
 
-    if (isPathToTarget) onToggleOpen?.();
-  }, [targetPath, page.path, isOpen, onToggleOpen]);
+    if (isPathToTarget) onToggle?.();
+  }, [targetPath, page.path, isExpanded, onToggle]);
 
   const isSelected = useMemo(() => {
     return page._id === targetPathOrId || page.path === targetPathOrId;
@@ -125,8 +124,8 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
           {hasDescendants && (
             <button
               type="button"
-              className={`btn btn-triangle p-0 ${isOpen ? 'open' : ''}`}
-              onClick={onToggleOpen}
+              className={`btn btn-triangle p-0 ${isExpanded ? 'open' : ''}`}
+              onClick={onToggle}
             >
               <div className="d-flex justify-content-center">
                 <span className="material-symbols-outlined fs-5">arrow_right</span>

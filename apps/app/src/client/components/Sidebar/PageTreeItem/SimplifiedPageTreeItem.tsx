@@ -1,32 +1,28 @@
 import type { FC } from 'react';
 import { useCallback } from 'react';
 
+import { pagePathUtils, pathUtils } from '@growi/core/dist/utils';
 import { useRouter } from 'next/router';
 
-import type { IPageForTreeItem } from '~/interfaces/page';
+import type { IPageForItem } from '~/interfaces/page';
 
-import { CountBadgeForPageTreeItem } from '../../Sidebar/PageTreeItem/CountBadgeForPageTreeItem';
-import { usePageItemControl } from '../../Sidebar/PageTreeItem/use-page-item-control';
+import type { TreeItemProps } from '../../TreeItem';
 import { TreeItemLayout } from '../../TreeItem';
 
+import { CountBadgeForPageTreeItem } from './CountBadgeForPageTreeItem';
+import { usePageItemControl } from './use-page-item-control';
 
-type Props = {
-  item: IPageForTreeItem;
-  isSelected: boolean;
-  level: number;
-  isExpanded: boolean;
-  isFolder: boolean;
-  targetPath: string;
-  targetPathOrId?: string | null;
-  isWipPageShown?: boolean;
-  isEnableActions?: boolean;
-  isReadOnlyUser?: boolean;
-  onToggle: () => void;
-};
+import styles from './PageTreeItem.module.scss';
 
-export const SimplifiedTreeItem: FC<Props> = ({
+const moduleClass = styles['page-tree-item'] ?? '';
+
+
+export const simplifiedPageTreeItemSize = 40; // in px
+
+
+export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
   item,
-  level,
+  itemLevel,
   isExpanded,
   targetPath,
   targetPathOrId,
@@ -50,17 +46,18 @@ export const SimplifiedTreeItem: FC<Props> = ({
 
   return (
     <TreeItemLayout
+      className={moduleClass}
       item={item}
-      itemLevel={level}
+      itemLevel={itemLevel}
       targetPath={targetPath}
       targetPathOrId={targetPathOrId ?? undefined}
-      isOpen={isExpanded}
+      isExpanded={isExpanded}
       isWipPageShown={isWipPageShown}
       isEnableActions={isEnableActions}
       isReadOnlyUser={isReadOnlyUser}
       onClick={handleClick}
       onWheelClick={handleWheelClick}
-      onToggleOpen={onToggle}
+      onToggle={onToggle}
       customEndComponents={[CountBadgeForPageTreeItem]}
       customHoveredEndComponents={[Control]}
     />
