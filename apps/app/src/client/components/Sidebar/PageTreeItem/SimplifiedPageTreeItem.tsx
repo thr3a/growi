@@ -1,10 +1,15 @@
 import type { FC } from 'react';
 import { useCallback } from 'react';
 
+import type { IPageToDeleteWithMeta } from '@growi/core';
 import { pathUtils } from '@growi/core/dist/utils';
 import { useRouter } from 'next/router';
 
 import type { IPageForItem } from '~/interfaces/page';
+import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
+import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
+import { usePageDuplicateModalActions } from '~/states/ui/modal/page-duplicate';
+import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
 
 import type { TreeItemProps } from '../../TreeItem';
 import { TreeItemLayout } from '../../TreeItem';
@@ -32,6 +37,28 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
   onToggle,
 }) => {
   const router = useRouter();
+
+  const { open: openDuplicateModal } = usePageDuplicateModalActions();
+  const { open: openDeleteModal } = usePageDeleteModalActions();
+
+  const onClickDuplicateMenuItem = useCallback((page: IPageForPageDuplicateModal) => {
+    openDuplicateModal(page, {
+      onDuplicated: () => {
+        mutatePageTree();
+        mutateRecentlyUpdated();
+      },
+    });
+  }, [openDuplicateModal]);
+
+  const onClickDeleteMenuItem = useCallback((page: IPageToDeleteWithMeta) => {
+    openDeleteModal([page], {
+      onDeleted: () => {
+        mutatePageTree();
+        mutateRecentlyUpdated();
+      },
+    });
+  }, [openDeleteModal]);
+
   const { Control } = usePageItemControl();
 
   const itemSelectedHandler = useCallback((page: IPageForItem) => {
@@ -62,6 +89,8 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
       onClick={itemSelectedHandler}
       onWheelClick={itemSelectedByWheelClickHandler}
       onToggle={onToggle}
+      onClickDuplicateMenuItem={onClickDuplicateMenuItem}
+      onClickDeleteMenuItem={onClickDeleteMenuItem}
       customEndComponents={[CountBadgeForPageTreeItem]}
       customHoveredEndComponents={[Control]}
     />
