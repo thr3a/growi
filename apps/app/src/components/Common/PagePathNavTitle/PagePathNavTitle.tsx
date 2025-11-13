@@ -50,10 +50,6 @@ export const PagePathNavTitle = (
       latterLinkClassName="fs-2"
     />
   ) : (
-    <PagePathNav
-      {...props}
-      className={className}
-      latterLinkClassName="fs-2"
-    />
+    <PagePathNav {...props} className={className} latterLinkClassName="fs-2" />
   );
 };
