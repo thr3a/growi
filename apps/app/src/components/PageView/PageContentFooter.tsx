@@ -27,7 +27,7 @@ export const PageContentFooter = (
 
   return (
     <div
-      className={`${styles['page-content-footer']} my-4 pt-4 d-edit-none d-print-none}`}
+      className={`${styles['page-content-footer']} my-4 pt-4 d-edit-none`}
     >
       <div className="page-meta">
         <AuthorInfo
