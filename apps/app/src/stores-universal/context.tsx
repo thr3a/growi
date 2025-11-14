@@ -1,8 +1,7 @@
+import type EventEmitter from 'node:events';
 import type { ColorScheme, IUserHasId } from '@growi/core';
-
 import { AcceptedUploadFileType } from '@growi/core';
 import { useSWRStatic } from '@growi/core/dist/swr';
-import type EventEmitter from 'events';
 import type { SWRResponse } from 'swr';
 import useSWR from 'swr';
 import useSWRImmutable from 'swr/immutable';
@@ -18,12 +17,6 @@ declare global {
 }
 
 type Nullable<T> = T | null;
-
-export const useCsrfToken = (
-  initialData?: string,
-): SWRResponse<string, Error> => {
-  return useContextSWR<string, Error>('csrfToken', initialData);
-};
 
 export const useAppTitle = (
   initialData?: string,

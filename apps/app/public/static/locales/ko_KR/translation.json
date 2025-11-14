@@ -857,7 +857,7 @@
     "Password field is required": "비밀번호 필드는 필수입니다.",
     "Username or E-mail has invalid characters": "사용자 이름 또는 이메일에 유효하지 않은 문자가 있습니다.",
     "user_not_found": "사용자를 찾을 수 없습니다.",
-    "provider_duplicated_username_exception": "<p><strong><span class='material-symbols-outlined me-1'>cancel</span>DuplicatedUsernameException 발생</strong></p><p class='mb-0'> {{ failedProviderForDuplicatedUsernameException }} 인증은 성공했지만 새 사용자를 생성할 수 없습니다. <a href='https://github.com/weseek/growi/issues/193'>#193</a> 문제를 참조하십시오.</p>"
+    "provider_duplicated_username_exception": "<p><strong><span class='material-symbols-outlined me-1'>cancel</span>DuplicatedUsernameException 발생</strong></p><p class='mb-0'> {{ failedProviderForDuplicatedUsernameException }} 인증은 성공했지만 새 사용자를 생성할 수 없습니다. <a href='https://github.com/growilabs/growi/issues/193'>#193</a> 문제를 참조하십시오.</p>"
   },
   "grid_edit": {
     "create_bootstrap_4_grid": "Bootstrap 4 그리드 생성",
@@ -959,7 +959,18 @@
   },
   "user_home_page": {
     "bookmarks": "북마크",
-    "recently_created": "최근 생성됨"
+    "recently_created": "최근 생성됨",
+    "recent_activity": "최근 활동",
+    "unknown_action": "지정되지 않은 변경 사항을 적용했습니다",
+    "page_create": "페이지를 생성했습니다",
+    "page_update": "페이지를 업데이트했습니다",
+    "page_delete": "페이지를 삭제했습니다",
+    "page_delete_completely": "페이지를 완전히 삭제했습니다",
+    "page_rename": "페이지 이름을 변경했습니다",
+    "page_revert": "페이지를 되돌렸습니다",
+    "page_duplicate": "페이지를 복제했습니다",
+    "page_like": "페이지에 좋아요를 눌렀습니다",
+    "comment_create": "댓글을 게시했습니다"
   },
   "bookmark_folder": {
     "bookmark_folder": "북마크 폴더",

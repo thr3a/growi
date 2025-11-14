@@ -6,7 +6,6 @@ import UserGroupRelation from '~/server/models/user-group-relation';
 
 import { getOrCreateModel } from '../../../../server/util/mongoose-utils';
 import type { IExternalUserGroupRelation } from '../../interfaces/external-user-group';
-
 import type { ExternalUserGroupDocument } from './external-user-group';
 
 export interface ExternalUserGroupRelationDocument
@@ -15,6 +14,7 @@ export interface ExternalUserGroupRelationDocument
 
 export interface ExternalUserGroupRelationModel
   extends Model<ExternalUserGroupRelationDocument> {
+  // biome-ignore lint/suspicious/noExplicitAny: ignore
   [x: string]: any; // for old methods
 
   PAGE_ITEMS: 50;

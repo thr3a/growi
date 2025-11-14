@@ -1,6 +1,6 @@
+import { type JSX, useState } from 'react';
 import { format } from 'date-fns/format';
 import { useTranslation } from 'next-i18next';
-import { type JSX, useState } from 'react';
 import { Modal, ModalBody, ModalHeader } from 'reactstrap';
 
 import { apiv3Post } from '~/client/util/apiv3-client';
@@ -50,7 +50,7 @@ const PageBulkExportSelectModal = (): JSX.Element => {
           restartJob: true,
         });
         toastSuccess(t('page_export.bulk_export_started'));
-      } catch (e) {
+      } catch (_e) {
         toastError(t('page_export.failed_to_export'));
       }
       setIsRestartModalOpened(false);

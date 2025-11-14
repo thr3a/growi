@@ -891,7 +891,7 @@
     "Password field is required": "Mot de passe requis.",
     "Username or E-mail has invalid characters": "Le nom d'utilisateur ou l'adresse courriel contient des caractères invalides",
     "user_not_found": "Utilisateur introuvable.",
-    "provider_duplicated_username_exception": "<p><strong><span class='material-symbols-outlined me-1'>cancel</span>DuplicatedUsernameException</strong></p><p class='mb-0'> L'authentification est réussie pour {{ failedProviderForDuplicatedUsernameException }} , mais la création d'un utilisateur a échouée. Voir <a href='https://github.com/weseek/growi/issues/193'>#193</a>.</p>"
+    "provider_duplicated_username_exception": "<p><strong><span class='material-symbols-outlined me-1'>cancel</span>DuplicatedUsernameException</strong></p><p class='mb-0'> L'authentification est réussie pour {{ failedProviderForDuplicatedUsernameException }} , mais la création d'un utilisateur a échouée. Voir <a href='https://github.com/growilabs/growi/issues/193'>#193</a>.</p>"
   },
   "grid_edit": {
     "create_bootstrap_4_grid": "Créer grille Bootstrap 4",
@@ -993,7 +993,18 @@
   },
   "user_home_page": {
     "bookmarks": "Favoris",
-    "recently_created": "Page récentes"
+    "recently_created": "Page récentes",
+    "recent_activity": "Activité récente",
+    "unknown_action": "a effectué une modification non spécifiée",
+    "page_create": "a créé une page",
+    "page_update": "a mis à jour une page",
+    "page_delete": "a supprimé une page",
+    "page_delete_completely": "a supprimé complètement une page",
+    "page_rename": "a renommé une page",
+    "page_revert": "a restauré une page",
+    "page_duplicate": "a dupliqué une page",
+    "page_like": "a aimé une page",
+    "comment_create": "a publié un commentaire"
   },
   "bookmark_folder": {
     "bookmark_folder": "dossier de favoris",
