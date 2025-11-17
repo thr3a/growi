@@ -286,49 +286,6 @@ class PdfConvertService implements OnInit {
   }
 
   /**
-   * Get puppeteer cluster configuration from environment variable
-   * @returns merged cluster configuration
-   */
-  private getPuppeteerClusterConfig(): Record<string, any> {
-    // Default puppeteer options
-    const defaultPuppeteerOptions: PuppeteerNodeLaunchOptions = {
-      // ref) https://github.com/growilabs/growi/pull/10192
-      args: ['--no-sandbox'],
-    };
-
-    // Default cluster configuration
-    const defaultConfig = {
-      concurrency: Cluster.CONCURRENCY_CONTEXT,
-      maxConcurrency: 1,
-      workerCreationDelay: 10000,
-      puppeteerOptions: defaultPuppeteerOptions,
-    };
-
-    // Parse configuration from environment variable
-    let customConfig: Record<string, any> = {};
-    if (process.env.PUPPETEER_CLUSTER_CONFIG) {
-      try {
-        customConfig = JSON.parse(process.env.PUPPETEER_CLUSTER_CONFIG);
-      } catch (err) {
-        this.logger.warn(
-          'Failed to parse PUPPETEER_CLUSTER_CONFIG, using default values',
-          err,
-        );
-      }
-    }
-
-    // Merge configurations (customConfig overrides defaultConfig)
-    return {
-      ...defaultConfig,
-      ...customConfig,
-      puppeteerOptions: {
-        ...defaultPuppeteerOptions,
-        ...customConfig.puppeteerOptions,
-      },
-    };
-  }
-
-  /**
    * Initialize puppeteer cluster
    */
   private async initPuppeteerCluster(): Promise<void> {
@@ -359,6 +316,51 @@ class PdfConvertService implements OnInit {
       });
       return pdfResult;
     });
+  }
+
+  /**
+   * Get puppeteer cluster configuration from environment variable
+   * @returns merged cluster configuration
+   */
+  private getPuppeteerClusterConfig(): Record<string, any> {
+    // Default cluster configuration
+    const defaultConfig = {
+      concurrency: Cluster.CONCURRENCY_CONTEXT,
+      maxConcurrency: 1,
+      workerCreationDelay: 10000,
+      // Puppeteer options (not configurable for security reasons)
+      // ref) https://github.com/growilabs/growi/pull/10192
+      puppeteerOptions: {
+        args: ['--no-sandbox'],
+      },
+    };
+
+    // Parse configuration from environment variable
+    let customConfig: Record<string, any> = {};
+    if (process.env.PUPPETEER_CLUSTER_CONFIG) {
+      try {
+        customConfig = JSON.parse(process.env.PUPPETEER_CLUSTER_CONFIG);
+      } catch (err) {
+        this.logger.warn(
+          'Failed to parse PUPPETEER_CLUSTER_CONFIG, using default values',
+          err,
+        );
+      }
+    }
+
+    // Remove puppeteerOptions from custom config if present (not allowed for security)
+    if (customConfig.puppeteerOptions) {
+      this.logger.warn(
+        'puppeteerOptions configuration is not allowed for security reasons and will be ignored',
+      );
+      delete customConfig.puppeteerOptions;
+    }
+
+    // Merge configurations (customConfig overrides defaultConfig, except puppeteerOptions)
+    return {
+      ...defaultConfig,
+      ...customConfig,
+    };
   }
 
   /**
