@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Readable, Writable } from 'node:stream';
 import { pipeline as pipelinePromise } from 'node:stream/promises';
-
 import { OnInit } from '@tsed/common';
 import { Service } from '@tsed/di';
 import { Logger } from '@tsed/logger';
@@ -43,8 +42,6 @@ class PdfConvertService implements OnInit {
   private convertRetryLimit = 5;
 
   private tmpOutputRootDir = '/tmp/page-bulk-export';
-
-  private tmpHtmlDir = `${this.tmpOutputRootDir}/html`;
 
   private jobList: {
     [key: string]: JobInfo;
@@ -183,8 +180,9 @@ class PdfConvertService implements OnInit {
    */
   private getHtmlReadable(jobId: string, appId?: number): Readable {
     const jobHtmlDir = path.join(
-      this.tmpHtmlDir,
+      this.tmpOutputRootDir,
       appId?.toString() ?? '',
+      'html',
       jobId,
     );
     const htmlFileEntries = fs
@@ -227,9 +225,22 @@ class PdfConvertService implements OnInit {
     return new Writable({
       objectMode: true,
       write: async (pageInfo: PageInfo, encoding, callback) => {
-        const fileOutputPath = pageInfo.htmlFilePath
-          .replace(new RegExp(`^${this.tmpHtmlDir}`), this.tmpOutputRootDir)
-          .replace(/\.html$/, '.pdf');
+        const pattern = new RegExp(
+          `^${this.tmpOutputRootDir}(?:\\/([0-9]+))?\\/html\\/(.+?)\\.html$`,
+        );
+
+        const match = pageInfo.htmlFilePath.match(pattern);
+        if (match == null) {
+          // Skip to next pageInfo if path doesn't match expected layout
+          callback();
+          return;
+        }
+
+        // match[1] → optional numeric dir, match[2] → basename (without extension)
+        const numericSegment = match[1] ? `/${match[1]}` : '';
+        const baseName = match[2];
+
+        const fileOutputPath = `${this.tmpOutputRootDir}${numericSegment}/${baseName}.pdf`;
         const fileOutputParentPath = this.getParentPath(fileOutputPath);
 
         try {
@@ -285,6 +296,10 @@ class PdfConvertService implements OnInit {
       concurrency: Cluster.CONCURRENCY_PAGE,
       maxConcurrency: this.maxConcurrency,
       workerCreationDelay: 10000,
+      puppeteerOptions: {
+        // ref) https://github.com/growilabs/growi/pull/10192
+        args: ['--no-sandbox'],
+      },
     });
 
     await this.puppeteerCluster.task(async ({ page, data: htmlString }) => {
