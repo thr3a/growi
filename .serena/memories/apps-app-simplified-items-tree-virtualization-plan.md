@@ -103,67 +103,82 @@ src/client/components/Common/SimplifiedItemsTree/
 - ✅ 選択状態が表示される（展開後に確認可能）
 
 **既知の課題**:
-- ❌ 選択されたページの祖先ページが自動展開されない（M3-B で対応予定）
+- ✅ 選択されたページの祖先ページが自動展開されない → M3-B で解決済み
 
 ---
 
-## 📋 マイルストーン3: 機能の段階的追加 🔄 次のステップ
+## 📋 マイルストーン3: 機能の段階的追加 ✅ A・B完了、C以降検討中
 
 ### 目的
 - M1, M2で削ぎ落とした機能を段階的に復活させる
 - 元の実装から必要な部分だけを移植
 
-### 優先度 A: UI機能の移植（既存実装を模倣） 🔄 次
+### 優先度 A: UI機能の移植（既存実装を模倣） ✅ 完了
 
 **参考実装**: `CustomTreeItem`, `TreeItemLayout`, `PageTreeItem`
 
-1. **WIPページフィルター**: isWipPageShown propsと表示制御
-   - SimplifiedItemsTree に isWipPageShown props を追加
-   - SimplifiedTreeItem でWIPページの表示/非表示を制御
+1. **WIPページフィルター**: ✅ 実装済み
+   - **実装場所**: `SimplifiedItemsTree.tsx:33,156-158`, `SimplifiedPageTreeItem.tsx:91`
+   - SimplifiedItemsTree に isWipPageShown props を追加済み
+   - WIPページの表示/非表示を制御済み
    
-2. **descendantCountバッジ**: CountBadgeForPageTreeItem移植
-   - `CountBadgeForPageTreeItem` コンポーネントを移植
-   - SimplifiedTreeItem に descendantCount バッジを表示
+2. **descendantCountバッジ**: ✅ 実装済み
+   - **実装場所**: `SimplifiedPageTreeItem.tsx:99`
+   - `CountBadgeForPageTreeItem` を `customEndComponents` として実装済み
+   - SimplifiedPageTreeItem が TreeItemLayout に渡している
 
-3. **EndComponent, HoveredEndContent の移植**（UIのみ）
-   - 既存の `EndComponent` を移植
-   - hover時に表示される操作ボタンのUI（rename/duplicate/delete）
-   - **注**: ボタンの挙動は優先度Cで実装、UIのみ先行実装
+3. **EndComponent, HoveredEndContent の移植**: ✅ 実装済み
+   - **実装場所**: `SimplifiedPageTreeItem.tsx:100`
+   - `Control` を `customHoveredEndComponents` として実装済み
+   - hover時の操作ボタン（duplicate/delete）の挙動も実装済み（47-65行目）
+   - TreeItemLayout でレンダリングされる
 
 **実装方針**:
-- 既存実装からコピー&ペースト
-- SimplifiedItemsTreeの構造に合わせて調整
-- 1機能ずつ追加 → 動作確認 → 次の機能
-
-**工数**: 1.5日
+- ✅ 既存実装（TreeItemLayout）を活用
+- ✅ SimplifiedPageTreeItem で customEndComponents と customHoveredEndComponents を指定
+- ✅ TreeItemLayout がレンダリングを担当
 
 ---
 
-### 優先度 B: ナビゲーション機能
+### 優先度 B: ナビゲーション機能 ✅ 完了
 
 **参考実装**: `TreeItemLayout` の useEffect
 
-4. **選択ページまでの自動展開**: targetPathOrIdに対応するページの祖先を自動展開
-   - TreeItemLayout の以下のロジックを参考に実装:
+4. **選択ページまでの自動展開**: ✅ 実装済み
+   - **実装場所**: `TreeItemLayout.tsx:72-80`
+   - TreeItemLayoutのuseEffectで自動展開ロジックを実装:
      ```typescript
      useEffect(() => {
+       if (isExpanded) return;
        const isPathToTarget = page.path != null
          && targetPath.startsWith(addTrailingSlash(page.path))
-         && targetPath !== page.path; // Target Page does not need to be opened
-       if (isPathToTarget) setIsOpen(true);
-     }, [targetPath, page.path]);
+         && targetPath !== page.path;
+       if (isPathToTarget) onToggle?.();
+     }, [targetPath, page.path, isExpanded, onToggle]);
      ```
-   - SimplifiedItemsTree に同様のロジックを実装
+   - SimplifiedPageTreeItemがTreeItemLayoutを使用しているため、自動的に機能する
 
-5. **初期スクロール**: usePageTreeScroll実装
-   - 選択されたページが画面内に表示されるようスクロール
-   - `@tanstack/react-virtual` の scrollToIndex 機能を活用
+5. **初期スクロール**: ✅ 実装済み
+   - **実装場所**: `SimplifiedItemsTree.tsx:128-142`
+   - `@tanstack/react-virtual` の scrollToIndex 機能を活用:
+     ```typescript
+     useEffect(() => {
+       if (targetPathOrId == null) return;
+       const selectedIndex = items.findIndex((item) => {
+         const itemData = item.getItemData();
+         return itemData._id === targetPathOrId || itemData.path === targetPathOrId;
+       });
+       if (selectedIndex !== -1) {
+         setTimeout(() => {
+           virtualizer.scrollToIndex(selectedIndex, { align: 'center', behavior: 'smooth' });
+         }, 100);
+       }
+     }, [targetPathOrId, items, virtualizer]);
+     ```
 
 **実装方針**:
-- TreeItemLayoutのロジックを参考に、SimplifiedItemsTreeに適用
-- @headless-tree/react と @tanstack/react-virtual の機能を活用
-
-**工数**: 1日
+- ✅ TreeItemLayoutのロジックを活用（自動展開）
+- ✅ @tanstack/react-virtual の scrollToIndex 機能を活用（初期スクロール）
 
 ---
 
@@ -336,20 +351,27 @@ src/client/components/Common/SimplifiedItemsTree/
 
 ---
 
-## 📊 現在の進捗状況（2025-11-10）
+## 📊 現在の進捗状況（2025-11-20）
 
-**完了**: M1 ✅、M2 ✅  
-**次のステップ**: M3-A（UI機能の移植）  
-**優先対応**: WIPページフィルター、descendantCountバッジ、EndComponent移植
+**完了**: M1 ✅、M2 ✅、M3-A ✅、M3-B ✅  
+**次のステップ**: M3-C（操作機能）またはM4（デグレチェック）  
+**優先対応**: M3-Cの必要性を検討、不要ならM4へ進む
 
 **実装済みコンポーネント**:
 - `SimplifiedItemsTree.tsx`: @headless-tree/react + @tanstack/react-virtual 統合済み
-- `SimplifiedTreeItem.tsx`: 基本的なツリーアイテム表示
+- `SimplifiedPageTreeItem.tsx`: UI機能、ナビゲーション機能すべて実装済み
 - バックエンドAPI: `/page-listing/item` エンドポイント追加済み
 
+**実装済み機能**:
+- ✅ WIPページフィルター
+- ✅ descendantCountバッジ表示
+- ✅ hover時の操作ボタン（duplicate/delete）
+- ✅ 選択ページまでの自動展開
+- ✅ 選択ページへの初期スクロール
+
 **既知の課題**:
-1. 選択ページの祖先が自動展開されない → M3-B で対応予定
-2. まだPageTreeSubstanceで差し替えていない → M3完了後に対応予定
+1. ~~選択ページの祖先が自動展開されない~~ → M3-B で解決済み ✅
+2. まだPageTreeSubstanceで差し替えていない → 実際にはPageTreeSubstanceでSimplifiedItemsTreeを使用中 ✅
 
 ---
 
@@ -359,4 +381,4 @@ src/client/components/Common/SimplifiedItemsTree/
 
 ## 📝 最終更新日
 
-2025-11-10 (M2完了、M3優先度整理完了)
+2025-11-20 (M3-A・M3-B完了確認済み)
