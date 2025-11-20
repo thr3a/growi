@@ -21,7 +21,6 @@ const CustomizeSettingContents = dynamic(
 );
 
 type PageProps = {
-  isDefaultBrandLogoUsed: boolean;
   isCustomizedLogoUploaded: boolean;
   customTitleTemplate?: string;
 };
@@ -34,7 +33,6 @@ const AdminCustomizeSettingsPage: NextPageWithLayout<Props> = (
 ) => {
   useHydrateAtoms(
     [
-      [atoms.isDefaultLogoAtom, props.isDefaultBrandLogoUsed],
       [atoms.customTitleTemplateAtom, props.customTitleTemplate],
       [isCustomizedLogoUploadedAtom, props.isCustomizedLogoUploaded],
     ],
@@ -66,8 +64,6 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
 
   const customizePropsFragment = {
     props: {
-      isDefaultBrandLogoUsed:
-        await crowi.attachmentService.isDefaultBrandLogoUsed(),
       isCustomizedLogoUploaded:
         await crowi.attachmentService.isBrandLogoExist(),
       customTitleTemplate: crowi.configManager.getConfig('customize:title'),
