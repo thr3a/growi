@@ -62,8 +62,8 @@ const getServerSideConfigurationProps: GetServerSideProps<
 
   return {
     props: {
-      invitedFormUsername: invitedForm?.username ?? '',
-      invitedFormName: invitedForm?.name ?? '',
+      invitedFormUsername: invitedForm?.username,
+      invitedFormName: invitedForm?.name,
     },
   };
 };
