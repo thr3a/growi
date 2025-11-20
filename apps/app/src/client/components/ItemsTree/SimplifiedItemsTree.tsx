@@ -1,13 +1,10 @@
 import type { FC } from 'react';
-import {
-  useCallback, useEffect, useState,
-} from 'react';
+import { useState } from 'react';
 
 import { asyncDataLoaderFeature } from '@headless-tree/core';
 import { useTree } from '@headless-tree/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
-import { apiv3Get } from '~/client/util/apiv3-client';
 import { ROOT_PAGE_VIRTUAL_ID } from '~/constants/page-tree';
 import type { IPageForTreeItem } from '~/interfaces/page';
 import { usePageTreeInformationGeneration, usePageTreeRevalidationEffect } from '~/states/page-tree-update';
@@ -15,17 +12,8 @@ import { useSWRxRootPage } from '~/stores/page-listing';
 
 import type { TreeItemProps } from '../TreeItem';
 
-function constructRootPageForVirtualRoot(rootPageId: string, allPagesCount: number): IPageForTreeItem {
-  return {
-    _id: rootPageId,
-    path: '/',
-    parent: null,
-    descendantCount: allPagesCount,
-    grant: 1,
-    isEmpty: false,
-    wip: false,
-  };
-}
+import { usePageTreeDataLoader } from './hooks/usePageTreeDataLoader';
+import { useScrollToSelectedItem } from './hooks/useScrollToSelectedItem';
 
 type Props = {
   targetPath: string;
@@ -53,35 +41,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   const rootPageId = rootPage?._id ?? ROOT_PAGE_VIRTUAL_ID;
   const allPagesCount = rootPage?.descendantCount ?? 0;
 
-  const getItem = useCallback(async (itemId: string): Promise<IPageForTreeItem> => {
-    // Virtual root (should rarely be called since it's provided by getChildrenWithData)
-    if (itemId === ROOT_PAGE_VIRTUAL_ID) {
-      return constructRootPageForVirtualRoot(rootPageId, allPagesCount);
-    }
-
-    // For all pages (including root), use /page-listing/item endpoint
-    // Note: This should rarely be called thanks to getChildrenWithData caching
-    const response = await apiv3Get<{ item: IPageForTreeItem }>('/page-listing/item', { id: itemId });
-    return response.data.item;
-  }, [allPagesCount, rootPageId]);
-
-  const getChildrenWithData = useCallback(async (itemId: string) => {
-    // Virtual root returns root page as its only child
-    // Use actual MongoDB _id as tree item ID to avoid duplicate API calls
-    if (itemId === ROOT_PAGE_VIRTUAL_ID) {
-      return [{
-        id: rootPageId,
-        data: constructRootPageForVirtualRoot(rootPageId, allPagesCount),
-      }];
-    }
-
-    // For all pages (including root), fetch children using their _id
-    const response = await apiv3Get<{ children: IPageForTreeItem[] }>('/page-listing/children', { id: itemId });
-    return response.data.children.map(child => ({
-      id: child._id,
-      data: child,
-    }));
-  }, [allPagesCount, rootPageId]);
+  const dataLoader = usePageTreeDataLoader(rootPageId, allPagesCount);
 
   const tree = useTree<IPageForTreeItem>({
     rootItemId: ROOT_PAGE_VIRTUAL_ID,
@@ -98,10 +58,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
       isEmpty: false,
       wip: false,
     }),
-    dataLoader: {
-      getItem,
-      getChildrenWithData,
-    },
+    dataLoader,
     features: [asyncDataLoaderFeature],
   });
 
@@ -125,21 +82,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   });
 
   // Scroll to selected item on mount or when targetPathOrId changes
-  useEffect(() => {
-    if (targetPathOrId == null) return;
-
-    const selectedIndex = items.findIndex((item) => {
-      const itemData = item.getItemData();
-      return itemData._id === targetPathOrId || itemData.path === targetPathOrId;
-    });
-
-    if (selectedIndex !== -1) {
-      // Use a small delay to ensure the virtualizer is ready
-      setTimeout(() => {
-        virtualizer.scrollToIndex(selectedIndex, { align: 'center', behavior: 'smooth' });
-      }, 100);
-    }
-  }, [targetPathOrId, items, virtualizer]);
+  useScrollToSelectedItem({ targetPathOrId, items, virtualizer });
 
   return (
     <div className="list-group">
