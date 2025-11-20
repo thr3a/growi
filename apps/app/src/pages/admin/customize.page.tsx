@@ -22,7 +22,7 @@ const CustomizeSettingContents = dynamic(
 
 type PageProps = {
   isCustomizedLogoUploaded: boolean;
-  customTitleTemplate: string;
+  customTitleTemplate?: string;
 };
 
 type Props = AdminCommonProps & PageProps;
@@ -66,7 +66,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
     props: {
       isCustomizedLogoUploaded:
         await crowi.attachmentService.isBrandLogoExist(),
-      customTitleTemplate: crowi.configManager.getConfig('customize:title') ?? '',
+      customTitleTemplate:
+        crowi.configManager.getConfig('customize:title') ?? '',
     },
   } satisfies { props: PageProps };
 
