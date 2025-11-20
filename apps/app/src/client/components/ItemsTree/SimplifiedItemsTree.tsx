@@ -142,7 +142,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   }, [targetPathOrId, items, virtualizer]);
 
   return (
-    <>
+    <div className="list-group">
       {virtualizer.getVirtualItems().map((virtualItem) => {
         const item = items[virtualItem.index];
         const itemData = item.getItemData();
@@ -193,6 +193,6 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
           </div>
         );
       })}
-    </>
+    </div>
   );
 };
