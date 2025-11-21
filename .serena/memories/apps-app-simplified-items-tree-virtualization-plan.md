@@ -29,7 +29,6 @@ src/client/components/Common/SimplifiedItemsTree/
 **実装済み機能**:
 - ✅ ページのフラットリスト表示（階層なし）
 - ✅ クリックでページ遷移
-- ✅ 選択状態の表示（aria-current）
 
 ### 1.2. PageTreeSubstanceでの差し替え ✅
 

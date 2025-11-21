@@ -117,7 +117,6 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
         id={`grw-pagetree-list-${page._id}`}
         onClick={itemClickHandler}
         onMouseUp={itemMouseupHandler}
-        aria-current={isSelected ? true : undefined}
       >
 
         <div className="btn-triangle-container d-flex justify-content-center">
