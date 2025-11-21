@@ -3,7 +3,6 @@ import dynamic from 'next/dynamic';
 import { useHydrateAtoms } from 'jotai/utils';
 
 import type { CrowiRequest } from '~/interfaces/crowi-request';
-import { _atomsForAdminPagesHydration as atoms } from '~/states/global';
 import { isCustomizedLogoUploadedAtom } from '~/states/server-configurations';
 
 import type { NextPageWithLayout } from '../_app.page';
@@ -33,7 +32,6 @@ const AdminCustomizeSettingsPage: NextPageWithLayout<Props> = (
 ) => {
   useHydrateAtoms(
     [
-      [atoms.customTitleTemplateAtom, props.customTitleTemplate],
       [isCustomizedLogoUploadedAtom, props.isCustomizedLogoUploaded],
     ],
     { dangerouslyForceHydrate: true },
@@ -66,8 +64,6 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
     props: {
       isCustomizedLogoUploaded:
         await crowi.attachmentService.isBrandLogoExist(),
-      customTitleTemplate:
-        crowi.configManager.getConfig('customize:title') ?? '',
     },
   } satisfies { props: PageProps };
 
