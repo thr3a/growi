@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 
+import { LoadingSpinner } from '@growi/ui/dist/components';
 import { useTranslation } from 'next-i18next';
 import PropTypes from 'prop-types';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
@@ -17,6 +18,7 @@ import { withUnstatedContainers } from '../../UnstatedUtils';
 import { EnvVarsTable } from './EnvVarsTable';
 import SystemInfomationTable from './SystemInfomationTable';
 
+
 const logger = loggerFactory('growi:admin');
 
 const AdminHome = (props) => {
@@ -24,7 +26,7 @@ const AdminHome = (props) => {
   const { t } = useTranslation();
   const { data: migrationStatus } = useSWRxV5MigrationStatus();
 
-  const fetchAdminHomeData = useCallback(async() => {
+  const fetchAdminHomeData = useCallback(async () => {
     try {
       await adminHomeContainer.retrieveAdminHomeData();
     }
@@ -37,6 +39,10 @@ const AdminHome = (props) => {
   useEffect(() => {
     fetchAdminHomeData();
   }, [fetchAdminHomeData]);
+
+  if (adminHomeContainer.state.growiVersion == null) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div data-testid="admin-home">
@@ -59,7 +65,7 @@ const AdminHome = (props) => {
         )
       }
       {
-      // Alert message will be displayed in case that V5 migration has not been compleated
+        // Alert message will be displayed in case that V5 migration has not been compleated
         (migrationStatus != null && !migrationStatus.isV5Compatible)
         && (
           <div className={`alert ${migrationStatus.isV5Compatible == null ? 'alert-warning' : 'alert-info'}`}>
