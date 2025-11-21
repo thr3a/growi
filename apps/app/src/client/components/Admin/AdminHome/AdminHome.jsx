@@ -26,7 +26,7 @@ const AdminHome = (props) => {
   const { t } = useTranslation();
   const { data: migrationStatus } = useSWRxV5MigrationStatus();
 
-  const fetchAdminHomeData = useCallback(async () => {
+  const fetchAdminHomeData = useCallback(async() => {
     try {
       await adminHomeContainer.retrieveAdminHomeData();
     }
