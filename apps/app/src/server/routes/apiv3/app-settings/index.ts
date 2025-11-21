@@ -911,7 +911,7 @@ module.exports = (crowi) => {
         'mail:sesSecretAccessKey': req.body.sesSecretAccessKey,
       };
 
-      let mailSettingParams;
+      let mailSettingParams: Awaited<ReturnType<typeof updateMailSettinConfig>>;
       try {
         mailSettingParams = await updateMailSettinConfig(
           requestSesSettingParams,

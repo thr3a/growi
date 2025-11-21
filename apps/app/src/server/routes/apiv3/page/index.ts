@@ -26,6 +26,7 @@ import { pipeline } from 'stream/promises';
 
 import { SupportedAction, SupportedTargetModel } from '~/interfaces/activity';
 import type { IPageGrantData } from '~/interfaces/page';
+import type { IRecordApplicableGrant } from '~/interfaces/page-grant';
 import type Crowi from '~/server/crowi';
 import { accessTokenParser } from '~/server/middlewares/access-token-parser';
 import { generateAddActivityMiddleware } from '~/server/middlewares/add-activity';
@@ -208,7 +209,7 @@ module.exports = (crowi: Crowi) => {
         | IDataWithMeta<null, IPageNotFoundInfo> = {
         data: null,
       };
-      let pages;
+      let pages: HydratedDocument<PageDocument>[] = [];
       try {
         if (isSharedPage) {
           const shareLink = await ShareLink.findOne({
@@ -487,7 +488,7 @@ module.exports = (crowi: Crowi) => {
     async (req, res) => {
       const { pageId, bool: isLiked } = req.body;
 
-      let page;
+      let page: HydratedDocument<PageDocument> | null;
       try {
         page = await Page.findByIdAndViewer(pageId, req.user);
         if (page == null) {
@@ -504,7 +505,7 @@ module.exports = (crowi: Crowi) => {
         return res.apiv3Err(err, 500);
       }
 
-      const result = { page, seenUser: page.seenUsers };
+      const result = { page, seenUser: page?.seenUsers };
 
       const parameters = {
         targetModel: SupportedTargetModel.MODEL_PAGE,
@@ -873,7 +874,7 @@ module.exports = (crowi: Crowi) => {
         );
       }
 
-      let data;
+      let data: IRecordApplicableGrant;
       try {
         data = await crowi.pageGrantService.calcApplicableGrantData(
           page,
@@ -954,7 +955,7 @@ module.exports = (crowi: Crowi) => {
         );
       }
 
-      let data;
+      let data: PageDocument;
       try {
         const grantData = { grant, userRelatedGrantedGroups };
         data = await crowi.pageService.updateGrant(page, req.user, grantData);
@@ -1001,7 +1002,7 @@ module.exports = (crowi: Crowi) => {
       const revisionId: string | undefined = req.query.revisionId;
 
       let revision: HydratedDocument<IRevision> | null;
-      let pagePath;
+      let pagePath: string;
 
       const Page = mongoose.model<HydratedDocument<PageDocument>, PageModel>(
         'Page',
