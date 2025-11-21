@@ -10,6 +10,7 @@ function constructRootPageForVirtualRoot(rootPageId: string, allPagesCount: numb
   return {
     _id: rootPageId,
     path: '/',
+    parent: null,
     descendantCount: allPagesCount,
     grant: 1,
     isEmpty: false,

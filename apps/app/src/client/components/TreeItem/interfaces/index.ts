@@ -1,10 +1,10 @@
 import type { IPageToDeleteWithMeta } from '@growi/core';
 
-import type { IPageForItem } from '~/interfaces/page';
+import type { IPageForTreeItem } from '~/interfaces/page';
 import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 
 type TreeItemBaseProps = {
-  item: IPageForItem,
+  item: IPageForTreeItem,
   itemLevel: number,
   isEnableActions: boolean,
   isReadOnlyUser: boolean,
@@ -31,6 +31,6 @@ export type TreeItemProps = TreeItemBaseProps & {
   showAlternativeContent?: boolean,
   customAlternativeComponents?: Array<React.FunctionComponent<TreeItemToolProps>>,
   onToggle: () => void;
-  onClick?(page: IPageForItem): void,
-  onWheelClick?(page: IPageForItem): void,
+  onClick?(page: IPageForTreeItem): void,
+  onWheelClick?(page: IPageForTreeItem): void,
 };

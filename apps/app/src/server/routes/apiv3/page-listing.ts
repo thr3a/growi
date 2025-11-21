@@ -206,6 +206,7 @@ const routerFactory = (crowi: Crowi): Router => {
         const item: IPageForTreeItem = {
           _id: page._id.toString(),
           path: page.path,
+          parent: page.parent,
           descendantCount: page.descendantCount,
           grant: page.grant,
           isEmpty: page.isEmpty,
