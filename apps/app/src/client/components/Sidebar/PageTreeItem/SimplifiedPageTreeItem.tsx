@@ -29,8 +29,6 @@ export const simplifiedPageTreeItemSize = 40; // in px
 
 export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
   item,
-  itemLevel,
-  isExpanded,
   targetPath,
   targetPathOrId,
   isWipPageShown,
@@ -40,6 +38,8 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
 }) => {
   const router = useRouter();
 
+  const itemData = item.getItemData();
+
   const { open: openDuplicateModal } = usePageDuplicateModalActions();
   const { open: openDeleteModal } = usePageDeleteModalActions();
   const { notifyUpdateItems } = usePageTreeInformationUpdate();
@@ -48,21 +48,21 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
     openDuplicateModal(page, {
       onDuplicated: () => {
         // Notify headless-tree update
-        const parentId = item.parent != null ? getIdStringForRef(item.parent) : ROOT_PAGE_VIRTUAL_ID;
+        const parentId = itemData.parent != null ? getIdStringForRef(itemData.parent) : ROOT_PAGE_VIRTUAL_ID;
         notifyUpdateItems([parentId]);
       },
     });
-  }, [openDuplicateModal, notifyUpdateItems, item.parent]);
+  }, [openDuplicateModal, notifyUpdateItems, itemData.parent]);
 
   const onClickDeleteMenuItem = useCallback((page: IPageToDeleteWithMeta) => {
     openDeleteModal([page], {
       onDeleted: () => {
         // Notify headless-tree update
-        const parentId = item.parent != null ? getIdStringForRef(item.parent) : ROOT_PAGE_VIRTUAL_ID;
+        const parentId = itemData.parent != null ? getIdStringForRef(itemData.parent) : ROOT_PAGE_VIRTUAL_ID;
         notifyUpdateItems([parentId]);
       },
     });
-  }, [openDeleteModal, item.parent, notifyUpdateItems]);
+  }, [openDeleteModal, itemData.parent, notifyUpdateItems]);
 
   const { Control } = usePageItemControl();
 
@@ -84,10 +84,8 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
     <TreeItemLayout
       className={moduleClass}
       item={item}
-      itemLevel={itemLevel}
       targetPath={targetPath}
       targetPathOrId={targetPathOrId ?? undefined}
-      isExpanded={isExpanded}
       isWipPageShown={isWipPageShown}
       isEnableActions={isEnableActions}
       isReadOnlyUser={isReadOnlyUser}

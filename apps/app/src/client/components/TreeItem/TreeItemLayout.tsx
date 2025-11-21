@@ -1,7 +1,8 @@
-import React, {
+import {
   useCallback,
   useEffect,
   useMemo,
+  useState,
   type MouseEvent,
   type JSX,
 } from 'react';
@@ -28,14 +29,29 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
   const {
     className, itemClassName,
     indentSize = 10,
-    item: page,
-    itemLevel: baseItemLevel = 1,
-    targetPath, targetPathOrId, isExpanded = false,
+    item,
+    targetPath, targetPathOrId,
     isEnableActions, isReadOnlyUser, isWipPageShown = true,
     showAlternativeContent,
     onRenamed, onClick, onClickDuplicateMenuItem, onClickDeleteMenuItem, onWheelClick,
     onToggle,
   } = props;
+
+  const page = item.getItemData();
+  const itemLevel = item.getItemMeta().level;
+
+  const [isAutoOpenerInitialized, setAutoOpenerInitialized] = useState(false);
+
+  const toggleHandler = useCallback(() => {
+    if (item.isExpanded()) {
+      item.collapse();
+    }
+    else {
+      item.expand();
+    }
+
+    onToggle?.();
+  }, [item, onToggle]);
 
   const itemClickHandler = useCallback((e: MouseEvent) => {
     // DO NOT handle the event when e.currentTarget and e.target is different
@@ -70,22 +86,27 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
 
   // auto open if targetPath is descendant of this page
   useEffect(() => {
-    if (isExpanded) return;
+    if (!isAutoOpenerInitialized) {
+      const isPathToTarget = page.path != null
+        && targetPath.startsWith(addTrailingSlash(page.path))
+        && targetPath !== page.path; // Target Page does not need to be opened
 
-    const isPathToTarget = page.path != null
-      && targetPath.startsWith(addTrailingSlash(page.path))
-      && targetPath !== page.path; // Target Page does not need to be opened
+      if (isPathToTarget) {
+        item.expand();
+        onToggle?.();
+      }
+    }
 
-    if (isPathToTarget) onToggle?.();
-  }, [targetPath, page.path, isExpanded, onToggle]);
+    setAutoOpenerInitialized(true);
+
+  }, [targetPath, page.path, isAutoOpenerInitialized, item, onToggle]);
 
   const isSelected = useMemo(() => {
     return page._id === targetPathOrId || page.path === targetPathOrId;
   }, [page, targetPathOrId]);
 
   const toolProps: TreeItemToolProps = {
-    item: page,
-    itemLevel: baseItemLevel,
+    item,
     isEnableActions,
     isReadOnlyUser,
     onRenamed,
@@ -105,8 +126,8 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
     <div
       id={`tree-item-layout-${page._id}`}
       data-testid="grw-pagetree-item-container"
-      className={`${moduleClass} ${className} level-${baseItemLevel}`}
-      style={{ paddingLeft: `${baseItemLevel > 1 ? indentSize : 0}px` }}
+      className={`${moduleClass} ${className} level-${itemLevel}`}
+      style={{ paddingLeft: `${itemLevel > 1 ? indentSize : 0}px` }}
     >
       <li
         role="button"
@@ -123,8 +144,8 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
           {hasDescendants && (
             <button
               type="button"
-              className={`btn btn-triangle p-0 ${isExpanded ? 'open' : ''}`}
-              onClick={onToggle}
+              className={`btn btn-triangle p-0 ${item.isExpanded() ? 'open' : ''}`}
+              onClick={toggleHandler}
             >
               <div className="d-flex justify-content-center">
                 <span className="material-symbols-outlined fs-5">arrow_right</span>

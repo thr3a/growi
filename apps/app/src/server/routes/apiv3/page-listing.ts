@@ -207,6 +207,7 @@ const routerFactory = (crowi: Crowi): Router => {
           _id: page._id.toString(),
           path: page.path,
           parent: page.parent,
+          revision: page.revision, // required to create an IPageToDeleteWithMeta instance
           descendantCount: page.descendantCount,
           grant: page.grant,
           isEmpty: page.isEmpty,

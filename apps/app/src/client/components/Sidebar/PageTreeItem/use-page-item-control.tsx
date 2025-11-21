@@ -6,6 +6,7 @@ import React, {
 import nodePath from 'path';
 
 import type { IPageInfoExt, IPageToDeleteWithMeta } from '@growi/core';
+import { getIdStringForRef } from '@growi/core';
 import { pathUtils } from '@growi/core/dist/utils';
 import { useRect } from '@growi/ui/dist/utils';
 import { useTranslation } from 'next-i18next';
@@ -39,11 +40,12 @@ export const usePageItemControl = (): UsePageItemControl => {
 
   const Control: FC<TreeItemToolProps> = (props) => {
     const {
-      item: page,
+      item,
       isEnableActions,
       isReadOnlyUser,
       onClickDuplicateMenuItem, onClickDeleteMenuItem,
     } = props;
+    const page = item.getItemData();
 
     const { trigger: mutateCurrentUserBookmarks } = useSWRMUTxCurrentUserBookmarks();
     const { trigger: mutatePageInfo } = useSWRMUTxPageInfo(page._id ?? null);
@@ -87,7 +89,7 @@ export const usePageItemControl = (): UsePageItemControl => {
       const pageToDelete: IPageToDeleteWithMeta = {
         data: {
           _id: page._id,
-          revision: page.revision as string,
+          revision: page.revision != null ? getIdStringForRef(page.revision) : null,
           path: page.path,
         },
         meta: pageInfo,
@@ -134,7 +136,8 @@ export const usePageItemControl = (): UsePageItemControl => {
 
 
   const RenameInput: FC<TreeItemToolProps> = (props) => {
-    const { item: page, onRenamed } = props;
+    const { item, onRenamed } = props;
+    const page = item.getItemData();
 
     const parentRef = useRef<HTMLDivElement>(null);
     const [parentRect] = useRect(parentRef);

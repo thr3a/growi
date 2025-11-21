@@ -8,7 +8,8 @@ import { usePageTreeDescCountMap } from '~/states/ui/page-tree-desc-count-map';
 export const CountBadgeForPageTreeItem = (props: TreeItemToolProps): JSX.Element => {
   const { getDescCount } = usePageTreeDescCountMap();
 
-  const { item: page } = props;
+  const { item } = props;
+  const page = item.getItemData();
 
   const descendantCount = getDescCount(page._id) || page.descendantCount || 0;
 

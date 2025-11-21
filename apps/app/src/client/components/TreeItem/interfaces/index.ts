@@ -1,11 +1,11 @@
 import type { IPageToDeleteWithMeta } from '@growi/core';
+import type { ItemInstance } from '@headless-tree/core';
 
 import type { IPageForTreeItem } from '~/interfaces/page';
 import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 
 type TreeItemBaseProps = {
-  item: IPageForTreeItem,
-  itemLevel: number,
+  item: ItemInstance<IPageForTreeItem>,
   isEnableActions: boolean,
   isReadOnlyUser: boolean,
   onClickDuplicateMenuItem?(pageToDuplicate: IPageForPageDuplicateModal): void,
@@ -20,7 +20,6 @@ export type TreeItemToolProps = TreeItemBaseProps & {
 };
 
 export type TreeItemProps = TreeItemBaseProps & {
-  isExpanded: boolean;
   targetPath: string;
   targetPathOrId?: string | null;
   isWipPageShown?: boolean;
@@ -30,7 +29,7 @@ export type TreeItemProps = TreeItemBaseProps & {
   customHeadOfChildrenComponents?: Array<React.FunctionComponent<TreeItemToolProps>>,
   showAlternativeContent?: boolean,
   customAlternativeComponents?: Array<React.FunctionComponent<TreeItemToolProps>>,
-  onToggle: () => void;
+  onToggle?: () => void;
   onClick?(page: IPageForTreeItem): void,
   onWheelClick?(page: IPageForTreeItem): void,
 };

@@ -114,21 +114,13 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
             }}
           >
             <CustomTreeItem
-              item={itemData}
-              itemLevel={item.getItemMeta().level}
-              isExpanded={item.isExpanded()}
+              item={item}
               targetPath={targetPath}
               targetPathOrId={targetPathOrId}
               isWipPageShown={isWipPageShown}
               isEnableActions={isEnableActions}
               isReadOnlyUser={isReadOnlyUser}
               onToggle={() => {
-                if (item.isExpanded()) {
-                  item.collapse();
-                }
-                else {
-                  item.expand();
-                }
                 // Trigger re-render to show/hide children
                 setRebuildTrigger(prev => prev + 1);
               }}
