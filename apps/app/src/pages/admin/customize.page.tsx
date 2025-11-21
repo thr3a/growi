@@ -31,9 +31,7 @@ const AdminCustomizeSettingsPage: NextPageWithLayout<Props> = (
   props: Props,
 ) => {
   useHydrateAtoms(
-    [
-      [isCustomizedLogoUploadedAtom, props.isCustomizedLogoUploaded],
-    ],
+    [[isCustomizedLogoUploadedAtom, props.isCustomizedLogoUploaded]],
     { dangerouslyForceHydrate: true },
   );
 
