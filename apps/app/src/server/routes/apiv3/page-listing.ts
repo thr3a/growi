@@ -262,7 +262,7 @@ const routerFactory = (crowi: Crowi): Router => {
 
         const foundIds = pages.map((page) => page._id);
 
-        let shortBodiesMap;
+        let shortBodiesMap: Record<string, string | null> | undefined;
         if (attachShortBody) {
           shortBodiesMap = await pageService.shortBodiesMapByPageIds(
             foundIds,
@@ -270,7 +270,7 @@ const routerFactory = (crowi: Crowi): Router => {
           );
         }
 
-        let bookmarkCountMap;
+        let bookmarkCountMap: Record<string, number> | undefined;
         if (attachBookmarkCount) {
           bookmarkCountMap = (await Bookmark.getPageIdToCountMap(
             foundIds,
@@ -311,7 +311,7 @@ const routerFactory = (crowi: Crowi): Router => {
                 isAbleToDeleteCompletely: canDeleteCompletely,
                 revisionShortBody:
                   shortBodiesMap != null
-                    ? shortBodiesMap[page._id.toString()]
+                    ? (shortBodiesMap[page._id.toString()] ?? undefined)
                     : undefined,
               } satisfies IPageInfoForListing);
 

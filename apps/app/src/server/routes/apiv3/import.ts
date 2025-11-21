@@ -1,5 +1,6 @@
 import { SCOPE } from '@growi/core/dist/interfaces';
 import { ErrorV3 } from '@growi/core/dist/models';
+import type { Router } from 'express';
 
 import { SupportedAction } from '~/interfaces/activity';
 import type { GrowiArchiveImportOption } from '~/models/admin/growi-archive-import-option';
@@ -8,6 +9,7 @@ import { accessTokenParser } from '~/server/middlewares/access-token-parser';
 import type { ImportSettings } from '~/server/service/import';
 import { getImportService } from '~/server/service/import';
 import { generateOverwriteParams } from '~/server/service/import/overwrite-params';
+import type { ZipFileStat } from '~/server/service/interfaces/export';
 import loggerFactory from '~/utils/logger';
 
 import { generateAddActivityMiddleware } from '../../middlewares/add-activity';
@@ -124,7 +126,7 @@ const router = express.Router();
  *                  type: integer
  *                  nullable: true
  */
-export default function route(crowi: Crowi): void {
+export default function route(crowi: Crowi): Router {
   const { growiBridgeService, socketIoService } = crowi;
   const importService = getImportService();
 
@@ -347,8 +349,12 @@ export default function route(crowi: Crowi): void {
       /*
        * unzip, parse
        */
-      let meta;
-      let fileStatsToImport;
+      let meta: object;
+      let fileStatsToImport: {
+        fileName: string;
+        collectionName: string;
+        size: number;
+      }[];
       try {
         // unzip
         await importService.unzip(zipFile);
@@ -462,7 +468,7 @@ export default function route(crowi: Crowi): void {
     async (req, res) => {
       const { file } = req;
       const zipFile = importService.getFile(file.filename);
-      let data;
+      let data: ZipFileStat | null;
 
       try {
         data = await growiBridgeService.parseZipFile(zipFile);
@@ -473,7 +479,7 @@ export default function route(crowi: Crowi): void {
       }
       try {
         // validate with meta.json
-        importService.validate(data.meta);
+        importService.validate(data?.meta);
 
         const parameters = {
           action: SupportedAction.ACTION_ADMIN_ARCHIVE_DATA_UPLOAD,

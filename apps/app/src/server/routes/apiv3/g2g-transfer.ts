@@ -7,6 +7,7 @@ import { createReadStream } from 'fs';
 import multer from 'multer';
 import path from 'path';
 
+import type { GrowiArchiveImportOption } from '~/models/admin/growi-archive-import-option';
 import { accessTokenParser } from '~/server/middlewares/access-token-parser';
 import { isG2GTransferError } from '~/server/models/vo/g2g-transfer-error';
 import { configManager } from '~/server/service/config-manager';
@@ -299,9 +300,9 @@ module.exports = (crowi: Crowi): Router => {
       /*
        * parse multipart form data
        */
-      let collections;
-      let optionsMap;
-      let sourceGROWIUploadConfigs;
+      let collections: string[];
+      let optionsMap: { [key: string]: GrowiArchiveImportOption };
+      let sourceGROWIUploadConfigs: any;
       try {
         collections = JSON.parse(strCollections);
         optionsMap = JSON.parse(strOptionsMap);
@@ -317,14 +318,18 @@ module.exports = (crowi: Crowi): Router => {
       /*
        * unzip and parse
        */
-      let meta;
-      let innerFileStats;
+      let meta: object | undefined;
+      let innerFileStats: {
+        fileName: string;
+        collectionName: string;
+        size: number;
+      }[];
       try {
         const zipFile = importService.getFile(file.filename);
         await importService.unzip(zipFile);
 
         const zipFileStat = await growiBridgeService.parseZipFile(zipFile);
-        innerFileStats = zipFileStat?.innerFileStats;
+        innerFileStats = zipFileStat?.innerFileStats ?? [];
         meta = zipFileStat?.meta;
       } catch (err) {
         logger.error(err);
@@ -440,7 +445,7 @@ module.exports = (crowi: Crowi): Router => {
       const { file } = req;
       const { attachmentMetadata } = req.body;
 
-      let attachmentMap;
+      let attachmentMap: { fileName: any; fileSize: any };
       try {
         attachmentMap = JSON.parse(attachmentMetadata);
       } catch (err) {

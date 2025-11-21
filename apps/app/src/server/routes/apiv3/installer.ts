@@ -1,3 +1,4 @@
+import type { IUser } from '@growi/core';
 import { ErrorV3 } from '@growi/core/dist/models';
 import type { Request, Router } from 'express';
 import express from 'express';
@@ -102,7 +103,7 @@ module.exports = (crowi: Crowi): Router => {
 
       const installerService = new InstallerService(crowi);
 
-      let adminUser;
+      let adminUser: IUser;
       try {
         adminUser = await installerService.install(
           {
