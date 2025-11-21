@@ -17,7 +17,7 @@ function constructRootPageForVirtualRoot(rootPageId: string, allPagesCount: numb
   };
 }
 
-export const usePageTreeDataLoader = (
+export const useDataLoader = (
     rootPageId: string,
     allPagesCount: number,
 ): TreeDataLoader<IPageForTreeItem> => {

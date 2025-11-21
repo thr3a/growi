@@ -12,8 +12,8 @@ import { useSWRxRootPage } from '~/stores/page-listing';
 
 import type { TreeItemProps } from '../TreeItem';
 
-import { usePageTreeDataLoader } from './hooks/usePageTreeDataLoader';
-import { useScrollToSelectedItem } from './hooks/useScrollToSelectedItem';
+import { useDataLoader } from './hooks/use-data-loader';
+import { useScrollToSelectedItem } from './hooks/use-scroll-to-selected-item';
 
 type Props = {
   targetPath: string;
@@ -41,7 +41,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   const rootPageId = rootPage?._id ?? ROOT_PAGE_VIRTUAL_ID;
   const allPagesCount = rootPage?.descendantCount ?? 0;
 
-  const dataLoader = usePageTreeDataLoader(rootPageId, allPagesCount);
+  const dataLoader = useDataLoader(rootPageId, allPagesCount);
 
   const tree = useTree<IPageForTreeItem>({
     rootItemId: ROOT_PAGE_VIRTUAL_ID,
