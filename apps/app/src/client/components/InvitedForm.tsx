@@ -111,8 +111,8 @@ export const InvitedForm = (props: InvitedFormProps): JSX.Element => {
             type="text"
             className="form-control"
             placeholder={t('User ID')}
-            {...register('username', { required: true })}
             required
+            {...register('username', { required: true })}
           />
         </div>
         {/* Name Form */}
@@ -124,8 +124,8 @@ export const InvitedForm = (props: InvitedFormProps): JSX.Element => {
             type="text"
             className="form-control"
             placeholder={t('Name')}
-            {...register('name', { required: true })}
             required
+            {...register('name', { required: true })}
           />
         </div>
         {/* Password Form */}
@@ -137,9 +137,9 @@ export const InvitedForm = (props: InvitedFormProps): JSX.Element => {
             type="password"
             className="form-control"
             placeholder={t('Password')}
-            {...register('password')}
             required
             minLength={6}
+            {...register('password', { required: true, minLength: 6 })}
           />
         </div>
         {/* Create Button */}
