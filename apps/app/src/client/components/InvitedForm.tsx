@@ -111,6 +111,7 @@ export const InvitedForm = (props: InvitedFormProps): JSX.Element => {
             type="text"
             className="form-control"
             placeholder={t('User ID')}
+            {...register('username', { required: true })}
             required
           />
         </div>
