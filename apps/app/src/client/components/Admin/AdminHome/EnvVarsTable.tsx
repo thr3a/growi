@@ -14,9 +14,7 @@ export const EnvVarsTable: React.FC<EnvVarsTableProps> = (props: EnvVarsTablePro
 
   const envVarRows: JSX.Element[] = [];
 
-  if (!props.envVars) return null;
-
-  for (const [key, value] of Object.entries(props.envVars)) {
+  for (const [key, value] of Object.entries(envVars ?? {})) {
     if (value != null) {
       envVarRows.push(
         <tr key={key}>
