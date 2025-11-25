@@ -36,6 +36,7 @@ export default class AdminHomeContainer extends Container {
       installedPlugins: null,
       isV5Compatible: null,
       isMaintenanceMode: null,
+      userStatistics: null,
     };
 
   }
@@ -59,6 +60,9 @@ export default class AdminHomeContainer extends Container {
       const response = await apiv3Get('/admin-home/');
       const { adminHomeParams } = response.data;
 
+      const statsRes = await apiv3Get('/statistics/user');
+      const userStatistics = statsRes.data.data;
+
       this.setState(prevState => ({
         ...prevState,
         growiVersion: adminHomeParams.growiVersion,
@@ -68,6 +72,7 @@ export default class AdminHomeContainer extends Container {
         envVars: adminHomeParams.envVars,
         isV5Compatible: adminHomeParams.isV5Compatible,
         isMaintenanceMode: adminHomeParams.isMaintenanceMode,
+        userStatistics,
       }));
     }
     catch (err) {

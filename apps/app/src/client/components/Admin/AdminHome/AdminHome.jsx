@@ -16,6 +16,7 @@ import { withUnstatedContainers } from '../../UnstatedUtils';
 
 import { EnvVarsTable } from './EnvVarsTable';
 import SystemInfomationTable from './SystemInfomationTable';
+import UserStatisticsTable from './UserStatisticsTable';
 
 const logger = loggerFactory('growi:admin');
 
@@ -91,6 +92,13 @@ const AdminHome = (props) => {
           {/* eslint-disable-next-line react/no-danger */}
           <p dangerouslySetInnerHTML={{ __html: t('admin:admin_top.about_security') }} />
           {adminHomeContainer.state.envVars && <EnvVarsTable envVars={adminHomeContainer.state.envVars} />}
+        </div>
+      </div>
+
+      <div className="row mb-5">
+        <div className="col-lg-12">
+          <h2 className="admin-setting-header">{t('admin:admin_top.user_statistics')}</h2>
+          <UserStatisticsTable />
         </div>
       </div>
 
