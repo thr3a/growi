@@ -1,6 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
 
-import { LoadingSpinner } from '@growi/ui/dist/components';
 import { useTranslation } from 'next-i18next';
 import PropTypes from 'prop-types';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
@@ -39,10 +38,6 @@ const AdminHome = (props) => {
   useEffect(() => {
     fetchAdminHomeData();
   }, [fetchAdminHomeData]);
-
-  if (adminHomeContainer.state.growiVersion == null) {
-    return <LoadingSpinner />;
-  }
 
   return (
     <div data-testid="admin-home">
@@ -96,7 +91,7 @@ const AdminHome = (props) => {
           <p>{t('admin:admin_top.env_var_priority')}</p>
           {/* eslint-disable-next-line react/no-danger */}
           <p dangerouslySetInnerHTML={{ __html: t('admin:admin_top.about_security') }} />
-          {adminHomeContainer.state.envVars && <EnvVarsTable envVars={adminHomeContainer.state.envVars} />}
+          <EnvVarsTable envVars={adminHomeContainer.state.envVars} />
         </div>
       </div>
 
