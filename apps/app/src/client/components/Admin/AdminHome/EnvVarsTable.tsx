@@ -3,7 +3,7 @@ import React, { type JSX } from 'react';
 import { LoadingSpinner } from '@growi/ui/dist/components';
 
 type EnvVarsTableProps = {
-  envVars: Record<string, string | number | boolean>,
+  envVars?: Record<string, string | number | boolean>,
 }
 
 export const EnvVarsTable: React.FC<EnvVarsTableProps> = (props: EnvVarsTableProps) => {
@@ -13,6 +13,8 @@ export const EnvVarsTable: React.FC<EnvVarsTableProps> = (props: EnvVarsTablePro
   }
 
   const envVarRows: JSX.Element[] = [];
+
+  if (!props.envVars) return null;
 
   for (const [key, value] of Object.entries(props.envVars)) {
     if (value != null) {
