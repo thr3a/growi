@@ -26,13 +26,13 @@ import {
 import type { NextPageWithLayout } from '../../_app.page';
 import { useInitialCSRFetch } from '../../general-page';
 import { useHydrateGeneralPageConfigurationAtoms } from '../../general-page/hydrate';
-import { registerPageToShowRevisionWithMeta } from '../../general-page/superjson';
+import { registerShareLinkRelatedPage } from '../../general-page/superjson';
 import { NEXT_JS_ROUTING_PAGE } from './consts';
 import { getServerSidePropsForInitial } from './server-side-props';
 import type { InitialProps } from './types';
 
 // call superjson custom register
-registerPageToShowRevisionWithMeta();
+registerShareLinkRelatedPage();
 
 const GrowiContextualSubNavigation = dynamic(
   // biome-ignore lint/style/noRestrictedImports: no-problem dynamic import
