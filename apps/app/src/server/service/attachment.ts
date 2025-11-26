@@ -1,4 +1,4 @@
-import type { Ref } from '@growi/core/dist/interfaces';
+import type { IAttachment, Ref } from '@growi/core/dist/interfaces';
 import type { HydratedDocument } from 'mongoose';
 
 import loggerFactory from '~/utils/logger';
@@ -32,7 +32,7 @@ type IAttachmentService = {
     disposeTmpFileCallback?: (file: Express.Multer.File) => void,
   ): Promise<IAttachmentDocument>;
   removeAllAttachments(attachments: IAttachmentDocument[]): Promise<void>;
-  removeAttachment(attachmentId: Ref<IAttachmentDocument> | undefined): Promise<void>;
+  removeAttachment(attachmentId: Ref<IAttachment> | undefined): Promise<void>;
   isBrandLogoExist(): Promise<boolean>;
   addAttachHandler(handler: AttachHandler): void;
   addDetachHandler(handler: DetachHandler): void;
@@ -116,7 +116,7 @@ export class AttachmentService implements IAttachmentService {
     return;
   }
 
-  async removeAttachment(attachmentId: Ref<IAttachmentDocument> | undefined): Promise<void> {
+  async removeAttachment(attachmentId: Ref<IAttachment> | undefined): Promise<void> {
     const { fileUploadService } = this.crowi;
     const attachment = await Attachment.findById(attachmentId);
 
