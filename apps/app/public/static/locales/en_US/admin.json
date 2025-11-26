@@ -798,7 +798,6 @@
     "cannot_invite_maximum_users": "Can not invite more than the maximum number of users.",
     "current_users": "Current users:",
     "user_statistics": {
-      "title": "User Statistics",
       "total": "Total Users",
       "active": "Active",
       "inactive": "Inactive"

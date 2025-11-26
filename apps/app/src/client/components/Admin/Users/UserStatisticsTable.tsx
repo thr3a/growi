@@ -21,7 +21,7 @@ const UserStatisticsTable: React.FC<Props> = ({ userStatistics }) => {
       <tbody>
         <tr>
           <th className="col-sm-4 align-top">{t('user_management.user_statistics.total')}</th>
-          <td className="align-top">{ userStatistics.active.total }</td>
+          <td className="align-top">{ userStatistics.total }</td>
         </tr>
         <tr>
           <th className="col-sm-4 align-top">{t('user_management.user_statistics.active')}</th>
