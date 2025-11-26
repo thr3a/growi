@@ -805,7 +805,6 @@
     "unset": "否",
     "related_username": "相关用户的",
     "cannot_invite_maximum_users": "邀请的用户数不能超过最大值。",
-    "current_users": "当前用户:",
     "user_statistics": {
       "total": "用户总数",
       "active": "活跃",

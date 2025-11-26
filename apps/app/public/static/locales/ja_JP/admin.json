@@ -805,7 +805,6 @@
     "unset": "未設定",
     "related_username": "関連付けられているユーザーの ",
     "cannot_invite_maximum_users": "ユーザーが上限に達したため招待できません。",
-    "current_users": "現在のユーザー数：",
     "user_statistics": {
       "title": "ユーザー統計",
       "total": "総ユーザー数",
