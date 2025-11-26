@@ -157,17 +157,6 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
   ) {
     return commonEachPropsResult;
   }
-  const commonEachProps = await commonEachPropsResult.props;
-
-  // Handle redirect destination from common props
-  if (commonEachProps.redirectDestination != null) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: commonEachProps.redirectDestination,
-      },
-    };
-  }
 
   //
   // STAGE 2
