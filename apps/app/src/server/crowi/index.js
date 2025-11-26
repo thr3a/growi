@@ -26,7 +26,7 @@ import UserEvent from '../events/user';
 import { accessTokenParser } from '../middlewares/access-token-parser';
 import { aclService as aclServiceSingletonInstance } from '../service/acl';
 import AppService from '../service/app';
-import AttachmentService from '../service/attachment';
+import { AttachmentService } from '../service/attachment';
 import { configManager as configManagerSingletonInstance } from '../service/config-manager';
 import instanciateExportService from '../service/export';
 import instanciateExternalAccountService from '../service/external-account';
@@ -73,6 +73,9 @@ class Crowi {
 
   /** @type {import('../service/config-manager').IConfigManagerForApp} */
   configManager;
+
+  /** @type {AttachmentService} */
+  attachmentService;
 
   /** @type {import('../service/acl').AclService} */
   aclService;

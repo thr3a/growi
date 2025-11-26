@@ -1,9 +1,11 @@
-import type { IAttachment } from '@growi/core/dist/interfaces';
+import type { Ref } from '@growi/core/dist/interfaces';
+import type { HydratedDocument } from 'mongoose';
 
 import loggerFactory from '~/utils/logger';
 
 import type Crowi from '../crowi';
 import { AttachmentType } from '../interfaces/attachment';
+import type { IAttachmentDocument } from '../models/attachment';
 import { Attachment } from '../models/attachment';
 
 const fs = require('fs');
@@ -19,15 +21,28 @@ const createReadStream = (filePath) => {
   });
 };
 
-type AttachHandler = (pageId: string | null, attachment: IAttachment, file: Express.Multer.File) => Promise<void>;
+type AttachHandler = (pageId: string | null, attachment: IAttachmentDocument, file: Express.Multer.File) => Promise<void>;
 
 type DetachHandler = (attachmentId: string) => Promise<void>;
+
+
+type IAttachmentService = {
+  createAttachment(
+    file: Express.Multer.File, user: any, pageId: string | null, attachmentType: AttachmentType,
+    disposeTmpFileCallback?: (file: Express.Multer.File) => void,
+  ): Promise<IAttachmentDocument>;
+  removeAllAttachments(attachments: IAttachmentDocument[]): Promise<void>;
+  removeAttachment(attachmentId: Ref<IAttachmentDocument> | undefined): Promise<void>;
+  isBrandLogoExist(): Promise<boolean>;
+  addAttachHandler(handler: AttachHandler): void;
+  addDetachHandler(handler: DetachHandler): void;
+};
 
 
 /**
  * the service class for Attachment and file-uploader
  */
-class AttachmentService {
+export class AttachmentService implements IAttachmentService {
 
   attachHandlers: AttachHandler[] = [];
 
@@ -39,7 +54,7 @@ class AttachmentService {
     this.crowi = crowi;
   }
 
-  async createAttachment(file, user, pageId = null, attachmentType, disposeTmpFileCallback) {
+  async createAttachment(file, user, pageId: string | null | undefined = null, attachmentType, disposeTmpFileCallback): Promise<IAttachmentDocument> {
     const { fileUploadService } = this.crowi;
 
     // check limit
@@ -82,7 +97,7 @@ class AttachmentService {
     return attachment;
   }
 
-  async removeAllAttachments(attachments) {
+  async removeAllAttachments(attachments: HydratedDocument<IAttachmentDocument>[]): Promise<void> {
     const { fileUploadService } = this.crowi;
     const attachmentsCollection = mongoose.connection.collection('attachments');
     const unorderAttachmentsBulkOp = attachmentsCollection.initializeUnorderedBulkOp();
@@ -96,12 +111,12 @@ class AttachmentService {
     });
     await unorderAttachmentsBulkOp.execute();
 
-    await fileUploadService.deleteFiles(attachments);
+    fileUploadService.deleteFiles(attachments);
 
     return;
   }
 
-  async removeAttachment(attachmentId) {
+  async removeAttachment(attachmentId: Ref<IAttachmentDocument> | undefined): Promise<void> {
     const { fileUploadService } = this.crowi;
     const attachment = await Attachment.findById(attachmentId);
 
@@ -125,7 +140,7 @@ class AttachmentService {
     return;
   }
 
-  async isBrandLogoExist() {
+  async isBrandLogoExist(): Promise<boolean> {
     const query = { attachmentType: AttachmentType.BRAND_LOGO };
     const count = await Attachment.countDocuments(query);
 
@@ -136,7 +151,7 @@ class AttachmentService {
    * Register a handler that will be called after attachment creation
    * @param {(pageId: string, attachment: Attachment, file: Express.Multer.File) => Promise<void>} handler
    */
-  addAttachHandler(handler) {
+  addAttachHandler(handler: AttachHandler): void {
     this.attachHandlers.push(handler);
   }
 
@@ -144,10 +159,8 @@ class AttachmentService {
    * Register a handler that will be called before attachment deletion
    * @param {(attachmentId: string) => Promise<void>} handler
    */
-  addDetachHandler(handler) {
+  addDetachHandler(handler: DetachHandler): void {
     this.detachHandlers.push(handler);
   }
 
 }
-
-module.exports = AttachmentService;
