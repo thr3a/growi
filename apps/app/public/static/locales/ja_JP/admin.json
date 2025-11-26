@@ -321,7 +321,6 @@
       "default": "上記のホスト情報をコピー",
       "done": "クリップボードにコピーしました！"
     },
-    "user_statistics": "ユーザーデータ",
     "bug_report": "バグを報告する",
     "submit_bug_report": "<a href='https://github.com/growilabs/growi/issues/new?assignees=&labels=bug&template=bug-report.md&title=Bug%3A' target='_blank' rel='noreferrer'>次に GitHub で Issue を投稿してください。</a>"
   },
@@ -806,8 +805,15 @@
     "unset": "未設定",
     "related_username": "関連付けられているユーザーの ",
     "cannot_invite_maximum_users": "ユーザーが上限に達したため招待できません。",
-    "current_users": "現在のユーザー数："
+    "current_users": "現在のユーザー数：",
+    "user_statistics": {
+      "title": "ユーザー統計",
+      "total": "総ユーザー数",
+      "active": "アクティブ",
+      "inactive": "非アクティブ"
+    }
   },
+
   "user_group_management": {
     "user_group_management": "グループ管理",
     "create_group": "新規グループの作成",
