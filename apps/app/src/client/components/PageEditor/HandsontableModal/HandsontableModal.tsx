@@ -30,7 +30,7 @@ const MARKDOWNTABLE_TO_HANDSONTABLE_ALIGNMENT_SYMBOL_MAPPING = {
   '': '',
 };
 
-export const HandsontableModalSubstance = (): JSX.Element => {
+const HandsontableModalSubstance = (): JSX.Element => {
 
   const { t } = useTranslation('commons');
   const handsontableModalData = useHandsontableModalStatus();
