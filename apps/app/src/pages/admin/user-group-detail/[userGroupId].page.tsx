@@ -48,7 +48,6 @@ AdminUserGroupDetailPage.getLayout = createAdminPageLayout<Props>({
   title: (_p, t) => t('user_group_management.user_group_management'),
 });
 
-
 export const getServerSideProps: GetServerSideProps<Props> = async (
   context: GetServerSidePropsContext,
 ) => {
@@ -63,7 +62,10 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
     },
   } satisfies { props: PageProps };
 
-  return mergeGetServerSidePropsResults(commonResult, UserGroupDetailPropsFragment);
+  return mergeGetServerSidePropsResults(
+    commonResult,
+    UserGroupDetailPropsFragment,
+  );
 };
 
 export default AdminUserGroupDetailPage;
