@@ -7,7 +7,6 @@ import type { CrowiRequest } from '~/interfaces/crowi-request';
 import type { IShareLink } from '~/interfaces/share-link';
 import type { PageModel } from '~/server/models/page';
 import type { ShareLinkModel } from '~/server/models/share-link';
-import { configManager } from '~/server/service/config-manager';
 
 import type { ShareLinkPageStatesProps } from './types';
 
@@ -35,7 +34,7 @@ export const getPageDataForInitial = async (
 ): Promise<GetServerSidePropsResult<ShareLinkPageStatesProps>> => {
   const req = context.req as CrowiRequest;
   const { crowi, params } = req;
-  const { pageService } = crowi;
+  const { pageService, configManager } = crowi;
 
   if (mongooseModel == null) {
     mongooseModel = (await import('mongoose')).model;
