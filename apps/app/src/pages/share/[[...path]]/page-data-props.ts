@@ -1,12 +1,13 @@
 import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import type { IPage } from '@growi/core';
-import { getIdForRef } from '@growi/core';
+import { getIdStringForRef } from '@growi/core';
 import type { model } from 'mongoose';
 
 import type { CrowiRequest } from '~/interfaces/crowi-request';
 import type { IShareLink } from '~/interfaces/share-link';
 import type { PageModel } from '~/server/models/page';
 import type { ShareLinkModel } from '~/server/models/share-link';
+import { configManager } from '~/server/service/config-manager';
 
 import type { ShareLinkPageStatesProps } from './types';
 
@@ -19,6 +20,7 @@ export const getPageDataForInitial = async (
 ): Promise<GetServerSidePropsResult<ShareLinkPageStatesProps>> => {
   const req = context.req as CrowiRequest;
   const { crowi, params } = req;
+  const { pageService } = crowi;
 
   if (mongooseModel == null) {
     mongooseModel = (await import('mongoose')).model;
@@ -39,7 +41,13 @@ export const getPageDataForInitial = async (
     return {
       props: {
         isNotFound: true,
-        page: null,
+        pageWithMeta: {
+          data: null,
+          meta: {
+            isNotFound: true,
+            isForbidden: false,
+          },
+        },
         isExpired: undefined,
         shareLink: undefined,
       },
@@ -51,24 +59,33 @@ export const getPageDataForInitial = async (
     return {
       props: {
         isNotFound: false,
-        page: null,
+        pageWithMeta: null,
         isExpired: true,
-        shareLink,
+        shareLink: shareLink.toObject(),
       },
     };
   }
 
-  // retrieve Page
-  const relatedPage = await Page.findOne({
-    _id: getIdForRef(shareLink.relatedPage),
-  });
+  const pageId = getIdStringForRef(shareLink.relatedPage);
+  const pageWithMeta = await pageService.findPageAndMetaDataByViewer(
+    pageId,
+    null,
+    undefined, // no user for share link
+    true, // isSharedPage
+  );
 
   // not found
-  if (relatedPage == null) {
+  if (pageWithMeta.data == null) {
     return {
       props: {
         isNotFound: true,
-        page: null,
+        pageWithMeta: {
+          data: null,
+          meta: {
+            isNotFound: true,
+            isForbidden: false,
+          },
+        },
         isExpired: undefined,
         shareLink: undefined,
       },
@@ -76,23 +93,28 @@ export const getPageDataForInitial = async (
   }
 
   // Handle existing page
-  const ssrMaxRevisionBodyLength = crowi.configManager.getConfig(
+  const ssrMaxRevisionBodyLength = configManager.getConfig(
     'app:ssrMaxRevisionBodyLength',
   );
 
   // Check if SSR should be skipped
   const latestRevisionBodyLength =
-    await relatedPage.getLatestRevisionBodyLength();
+    await pageWithMeta.data.getLatestRevisionBodyLength();
   const skipSSR =
     latestRevisionBodyLength != null &&
     ssrMaxRevisionBodyLength < latestRevisionBodyLength;
 
-  const populatedPage = await relatedPage.populateDataToShowRevision(skipSSR);
+  // Populate page data for display
+  const populatedPage =
+    await pageWithMeta.data.populateDataToShowRevision(skipSSR);
 
   return {
     props: {
       isNotFound: false,
-      page: populatedPage,
+      pageWithMeta: {
+        data: populatedPage,
+        meta: pageWithMeta.meta,
+      },
       skipSSR,
       isExpired: false,
       shareLink: shareLink.toObject(),
