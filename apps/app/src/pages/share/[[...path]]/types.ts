@@ -16,18 +16,21 @@ export type ShareLinkPageStatesProps = Pick<
 > &
   (
     | {
+        // not found case
         pageWithMeta: IDataWithRequiredMeta<null, IPageNotFoundInfo>;
         isNotFound: true;
         isExpired: undefined;
         shareLink: undefined;
       }
     | {
-        pageWithMeta: null;
+        // expired case
+        pageWithMeta: IPageToShowRevisionWithMeta;
         isNotFound: false;
         isExpired: true;
         shareLink: IShareLinkHasId;
       }
     | {
+        // normal case
         pageWithMeta: IPageToShowRevisionWithMeta;
         isNotFound: false;
         isExpired: false;

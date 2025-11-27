@@ -55,18 +55,6 @@ export const getPageDataForInitial = async (
     return notFoundProps;
   }
 
-  // expired
-  if (shareLink.isExpired()) {
-    return {
-      props: {
-        isNotFound: false,
-        pageWithMeta: null,
-        isExpired: true,
-        shareLink: shareLink.toObject(),
-      },
-    };
-  }
-
   const pageId = getIdStringForRef(shareLink.relatedPage);
   const pageWithMeta = await pageService.findPageAndMetaDataByViewer(
     pageId,
@@ -78,6 +66,23 @@ export const getPageDataForInitial = async (
   // not found
   if (pageWithMeta.data == null) {
     return notFoundProps;
+  }
+
+  // expired
+  if (shareLink.isExpired()) {
+    const populatedPage =
+      await pageWithMeta.data.populateDataToShowRevision(true); //shouldExcludeBody = false,
+    return {
+      props: {
+        isNotFound: false,
+        pageWithMeta: {
+          data: populatedPage,
+          meta: pageWithMeta.meta,
+        },
+        isExpired: true,
+        shareLink: shareLink.toObject(),
+      },
+    };
   }
 
   // Handle existing page
