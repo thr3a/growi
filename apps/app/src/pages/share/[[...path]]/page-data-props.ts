@@ -15,6 +15,21 @@ let mongooseModel: typeof model;
 let Page: PageModel;
 let ShareLink: ShareLinkModel;
 
+const notFoundProps: GetServerSidePropsResult<ShareLinkPageStatesProps> = {
+  props: {
+    isNotFound: true,
+    pageWithMeta: {
+      data: null,
+      meta: {
+        isNotFound: true,
+        isForbidden: false,
+      },
+    },
+    isExpired: undefined,
+    shareLink: undefined,
+  },
+};
+
 export const getPageDataForInitial = async (
   context: GetServerSidePropsContext,
 ): Promise<GetServerSidePropsResult<ShareLinkPageStatesProps>> => {
@@ -38,20 +53,7 @@ export const getPageDataForInitial = async (
 
   // not found
   if (shareLink == null) {
-    return {
-      props: {
-        isNotFound: true,
-        pageWithMeta: {
-          data: null,
-          meta: {
-            isNotFound: true,
-            isForbidden: false,
-          },
-        },
-        isExpired: undefined,
-        shareLink: undefined,
-      },
-    };
+    return notFoundProps;
   }
 
   // expired
@@ -76,20 +78,7 @@ export const getPageDataForInitial = async (
 
   // not found
   if (pageWithMeta.data == null) {
-    return {
-      props: {
-        isNotFound: true,
-        pageWithMeta: {
-          data: null,
-          meta: {
-            isNotFound: true,
-            isForbidden: false,
-          },
-        },
-        isExpired: undefined,
-        shareLink: undefined,
-      },
-    };
+    return notFoundProps;
   }
 
   // Handle existing page
