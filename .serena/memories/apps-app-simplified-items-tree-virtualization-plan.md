@@ -185,25 +185,27 @@ src/client/components/Common/SimplifiedItemsTree/
 
 **実装方針**: 既存実装よりも @headless-tree の機能を使って新規実装、APIは既存を使用
 
-6. **Create**
-   - @headless-tree/core の renameFeature を活用
-   - 仮のノードを追加してから renameFeature によりページ名を入力、確定したら API を呼び出してページの実態を作成する
+6. **Create** ⏳ 次のタスク
+   - @headless-tree/core の renamingFeature を活用
+   - 仮のノードを追加してから renamingFeature によりページ名を入力、確定したら API を呼び出してページの実態を作成する
+   - Rename の実装パターンを参考にする
 
 7. **Drag and Drop**
    - @headless-tree/core の dragAndDropFeature を活用
    - 既存の移動API（mutation）を使用
    
-8. **Rename**
-   - @headless-tree/core の renameFeature を活用
-   - 既存のrename API（mutation）を使用
+8. **Rename** ✅ 完了
+   - @headless-tree/core の renamingFeature を活用
+   - 既存のrename API（PUT /pages/rename）を使用
+   - **実装詳細は後述「Rename 実装詳細」セクション参照**
    
-9. **Duplicate**
-   - SimplifiedTreeItem にDuplicateボタンの挙動を実装
+9. **Duplicate** ✅ 完了（M3-Aで実装済み）
+   - SimplifiedPageTreeItem の hover時操作ボタンで実装
    - 既存のduplicate API（mutation）を使用
    
-10. **Delete**
-   - SimplifiedTreeItem にDeleteボタンの挙動を実装
-   - 既存のdelete API（mutation）を使用
+10. **Delete** ✅ 完了（M3-Aで実装済み）
+    - SimplifiedPageTreeItem の hover時操作ボタンで実装
+    - 既存のdelete API（mutation）を使用
 
 **工数**: 2日
 
@@ -222,6 +224,89 @@ src/client/components/Common/SimplifiedItemsTree/
     - 操作後のツリーデータ更新
 
 **工数**: 1日（必要に応じて）
+
+---
+
+## 📝 Rename 実装詳細（2025-11-28 完了）
+
+### 実装アーキテクチャ
+
+**headless-tree の renamingFeature を最大限活用し、カスタムコードを最小化**
+
+```
+SimplifiedItemsTree
+├── features: [renamingFeature, hotkeysCoreFeature, selectionFeature, asyncDataLoaderFeature]
+├── getContainerProps() → コンテナに適用（ホットキー有効化に必須）
+└── onRename: handleRename → rename API呼び出し
+
+usePageRename フック
+├── rename() → API呼び出し、toast表示、ツリー更新通知
+├── validateName() → ページ名バリデーション
+├── getPageName() → アイテムからページ名取得
+├── isRenaming() → リネームモード判定
+└── RenameAlternativeComponent → TreeItemLayout の customAlternativeComponents 用
+```
+
+### 実装ファイル
+
+1. **`features/page-tree/client/hooks/use-page-rename.tsx`** (新規)
+   - Rename ビジネスロジックを集約したカスタムフック
+   - `rename`: API呼び出し（PUT /pages/rename）
+   - `validateName`: useInputValidator を使用したバリデーション
+   - `getPageName`: path から basename を抽出
+   - `isRenaming`: `item.isRenaming()` のラッパー
+   - `RenameAlternativeComponent`: リネームモード時に表示するコンポーネント
+
+2. **`features/page-tree/client/components/RenameInput.tsx`** (新規)
+   - headless-tree の `getRenameInputProps()` をそのまま使用
+   - シンプルな薄い UI ラッパー（~50行）
+   - デバウンスされたバリデーション表示
+
+3. **`features/page-tree/client/components/SimplifiedItemsTree.tsx`** (変更)
+   - `renamingFeature`, `hotkeysCoreFeature` を features に追加
+   - `getContainerProps()` をコンテナに適用
+   - `onRename` ハンドラで `usePageRename().rename()` を呼び出し
+
+4. **`features/page-tree/client/components/TreeItemLayout.tsx`** (変更)
+   - `showAlternativeContent` と `customAlternativeComponents` props を追加
+   - リネームモード時は通常コンテンツの代わりに AlternativeComponent を表示
+
+5. **`client/components/Sidebar/PageTreeItem/SimplifiedPageTreeItem.tsx`** (変更)
+   - `usePageRename()` から `isRenaming`, `RenameAlternativeComponent` を取得
+   - `showAlternativeContent={isRenaming(item)}` を TreeItemLayout に渡す
+   - `customAlternativeComponents={[RenameAlternativeComponent]}` を渡す
+
+### キーポイント
+
+1. **ホットキーサポート**: F2 でリネーム開始、Enter で確定、Escape でキャンセル
+   - `hotkeysCoreFeature` と `getContainerProps()` の組み合わせが必須
+   - `getContainerProps()` がないとホットキーが動作しない
+
+2. **コンテキストメニューからのリネーム**: 
+   - `Control` コンポーネント（hover時操作ボタン）から `item.startRenaming()` を呼び出し
+
+3. **バリデーション**:
+   - `useInputValidator(ValidationTarget.PAGE)` を使用
+   - RenameInput でリアルタイム表示（300ms デバウンス）
+
+4. **ツリー更新**:
+   - rename 成功後、`mutatePageTree()` と `notifyUpdateItems()` でツリーを更新
+
+### Create 実装への引き継ぎ事項
+
+1. **同じ renamingFeature を活用可能**
+   - 仮ノード追加 → startRenaming() → 入力確定後に API 呼び出し
+
+2. **RenameInput を再利用可能**
+   - Create 時のページ名入力にも同じコンポーネントを使える
+
+3. **仮ノードの追加方法を検討**
+   - headless-tree のデータローダーに仮ノードを追加する方法
+   - または UI 上でのみ仮ノードを表示する方法
+
+4. **API 呼び出しタイミング**
+   - Rename: 既存ページの更新なので、確定時に PUT /pages/rename
+   - Create: 新規ページ作成なので、確定時に POST /pages で作成
 
 ---
 
@@ -350,23 +435,34 @@ src/client/components/Common/SimplifiedItemsTree/
 
 ---
 
-## 📊 現在の進捗状況（2025-11-28）
+## 📊 現在の進捗状況（2025-11-28 更新）
 
-**完了**: M1 ✅、M2 ✅、M3-A ✅、M3-B ✅、ディレクトリ再編成 ✅  
-**次のステップ**: M3-C（操作機能）またはM4（デグレチェック）  
-**優先対応**: M3-Cの必要性を検討、不要ならM4へ進む
+**完了**: M1 ✅、M2 ✅、M3-A ✅、M3-B ✅、M3-C Rename ✅、ディレクトリ再編成 ✅  
+**次のステップ**: M3-C Create（ページ新規作成機能）  
+**その後**: M3-C Drag and Drop → M4 デグレチェック
 
 **実装済みコンポーネント**:
 - `SimplifiedItemsTree.tsx`: @headless-tree/react + @tanstack/react-virtual 統合済み
-- `SimplifiedPageTreeItem.tsx`: UI機能、ナビゲーション機能すべて実装済み
+- `SimplifiedPageTreeItem.tsx`: UI機能、ナビゲーション機能、Rename すべて実装済み
+- `use-page-rename.tsx`: Rename ビジネスロジック集約フック
+- `RenameInput.tsx`: リネーム入力 UI コンポーネント
 - バックエンドAPI: `/page-listing/item` エンドポイント追加済み
 
 **実装済み機能**:
 - ✅ WIPページフィルター
 - ✅ descendantCountバッジ表示
-- ✅ hover時の操作ボタン（duplicate/delete）
+- ✅ hover時の操作ボタン（duplicate/delete/rename）
 - ✅ 選択ページまでの自動展開
 - ✅ 選択ページへの初期スクロール
+- ✅ **Rename（ページ名変更）** - renamingFeature + hotkeysCoreFeature
+  - コンテキストメニューからのリネーム
+  - F2 キーボードショートカット
+  - Enter で確定、Escape でキャンセル
+  - リアルタイムバリデーション
+
+**未実装機能**:
+- ⏳ Create（ページ新規作成）- 次のタスク
+- ⏳ Drag and Drop（ページ移動）
 
 **既知の課題**:
 1. ~~選択ページの祖先が自動展開されない~~ → M3-B で解決済み ✅
@@ -456,4 +552,4 @@ import { ROOT_PAGE_VIRTUAL_ID, usePageTreeInformationUpdate } from '~/features/p
 
 ## 📝 最終更新日
 
-2025-11-28 (ディレクトリ再編成完了)
+2025-11-28 (Rename 実装完了、Create 実装への引き継ぎ事項追記)
