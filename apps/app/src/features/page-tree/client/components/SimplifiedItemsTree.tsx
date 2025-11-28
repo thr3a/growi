@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   asyncDataLoaderFeature,
   hotkeysCoreFeature,
@@ -22,6 +22,7 @@ import {
   usePageTreeInformationGeneration,
   usePageTreeRevalidationEffect,
 } from '../states/page-tree-update';
+import { useTreeRebuildTrigger, useTriggerTreeRebuild } from '../states/tree-rebuild';
 
 // Stable features array to avoid recreating on every render
 const TREE_FEATURES = [
@@ -65,7 +66,9 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     scrollerElem,
   } = props;
 
-  const [, setRebuildTrigger] = useState(0);
+  // Subscribe to rebuild trigger to re-render when tree structure changes
+  useTreeRebuildTrigger();
+  const triggerTreeRebuild = useTriggerTreeRebuild();
 
   const { data: rootPageResult } = useSWRxRootPage({ suspense: true });
   const rootPage = rootPageResult?.rootPage;
@@ -75,15 +78,13 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   const dataLoader = useDataLoader(rootPageId, allPagesCount);
 
   // Tree item handlers (rename, create, etc.) with stable callbacks for headless-tree
-  const handleAfterRename = useCallback(() => {
-    setRebuildTrigger((prev) => prev + 1);
-  }, []);
+  // Note: triggerTreeRebuild is stable (from useSetAtom), so no need for useCallback wrapper
   const {
     getItemName,
     isItemFolder,
     handleRename,
     creatingParentId,
-  } = useTreeItemHandlers(handleAfterRename);
+  } = useTreeItemHandlers(triggerTreeRebuild);
 
   // Stable initial state
   const initialState = useMemo(() => ({ expandedItems: [ROOT_PAGE_VIRTUAL_ID] }), []);
@@ -100,13 +101,13 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   });
 
   // Track local generation number
-  const [localGeneration, setLocalGeneration] = useState(1);
+  const localGenerationRef = useRef(1);
   const globalGeneration = usePageTreeInformationGeneration();
 
   // Refetch data when global generation is updated
-  usePageTreeRevalidationEffect(tree, localGeneration, {
+  usePageTreeRevalidationEffect(tree, localGenerationRef.current, {
     // Update local generation number after revalidation
-    onRevalidated: () => setLocalGeneration(globalGeneration),
+    onRevalidated: () => { localGenerationRef.current = globalGeneration; },
   });
 
   // Expand and rebuild tree when creatingParentId changes
@@ -129,8 +130,8 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     parentItem?.invalidateChildrenIds(true);
 
     // Trigger re-render
-    setRebuildTrigger((prev) => prev + 1);
-  }, [creatingParentId, tree]);
+    triggerTreeRebuild();
+  }, [creatingParentId, tree, triggerTreeRebuild]);
 
   const items = tree.getItems();
 
@@ -140,18 +141,16 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     if (items.length !== prevItemsCountRef.current) {
       prevItemsCountRef.current = items.length;
       // Trigger re-render when items count changes (e.g., after async load completes)
-      setRebuildTrigger((prev) => prev + 1);
+      triggerTreeRebuild();
     }
-  }, [items.length]);
+  }, [items.length, triggerTreeRebuild]);
 
   // Auto-expand items that are ancestors of targetPath
-  const handleAutoExpanded = useCallback(() => {
-    setRebuildTrigger((prev) => prev + 1);
-  }, []);
+  // Note: triggerTreeRebuild is stable, no need for useCallback wrapper
   useAutoExpandAncestors({
     items,
     targetPath,
-    onExpanded: handleAutoExpanded,
+    onExpanded: triggerTreeRebuild,
   });
 
   const virtualizer = useVirtualizer({
@@ -200,10 +199,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
               isWipPageShown={isWipPageShown}
               isEnableActions={isEnableActions}
               isReadOnlyUser={isReadOnlyUser}
-              onToggle={() => {
-                // Trigger re-render to show/hide children
-                setRebuildTrigger((prev) => prev + 1);
-              }}
+              onToggle={triggerTreeRebuild}
             />
           </div>
         );
