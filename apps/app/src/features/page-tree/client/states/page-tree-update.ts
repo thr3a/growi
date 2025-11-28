@@ -3,6 +3,7 @@ import type { TreeInstance } from '@headless-tree/core';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
 import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
+import { clearChildrenCache } from '../hooks/use-data-loader';
 
 // Update generation number
 const generationAtom = atom<number>(1);
@@ -61,11 +62,13 @@ export const usePageTreeRevalidationEffect = (
     const shouldUpdateAll = globalLastUpdatedItemIds == null;
 
     if (shouldUpdateAll) {
-      // Full tree update: refetch from root
+      // Full tree update: clear all cache and refetch from root
+      clearChildrenCache();
       const root = getItemInstance(ROOT_PAGE_VIRTUAL_ID);
       root?.invalidateChildrenIds(true);
     } else {
-      // Partial update: refetch children of specified items
+      // Partial update: clear cache for specified items and refetch children
+      clearChildrenCache(globalLastUpdatedItemIds);
       globalLastUpdatedItemIds.forEach((itemId) => {
         const item = getItemInstance(itemId);
         // Invalidate children to refresh child list

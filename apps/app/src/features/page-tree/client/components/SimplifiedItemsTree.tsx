@@ -1,5 +1,6 @@
 import type { FC } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ItemInstance } from '@headless-tree/core';
 import {
   asyncDataLoaderFeature,
   hotkeysCoreFeature,
@@ -14,7 +15,7 @@ import { useSWRxRootPage } from '~/stores/page-listing';
 
 import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
 import { useAutoExpandAncestors } from '../hooks/use-auto-expand-ancestors';
-import { useDataLoader } from '../hooks/use-data-loader';
+import { clearChildrenCache, useDataLoader } from '../hooks/use-data-loader';
 import { usePageCreate } from '../hooks/use-page-create';
 import { usePageRename } from '../hooks/use-page-rename';
 import { useScrollToSelectedItem } from '../hooks/use-scroll-to-selected-item';
@@ -24,6 +25,25 @@ import {
   usePageTreeInformationGeneration,
   usePageTreeRevalidationEffect,
 } from '../states/page-tree-update';
+
+// Stable features array to avoid recreating on every render
+const TREE_FEATURES = [
+  asyncDataLoaderFeature,
+  selectionFeature,
+  hotkeysCoreFeature,
+  renamingFeature,
+];
+
+// Stable createLoadingItemData function
+const createLoadingItemData = (): IPageForTreeItem => ({
+  _id: '',
+  path: 'Loading...',
+  parent: '',
+  descendantCount: 0,
+  grant: 1,
+  isEmpty: false,
+  wip: false,
+});
 
 type Props = {
   targetPath: string;
@@ -67,64 +87,78 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   // Get creating parent id to determine if item should be treated as folder
   const creatingParentId = useCreatingParentId();
 
-  // onRename handler for headless-tree
+  // Use refs to stabilize callbacks passed to useTree
+  // This prevents headless-tree from detecting config changes and refetching data
+  const creatingParentIdRef = useRef(creatingParentId);
+  creatingParentIdRef.current = creatingParentId;
+
+  const getPageNameRef = useRef(getPageName);
+  getPageNameRef.current = getPageName;
+
+  const renameRef = useRef(rename);
+  renameRef.current = rename;
+
+  const createFromPlaceholderRef = useRef(createFromPlaceholder);
+  createFromPlaceholderRef.current = createFromPlaceholder;
+
+  const isCreatingPlaceholderRef = useRef(isCreatingPlaceholder);
+  isCreatingPlaceholderRef.current = isCreatingPlaceholder;
+
+  const cancelCreatingRef = useRef(cancelCreating);
+  cancelCreatingRef.current = cancelCreating;
+
+  // Stable getItemName callback - receives ItemInstance from headless-tree
+  const getItemName = useCallback((item: ItemInstance<IPageForTreeItem>) => {
+    return getPageNameRef.current(item);
+  }, []);
+
+  // Stable isItemFolder callback
+  // IMPORTANT: Do NOT call item.getChildren() here as it triggers API calls for ALL visible items
+  const isItemFolder = useCallback((item: ItemInstance<IPageForTreeItem>) => {
+    const itemData = item.getItemData();
+    const currentCreatingParentId = creatingParentIdRef.current;
+    const isCreatingUnderThis = currentCreatingParentId === itemData._id;
+    if (isCreatingUnderThis) return true;
+
+    // Use descendantCount from the item data to determine if it's a folder
+    // This avoids triggering getChildrenWithData API calls
+    return itemData.descendantCount > 0;
+  }, []);
+
+  // Stable onRename handler for headless-tree
   // Handles both rename and create (for placeholder nodes)
   const handleRename = useCallback(
-    async (item, newValue: string) => {
-      if (isCreatingPlaceholder(item)) {
+    async (item: ItemInstance<IPageForTreeItem>, newValue: string) => {
+      if (isCreatingPlaceholderRef.current(item)) {
         // Placeholder node: create new page or cancel if empty
         if (newValue.trim() === '') {
           // Empty value means cancel (Esc key or blur)
-          cancelCreating();
+          cancelCreatingRef.current();
         } else {
-          await createFromPlaceholder(item, newValue);
+          await createFromPlaceholderRef.current(item, newValue);
         }
       } else {
         // Normal node: rename page
-        await rename(item, newValue);
+        await renameRef.current(item, newValue);
       }
       // Trigger re-render after operation
       setRebuildTrigger((prev) => prev + 1);
     },
-    [rename, createFromPlaceholder, isCreatingPlaceholder, cancelCreating],
+    [],
   );
+
+  // Stable initial state
+  const initialState = useMemo(() => ({ expandedItems: [ROOT_PAGE_VIRTUAL_ID] }), []);
 
   const tree = useTree<IPageForTreeItem>({
     rootItemId: ROOT_PAGE_VIRTUAL_ID,
-    getItemName: (item) => getPageName(item),
-    initialState: { expandedItems: [ROOT_PAGE_VIRTUAL_ID] },
-    // Item is a folder if it has loaded children OR if it's currently in "creating" mode
-    // Use getChildren() to check actual cached children instead of descendantCount
-    isItemFolder: (item) => {
-      const itemData = item.getItemData();
-      const isCreatingUnderThis = creatingParentId === itemData._id;
-      if (isCreatingUnderThis) return true;
-
-      // Check cached children - getChildren() returns cached child items
-      const children = item.getChildren();
-      if (children.length > 0) return true;
-
-      // Fallback to descendantCount for items not yet expanded
-      return itemData.descendantCount > 0;
-    },
-    createLoadingItemData: () => ({
-      _id: '',
-      path: 'Loading...',
-      parent: '',
-      descendantCount: 0,
-      revision: '',
-      grant: 1,
-      isEmpty: false,
-      wip: false,
-    }),
+    getItemName,
+    initialState,
+    isItemFolder,
+    createLoadingItemData,
     dataLoader,
     onRename: handleRename,
-    features: [
-      asyncDataLoaderFeature,
-      selectionFeature,
-      hotkeysCoreFeature,
-      renamingFeature,
-    ],
+    features: TREE_FEATURES,
   });
 
   // Track local generation number
@@ -152,7 +186,8 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
       parentItem.expand();
     }
 
-    // Invalidate children to load placeholder
+    // Clear cache for this parent and invalidate children to load placeholder
+    clearChildrenCache([creatingParentId]);
     parentItem?.invalidateChildrenIds(true);
 
     // Trigger re-render
