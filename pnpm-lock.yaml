@@ -61,9 +61,6 @@ importers:
       '@types/node':
         specifier: ^20.18.3
         version: 20.19.17
-      '@types/path-browserify':
-        specifier: ^1.0.0
-        version: 1.0.0
       '@typescript-eslint/eslint-plugin':
         specifier: ^5.59.7
         version: 5.59.7(@typescript-eslint/parser@5.59.7(eslint@8.41.0)(typescript@5.0.4))(eslint@8.41.0)(typescript@5.0.4)
@@ -130,9 +127,9 @@ importers:
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      path-browserify:
-        specifier: ^1.0.1
-        version: 1.0.1
+      pathe:
+        specifier: ^2.0.3
+        version: 2.0.3
       reg-keygen-git-hash-plugin:
         specifier: ^0.11.1
         version: 0.11.1
@@ -5866,9 +5863,6 @@ packages:
 
   '@types/oracledb@6.5.2':
     resolution: {integrity: sha512-kK1eBS/Adeyis+3OlBDMeQQuasIDLUYXsi2T15ccNJ0iyUpQ4xDF7svFu3+bGVrI0CMBUclPciz+lsQR3JX3TQ==}
-
-  '@types/path-browserify@1.0.0':
-    resolution: {integrity: sha512-XMCcyhSvxcch8b7rZAtFAaierBYdeHXVvg2iYnxOV0MCQHmPuRRmGZPFDRzPayxcGiiSL1Te9UIO+f3cuj0tfw==}
 
   '@types/pg-pool@2.0.6':
     resolution: {integrity: sha512-TaAUE5rq2VQYxab5Ts7WZhKNmuN78Q6PiFonTDdpbx8a1H0M1vhy3rhiMjl+e2iHmogyMw7jZF4FrE6eJUy5HQ==}
@@ -21530,8 +21524,6 @@ snapshots:
   '@types/oracledb@6.5.2':
     dependencies:
       '@types/node': 20.19.17
-
-  '@types/path-browserify@1.0.0': {}
 
   '@types/pg-pool@2.0.6':
     dependencies:
