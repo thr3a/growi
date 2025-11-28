@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import type { TreeInstance } from '@headless-tree/core';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
-import { ROOT_PAGE_VIRTUAL_ID } from '~/constants/page-tree';
+import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
 
 // Update generation number
 const generationAtom = atom<number>(1);

@@ -16,7 +16,7 @@ import { useGlobalSocket } from '~/states/socket-io';
 import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
 import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 import { usePageDuplicateModalActions } from '~/states/ui/modal/page-duplicate';
-import { usePageTreeDescCountMapAction } from '~/states/ui/page-tree-desc-count-map';
+import { usePageTreeDescCountMapAction } from '~/features/page-tree';
 import { mutateAllPageInfo } from '~/stores/page';
 import {
   useSWRxRootPage, mutatePageTree, mutatePageList,

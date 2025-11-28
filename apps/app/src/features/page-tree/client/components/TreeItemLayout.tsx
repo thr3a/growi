@@ -1,19 +1,16 @@
 import {
+  type JSX,
+  type MouseEvent,
   useCallback,
   useEffect,
   useMemo,
   useState,
-  type MouseEvent,
-  type JSX,
 } from 'react';
-
 import { addTrailingSlash } from '@growi/core/dist/utils/path-utils';
 
-import { usePageTreeDescCountMap } from '~/states/ui/page-tree-desc-count-map';
-
+import type { TreeItemProps, TreeItemToolProps } from '../interfaces';
+import { usePageTreeDescCountMap } from '../states/page-tree-desc-count-map';
 import { SimpleItemContent } from './SimpleItemContent';
-import type { TreeItemProps, TreeItemToolProps } from './interfaces';
-
 
 import styles from './TreeItemLayout.module.scss';
 
@@ -21,19 +18,26 @@ const moduleClass = styles['tree-item-layout'] ?? '';
 
 const indentSize = 10; // in px
 
-
 type TreeItemLayoutProps = TreeItemProps & {
-  className?: string,
-}
+  className?: string;
+};
 
 export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
   const {
-    className, itemClassName,
+    className,
+    itemClassName,
     item,
-    targetPath, targetPathOrId,
-    isEnableActions, isReadOnlyUser, isWipPageShown = true,
+    targetPath,
+    targetPathOrId,
+    isEnableActions,
+    isReadOnlyUser,
+    isWipPageShown = true,
     showAlternativeContent,
-    onRenamed, onClick, onClickDuplicateMenuItem, onClickDeleteMenuItem, onWheelClick,
+    onRenamed,
+    onClick,
+    onClickDuplicateMenuItem,
+    onClickDeleteMenuItem,
+    onWheelClick,
     onToggle,
   } = props;
 
@@ -45,37 +49,39 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
   const toggleHandler = useCallback(() => {
     if (item.isExpanded()) {
       item.collapse();
-    }
-    else {
+    } else {
       item.expand();
     }
 
     onToggle?.();
   }, [item, onToggle]);
 
-  const itemClickHandler = useCallback((e: MouseEvent) => {
-    // DO NOT handle the event when e.currentTarget and e.target is different
-    if (e.target !== e.currentTarget) {
-      return;
-    }
+  const itemClickHandler = useCallback(
+    (e: MouseEvent) => {
+      // DO NOT handle the event when e.currentTarget and e.target is different
+      if (e.target !== e.currentTarget) {
+        return;
+      }
 
-    onClick?.(page);
+      onClick?.(page);
+    },
+    [onClick, page],
+  );
 
-  }, [onClick, page]);
+  const itemMouseupHandler = useCallback(
+    (e: MouseEvent) => {
+      // DO NOT handle the event when e.currentTarget and e.target is different
+      if (e.target !== e.currentTarget) {
+        return;
+      }
 
-  const itemMouseupHandler = useCallback((e: MouseEvent) => {
-    // DO NOT handle the event when e.currentTarget and e.target is different
-    if (e.target !== e.currentTarget) {
-      return;
-    }
-
-    if (e.button === 1) {
-      e.preventDefault();
-      onWheelClick?.(page);
-    }
-
-  }, [onWheelClick, page]);
-
+      if (e.button === 1) {
+        e.preventDefault();
+        onWheelClick?.(page);
+      }
+    },
+    [onWheelClick, page],
+  );
 
   // descendantCount
   const { getDescCount } = usePageTreeDescCountMap();
@@ -87,9 +93,10 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
   // auto open if targetPath is descendant of this page
   useEffect(() => {
     if (!isAutoOpenerInitialized) {
-      const isPathToTarget = page.path != null
-        && targetPath.startsWith(addTrailingSlash(page.path))
-        && targetPath !== page.path; // Target Page does not need to be opened
+      const isPathToTarget =
+        page.path != null &&
+        targetPath.startsWith(addTrailingSlash(page.path)) &&
+        targetPath !== page.path; // Target Page does not need to be opened
 
       if (page.path === '/' || isPathToTarget) {
         item.expand();
@@ -98,7 +105,6 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
     }
 
     setAutoOpenerInitialized(true);
-
   }, [targetPath, page.path, isAutoOpenerInitialized, item, onToggle]);
 
   const isSelected = useMemo(() => {
@@ -139,7 +145,6 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
         onClick={itemClickHandler}
         onMouseUp={itemMouseupHandler}
       >
-
         <div className="btn-triangle-container d-flex justify-content-center">
           {hasDescendants && (
             <button
@@ -148,38 +153,36 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
               onClick={toggleHandler}
             >
               <div className="d-flex justify-content-center">
-                <span className="material-symbols-outlined fs-5">arrow_right</span>
+                <span className="material-symbols-outlined fs-5">
+                  arrow_right
+                </span>
               </div>
             </button>
           )}
         </div>
 
-        {showAlternativeContent && AlternativeComponents != null
-          ? (
-            AlternativeComponents.map((AlternativeContent, index) => (
-              // eslint-disable-next-line react/no-array-index-key
-              (<AlternativeContent key={index} {...toolProps} />)
-            ))
-          )
-          : (
-            <>
-              <SimpleItemContent page={page} />
-              <div className="d-hover-none">
-                {EndComponents?.map((EndComponent, index) => (
-                  // eslint-disable-next-line react/no-array-index-key
-                  (<EndComponent key={index} {...toolProps} />)
-                ))}
-              </div>
-              <div className="d-none d-hover-flex">
-                {HoveredEndComponents?.map((HoveredEndContent, index) => (
-                  // eslint-disable-next-line react/no-array-index-key
-                  (<HoveredEndContent key={index} {...toolProps} />)
-                ))}
-              </div>
-            </>
-          )
-        }
-
+        {showAlternativeContent && AlternativeComponents != null ? (
+          AlternativeComponents.map((AlternativeContent, index) => (
+            // eslint-disable-next-line react/no-array-index-key
+            <AlternativeContent key={index} {...toolProps} />
+          ))
+        ) : (
+          <>
+            <SimpleItemContent page={page} />
+            <div className="d-hover-none">
+              {EndComponents?.map((EndComponent, index) => (
+                // eslint-disable-next-line react/no-array-index-key
+                <EndComponent key={index} {...toolProps} />
+              ))}
+            </div>
+            <div className="d-none d-hover-flex">
+              {HoveredEndComponents?.map((HoveredEndContent, index) => (
+                // eslint-disable-next-line react/no-array-index-key
+                <HoveredEndContent key={index} {...toolProps} />
+              ))}
+            </div>
+          </>
+        )}
       </li>
     </div>
   );

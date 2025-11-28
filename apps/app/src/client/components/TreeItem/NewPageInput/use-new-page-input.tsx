@@ -16,7 +16,7 @@ import { useCreatePage } from '~/client/services/create-page';
 import { toastWarning, toastError, toastSuccess } from '~/client/util/toastr';
 import type { InputValidationResult } from '~/client/util/use-input-validator';
 import { ValidationTarget, useInputValidator } from '~/client/util/use-input-validator';
-import { usePageTreeDescCountMap } from '~/states/ui/page-tree-desc-count-map';
+import { usePageTreeDescCountMap } from '~/features/page-tree';
 import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
 
 import { shouldCreateWipPage } from '../../../../utils/should-create-wip-page';

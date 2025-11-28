@@ -10,11 +10,10 @@ import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
 import { toastSuccess } from '~/client/util/toastr';
-import { ROOT_PAGE_VIRTUAL_ID } from '~/constants/page-tree';
+import { ROOT_PAGE_VIRTUAL_ID, usePageTreeInformationUpdate } from '~/features/page-tree';
 import type { IPageForItem } from '~/interfaces/page';
 import type { OnDeletedFunction, OnDuplicatedFunction } from '~/interfaces/ui';
 import { useCurrentPagePath, useFetchCurrentPage } from '~/states/page';
-import { usePageTreeInformationUpdate } from '~/states/page-tree-update';
 import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
 import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 import { usePageDuplicateModalActions } from '~/states/ui/modal/page-duplicate';

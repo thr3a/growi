@@ -1,19 +1,20 @@
 import type { FC } from 'react';
 import { useState } from 'react';
-
 import { asyncDataLoaderFeature } from '@headless-tree/core';
 import { useTree } from '@headless-tree/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
-import { ROOT_PAGE_VIRTUAL_ID } from '~/constants/page-tree';
 import type { IPageForTreeItem } from '~/interfaces/page';
-import { usePageTreeInformationGeneration, usePageTreeRevalidationEffect } from '~/states/page-tree-update';
 import { useSWRxRootPage } from '~/stores/page-listing';
 
-import type { TreeItemProps } from '../TreeItem';
-
-import { useDataLoader } from './hooks/use-data-loader';
-import { useScrollToSelectedItem } from './hooks/use-scroll-to-selected-item';
+import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
+import { useDataLoader } from '../hooks/use-data-loader';
+import { useScrollToSelectedItem } from '../hooks/use-scroll-to-selected-item';
+import type { TreeItemProps } from '../interfaces';
+import {
+  usePageTreeInformationGeneration,
+  usePageTreeRevalidationEffect,
+} from '../states/page-tree-update';
 
 type Props = {
   targetPath: string;
@@ -21,16 +22,20 @@ type Props = {
   isWipPageShown?: boolean;
   isEnableActions?: boolean;
   isReadOnlyUser?: boolean;
-  CustomTreeItem: React.FunctionComponent<TreeItemProps>
+  CustomTreeItem: React.FunctionComponent<TreeItemProps>;
   estimateTreeItemSize: () => number;
   scrollerElem?: HTMLElement | null;
 };
 
 export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   const {
-    targetPath, targetPathOrId,
-    isWipPageShown = true, isEnableActions = false, isReadOnlyUser = false,
-    CustomTreeItem, estimateTreeItemSize,
+    targetPath,
+    targetPathOrId,
+    isWipPageShown = true,
+    isEnableActions = false,
+    isReadOnlyUser = false,
+    CustomTreeItem,
+    estimateTreeItemSize,
     scrollerElem,
   } = props;
 
@@ -45,9 +50,9 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
 
   const tree = useTree<IPageForTreeItem>({
     rootItemId: ROOT_PAGE_VIRTUAL_ID,
-    getItemName: item => item.getItemData().path || '/',
+    getItemName: (item) => item.getItemData().path || '/',
     initialState: { expandedItems: [ROOT_PAGE_VIRTUAL_ID] },
-    isItemFolder: item => item.getItemData().descendantCount > 0,
+    isItemFolder: (item) => item.getItemData().descendantCount > 0,
     createLoadingItemData: () => ({
       _id: '',
       path: 'Loading...',
@@ -122,7 +127,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
               isReadOnlyUser={isReadOnlyUser}
               onToggle={() => {
                 // Trigger re-render to show/hide children
-                setRebuildTrigger(prev => prev + 1);
+                setRebuildTrigger((prev) => prev + 1);
               }}
             />
           </div>
