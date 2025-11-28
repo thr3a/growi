@@ -14,15 +14,19 @@ import { useSWRxRootPage } from '~/stores/page-listing';
 
 import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
 import { useAutoExpandAncestors } from '../hooks/use-auto-expand-ancestors';
-import { clearChildrenCache, useDataLoader } from '../hooks/use-data-loader';
+import { useDataLoader } from '../hooks/use-data-loader';
 import { useScrollToSelectedItem } from '../hooks/use-scroll-to-selected-item';
 import { useTreeItemHandlers } from '../hooks/use-tree-item-handlers';
 import type { TreeItemProps } from '../interfaces';
+import { invalidatePageTreeChildren } from '../services';
 import {
   usePageTreeInformationGeneration,
   usePageTreeRevalidationEffect,
 } from '../states/page-tree-update';
-import { useTreeRebuildTrigger, useTriggerTreeRebuild } from '../states/tree-rebuild';
+import {
+  useTreeRebuildTrigger,
+  useTriggerTreeRebuild,
+} from '../states/tree-rebuild';
 
 // Stable features array to avoid recreating on every render
 const TREE_FEATURES = [
@@ -79,15 +83,14 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
 
   // Tree item handlers (rename, create, etc.) with stable callbacks for headless-tree
   // Note: triggerTreeRebuild is stable (from useSetAtom), so no need for useCallback wrapper
-  const {
-    getItemName,
-    isItemFolder,
-    handleRename,
-    creatingParentId,
-  } = useTreeItemHandlers(triggerTreeRebuild);
+  const { getItemName, isItemFolder, handleRename, creatingParentId } =
+    useTreeItemHandlers(triggerTreeRebuild);
 
   // Stable initial state
-  const initialState = useMemo(() => ({ expandedItems: [ROOT_PAGE_VIRTUAL_ID] }), []);
+  const initialState = useMemo(
+    () => ({ expandedItems: [ROOT_PAGE_VIRTUAL_ID] }),
+    [],
+  );
 
   const tree = useTree<IPageForTreeItem>({
     rootItemId: ROOT_PAGE_VIRTUAL_ID,
@@ -107,7 +110,9 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   // Refetch data when global generation is updated
   usePageTreeRevalidationEffect(tree, localGenerationRef.current, {
     // Update local generation number after revalidation
-    onRevalidated: () => { localGenerationRef.current = globalGeneration; },
+    onRevalidated: () => {
+      localGenerationRef.current = globalGeneration;
+    },
   });
 
   // Expand and rebuild tree when creatingParentId changes
@@ -126,7 +131,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     }
 
     // Clear cache for this parent and invalidate children to load placeholder
-    clearChildrenCache([creatingParentId]);
+    invalidatePageTreeChildren([creatingParentId]);
     parentItem?.invalidateChildrenIds(true);
 
     // Trigger re-render

@@ -20,12 +20,13 @@ import { createStore, Provider } from 'jotai';
 
 import type { IPageForTreeItem } from '~/interfaces/page';
 
+import { invalidatePageTreeChildren } from '../services';
 // Re-import the actions hook to use real implementation
 import {
   CREATING_PAGE_VIRTUAL_ID,
   usePageTreeCreateActions,
 } from '../states/page-tree-create';
-import { clearChildrenCache, useDataLoader } from './use-data-loader';
+import { useDataLoader } from './use-data-loader';
 
 /**
  * Type helper to extract getChildrenWithData from TreeDataLoader
@@ -87,8 +88,8 @@ describe('use-data-loader integration with Jotai atoms', () => {
   beforeEach(() => {
     // Create fresh store for each test
     store = createStore();
-    // Clear cache before each test
-    clearChildrenCache();
+    // Clear pending requests before each test
+    invalidatePageTreeChildren();
     // Reset mock
     mockApiv3Get.mockReset();
   });
@@ -124,8 +125,8 @@ describe('use-data-loader integration with Jotai atoms', () => {
         actionsResult.current.startCreating('parent-id', '/parent');
       });
 
-      // Clear cache to force re-fetch
-      clearChildrenCache(['parent-id']);
+      // Clear pending requests to force re-fetch
+      invalidatePageTreeChildren(['parent-id']);
 
       // Second call - should have placeholder because atom state changed
       const childrenAfter =
@@ -160,8 +161,8 @@ describe('use-data-loader integration with Jotai atoms', () => {
         actionsResult.current.startCreating('parent-id', '/parent');
       });
 
-      // Clear cache and fetch - should have placeholder
-      clearChildrenCache(['parent-id']);
+      // Clear pending requests and fetch - should have placeholder
+      invalidatePageTreeChildren(['parent-id']);
       const childrenWithPlaceholder =
         await getDataLoader(dataLoaderResult).getChildrenWithData('parent-id');
       expect(childrenWithPlaceholder).toHaveLength(2);
@@ -172,8 +173,8 @@ describe('use-data-loader integration with Jotai atoms', () => {
         actionsResult.current.cancelCreating();
       });
 
-      // Clear cache and fetch - should NOT have placeholder
-      clearChildrenCache(['parent-id']);
+      // Clear pending requests and fetch - should NOT have placeholder
+      invalidatePageTreeChildren(['parent-id']);
       const childrenAfterCancel =
         await getDataLoader(dataLoaderResult).getChildrenWithData('parent-id');
       expect(childrenAfterCancel).toHaveLength(1);
@@ -237,8 +238,8 @@ describe('use-data-loader integration with Jotai atoms', () => {
         actionsResult.current.startCreating('parent-id', '/parent');
       });
 
-      // Clear cache
-      clearChildrenCache(['parent-id']);
+      // Clear pending requests
+      invalidatePageTreeChildren(['parent-id']);
 
       // Call getChildrenWithData using the SAME dataLoader reference
       // This should still see the updated atom state
@@ -276,7 +277,7 @@ describe('use-data-loader integration with Jotai atoms', () => {
       act(() => {
         actionsResult.current.startCreating('parent-id', '/parent');
       });
-      clearChildrenCache(['parent-id']);
+      invalidatePageTreeChildren(['parent-id']);
       let children = await dataLoader.getChildrenWithData('parent-id');
       expect(children).toHaveLength(2);
       expect(children[0].id).toBe(CREATING_PAGE_VIRTUAL_ID);
@@ -285,7 +286,7 @@ describe('use-data-loader integration with Jotai atoms', () => {
       act(() => {
         actionsResult.current.cancelCreating();
       });
-      clearChildrenCache(['parent-id']);
+      invalidatePageTreeChildren(['parent-id']);
       children = await dataLoader.getChildrenWithData('parent-id');
       expect(children).toHaveLength(1);
       expect(children[0].id).toBe('existing-child');
@@ -294,7 +295,7 @@ describe('use-data-loader integration with Jotai atoms', () => {
       act(() => {
         actionsResult.current.startCreating('other-parent', '/other');
       });
-      clearChildrenCache(['parent-id', 'other-parent']);
+      invalidatePageTreeChildren(['parent-id', 'other-parent']);
 
       // Original parent should NOT have placeholder
       children = await dataLoader.getChildrenWithData('parent-id');
@@ -311,7 +312,7 @@ describe('use-data-loader integration with Jotai atoms', () => {
       act(() => {
         actionsResult.current.cancelCreating();
       });
-      clearChildrenCache(['other-parent']);
+      invalidatePageTreeChildren(['other-parent']);
       mockApiv3Get.mockResolvedValueOnce({ data: { children: [] } });
       children = await dataLoader.getChildrenWithData('other-parent');
       expect(children).toHaveLength(0);

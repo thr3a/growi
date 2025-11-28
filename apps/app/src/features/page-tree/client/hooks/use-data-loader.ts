@@ -5,6 +5,7 @@ import { apiv3Get } from '~/client/util/apiv3-client';
 import type { IPageForTreeItem } from '~/interfaces/page';
 
 import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
+import { type ChildrenData, fetchAndCacheChildren } from '../services';
 import {
   CREATING_PAGE_VIRTUAL_ID,
   createPlaceholderPageData,
@@ -27,33 +28,6 @@ function constructRootPageForVirtualRoot(
   };
 }
 
-// Cache for children data to prevent duplicate API calls
-// Key: itemId, Value: { promise, data, timestamp }
-type CacheEntry = {
-  promise: Promise<{ id: string; data: IPageForTreeItem }[]>;
-  data?: { id: string; data: IPageForTreeItem }[];
-  timestamp: number;
-};
-
-// Module-level cache (persists across component remounts)
-const childrenCache = new Map<string, CacheEntry>();
-
-// Cache TTL in milliseconds (5 minutes)
-const CACHE_TTL = 5 * 60 * 1000;
-
-/**
- * Clear cache for specific item IDs or all cache
- */
-export const clearChildrenCache = (itemIds?: string[]): void => {
-  if (itemIds == null) {
-    childrenCache.clear();
-  } else {
-    itemIds.forEach((id) => {
-      childrenCache.delete(id);
-    });
-  }
-};
-
 export const useDataLoader = (
   rootPageId: string,
   allPagesCount: number,
@@ -72,6 +46,7 @@ export const useDataLoader = (
 
   // Memoize the entire dataLoader object to ensure reference stability
   // Only recreate when rootPageId or allPagesCount changes (which are truly needed for the API calls)
+  // Note: Creating state is read from refs inside callbacks to avoid triggering dataLoader recreation
   const dataLoader = useMemo<TreeDataLoader<IPageForTreeItem>>(() => {
     const getItem = async (itemId: string): Promise<IPageForTreeItem> => {
       // Virtual root (should rarely be called since it's provided by getChildrenWithData)
@@ -94,21 +69,9 @@ export const useDataLoader = (
       return response.data.item;
     };
 
-    const fetchChildrenFromApi = async (
+    const getChildrenWithData = async (
       itemId: string,
-    ): Promise<{ id: string; data: IPageForTreeItem }[]> => {
-      const response = await apiv3Get<{ children: IPageForTreeItem[] }>(
-        '/page-listing/children',
-        { id: itemId },
-      );
-
-      return response.data.children.map((child) => ({
-        id: child._id,
-        data: child,
-      }));
-    };
-
-    const getChildrenWithData = async (itemId: string) => {
+    ): Promise<ChildrenData> => {
       // Virtual root returns root page as its only child
       // Use actual MongoDB _id as tree item ID to avoid duplicate API calls
       if (itemId === ROOT_PAGE_VIRTUAL_ID) {
@@ -125,35 +88,7 @@ export const useDataLoader = (
         return [];
       }
 
-      // Check cache first
-      const now = Date.now();
-      const cached = childrenCache.get(itemId);
-
-      let children: { id: string; data: IPageForTreeItem }[];
-
-      if (cached != null && now - cached.timestamp < CACHE_TTL) {
-        // Use cached data or wait for pending promise
-        if (cached.data != null) {
-          children = cached.data;
-        } else {
-          children = await cached.promise;
-        }
-      } else {
-        // Fetch from API and cache the promise to prevent duplicate requests
-        const promise = fetchChildrenFromApi(itemId);
-        const entry: CacheEntry = { promise, timestamp: now };
-        childrenCache.set(itemId, entry);
-
-        try {
-          children = await promise;
-          // Store the resolved data in cache
-          entry.data = children;
-        } catch (error) {
-          // Remove failed entry from cache
-          childrenCache.delete(itemId);
-          throw error;
-        }
-      }
+      const children = await fetchAndCacheChildren(itemId);
 
       // If this parent is in "creating" mode, prepend placeholder node
       // Read from refs to get current value without triggering dataLoader recreation

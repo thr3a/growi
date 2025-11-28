@@ -3,15 +3,18 @@ import { renderHook } from '@testing-library/react';
 import type { IPageForTreeItem } from '~/interfaces/page';
 
 import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
+import { invalidatePageTreeChildren } from '../services';
 import { CREATING_PAGE_VIRTUAL_ID } from '../states/page-tree-create';
-import { clearChildrenCache, useDataLoader } from './use-data-loader';
+import { useDataLoader } from './use-data-loader';
 
 /**
  * Type helper to extract getChildrenWithData from TreeDataLoader
  * TreeDataLoader is a union type, and we're using the variant with getChildrenWithData
  */
 type DataLoaderWithChildrenData = ReturnType<typeof useDataLoader> & {
-  getChildrenWithData: (itemId: string) => Promise<{ id: string; data: IPageForTreeItem }[]>;
+  getChildrenWithData: (
+    itemId: string,
+  ) => Promise<{ id: string; data: IPageForTreeItem }[]>;
 };
 
 // Mock the apiv3Get function
@@ -55,9 +58,9 @@ const createMockPage = (
 /**
  * Helper to get typed dataLoader with getChildrenWithData
  */
-const getDataLoader = (
-  result: { current: ReturnType<typeof useDataLoader> },
-): DataLoaderWithChildrenData => {
+const getDataLoader = (result: {
+  current: ReturnType<typeof useDataLoader>;
+}): DataLoaderWithChildrenData => {
   return result.current as DataLoaderWithChildrenData;
 };
 
@@ -66,8 +69,8 @@ describe('use-data-loader', () => {
   const ALL_PAGES_COUNT = 100;
 
   beforeEach(() => {
-    // Clear cache before each test
-    clearChildrenCache();
+    // Clear pending requests before each test
+    invalidatePageTreeChildren();
     // Reset mock
     mockApiv3Get.mockReset();
     // Reset creating state
@@ -158,7 +161,8 @@ describe('use-data-loader', () => {
           useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
         );
 
-        const children = await getDataLoader(result).getChildrenWithData('parent-id');
+        const children =
+          await getDataLoader(result).getChildrenWithData('parent-id');
 
         expect(children).toHaveLength(2);
         expect(children[0].id).toBe('child-1');
@@ -170,47 +174,7 @@ describe('use-data-loader', () => {
       });
     });
 
-    describe('cache behavior - API call count', () => {
-      test('should call API only once for same itemId (cache hit)', async () => {
-        const mockChildren = [createMockPage('child-1', '/parent/child-1')];
-        mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
-
-        const { result } = renderHook(() =>
-          useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
-        );
-
-        // Call getChildrenWithData multiple times with the same ID
-        await getDataLoader(result).getChildrenWithData('parent-id');
-        await getDataLoader(result).getChildrenWithData('parent-id');
-        await getDataLoader(result).getChildrenWithData('parent-id');
-
-        // API should only be called once due to caching
-        expect(mockApiv3Get).toHaveBeenCalledTimes(1);
-      });
-
-      test('should call API once per unique itemId', async () => {
-        const mockChildren1 = [createMockPage('child-1', '/parent1/child-1')];
-        const mockChildren2 = [createMockPage('child-2', '/parent2/child-2')];
-        const mockChildren3 = [createMockPage('child-3', '/parent3/child-3')];
-
-        mockApiv3Get
-          .mockResolvedValueOnce({ data: { children: mockChildren1 } })
-          .mockResolvedValueOnce({ data: { children: mockChildren2 } })
-          .mockResolvedValueOnce({ data: { children: mockChildren3 } });
-
-        const { result } = renderHook(() =>
-          useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
-        );
-
-        // Call getChildrenWithData for different IDs
-        await getDataLoader(result).getChildrenWithData('parent-1');
-        await getDataLoader(result).getChildrenWithData('parent-2');
-        await getDataLoader(result).getChildrenWithData('parent-3');
-
-        // API should be called once per unique ID
-        expect(mockApiv3Get).toHaveBeenCalledTimes(3);
-      });
-
+    describe('concurrent request deduplication', () => {
       test('should deduplicate concurrent requests for the same itemId', async () => {
         const mockChildren = [createMockPage('child-1', '/parent/child-1')];
 
@@ -249,52 +213,41 @@ describe('use-data-loader', () => {
         expect(mockApiv3Get).toHaveBeenCalledTimes(1);
       });
 
-      test('should call API again after cache is cleared', async () => {
-        const mockChildren = [createMockPage('child-1', '/parent/child-1')];
-        mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
-
-        const { result } = renderHook(() =>
-          useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
-        );
-
-        // First call
-        await getDataLoader(result).getChildrenWithData('parent-id');
-        expect(mockApiv3Get).toHaveBeenCalledTimes(1);
-
-        // Clear cache for specific ID
-        clearChildrenCache(['parent-id']);
-
-        // Second call after cache clear
-        await getDataLoader(result).getChildrenWithData('parent-id');
-        expect(mockApiv3Get).toHaveBeenCalledTimes(2);
-      });
-
-      test('should call API again after all cache is cleared', async () => {
+      test('should call API once per unique itemId for concurrent requests', async () => {
         const mockChildren1 = [createMockPage('child-1', '/parent1/child-1')];
         const mockChildren2 = [createMockPage('child-2', '/parent2/child-2')];
 
+        let resolvePromise1: ((value: unknown) => void) | undefined;
+        let resolvePromise2: ((value: unknown) => void) | undefined;
+
         mockApiv3Get
-          .mockResolvedValueOnce({ data: { children: mockChildren1 } })
-          .mockResolvedValueOnce({ data: { children: mockChildren2 } })
-          .mockResolvedValueOnce({ data: { children: mockChildren1 } })
-          .mockResolvedValueOnce({ data: { children: mockChildren2 } });
+          .mockReturnValueOnce(
+            new Promise((resolve) => {
+              resolvePromise1 = resolve;
+            }),
+          )
+          .mockReturnValueOnce(
+            new Promise((resolve) => {
+              resolvePromise2 = resolve;
+            }),
+          );
 
         const { result } = renderHook(() =>
           useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
         );
 
-        // First calls
-        await getDataLoader(result).getChildrenWithData('parent-1');
-        await getDataLoader(result).getChildrenWithData('parent-2');
+        // Start concurrent requests for different IDs
+        const promise1 = getDataLoader(result).getChildrenWithData('parent-1');
+        const promise2 = getDataLoader(result).getChildrenWithData('parent-2');
+
+        // Resolve both
+        resolvePromise1?.({ data: { children: mockChildren1 } });
+        resolvePromise2?.({ data: { children: mockChildren2 } });
+
+        await Promise.all([promise1, promise2]);
+
+        // API should be called once per unique ID
         expect(mockApiv3Get).toHaveBeenCalledTimes(2);
-
-        // Clear all cache
-        clearChildrenCache();
-
-        // Calls after cache clear
-        await getDataLoader(result).getChildrenWithData('parent-1');
-        await getDataLoader(result).getChildrenWithData('parent-2');
-        expect(mockApiv3Get).toHaveBeenCalledTimes(4);
       });
     });
 
@@ -351,7 +304,7 @@ describe('use-data-loader', () => {
     });
 
     describe('error handling', () => {
-      test('should remove cache entry on API error', async () => {
+      test('should allow retry after API error', async () => {
         const error = new Error('API Error');
         mockApiv3Get.mockRejectedValueOnce(error).mockResolvedValueOnce({
           data: { children: [createMockPage('child-1', '/parent/child-1')] },
@@ -361,13 +314,16 @@ describe('use-data-loader', () => {
           useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
         );
 
-        // First call - should fail
-        await expect(
-          getDataLoader(result).getChildrenWithData('parent-id'),
-        ).rejects.toThrow('API Error');
+        // First call - should fail and remove pending entry
+        try {
+          await getDataLoader(result).getChildrenWithData('parent-id');
+        } catch {
+          // Expected to fail
+        }
 
-        // Second call - should retry since cache entry was removed
-        const children = await getDataLoader(result).getChildrenWithData('parent-id');
+        // Second call - should retry since pending entry was removed
+        const children =
+          await getDataLoader(result).getChildrenWithData('parent-id');
 
         expect(children).toHaveLength(1);
         expect(mockApiv3Get).toHaveBeenCalledTimes(2);
@@ -375,55 +331,11 @@ describe('use-data-loader', () => {
     });
   });
 
-  describe('clearChildrenCache', () => {
-    test('should clear specific cache entries', async () => {
-      const mockChildren = [createMockPage('child-1', '/parent/child-1')];
-      mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
-
-      const { result } = renderHook(() =>
-        useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
-      );
-
-      // Populate cache
-      await getDataLoader(result).getChildrenWithData('parent-1');
-      await getDataLoader(result).getChildrenWithData('parent-2');
-      expect(mockApiv3Get).toHaveBeenCalledTimes(2);
-
-      // Clear only parent-1
-      clearChildrenCache(['parent-1']);
-
-      // parent-1 should call API again, parent-2 should use cache
-      await getDataLoader(result).getChildrenWithData('parent-1');
-      await getDataLoader(result).getChildrenWithData('parent-2');
-      expect(mockApiv3Get).toHaveBeenCalledTimes(3);
-    });
-
-    test('should clear all cache entries when called without arguments', async () => {
-      const mockChildren = [createMockPage('child-1', '/parent/child-1')];
-      mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
-
-      const { result } = renderHook(() =>
-        useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
-      );
-
-      // Populate cache
-      await getDataLoader(result).getChildrenWithData('parent-1');
-      await getDataLoader(result).getChildrenWithData('parent-2');
-      expect(mockApiv3Get).toHaveBeenCalledTimes(2);
-
-      // Clear all cache
-      clearChildrenCache();
-
-      // Both should call API again
-      await getDataLoader(result).getChildrenWithData('parent-1');
-      await getDataLoader(result).getChildrenWithData('parent-2');
-      expect(mockApiv3Get).toHaveBeenCalledTimes(4);
-    });
-  });
-
   describe('placeholder node for page creation', () => {
     test('should prepend placeholder node when parent is in creating mode', async () => {
-      const mockChildren = [createMockPage('existing-child', '/parent/existing')];
+      const mockChildren = [
+        createMockPage('existing-child', '/parent/existing'),
+      ];
       mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
 
       // Set creating state BEFORE rendering the hook
@@ -434,7 +346,8 @@ describe('use-data-loader', () => {
         useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
       );
 
-      const children = await getDataLoader(result).getChildrenWithData('parent-id');
+      const children =
+        await getDataLoader(result).getChildrenWithData('parent-id');
 
       // Should have placeholder + existing children
       expect(children).toHaveLength(2);
@@ -448,7 +361,9 @@ describe('use-data-loader', () => {
     });
 
     test('should not add placeholder when parent is not in creating mode', async () => {
-      const mockChildren = [createMockPage('existing-child', '/parent/existing')];
+      const mockChildren = [
+        createMockPage('existing-child', '/parent/existing'),
+      ];
       mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
 
       // Creating state is null (not creating)
@@ -459,7 +374,8 @@ describe('use-data-loader', () => {
         useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
       );
 
-      const children = await getDataLoader(result).getChildrenWithData('parent-id');
+      const children =
+        await getDataLoader(result).getChildrenWithData('parent-id');
 
       // Should only have existing children, no placeholder
       expect(children).toHaveLength(1);
@@ -467,7 +383,9 @@ describe('use-data-loader', () => {
     });
 
     test('should not add placeholder to different parent', async () => {
-      const mockChildren = [createMockPage('existing-child', '/other/existing')];
+      const mockChildren = [
+        createMockPage('existing-child', '/other/existing'),
+      ];
       mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
 
       // Creating under 'parent-id', but fetching children of 'other-id'
@@ -478,7 +396,8 @@ describe('use-data-loader', () => {
         useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
       );
 
-      const children = await getDataLoader(result).getChildrenWithData('other-id');
+      const children =
+        await getDataLoader(result).getChildrenWithData('other-id');
 
       // Should only have existing children, no placeholder
       expect(children).toHaveLength(1);
@@ -497,7 +416,8 @@ describe('use-data-loader', () => {
         useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
       );
 
-      const children = await getDataLoader(result).getChildrenWithData('empty-parent-id');
+      const children =
+        await getDataLoader(result).getChildrenWithData('empty-parent-id');
 
       // Should have only the placeholder
       expect(children).toHaveLength(1);
@@ -507,7 +427,9 @@ describe('use-data-loader', () => {
     });
 
     test('should read creating state via refs when called after state change', async () => {
-      const mockChildren = [createMockPage('existing-child', '/parent/existing')];
+      const mockChildren = [
+        createMockPage('existing-child', '/parent/existing'),
+      ];
       mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
 
       // Render hook WITHOUT creating state
@@ -516,8 +438,8 @@ describe('use-data-loader', () => {
       );
 
       // First call - no placeholder
-      clearChildrenCache();
-      const childrenBefore = await getDataLoader(result).getChildrenWithData('parent-id');
+      const childrenBefore =
+        await getDataLoader(result).getChildrenWithData('parent-id');
       expect(childrenBefore).toHaveLength(1);
       expect(childrenBefore[0].id).toBe('existing-child');
 
@@ -528,11 +450,13 @@ describe('use-data-loader', () => {
       // Rerender to update refs
       rerender();
 
-      // Clear cache to force re-fetch
-      clearChildrenCache();
-
       // Second call - should have placeholder because refs are updated
-      const childrenAfter = await getDataLoader(result).getChildrenWithData('parent-id');
+      // Note: Since sequential caching is now handled by headless-tree,
+      // we need to clear pending requests to get fresh data
+      invalidatePageTreeChildren();
+
+      const childrenAfter =
+        await getDataLoader(result).getChildrenWithData('parent-id');
       expect(childrenAfter).toHaveLength(2);
       expect(childrenAfter[0].id).toBe(CREATING_PAGE_VIRTUAL_ID);
       expect(childrenAfter[1].id).toBe('existing-child');

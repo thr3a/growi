@@ -5,8 +5,8 @@ import { render, waitFor } from '@testing-library/react';
 
 import type { IPageForTreeItem } from '~/interfaces/page';
 
-import { clearChildrenCache } from '../hooks/use-data-loader';
 import type { TreeItemProps } from '../interfaces';
+import { invalidatePageTreeChildren } from '../services';
 import { SimplifiedItemsTree } from './SimplifiedItemsTree';
 
 // Mock the apiv3Get function
@@ -110,7 +110,7 @@ const TestWrapper: FC<{ children: React.ReactNode }> = ({ children }) => (
 describe('SimplifiedItemsTree', () => {
   beforeEach(() => {
     // Clear cache before each test
-    clearChildrenCache();
+    invalidatePageTreeChildren();
     // Reset mock
     mockApiv3Get.mockReset();
   });
