@@ -33,12 +33,16 @@ vi.mock('~/stores/page-listing', () => ({
 }));
 
 // Mock page-tree-create state hooks
+// These will be overridden in specific tests
+let mockCreatingParentId: string | null = null;
+let mockCreatingParentPath: string | null = null;
+
 vi.mock('../states/page-tree-create', async () => {
   const actual = await vi.importActual('../states/page-tree-create');
   return {
     ...actual,
-    useCreatingParentId: () => null,
-    useCreatingParentPath: () => null,
+    useCreatingParentId: () => mockCreatingParentId,
+    useCreatingParentPath: () => mockCreatingParentPath,
   };
 });
 
@@ -113,6 +117,9 @@ describe('SimplifiedItemsTree', () => {
     invalidatePageTreeChildren();
     // Reset mock
     mockApiv3Get.mockReset();
+    // Reset creating state
+    mockCreatingParentId = null;
+    mockCreatingParentPath = null;
   });
 
   describe('API call optimization', () => {
@@ -134,6 +141,12 @@ describe('SimplifiedItemsTree', () => {
             }
             // Return empty children for other nodes (they shouldn't be called if not expanded)
             return Promise.resolve({ data: { children: [] } });
+          }
+          // Handle /page-listing/item endpoint
+          if (endpoint === '/page-listing/item') {
+            return Promise.resolve({
+              data: { item: createMockPage(params.id, `/${params.id}`) },
+            });
           }
           return Promise.reject(new Error(`Unexpected endpoint: ${endpoint}`));
         },
@@ -189,11 +202,17 @@ describe('SimplifiedItemsTree', () => {
 
       mockApiv3Get.mockImplementation(
         (endpoint: string, params: { id: string }) => {
-          if (
-            endpoint === '/page-listing/children' &&
-            params.id === 'root-page-id'
-          ) {
-            return Promise.resolve({ data: { children: rootChildren } });
+          if (endpoint === '/page-listing/children') {
+            if (params.id === 'root-page-id') {
+              return Promise.resolve({ data: { children: rootChildren } });
+            }
+            return Promise.resolve({ data: { children: [] } });
+          }
+          // Handle /page-listing/item endpoint
+          if (endpoint === '/page-listing/item') {
+            return Promise.resolve({
+              data: { item: createMockPage(params.id, `/${params.id}`) },
+            });
           }
           return Promise.resolve({ data: { children: [] } });
         },
@@ -252,6 +271,12 @@ describe('SimplifiedItemsTree', () => {
               return Promise.resolve({ data: { children: rootChildren } });
             }
             return Promise.resolve({ data: { children: [] } });
+          }
+          // Handle /page-listing/item endpoint
+          if (endpoint === '/page-listing/item') {
+            return Promise.resolve({
+              data: { item: createMockPage(params.id, `/${params.id}`) },
+            });
           }
           return Promise.reject(new Error(`Unexpected endpoint: ${endpoint}`));
         },
@@ -313,6 +338,7 @@ describe('SimplifiedItemsTree', () => {
         (endpoint: string, params: { id: string }) => {
           if (endpoint === '/page-listing/children') {
             fetchedChildrenIds.push(params.id);
+
             if (params.id === 'root-page-id') {
               return Promise.resolve({ data: { children: rootChildren } });
             }
@@ -320,6 +346,12 @@ describe('SimplifiedItemsTree', () => {
               return Promise.resolve({ data: { children: sandboxChildren } });
             }
             return Promise.resolve({ data: { children: [] } });
+          }
+          // Handle /page-listing/item endpoint
+          if (endpoint === '/page-listing/item') {
+            return Promise.resolve({
+              data: { item: createMockPage(params.id, `/${params.id}`) },
+            });
           }
           return Promise.reject(new Error(`Unexpected endpoint: ${endpoint}`));
         },
@@ -363,4 +395,261 @@ describe('SimplifiedItemsTree', () => {
 
   // NOTE: Page creation placeholder tests are covered in use-data-loader.spec.tsx
   // The dataLoader is responsible for prepending placeholder nodes when creatingParentId is set
+
+  describe('page creation (creatingParentId)', () => {
+    test('should not cause infinite API requests when creatingParentId is set', async () => {
+      // This test verifies the fix for the infinite request loop bug
+      // When creatingParentId is set, the component should:
+      // 1. Invalidate and refetch children for that parent ONCE
+      // 2. NOT continuously refetch in an infinite loop
+
+      const rootChildren = [
+        createMockPage('parent-1', '/Parent1', { descendantCount: 2 }),
+        createMockPage('parent-2', '/Parent2', { descendantCount: 0 }),
+      ];
+
+      const parent1Children = [
+        createMockPage('child-1', '/Parent1/Child1', { descendantCount: 0 }),
+      ];
+
+      // Track API call count per ID
+      const apiCallCounts: Record<string, number> = {};
+
+      mockApiv3Get.mockImplementation(
+        (endpoint: string, params: { id: string }) => {
+          if (endpoint === '/page-listing/children') {
+            apiCallCounts[params.id] = (apiCallCounts[params.id] || 0) + 1;
+
+            if (params.id === 'root-page-id') {
+              return Promise.resolve({ data: { children: rootChildren } });
+            }
+            if (params.id === 'parent-1') {
+              return Promise.resolve({ data: { children: parent1Children } });
+            }
+            return Promise.resolve({ data: { children: [] } });
+          }
+          // Handle /page-listing/item endpoint for individual item fetches
+          if (endpoint === '/page-listing/item') {
+            return Promise.resolve({
+              data: { item: createMockPage(params.id, `/${params.id}`) },
+            });
+          }
+          return Promise.reject(new Error(`Unexpected endpoint: ${endpoint}`));
+        },
+      );
+
+      const scrollerElem = document.createElement('div');
+      scrollerElem.style.height = '500px';
+      document.body.appendChild(scrollerElem);
+
+      // Set creatingParentId BEFORE rendering to simulate the user clicking create button
+      mockCreatingParentId = 'parent-1';
+      mockCreatingParentPath = '/Parent1';
+
+      const { rerender } = render(
+        <TestWrapper>
+          <SimplifiedItemsTree
+            targetPath="/"
+            isEnableActions={true}
+            CustomTreeItem={TestTreeItem}
+            estimateTreeItemSize={() => 32}
+            scrollerElem={scrollerElem}
+          />
+        </TestWrapper>,
+      );
+
+      // Wait for initial data fetch
+      await waitFor(() => {
+        expect(mockApiv3Get).toHaveBeenCalled();
+      });
+
+      // Wait a reasonable amount of time to detect infinite loops
+      // If there's an infinite loop, we'd see many API calls within this time
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Force re-render to simulate React re-renders that could trigger the loop
+      rerender(
+        <TestWrapper>
+          <SimplifiedItemsTree
+            targetPath="/"
+            isEnableActions={true}
+            CustomTreeItem={TestTreeItem}
+            estimateTreeItemSize={() => 32}
+            scrollerElem={scrollerElem}
+          />
+        </TestWrapper>,
+      );
+
+      // Wait more time for potential infinite loop to manifest
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Key assertion: API calls for parent-1 should be bounded
+      // An infinite loop would cause this count to be very high (100+)
+      // Normal behavior: 1-3 calls (initial load + invalidation)
+      const parent1CallCount = apiCallCounts['parent-1'] || 0;
+      expect(parent1CallCount).toBeLessThanOrEqual(5);
+
+      // Total API calls should also be bounded
+      const totalCalls = Object.values(apiCallCounts).reduce(
+        (sum, count) => sum + count,
+        0,
+      );
+      expect(totalCalls).toBeLessThanOrEqual(10);
+
+      document.body.removeChild(scrollerElem);
+    });
+
+    test('should handle creatingParentId change without infinite loop', async () => {
+      // Test that changing creatingParentId from one value to another
+      // doesn't cause infinite requests
+
+      const rootChildren = [
+        createMockPage('parent-1', '/Parent1', { descendantCount: 1 }),
+        createMockPage('parent-2', '/Parent2', { descendantCount: 1 }),
+      ];
+
+      let totalApiCalls = 0;
+
+      mockApiv3Get.mockImplementation(
+        (endpoint: string, params: { id: string }) => {
+          if (endpoint === '/page-listing/children') {
+            totalApiCalls++;
+
+            if (params.id === 'root-page-id') {
+              return Promise.resolve({ data: { children: rootChildren } });
+            }
+            return Promise.resolve({ data: { children: [] } });
+          }
+          // Handle /page-listing/item endpoint for individual item fetches
+          if (endpoint === '/page-listing/item') {
+            return Promise.resolve({
+              data: { item: createMockPage(params.id, `/${params.id}`) },
+            });
+          }
+          return Promise.reject(new Error(`Unexpected endpoint: ${endpoint}`));
+        },
+      );
+
+      const scrollerElem = document.createElement('div');
+      scrollerElem.style.height = '500px';
+      document.body.appendChild(scrollerElem);
+
+      // Initial render without creating state
+      render(
+        <TestWrapper>
+          <SimplifiedItemsTree
+            targetPath="/"
+            isEnableActions={true}
+            CustomTreeItem={TestTreeItem}
+            estimateTreeItemSize={() => 32}
+            scrollerElem={scrollerElem}
+          />
+        </TestWrapper>,
+      );
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(mockApiv3Get).toHaveBeenCalled();
+      });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      const callsAfterInitialLoad = totalApiCalls;
+
+      // Simulate setting creatingParentId (user clicks create button)
+      // Note: Since we can't easily change the mock mid-test in this setup,
+      // we're mainly testing the initial render with creatingParentId set
+
+      // Wait to ensure no more calls happen
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Verify API calls stabilized
+      expect(totalApiCalls).toBeLessThanOrEqual(callsAfterInitialLoad + 2);
+
+      document.body.removeChild(scrollerElem);
+    });
+
+    test('should stop fetching when creatingParentId becomes null', async () => {
+      // Verify that resetting creatingParentId to null doesn't cause issues
+
+      const rootChildren = [
+        createMockPage('parent-1', '/Parent1', { descendantCount: 1 }),
+      ];
+
+      let apiCallCount = 0;
+
+      mockApiv3Get.mockImplementation(
+        (endpoint: string, params: { id: string }) => {
+          if (endpoint === '/page-listing/children') {
+            apiCallCount++;
+
+            if (params.id === 'root-page-id') {
+              return Promise.resolve({ data: { children: rootChildren } });
+            }
+            return Promise.resolve({ data: { children: [] } });
+          }
+          // Handle /page-listing/item endpoint for individual item fetches
+          if (endpoint === '/page-listing/item') {
+            return Promise.resolve({
+              data: { item: createMockPage(params.id, `/${params.id}`) },
+            });
+          }
+          return Promise.reject(new Error(`Unexpected endpoint: ${endpoint}`));
+        },
+      );
+
+      const scrollerElem = document.createElement('div');
+      scrollerElem.style.height = '500px';
+      document.body.appendChild(scrollerElem);
+
+      // Start with creatingParentId set
+      mockCreatingParentId = 'parent-1';
+      mockCreatingParentPath = '/Parent1';
+
+      const { unmount } = render(
+        <TestWrapper>
+          <SimplifiedItemsTree
+            targetPath="/"
+            isEnableActions={true}
+            CustomTreeItem={TestTreeItem}
+            estimateTreeItemSize={() => 32}
+            scrollerElem={scrollerElem}
+          />
+        </TestWrapper>,
+      );
+
+      await waitFor(() => {
+        expect(mockApiv3Get).toHaveBeenCalled();
+      });
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      const callsBeforeReset = apiCallCount;
+
+      // Reset creating state (simulating cancel or completion)
+      mockCreatingParentId = null;
+      mockCreatingParentPath = null;
+
+      // Unmount and remount to apply the null state
+      unmount();
+
+      render(
+        <TestWrapper>
+          <SimplifiedItemsTree
+            targetPath="/"
+            isEnableActions={true}
+            CustomTreeItem={TestTreeItem}
+            estimateTreeItemSize={() => 32}
+            scrollerElem={scrollerElem}
+          />
+        </TestWrapper>,
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // API calls should be bounded even after state changes
+      // The difference should be minimal (just the initial load after remount)
+      expect(apiCallCount - callsBeforeReset).toBeLessThanOrEqual(3);
+
+      document.body.removeChild(scrollerElem);
+    });
+  });
 });

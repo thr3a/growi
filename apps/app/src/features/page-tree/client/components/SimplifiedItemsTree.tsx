@@ -115,17 +115,26 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     },
   });
 
+  // Track previous creatingParentId to detect changes
+  const prevCreatingParentIdRef = useRef<string | null>(null);
+
   // Expand and rebuild tree when creatingParentId changes
+  // IMPORTANT: This effect intentionally has no dependency array and uses a ref to track
+  // previous value. This prevents infinite loops that would occur if we put [creatingParentId, tree]
+  // in deps, because tree object changes on every render, causing the effect to re-run continuously.
+  // See: SimplifiedItemsTree.spec.tsx "page creation (creatingParentId)" tests
   useEffect(() => {
+    // Only run when creatingParentId actually changes (not on every render)
+    if (creatingParentId === prevCreatingParentIdRef.current) return;
+    prevCreatingParentIdRef.current = creatingParentId;
+
     if (creatingParentId == null) return;
 
-    const { getItemInstance, rebuildTree } = tree;
-
     // Rebuild tree first to re-evaluate isItemFolder
-    rebuildTree();
+    tree.rebuildTree();
 
     // Then expand the parent item
-    const parentItem = getItemInstance(creatingParentId);
+    const parentItem = tree.getItemInstance(creatingParentId);
     if (parentItem != null && !parentItem.isExpanded()) {
       parentItem.expand();
     }
@@ -136,7 +145,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
 
     // Trigger re-render
     triggerTreeRebuild();
-  }, [creatingParentId, tree, triggerTreeRebuild]);
+  });
 
   const items = tree.getItems();
 
