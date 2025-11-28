@@ -17,6 +17,7 @@ import { mutatePageTree } from '~/stores/page-listing';
 
 import { RenameInput } from '../components/RenameInput';
 import type { TreeItemToolProps } from '../interfaces';
+import { CREATING_PAGE_VIRTUAL_ID } from '../states/page-tree-create';
 import { usePageTreeInformationUpdate } from '../states/page-tree-update';
 
 type RenameResult = {
@@ -68,6 +69,10 @@ export const usePageRename = (): UsePageRenameReturn => {
   const getPageName = useCallback(
     (item: ItemInstance<IPageForItem>): string => {
       const page = item.getItemData();
+      // Return empty string for placeholder node (new page creation)
+      if (page._id === CREATING_PAGE_VIRTUAL_ID) {
+        return '';
+      }
       return basename(page.path ?? '');
     },
     [],

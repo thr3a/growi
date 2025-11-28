@@ -14,6 +14,7 @@ import { useSWRxRootPage } from '~/stores/page-listing';
 
 import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
 import { useDataLoader } from '../hooks/use-data-loader';
+import { usePageCreate } from '../hooks/use-page-create';
 import { usePageRename } from '../hooks/use-page-rename';
 import { useScrollToSelectedItem } from '../hooks/use-scroll-to-selected-item';
 import type { TreeItemProps } from '../interfaces';
@@ -58,17 +59,34 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   // Page rename hook
   const { rename, getPageName } = usePageRename();
 
+  // Page create hook
+  const { createFromPlaceholder, isCreatingPlaceholder, cancelCreating } = usePageCreate();
+
   // Get creating parent id to determine if item should be treated as folder
   const creatingParentId = useCreatingParentId();
 
   // onRename handler for headless-tree
+  // Handles both rename and create (for placeholder nodes)
   const handleRename = useCallback(
     async (item, newValue: string) => {
-      await rename(item, newValue);
-      // Trigger re-render after rename
+      if (isCreatingPlaceholder(item)) {
+        // Placeholder node: create new page or cancel if empty
+        if (newValue.trim() === '') {
+          // Empty value means cancel (Esc key or blur)
+          cancelCreating();
+        }
+        else {
+          await createFromPlaceholder(item, newValue);
+        }
+      }
+      else {
+        // Normal node: rename page
+        await rename(item, newValue);
+      }
+      // Trigger re-render after operation
       setRebuildTrigger((prev) => prev + 1);
     },
-    [rename],
+    [rename, createFromPlaceholder, isCreatingPlaceholder, cancelCreating],
   );
 
   const tree = useTree<IPageForTreeItem>({

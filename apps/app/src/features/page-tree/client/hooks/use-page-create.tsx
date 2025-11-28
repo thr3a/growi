@@ -20,6 +20,7 @@ import { shouldCreateWipPage } from '~/utils/should-create-wip-page';
 import { CreateInput } from '../components/CreateInput';
 import type { TreeItemToolProps } from '../interfaces';
 import {
+  CREATING_PAGE_VIRTUAL_ID,
   useCreatingParentId,
   usePageTreeCreateActions,
 } from '../states/page-tree-create';
@@ -39,6 +40,20 @@ type UsePageCreateReturn = {
     parentItem: ItemInstance<IPageForItem>,
     pageName: string,
   ) => Promise<CreateResult>;
+
+  /**
+   * Create a new page from the placeholder node (called by onRename handler)
+   * The placeholder node's parent is used as the parent of the new page
+   */
+  createFromPlaceholder: (
+    placeholderItem: ItemInstance<IPageForItem>,
+    pageName: string,
+  ) => Promise<CreateResult>;
+
+  /**
+   * Check if an item is the creating placeholder node
+   */
+  isCreatingPlaceholder: (item: ItemInstance<IPageForItem>) => boolean;
 
   /**
    * Validate page name
@@ -62,15 +77,9 @@ type UsePageCreateReturn = {
 
   /**
    * Alternative component for creating a child page (used in TreeItemLayout)
-   * This renders the CreateInput with proper indentation for child level
+   * This renders the CreateInput using item.getRenameInputProps()
    */
   CreateAlternativeComponent: FC<TreeItemToolProps>;
-
-  /**
-   * @deprecated Use CreateAlternativeComponent instead
-   * CreateInput component to use as HeadOfChildrenComponent
-   */
-  CreateInputComponent: FC<TreeItemToolProps>;
 };
 
 /**
@@ -123,6 +132,13 @@ export const usePageCreate = (): UsePageCreateReturn => {
       return creatingParentId === item.getId();
     },
     [creatingParentId],
+  );
+
+  const isCreatingPlaceholder = useCallback(
+    (item: ItemInstance<IPageForItem>): boolean => {
+      return item.getId() === CREATING_PAGE_VIRTUAL_ID;
+    },
+    [],
   );
 
   const create = useCallback(
@@ -192,73 +208,44 @@ export const usePageCreate = (): UsePageCreateReturn => {
     [t, createPage, notifyUpdateItems, cancelCreating],
   );
 
+  // Create from placeholder node (used by onRename handler in SimplifiedItemsTree)
+  const createFromPlaceholder = useCallback(
+    async (
+      placeholderItem: ItemInstance<IPageForItem>,
+      pageName: string,
+    ): Promise<CreateResult> => {
+      const parentItem = placeholderItem.getParent();
+      if (parentItem == null) {
+        cancelCreating();
+        return { success: false };
+      }
+      return create(parentItem, pageName);
+    },
+    [create, cancelCreating],
+  );
+
   // CreateInput as alternative component for TreeItemLayout
-  // This renders inside the TreeItemLayout, replacing the normal content
-  // The item here is the placeholder node, so we need to get parent from it
+  // This uses item.getRenameInputProps() from headless-tree's renamingFeature
+  // Note: SimplifiedPageTreeItem ensures item.isRenaming() is true before rendering this
   const CreateAlternativeComponent: FC<TreeItemToolProps> = useMemo(() => {
-    const Component: FC<TreeItemToolProps> = ({ item }) => {
-      // Get the parent item (the placeholder's parent is the actual parent where we create)
-      const parentItem = item.getParent();
-
-      const handleCreate = async (value: string) => {
-        if (parentItem == null) {
-          cancelCreating();
-          return;
-        }
-        await create(parentItem, value);
-      };
-
-      const handleCancel = () => {
-        cancelCreating();
-      };
-
-      return (
-        <CreateInput
-          validateName={validateName}
-          onSubmit={handleCreate}
-          onCancel={handleCancel}
-          className="flex-grow-1"
-        />
-      );
-    };
+    const Component: FC<TreeItemToolProps> = ({ item }) => (
+      <CreateInput
+        inputProps={item.getRenameInputProps()}
+        validateName={validateName}
+        className="flex-grow-1"
+      />
+    );
     return Component;
-  }, [create, cancelCreating, validateName]);
-
-  // Legacy: CreateInput as HeadOfChildrenComponent (with custom padding)
-  const CreateInputComponent: FC<TreeItemToolProps> = useMemo(() => {
-    const Component: FC<TreeItemToolProps> = ({ item }) => {
-      const handleCreate = async (value: string) => {
-        await create(item, value);
-      };
-
-      const handleCancel = () => {
-        cancelCreating();
-      };
-
-      // Calculate indent based on item level (child should be indented one level more than parent)
-      const parentLevel = item.getItemMeta().level;
-      const childLevel = parentLevel + 1;
-      const indentSize = 10; // px, same as TreeItemLayout
-
-      return (
-        <CreateInput
-          validateName={validateName}
-          onSubmit={handleCreate}
-          onCancel={handleCancel}
-          style={{ paddingLeft: `${childLevel * indentSize}px` }}
-        />
-      );
-    };
-    return Component;
-  }, [create, cancelCreating, validateName]);
+  }, [validateName]);
 
   return {
     create,
+    createFromPlaceholder,
+    isCreatingPlaceholder,
     validateName,
     startCreating,
     cancelCreating,
     isCreatingChild,
     CreateAlternativeComponent,
-    CreateInputComponent,
   };
 };

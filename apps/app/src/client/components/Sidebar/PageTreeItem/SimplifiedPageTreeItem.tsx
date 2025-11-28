@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import path from 'path';
 
@@ -112,10 +112,40 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
   const { isRenaming, RenameAlternativeComponent } = usePageRename();
 
   // Page create feature
-  const { CreateAlternativeComponent } = usePageCreate();
+  const { CreateAlternativeComponent, cancelCreating } = usePageCreate();
 
   // Check if this is the creating placeholder node
   const isCreatingPlaceholder = itemData._id === CREATING_PAGE_VIRTUAL_ID;
+
+  // Track if renaming mode was ever activated for this placeholder
+  const wasRenamingRef = useRef(false);
+  const isRenamingNow = item.isRenaming();
+
+  // Start renaming mode on placeholder node to enable getRenameInputProps()
+  useEffect(() => {
+    if (isCreatingPlaceholder && !item.isRenaming()) {
+      item.startRenaming();
+    }
+  }, [isCreatingPlaceholder, item]);
+
+  // Track when renaming becomes active
+  useEffect(() => {
+    if (isCreatingPlaceholder && isRenamingNow) {
+      wasRenamingRef.current = true;
+    }
+  }, [isCreatingPlaceholder, isRenamingNow]);
+
+  // Cancel creating when renaming mode ends on placeholder node (Esc key pressed)
+  useEffect(() => {
+    // Only cancel if renaming was previously active and is now inactive
+    if (isCreatingPlaceholder && wasRenamingRef.current && !isRenamingNow) {
+      cancelCreating();
+      wasRenamingRef.current = false;
+    }
+  }, [isCreatingPlaceholder, isRenamingNow, cancelCreating]);
+
+  // Show CreateInput only when renamingFeature is active (item.isRenaming() is true)
+  const showCreateInput = isCreatingPlaceholder && item.isRenaming();
 
   const itemSelectedHandler = useCallback((page: IPageForItem) => {
     if (page.path == null || page._id == null) return;
@@ -147,8 +177,8 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
       onClickDeleteMenuItem={onClickDeleteMenuItem}
       customEndComponents={[CountBadgeForPageTreeItem]}
       customHoveredEndComponents={[Control]}
-      showAlternativeContent={isRenaming(item) || isCreatingPlaceholder}
-      customAlternativeComponents={isCreatingPlaceholder ? [CreateAlternativeComponent] : [RenameAlternativeComponent]}
+      showAlternativeContent={isRenaming(item) || showCreateInput}
+      customAlternativeComponents={showCreateInput ? [CreateAlternativeComponent] : [RenameAlternativeComponent]}
     />
   );
 };
