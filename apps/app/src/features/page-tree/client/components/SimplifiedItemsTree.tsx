@@ -1,5 +1,6 @@
 import type { FC } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { addTrailingSlash } from '@growi/core/dist/utils/path-utils';
 import {
   asyncDataLoaderFeature,
   hotkeysCoreFeature,
@@ -60,7 +61,8 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   const { rename, getPageName } = usePageRename();
 
   // Page create hook
-  const { createFromPlaceholder, isCreatingPlaceholder, cancelCreating } = usePageCreate();
+  const { createFromPlaceholder, isCreatingPlaceholder, cancelCreating } =
+    usePageCreate();
 
   // Get creating parent id to determine if item should be treated as folder
   const creatingParentId = useCreatingParentId();
@@ -74,12 +76,10 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
         if (newValue.trim() === '') {
           // Empty value means cancel (Esc key or blur)
           cancelCreating();
-        }
-        else {
+        } else {
           await createFromPlaceholder(item, newValue);
         }
-      }
-      else {
+      } else {
         // Normal node: rename page
         await rename(item, newValue);
       }
@@ -160,6 +160,81 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   }, [creatingParentId, tree]);
 
   const items = tree.getItems();
+
+  // Track items count to detect when async data loading completes
+  const prevItemsCountRef = useRef(items.length);
+  useEffect(() => {
+    if (items.length !== prevItemsCountRef.current) {
+      prevItemsCountRef.current = items.length;
+      // Trigger re-render when items count changes (e.g., after async load completes)
+      setRebuildTrigger((prev) => prev + 1);
+    }
+  }, [items.length]);
+
+  // Auto-expand items that are ancestors of targetPath
+  // This runs at the parent level to handle all items regardless of virtualization
+  const expandedForTargetPathRef = useRef<string | null>(null);
+  useEffect(() => {
+    // Skip if no items loaded yet
+    if (items.length === 0) {
+      return;
+    }
+
+    // Skip if already fully processed for this targetPath
+    if (expandedForTargetPathRef.current === targetPath) {
+      return;
+    }
+
+    let didExpand = false;
+
+    for (const item of items) {
+      const itemData = item.getItemData();
+      const itemPath = itemData.path;
+
+      if (itemPath == null) continue;
+
+      // Check if this item is an ancestor of targetPath
+      const isAncestorOfTarget =
+        itemPath === '/' ||
+        (targetPath.startsWith(addTrailingSlash(itemPath)) &&
+          targetPath !== itemPath);
+
+      if (!isAncestorOfTarget) continue;
+
+      const isFolder = item.isFolder();
+      const isExpanded = item.isExpanded();
+
+      if (isFolder && !isExpanded) {
+        item.expand();
+        didExpand = true;
+      }
+    }
+
+    // If we expanded any items, trigger re-render to load children
+    if (didExpand) {
+      setRebuildTrigger((prev) => prev + 1);
+    }
+    else {
+      // Only mark as fully processed when all ancestors are expanded
+      // Check if we have all the ancestors we need
+      const targetSegments = targetPath.split('/').filter(Boolean);
+      let hasAllAncestors = true;
+
+      // Build ancestor paths and check if they exist in items
+      for (let i = 0; i < targetSegments.length - 1; i++) {
+        const ancestorPath = '/' + targetSegments.slice(0, i + 1).join('/');
+        const ancestorItem = items.find(item => item.getItemData().path === ancestorPath);
+        if (!ancestorItem) {
+          hasAllAncestors = false;
+          break;
+        }
+      }
+
+      if (hasAllAncestors) {
+        expandedForTargetPathRef.current = targetPath;
+      }
+    }
+  }, [items, targetPath]);
 
   const virtualizer = useVirtualizer({
     count: items.length,

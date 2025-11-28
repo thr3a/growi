@@ -2,11 +2,8 @@ import {
   type JSX,
   type MouseEvent,
   useCallback,
-  useEffect,
   useMemo,
-  useState,
 } from 'react';
-import { addTrailingSlash } from '@growi/core/dist/utils/path-utils';
 
 import type { TreeItemProps, TreeItemToolProps } from '../interfaces';
 import { SimpleItemContent } from './SimpleItemContent';
@@ -26,7 +23,6 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
     className,
     itemClassName,
     item,
-    targetPath,
     targetPathOrId,
     isEnableActions,
     isReadOnlyUser,
@@ -42,8 +38,6 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
 
   const page = item.getItemData();
   const itemLevel = item.getItemMeta().level;
-
-  const [isAutoOpenerInitialized, setAutoOpenerInitialized] = useState(false);
 
   const toggleHandler = useCallback(() => {
     if (item.isExpanded()) {
@@ -85,23 +79,6 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
   // Use item.isFolder() which is evaluated by headless-tree's isItemFolder config
   // This will be re-evaluated after rebuildTree()
   const hasDescendants = item.isFolder();
-
-  // auto open if targetPath is descendant of this page
-  useEffect(() => {
-    if (!isAutoOpenerInitialized) {
-      const isPathToTarget =
-        page.path != null &&
-        targetPath.startsWith(addTrailingSlash(page.path)) &&
-        targetPath !== page.path; // Target Page does not need to be opened
-
-      if (page.path === '/' || isPathToTarget) {
-        item.expand();
-        onToggle?.();
-      }
-    }
-
-    setAutoOpenerInitialized(true);
-  }, [targetPath, page.path, isAutoOpenerInitialized, item, onToggle]);
 
   const isSelected = useMemo(() => {
     return page._id === targetPathOrId || page.path === targetPathOrId;
