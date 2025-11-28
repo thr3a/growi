@@ -15,18 +15,15 @@ import { useSWRxRootPage } from '~/stores/page-listing';
 import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
 import { useAutoExpandAncestors } from '../hooks/use-auto-expand-ancestors';
 import { useDataLoader } from '../hooks/use-data-loader';
+import { useExpandParentOnCreate } from '../hooks/use-expand-parent-on-create';
 import { useScrollToSelectedItem } from '../hooks/use-scroll-to-selected-item';
 import { useTreeItemHandlers } from '../hooks/use-tree-item-handlers';
 import type { TreeItemProps } from '../interfaces';
-import { invalidatePageTreeChildren } from '../services';
 import {
   usePageTreeInformationGeneration,
   usePageTreeRevalidationEffect,
 } from '../states/page-tree-update';
-import {
-  useTreeRebuildTrigger,
-  useTriggerTreeRebuild,
-} from '../states/tree-rebuild';
+import { useTriggerTreeRebuild } from '../states/tree-rebuild';
 
 // Stable features array to avoid recreating on every render
 const TREE_FEATURES = [
@@ -70,8 +67,6 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     scrollerElem,
   } = props;
 
-  // Subscribe to rebuild trigger to re-render when tree structure changes
-  useTreeRebuildTrigger();
   const triggerTreeRebuild = useTriggerTreeRebuild();
 
   const { data: rootPageResult } = useSWRxRootPage({ suspense: true });
@@ -115,36 +110,11 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     },
   });
 
-  // Track previous creatingParentId to detect changes
-  const prevCreatingParentIdRef = useRef<string | null>(null);
-
-  // Expand and rebuild tree when creatingParentId changes
-  // IMPORTANT: This effect intentionally has no dependency array and uses a ref to track
-  // previous value. This prevents infinite loops that would occur if we put [creatingParentId, tree]
-  // in deps, because tree object changes on every render, causing the effect to re-run continuously.
-  // See: SimplifiedItemsTree.spec.tsx "page creation (creatingParentId)" tests
-  useEffect(() => {
-    // Only run when creatingParentId actually changes (not on every render)
-    if (creatingParentId === prevCreatingParentIdRef.current) return;
-    prevCreatingParentIdRef.current = creatingParentId;
-
-    if (creatingParentId == null) return;
-
-    // Rebuild tree first to re-evaluate isItemFolder
-    tree.rebuildTree();
-
-    // Then expand the parent item
-    const parentItem = tree.getItemInstance(creatingParentId);
-    if (parentItem != null && !parentItem.isExpanded()) {
-      parentItem.expand();
-    }
-
-    // Clear cache for this parent and invalidate children to load placeholder
-    invalidatePageTreeChildren([creatingParentId]);
-    parentItem?.invalidateChildrenIds(true);
-
-    // Trigger re-render
-    triggerTreeRebuild();
+  // Expand parent item when page creation is initiated
+  useExpandParentOnCreate({
+    tree,
+    creatingParentId,
+    onTreeUpdated: triggerTreeRebuild,
   });
 
   const items = tree.getItems();
