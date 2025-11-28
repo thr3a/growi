@@ -31,7 +31,6 @@ const MARKDOWNTABLE_TO_HANDSONTABLE_ALIGNMENT_SYMBOL_MAPPING = {
 };
 
 const HandsontableModalSubstance = (): JSX.Element => {
-
   const { t } = useTranslation('commons');
   const handsontableModalData = useHandsontableModalStatus();
   const { close: closeHandsontableModal } = useHandsontableModalActions();
@@ -536,5 +535,14 @@ const HandsontableModalSubstance = (): JSX.Element => {
 };
 
 export const HandsontableModal = (): JSX.Element => {
+  const handsontableModalData = useHandsontableModalStatus();
+  const handsontableModalForEditorData = useHandsontableModalForEditorStatus();
+
+  const isOpened = (handsontableModalData.isOpened || handsontableModalForEditorData.isOpened);
+
+  if (!isOpened) {
+    return <></>;
+  }
+
   return <HandsontableModalSubstance />;
 };
