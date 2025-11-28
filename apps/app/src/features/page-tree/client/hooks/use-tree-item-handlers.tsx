@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import type { ItemInstance } from '@headless-tree/core';
+import type { ItemInstance, TreeConfig } from '@headless-tree/core';
 
 import type { IPageForTreeItem } from '~/interfaces/page';
 
@@ -11,21 +11,18 @@ type UseTreeItemHandlersReturn = {
   /**
    * Stable callback for headless-tree getItemName config
    */
-  getItemName: (item: ItemInstance<IPageForTreeItem>) => string;
+  getItemName: TreeConfig<IPageForTreeItem>['getItemName'];
 
   /**
    * Stable callback for headless-tree isItemFolder config
    */
-  isItemFolder: (item: ItemInstance<IPageForTreeItem>) => boolean;
+  isItemFolder: TreeConfig<IPageForTreeItem>['isItemFolder'];
 
   /**
    * Stable callback for headless-tree onRename config
    * Handles both rename and create (for placeholder nodes)
    */
-  handleRename: (
-    item: ItemInstance<IPageForTreeItem>,
-    newValue: string,
-  ) => Promise<void>;
+  handleRename: TreeConfig<IPageForTreeItem>['onRename'];
 
   /**
    * Current creating parent ID (for tree expansion logic)
