@@ -12,7 +12,7 @@ type UseAutoExpandAncestorsProps = {
 
 /**
  * Get all ancestor paths for a given target path
- * e.g., "/Sandbox/Diagrams/print-test" => ["/Sandbox", "/Sandbox/Diagrams"]
+ * e.g., "/Sandbox/Diagrams/figure-1" => ["/Sandbox", "/Sandbox/Diagrams"]
  */
 export const getAncestorPaths = (targetPath: string): string[] => {
   const segments = targetPath.split('/').filter(Boolean);
@@ -20,7 +20,7 @@ export const getAncestorPaths = (targetPath: string): string[] => {
 
   // Build ancestor paths (excluding the target itself)
   for (let i = 0; i < segments.length - 1; i++) {
-    ancestors.push('/' + segments.slice(0, i + 1).join('/'));
+    ancestors.push(`/${segments.slice(0, i + 1).join('/')}`);
   }
 
   return ancestors;
