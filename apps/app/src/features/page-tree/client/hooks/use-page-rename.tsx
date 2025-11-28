@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { pathUtils } from '@growi/core/dist/utils';
 import type { ItemInstance } from '@headless-tree/core';
 import { useTranslation } from 'next-i18next';
-import nodePath from 'path';
+import { basename, dirname, resolve } from 'pathe';
 
 import { apiv3Put } from '~/client/util/apiv3-client';
 import { toastError, toastSuccess } from '~/client/util/toastr';
@@ -68,7 +68,7 @@ export const usePageRename = (): UsePageRenameReturn => {
   const getPageName = useCallback(
     (item: ItemInstance<IPageForItem>): string => {
       const page = item.getItemData();
-      return nodePath.basename(page.path ?? '');
+      return basename(page.path ?? '');
     },
     [],
   );
@@ -114,10 +114,8 @@ export const usePageRename = (): UsePageRenameReturn => {
       }
 
       // Build new path
-      const parentPath = pathUtils.addTrailingSlash(
-        nodePath.dirname(oldPath ?? ''),
-      );
-      const newPagePath = nodePath.resolve(parentPath, trimmedName);
+      const parentPath = pathUtils.addTrailingSlash(dirname(oldPath ?? ''));
+      const newPagePath = resolve(parentPath, trimmedName);
 
       // No change needed
       if (newPagePath === oldPath) {
