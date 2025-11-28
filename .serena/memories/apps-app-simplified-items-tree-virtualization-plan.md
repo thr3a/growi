@@ -350,9 +350,9 @@ src/client/components/Common/SimplifiedItemsTree/
 
 ---
 
-## 📊 現在の進捗状況（2025-11-20）
+## 📊 現在の進捗状況（2025-11-28）
 
-**完了**: M1 ✅、M2 ✅、M3-A ✅、M3-B ✅  
+**完了**: M1 ✅、M2 ✅、M3-A ✅、M3-B ✅、ディレクトリ再編成 ✅  
 **次のステップ**: M3-C（操作機能）またはM4（デグレチェック）  
 **優先対応**: M3-Cの必要性を検討、不要ならM4へ進む
 
@@ -370,7 +370,83 @@ src/client/components/Common/SimplifiedItemsTree/
 
 **既知の課題**:
 1. ~~選択ページの祖先が自動展開されない~~ → M3-B で解決済み ✅
-2. まだPageTreeSubstanceで差し替えていない → 実際にはPageTreeSubstanceでSimplifiedItemsTreeを使用中 ✅
+2. ~~まだPageTreeSubstanceで差し替えていない~~ → 実際にはPageTreeSubstanceでSimplifiedItemsTreeを使用中 ✅
+
+---
+
+## 📁 ディレクトリ再編成（2025-11-28 完了）
+
+### 目的
+- Feature Directory Pattern を適用し、汎用的なページツリーコンポーネントを `features/page-tree/` に集約
+- Sidebar/PageTree 専用コンポーネントは元の場所に残す
+
+### 移動ファイル一覧
+
+`src/features/page-tree/` に以下のファイルを配置:
+
+```
+features/page-tree/
+├── index.ts                           # メインエクスポート
+├── client/
+│   ├── components/
+│   │   ├── SimplifiedItemsTree.tsx    # コアvirtualizedツリーコンポーネント
+│   │   ├── TreeItemLayout.tsx         # 汎用ツリーアイテムレイアウト
+│   │   ├── TreeItemLayout.module.scss
+│   │   ├── SimpleItemContent.tsx      # シンプルなアイテムコンテンツ表示
+│   │   ├── SimpleItemContent.module.scss
+│   │   └── _tree-item-variables.scss  # SCSS変数
+│   ├── hooks/
+│   │   ├── use-data-loader.ts         # データローダーフック
+│   │   └── use-scroll-to-selected-item.ts # スクロール制御フック
+│   ├── interfaces/
+│   │   └── index.ts                   # TreeItemProps, TreeItemToolProps
+│   └── states/
+│       ├── page-tree-update.ts        # ツリー更新状態（Jotai）
+│       └── page-tree-desc-count-map.ts # 子孫カウント状態（Jotai）
+└── constants/
+    └── index.ts                       # ROOT_PAGE_VIRTUAL_ID
+```
+
+### 移動しなかったファイル（Sidebar/PageTree専用）
+
+以下は `components/Sidebar/PageTreeItem/` または `components/TreeItem/` に残留:
+
+- `SimplifiedPageTreeItem.tsx` - Sidebar専用の実装
+- `CountBadgeForPageTreeItem.tsx` - PageTree専用バッジ
+- `NewPageInput/` - 旧実装専用（ItemNode依存）
+- `PageTreeItem.tsx` - 旧実装（Sidebar用）
+- `TreeItemForModal.tsx` - 旧実装（Modal用）
+
+### インポートパス更新
+
+Sidebar/PageTree関連ファイルは `~/features/page-tree` からインポート:
+
+```typescript
+// Before
+import { ROOT_PAGE_VIRTUAL_ID } from '../TreeItem';
+import { usePageTreeInformationUpdate } from '~/stores/ui/page-tree-update';
+
+// After
+import { ROOT_PAGE_VIRTUAL_ID, usePageTreeInformationUpdate } from '~/features/page-tree';
+```
+
+### 旧実装の状態
+
+- `ItemsTree.tsx` - TypeScript エラーあり（許容）
+- `PageTreeItem.tsx` - TypeScript エラーあり（許容）
+- `TreeItemForModal.tsx` - TypeScript エラーあり（許容）
+- `NewPageInput/` - 旧実装専用として残留
+
+### 注意点
+
+1. **NewPageInput は汎用コンポーネントではない**
+   - `ItemNode` インターフェース（旧実装のツリーノード型）に依存
+   - 新実装（SimplifiedPageTreeItem）では使用されていない
+   - 将来、新実装でページ作成機能を実装する場合は別途作成が必要
+
+2. **後方互換性の re-export は不要**
+   - 旧実装のエラーは許容
+   - Sidebar/PageTree が正常動作すれば OK
 
 ---
 
@@ -380,4 +456,4 @@ src/client/components/Common/SimplifiedItemsTree/
 
 ## 📝 最終更新日
 
-2025-11-20 (M3-A・M3-B完了確認済み)
+2025-11-28 (ディレクトリ再編成完了)
