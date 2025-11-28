@@ -113,12 +113,18 @@ const HandsontableModalSubstance = (): JSX.Element => {
 
   // Memoize modal open handler
   const handleModalOpen = useCallback(() => {
-    const markdownTableState = table == null && editor != null ? getMarkdownTable(editor) : table;
+    let markdownTableState: MarkdownTable | undefined;
+    if (isOpendInEditor) {
+      markdownTableState = editor != null ? getMarkdownTable(editor) : undefined;
+    }
+    else {
+      markdownTableState = table;
+    }
     const initTableInstance = markdownTableState == null ? defaultMarkdownTable : markdownTableState.clone();
     setMarkdownTable(markdownTableState ?? defaultMarkdownTable);
     setMarkdownTableOnInit(initTableInstance);
     debouncedHandleWindowExpandedChange();
-  }, [table, editor, defaultMarkdownTable, debouncedHandleWindowExpandedChange]);
+  }, [isOpendInEditor, defaultMarkdownTable, debouncedHandleWindowExpandedChange, editor, table]);
 
   // Memoize expand/contract handlers
   const expandWindow = useCallback(() => {
