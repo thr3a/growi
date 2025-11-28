@@ -1,11 +1,13 @@
 import type { FC } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useId } from 'react';
 import { Origin } from '@growi/core';
 import { pagePathUtils, pathUtils } from '@growi/core/dist/utils';
 import type { ItemInstance } from '@headless-tree/core';
 import { useTranslation } from 'next-i18next';
 import { join } from 'pathe';
 
+import { NotAvailableForGuest } from '~/client/components/NotAvailableForGuest';
+import { NotAvailableForReadOnlyUser } from '~/client/components/NotAvailableForReadOnlyUser';
 import { useCreatePage } from '~/client/services/create-page';
 import { toastError, toastSuccess, toastWarning } from '~/client/util/toastr';
 import type { IPageForItem } from '~/interfaces/page';
@@ -19,6 +21,50 @@ import {
   usePageTreeCreateActions,
 } from '../states/page-tree-create';
 import { usePageTreeInformationUpdate } from '../states/page-tree-update';
+
+// Inner component for CreateButton to properly use hooks
+type CreateButtonInnerProps = {
+  item: ItemInstance<IPageForItem>;
+  onStartCreating: (item: ItemInstance<IPageForItem>) => void;
+};
+
+const CreateButtonInner: FC<CreateButtonInnerProps> = ({ item, onStartCreating }) => {
+  const buttonId = useId();
+  const creatingParentId = useCreatingParentId();
+  const isCreating = creatingParentId != null;
+
+  const page = item.getItemData();
+  const isUsersTopPage = pagePathUtils.isUsersTopPage(page.path ?? '');
+
+  if (isUsersTopPage) {
+    return null;
+  }
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Always stop propagation to prevent parent item click handlers
+    e.stopPropagation();
+
+    if (isCreating) {
+      return;
+    }
+    onStartCreating(item);
+  };
+
+  return (
+    <NotAvailableForGuest>
+      <NotAvailableForReadOnlyUser>
+        <button
+          id={`page-create-button-in-page-tree-${buttonId}`}
+          type="button"
+          className="border-0 rounded btn btn-page-item-control p-0"
+          onClick={handleClick}
+        >
+          <span className="material-symbols-outlined p-0">add_circle</span>
+        </button>
+      </NotAvailableForReadOnlyUser>
+    </NotAvailableForGuest>
+  );
+};
 
 type CreateResult = {
   success: boolean;
@@ -63,6 +109,11 @@ type UsePageCreateReturn = {
    * Check if a child is being created under this item
    */
   isCreatingChild: (item: ItemInstance<IPageForItem>) => boolean;
+
+  /**
+   * Button component to trigger page creation
+   */
+  CreateButton: FC<TreeItemToolProps>;
 };
 
 /**
@@ -198,6 +249,14 @@ export const usePageCreate = (): UsePageCreateReturn => {
     [create, cancelCreating],
   );
 
+  // CreateButton component for tree item
+  const CreateButton: FC<TreeItemToolProps> = useCallback(
+    ({ item }) => {
+      return <CreateButtonInner item={item} onStartCreating={startCreating} />;
+    },
+    [startCreating],
+  ) as FC<TreeItemToolProps>;
+
   return {
     create,
     createFromPlaceholder,
@@ -205,5 +264,6 @@ export const usePageCreate = (): UsePageCreateReturn => {
     startCreating,
     cancelCreating,
     isCreatingChild,
+    CreateButton,
   };
 };

@@ -4,16 +4,14 @@ import React, { useCallback } from 'react';
 import type { IPageInfoExt, IPageToDeleteWithMeta } from '@growi/core';
 import { getIdStringForRef } from '@growi/core';
 import { useTranslation } from 'next-i18next';
-import { DropdownItem, DropdownToggle } from 'reactstrap';
+import { DropdownToggle } from 'reactstrap';
 
 import { NotAvailableForGuest } from '~/client/components/NotAvailableForGuest';
 import { bookmark, unbookmark, resumeRenameOperation } from '~/client/services/page-operation';
 import { toastError, toastSuccess } from '~/client/util/toastr';
-import { usePageCreate } from '~/features/page-tree';
 import { useSWRMUTxCurrentUserBookmarks } from '~/stores/bookmark';
 import { useSWRMUTxPageInfo } from '~/stores/page';
 
-import type { AdditionalMenuItemsRendererProps } from '../../Common/Dropdown/PageItemControl';
 import { PageItemControl } from '../../Common/Dropdown/PageItemControl';
 import type { TreeItemToolProps } from '../../TreeItem';
 
@@ -24,7 +22,6 @@ type UsePageItemControl = {
 
 export const usePageItemControl = (): UsePageItemControl => {
   const { t } = useTranslation();
-  const { startCreating } = usePageCreate();
 
 
   const Control: FC<TreeItemToolProps> = (props) => {
@@ -67,11 +64,6 @@ export const usePageItemControl = (): UsePageItemControl => {
       item.startRenaming();
     }, [item]);
 
-    const createMenuItemClickHandler = useCallback(() => {
-      // Start creating a new page under this item
-      startCreating(item);
-    }, [item]);
-
     const deleteMenuItemClickHandler = useCallback(async(_pageId: string, pageInfo: IPageInfoExt | undefined): Promise<void> => {
       if (onClickDeleteMenuItem == null) {
         return;
@@ -103,24 +95,6 @@ export const usePageItemControl = (): UsePageItemControl => {
       }
     };
 
-    // Renderer for "Create new page" menu item at the top
-    const CreateMenuItemRenderer: FC<AdditionalMenuItemsRendererProps> = useCallback(() => {
-      if (!isEnableActions || isReadOnlyUser) {
-        return null;
-      }
-
-      return (
-        <DropdownItem
-          onClick={createMenuItemClickHandler}
-          className="grw-page-control-dropdown-item"
-          data-testid="create-page-btn"
-        >
-          <span className="material-symbols-outlined me-1 grw-page-control-dropdown-icon">add</span>
-          {t('Create')}
-        </DropdownItem>
-      );
-    }, [isEnableActions, isReadOnlyUser, createMenuItemClickHandler]);
-
     return (
       <NotAvailableForGuest>
         <div className="grw-pagetree-control d-flex">
@@ -133,7 +107,6 @@ export const usePageItemControl = (): UsePageItemControl => {
             onClickRenameMenuItem={renameMenuItemClickHandler}
             onClickDeleteMenuItem={deleteMenuItemClickHandler}
             onClickPathRecoveryMenuItem={pathRecoveryMenuItemClickHandler}
-            additionalMenuItemOnTopRenderer={CreateMenuItemRenderer}
             isInstantRename
             // Todo: It is wanted to find a better way to pass operationProcessData to PageItemControl
             operationProcessData={page.processData}

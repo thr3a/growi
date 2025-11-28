@@ -114,7 +114,7 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
   const { isRenaming } = usePageRename();
 
   // Page create feature
-  const { cancelCreating } = usePageCreate();
+  const { cancelCreating, CreateButton } = usePageCreate();
 
   // Check if this is the creating placeholder node
   const isCreatingPlaceholder = itemData._id === CREATING_PAGE_VIRTUAL_ID;
@@ -155,7 +155,7 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
       onClickDuplicateMenuItem={onClickDuplicateMenuItem}
       onClickDeleteMenuItem={onClickDeleteMenuItem}
       customEndComponents={[CountBadgeForPageTreeItem]}
-      customHoveredEndComponents={[Control]}
+      customHoveredEndComponents={[Control, CreateButton]}
       showAlternativeContent={isRenaming(item) || isCreatingPlaceholder}
       customAlternativeComponents={[NameInputAlternativeComponent]}
     />
