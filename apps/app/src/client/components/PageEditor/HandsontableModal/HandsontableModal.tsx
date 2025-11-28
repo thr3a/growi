@@ -32,17 +32,21 @@ const MARKDOWNTABLE_TO_HANDSONTABLE_ALIGNMENT_SYMBOL_MAPPING = {
 
 const HandsontableModalSubstance = (): JSX.Element => {
   const { t } = useTranslation('commons');
-  const handsontableModalData = useHandsontableModalStatus();
-  const { close: closeHandsontableModal } = useHandsontableModalActions();
-  const handsontableModalForEditorData = useHandsontableModalForEditorStatus();
-  const { close: closeHandsontableModalForEditor } = useHandsontableModalForEditorActions();
 
-  const isOpened = handsontableModalData?.isOpened ?? false;
-  const isOpendInEditor = handsontableModalForEditorData?.isOpened ?? false;
+  // for View
+  const { close: closeHandsontableModal } = useHandsontableModalActions();
+  const handsontableModalData = useHandsontableModalStatus();
+  const isOpened = handsontableModalData.isOpened;
   const table = handsontableModalData?.table;
   const autoFormatMarkdownTable = handsontableModalData?.autoFormatMarkdownTable ?? false;
-  const editor = handsontableModalForEditorData?.editor;
   const onSave = handsontableModalData?.onSave;
+
+  // for Editor
+  const { close: closeHandsontableModalForEditor } = useHandsontableModalForEditorActions();
+  const handsontableModalForEditorData = useHandsontableModalForEditorStatus();
+  const isOpendInEditor = handsontableModalForEditorData.isOpened;
+  const editor = handsontableModalForEditorData?.editor;
+
 
   // Memoize default table creation
   const defaultMarkdownTable = useMemo(() => {
