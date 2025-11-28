@@ -10,7 +10,10 @@ import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
 import { toastSuccess } from '~/client/util/toastr';
-import { ROOT_PAGE_VIRTUAL_ID, usePageTreeInformationUpdate, usePageRename } from '~/features/page-tree';
+import {
+  CREATING_PAGE_VIRTUAL_ID,
+  ROOT_PAGE_VIRTUAL_ID, usePageTreeInformationUpdate, usePageRename, usePageCreate,
+} from '~/features/page-tree';
 import type { IPageForItem } from '~/interfaces/page';
 import type { OnDeletedFunction, OnDuplicatedFunction } from '~/interfaces/ui';
 import { useCurrentPagePath, useFetchCurrentPage } from '~/states/page';
@@ -108,6 +111,12 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
   // Rename feature from usePageRename hook
   const { isRenaming, RenameAlternativeComponent } = usePageRename();
 
+  // Page create feature
+  const { CreateAlternativeComponent } = usePageCreate();
+
+  // Check if this is the creating placeholder node
+  const isCreatingPlaceholder = itemData._id === CREATING_PAGE_VIRTUAL_ID;
+
   const itemSelectedHandler = useCallback((page: IPageForItem) => {
     if (page.path == null || page._id == null) return;
 
@@ -138,8 +147,8 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
       onClickDeleteMenuItem={onClickDeleteMenuItem}
       customEndComponents={[CountBadgeForPageTreeItem]}
       customHoveredEndComponents={[Control]}
-      showAlternativeContent={isRenaming(item)}
-      customAlternativeComponents={[RenameAlternativeComponent]}
+      showAlternativeContent={isRenaming(item) || isCreatingPlaceholder}
+      customAlternativeComponents={isCreatingPlaceholder ? [CreateAlternativeComponent] : [RenameAlternativeComponent]}
     />
   );
 };

@@ -9,7 +9,6 @@ import {
 import { addTrailingSlash } from '@growi/core/dist/utils/path-utils';
 
 import type { TreeItemProps, TreeItemToolProps } from '../interfaces';
-import { usePageTreeDescCountMap } from '../states/page-tree-desc-count-map';
 import { SimpleItemContent } from './SimpleItemContent';
 
 import styles from './TreeItemLayout.module.scss';
@@ -33,7 +32,6 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
     isReadOnlyUser,
     isWipPageShown = true,
     showAlternativeContent,
-    validateName,
     onRenamed,
     onClick,
     onClickDuplicateMenuItem,
@@ -84,12 +82,9 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
     [onWheelClick, page],
   );
 
-  // descendantCount
-  const { getDescCount } = usePageTreeDescCountMap();
-  const descendantCount = getDescCount(page._id) || page.descendantCount || 0;
-
-  // hasDescendants flag
-  const hasDescendants = descendantCount > 0;
+  // Use item.isFolder() which is evaluated by headless-tree's isItemFolder config
+  // This will be re-evaluated after rebuildTree()
+  const hasDescendants = item.isFolder();
 
   // auto open if targetPath is descendant of this page
   useEffect(() => {

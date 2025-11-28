@@ -52,7 +52,7 @@ export const usePageTreeRevalidationEffect = (
   const globalGeneration = useAtomValue(generationAtom);
   const globalLastUpdatedItemIds = useAtomValue(lastUpdatedItemIdsAtom);
 
-  const { getItemInstance } = tree;
+  const { getItemInstance, rebuildTree } = tree;
 
   useEffect(() => {
     if (globalGeneration <= generation) return; // Already up to date
@@ -68,16 +68,26 @@ export const usePageTreeRevalidationEffect = (
       // Partial update: refetch children of specified items
       globalLastUpdatedItemIds.forEach((itemId) => {
         const item = getItemInstance(itemId);
+        // Invalidate children to refresh child list
         item?.invalidateChildrenIds(true);
       });
     }
 
+    // Rebuild tree after a short delay to allow async data fetching to complete
+    // This ensures isItemFolder is re-evaluated with fresh children data
+    const timeoutId = setTimeout(() => {
+      rebuildTree();
+    }, 100);
+
     opts?.onRevalidated?.();
+
+    return () => clearTimeout(timeoutId);
   }, [
     globalGeneration,
     generation,
     getItemInstance,
     globalLastUpdatedItemIds,
+    rebuildTree,
     opts,
   ]);
 };

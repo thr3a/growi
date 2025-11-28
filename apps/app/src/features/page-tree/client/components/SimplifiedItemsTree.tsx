@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   asyncDataLoaderFeature,
   hotkeysCoreFeature,
@@ -17,6 +17,7 @@ import { useDataLoader } from '../hooks/use-data-loader';
 import { usePageRename } from '../hooks/use-page-rename';
 import { useScrollToSelectedItem } from '../hooks/use-scroll-to-selected-item';
 import type { TreeItemProps } from '../interfaces';
+import { useCreatingParentId } from '../states/page-tree-create';
 import {
   usePageTreeInformationGeneration,
   usePageTreeRevalidationEffect,
@@ -57,6 +58,9 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   // Page rename hook
   const { rename, getPageName } = usePageRename();
 
+  // Get creating parent id to determine if item should be treated as folder
+  const creatingParentId = useCreatingParentId();
+
   // onRename handler for headless-tree
   const handleRename = useCallback(
     async (item, newValue: string) => {
@@ -71,7 +75,20 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     rootItemId: ROOT_PAGE_VIRTUAL_ID,
     getItemName: (item) => getPageName(item),
     initialState: { expandedItems: [ROOT_PAGE_VIRTUAL_ID] },
-    isItemFolder: (item) => item.getItemData().descendantCount > 0,
+    // Item is a folder if it has loaded children OR if it's currently in "creating" mode
+    // Use getChildren() to check actual cached children instead of descendantCount
+    isItemFolder: (item) => {
+      const itemData = item.getItemData();
+      const isCreatingUnderThis = creatingParentId === itemData._id;
+      if (isCreatingUnderThis) return true;
+
+      // Check cached children - getChildren() returns cached child items
+      const children = item.getChildren();
+      if (children.length > 0) return true;
+
+      // Fallback to descendantCount for items not yet expanded
+      return itemData.descendantCount > 0;
+    },
     createLoadingItemData: () => ({
       _id: '',
       path: 'Loading...',
@@ -101,6 +118,28 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     // Update local generation number after revalidation
     onRevalidated: () => setLocalGeneration(globalGeneration),
   });
+
+  // Expand and rebuild tree when creatingParentId changes
+  useEffect(() => {
+    if (creatingParentId == null) return;
+
+    const { getItemInstance, rebuildTree } = tree;
+
+    // Rebuild tree first to re-evaluate isItemFolder
+    rebuildTree();
+
+    // Then expand the parent item
+    const parentItem = getItemInstance(creatingParentId);
+    if (parentItem != null && !parentItem.isExpanded()) {
+      parentItem.expand();
+    }
+
+    // Invalidate children to load placeholder
+    parentItem?.invalidateChildrenIds(true);
+
+    // Trigger re-render
+    setRebuildTrigger((prev) => prev + 1);
+  }, [creatingParentId, tree]);
 
   const items = tree.getItems();
 

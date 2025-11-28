@@ -5,6 +5,12 @@ import { apiv3Get } from '~/client/util/apiv3-client';
 import type { IPageForTreeItem } from '~/interfaces/page';
 
 import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
+import {
+  CREATING_PAGE_VIRTUAL_ID,
+  createPlaceholderPageData,
+  useCreatingParentId,
+  useCreatingParentPath,
+} from '../states/page-tree-create';
 
 function constructRootPageForVirtualRoot(
   rootPageId: string,
@@ -25,11 +31,20 @@ export const useDataLoader = (
   rootPageId: string,
   allPagesCount: number,
 ): TreeDataLoader<IPageForTreeItem> => {
+  const creatingParentId = useCreatingParentId();
+  const creatingParentPath = useCreatingParentPath();
+
   const getItem = useCallback(
     async (itemId: string): Promise<IPageForTreeItem> => {
       // Virtual root (should rarely be called since it's provided by getChildrenWithData)
       if (itemId === ROOT_PAGE_VIRTUAL_ID) {
         return constructRootPageForVirtualRoot(rootPageId, allPagesCount);
+      }
+
+      // Creating placeholder node - return placeholder data
+      if (itemId === CREATING_PAGE_VIRTUAL_ID) {
+        // This shouldn't normally be called, but return empty placeholder if it is
+        return createPlaceholderPageData('', '/');
       }
 
       // For all pages (including root), use /page-listing/item endpoint
@@ -61,12 +76,27 @@ export const useDataLoader = (
         '/page-listing/children',
         { id: itemId },
       );
-      return response.data.children.map((child) => ({
+
+      const children = response.data.children.map((child) => ({
         id: child._id,
         data: child,
       }));
+
+      // If this parent is in "creating" mode, prepend placeholder node
+      if (creatingParentId === itemId && creatingParentPath != null) {
+        const placeholderData = createPlaceholderPageData(
+          itemId,
+          creatingParentPath,
+        );
+        return [
+          { id: CREATING_PAGE_VIRTUAL_ID, data: placeholderData },
+          ...children,
+        ];
+      }
+
+      return children;
     },
-    [allPagesCount, rootPageId],
+    [allPagesCount, rootPageId, creatingParentId, creatingParentPath],
   );
 
   return { getItem, getChildrenWithData };
