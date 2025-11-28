@@ -1,17 +1,26 @@
 import type { FC } from 'react';
 import { useCallback } from 'react';
 
+import path from 'path';
+
 import type { IPageToDeleteWithMeta } from '@growi/core/dist/interfaces';
 import { getIdStringForRef } from '@growi/core/dist/interfaces';
 import { pathUtils } from '@growi/core/dist/utils';
+import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
+import { toastSuccess } from '~/client/util/toastr';
 import { ROOT_PAGE_VIRTUAL_ID } from '~/constants/page-tree';
 import type { IPageForItem } from '~/interfaces/page';
+import type { OnDeletedFunction, OnDuplicatedFunction } from '~/interfaces/ui';
+import { useCurrentPagePath, useFetchCurrentPage } from '~/states/page';
 import { usePageTreeInformationUpdate } from '~/states/page-tree-update';
 import { usePageDeleteModalActions } from '~/states/ui/modal/page-delete';
 import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 import { usePageDuplicateModalActions } from '~/states/ui/modal/page-duplicate';
+import { mutateAllPageInfo } from '~/stores/page';
+import { mutatePageTree, mutatePageList } from '~/stores/page-listing';
+import { mutateSearching } from '~/stores/search';
 
 import type { TreeItemProps } from '../../TreeItem';
 import { TreeItemLayout } from '../../TreeItem';
@@ -36,33 +45,64 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
   isReadOnlyUser = false,
   onToggle,
 }) => {
+  const { t } = useTranslation();
   const router = useRouter();
 
   const itemData = item.getItemData();
+
+  const currentPagePath = useCurrentPagePath();
+  const { fetchCurrentPage } = useFetchCurrentPage();
 
   const { open: openDuplicateModal } = usePageDuplicateModalActions();
   const { open: openDeleteModal } = usePageDeleteModalActions();
   const { notifyUpdateItems } = usePageTreeInformationUpdate();
 
   const onClickDuplicateMenuItem = useCallback((page: IPageForPageDuplicateModal) => {
-    openDuplicateModal(page, {
-      onDuplicated: () => {
-        // Notify headless-tree update
-        const parentId = itemData.parent != null ? getIdStringForRef(itemData.parent) : ROOT_PAGE_VIRTUAL_ID;
-        notifyUpdateItems([parentId]);
-      },
-    });
-  }, [openDuplicateModal, notifyUpdateItems, itemData.parent]);
+    const duplicatedHandler: OnDuplicatedFunction = (fromPath) => {
+      toastSuccess(t('duplicated_pages', { fromPath }));
+
+      mutatePageTree();
+      mutateSearching();
+      mutatePageList();
+
+      // Notify headless-tree update
+      const parentId = itemData.parent != null ? getIdStringForRef(itemData.parent) : ROOT_PAGE_VIRTUAL_ID;
+      notifyUpdateItems([parentId]);
+    };
+
+    openDuplicateModal(page, { onDuplicated: duplicatedHandler });
+  }, [openDuplicateModal, t, notifyUpdateItems, itemData.parent]);
 
   const onClickDeleteMenuItem = useCallback((page: IPageToDeleteWithMeta) => {
-    openDeleteModal([page], {
-      onDeleted: () => {
-        // Notify headless-tree update
-        const parentId = itemData.parent != null ? getIdStringForRef(itemData.parent) : ROOT_PAGE_VIRTUAL_ID;
-        notifyUpdateItems([parentId]);
-      },
-    });
-  }, [openDeleteModal, itemData.parent, notifyUpdateItems]);
+    const onDeletedHandler: OnDeletedFunction = (pathOrPathsToDelete, isRecursively, isCompletely) => {
+      if (typeof pathOrPathsToDelete !== 'string') {
+        return;
+      }
+
+      if (isCompletely) {
+        toastSuccess(t('deleted_pages_completely', { path: pathOrPathsToDelete }));
+      }
+      else {
+        toastSuccess(t('deleted_pages', { path: pathOrPathsToDelete }));
+      }
+
+      mutatePageTree();
+      mutateSearching();
+      mutatePageList();
+      mutateAllPageInfo();
+
+      if (currentPagePath === pathOrPathsToDelete) {
+        fetchCurrentPage({ force: true });
+        router.push(isCompletely ? path.dirname(pathOrPathsToDelete) : `/trash${pathOrPathsToDelete}`);
+      }
+
+      // Notify headless-tree update
+      const parentId = itemData.parent != null ? getIdStringForRef(itemData.parent) : ROOT_PAGE_VIRTUAL_ID;
+      notifyUpdateItems([parentId]);
+    };
+
+    openDeleteModal([page], { onDeleted: onDeletedHandler });
+  }, [openDeleteModal, t, currentPagePath, fetchCurrentPage, router, itemData.parent, notifyUpdateItems]);
 
   const { Control } = usePageItemControl();
 
