@@ -1,6 +1,5 @@
 import type { FC } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { addTrailingSlash } from '@growi/core/dist/utils/path-utils';
 import {
   asyncDataLoaderFeature,
   hotkeysCoreFeature,
@@ -14,6 +13,7 @@ import type { IPageForTreeItem } from '~/interfaces/page';
 import { useSWRxRootPage } from '~/stores/page-listing';
 
 import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
+import { useAutoExpandAncestors } from '../hooks/use-auto-expand-ancestors';
 import { useDataLoader } from '../hooks/use-data-loader';
 import { usePageCreate } from '../hooks/use-page-create';
 import { usePageRename } from '../hooks/use-page-rename';
@@ -172,69 +172,14 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   }, [items.length]);
 
   // Auto-expand items that are ancestors of targetPath
-  // This runs at the parent level to handle all items regardless of virtualization
-  const expandedForTargetPathRef = useRef<string | null>(null);
-  useEffect(() => {
-    // Skip if no items loaded yet
-    if (items.length === 0) {
-      return;
-    }
-
-    // Skip if already fully processed for this targetPath
-    if (expandedForTargetPathRef.current === targetPath) {
-      return;
-    }
-
-    let didExpand = false;
-
-    for (const item of items) {
-      const itemData = item.getItemData();
-      const itemPath = itemData.path;
-
-      if (itemPath == null) continue;
-
-      // Check if this item is an ancestor of targetPath
-      const isAncestorOfTarget =
-        itemPath === '/' ||
-        (targetPath.startsWith(addTrailingSlash(itemPath)) &&
-          targetPath !== itemPath);
-
-      if (!isAncestorOfTarget) continue;
-
-      const isFolder = item.isFolder();
-      const isExpanded = item.isExpanded();
-
-      if (isFolder && !isExpanded) {
-        item.expand();
-        didExpand = true;
-      }
-    }
-
-    // If we expanded any items, trigger re-render to load children
-    if (didExpand) {
-      setRebuildTrigger((prev) => prev + 1);
-    }
-    else {
-      // Only mark as fully processed when all ancestors are expanded
-      // Check if we have all the ancestors we need
-      const targetSegments = targetPath.split('/').filter(Boolean);
-      let hasAllAncestors = true;
-
-      // Build ancestor paths and check if they exist in items
-      for (let i = 0; i < targetSegments.length - 1; i++) {
-        const ancestorPath = '/' + targetSegments.slice(0, i + 1).join('/');
-        const ancestorItem = items.find(item => item.getItemData().path === ancestorPath);
-        if (!ancestorItem) {
-          hasAllAncestors = false;
-          break;
-        }
-      }
-
-      if (hasAllAncestors) {
-        expandedForTargetPathRef.current = targetPath;
-      }
-    }
-  }, [items, targetPath]);
+  const handleAutoExpanded = useCallback(() => {
+    setRebuildTrigger((prev) => prev + 1);
+  }, []);
+  useAutoExpandAncestors({
+    items,
+    targetPath,
+    onExpanded: handleAutoExpanded,
+  });
 
   const virtualizer = useVirtualizer({
     count: items.length,
