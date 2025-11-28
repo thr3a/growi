@@ -10,6 +10,7 @@ export {
 export { useDataLoader } from './client/hooks/use-data-loader';
 export { usePageCreate } from './client/hooks/use-page-create';
 export { usePageRename } from './client/hooks/use-page-rename';
+export { usePlaceholderRenameEffect } from './client/hooks/use-placeholder-rename-effect';
 export { useScrollToSelectedItem } from './client/hooks/use-scroll-to-selected-item';
 // Interfaces
 export * from './client/interfaces';
