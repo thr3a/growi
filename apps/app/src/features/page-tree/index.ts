@@ -1,10 +1,11 @@
 // Components
-
+export { RenameInput } from './client/components/RenameInput';
 export { SimpleItemContent } from './client/components/SimpleItemContent';
 export { SimplifiedItemsTree } from './client/components/SimplifiedItemsTree';
 export { TreeItemLayout } from './client/components/TreeItemLayout';
 // Hooks
 export { useDataLoader } from './client/hooks/use-data-loader';
+export { usePageRename } from './client/hooks/use-page-rename';
 export { useScrollToSelectedItem } from './client/hooks/use-scroll-to-selected-item';
 // Interfaces
 export * from './client/interfaces';

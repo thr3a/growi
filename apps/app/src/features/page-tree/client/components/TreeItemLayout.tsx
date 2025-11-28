@@ -33,6 +33,7 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
     isReadOnlyUser,
     isWipPageShown = true,
     showAlternativeContent,
+    validateName,
     onRenamed,
     onClick,
     onClickDuplicateMenuItem,
@@ -135,8 +136,8 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
       className={`${moduleClass} ${className}`}
       style={{ paddingLeft: `${itemLevel > 0 ? indentSize * itemLevel : 0}px` }}
     >
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: tree item interaction */}
       <li
-        role="button"
         className={`list-group-item list-group-item-action
           ${isSelected ? 'active' : ''}
           ${itemClassName ?? ''}
@@ -163,7 +164,7 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
 
         {showAlternativeContent && AlternativeComponents != null ? (
           AlternativeComponents.map((AlternativeContent, index) => (
-            // eslint-disable-next-line react/no-array-index-key
+            // biome-ignore lint/suspicious/noArrayIndexKey: static component list
             <AlternativeContent key={index} {...toolProps} />
           ))
         ) : (
@@ -171,13 +172,13 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
             <SimpleItemContent page={page} />
             <div className="d-hover-none">
               {EndComponents?.map((EndComponent, index) => (
-                // eslint-disable-next-line react/no-array-index-key
+                // biome-ignore lint/suspicious/noArrayIndexKey: static component list
                 <EndComponent key={index} {...toolProps} />
               ))}
             </div>
             <div className="d-none d-hover-flex">
               {HoveredEndComponents?.map((HoveredEndContent, index) => (
-                // eslint-disable-next-line react/no-array-index-key
+                // biome-ignore lint/suspicious/noArrayIndexKey: static component list
                 <HoveredEndContent key={index} {...toolProps} />
               ))}
             </div>

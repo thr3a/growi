@@ -1,0 +1,10 @@
+@use './tree-item-variables' as vars;
+
+.rename-input {
+  width: 100%;
+
+  input {
+    height: vars.$tree-item-height;
+    font-size: 14px;
+  }
+}

@@ -1,6 +1,11 @@
 import type { FC } from 'react';
-import { useState } from 'react';
-import { asyncDataLoaderFeature } from '@headless-tree/core';
+import { useCallback, useState } from 'react';
+import {
+  asyncDataLoaderFeature,
+  hotkeysCoreFeature,
+  renamingFeature,
+  selectionFeature,
+} from '@headless-tree/core';
 import { useTree } from '@headless-tree/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -9,6 +14,7 @@ import { useSWRxRootPage } from '~/stores/page-listing';
 
 import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
 import { useDataLoader } from '../hooks/use-data-loader';
+import { usePageRename } from '../hooks/use-page-rename';
 import { useScrollToSelectedItem } from '../hooks/use-scroll-to-selected-item';
 import type { TreeItemProps } from '../interfaces';
 import {
@@ -48,9 +54,22 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
 
   const dataLoader = useDataLoader(rootPageId, allPagesCount);
 
+  // Page rename hook
+  const { rename, validateName, getPageName } = usePageRename();
+
+  // onRename handler for headless-tree
+  const handleRename = useCallback(
+    async (item, newValue: string) => {
+      await rename(item, newValue);
+      // Trigger re-render after rename
+      setRebuildTrigger((prev) => prev + 1);
+    },
+    [rename],
+  );
+
   const tree = useTree<IPageForTreeItem>({
     rootItemId: ROOT_PAGE_VIRTUAL_ID,
-    getItemName: (item) => item.getItemData().path || '/',
+    getItemName: (item) => getPageName(item),
     initialState: { expandedItems: [ROOT_PAGE_VIRTUAL_ID] },
     isItemFolder: (item) => item.getItemData().descendantCount > 0,
     createLoadingItemData: () => ({
@@ -64,7 +83,13 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
       wip: false,
     }),
     dataLoader,
-    features: [asyncDataLoaderFeature],
+    onRename: handleRename,
+    features: [
+      asyncDataLoaderFeature,
+      selectionFeature,
+      hotkeysCoreFeature,
+      renamingFeature,
+    ],
   });
 
   // Track local generation number
@@ -90,7 +115,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   useScrollToSelectedItem({ targetPathOrId, items, virtualizer });
 
   return (
-    <div className="list-group">
+    <div {...tree.getContainerProps()} className="list-group">
       {virtualizer.getVirtualItems().map((virtualItem) => {
         const item = items[virtualItem.index];
         const itemData = item.getItemData();
@@ -125,6 +150,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
               isWipPageShown={isWipPageShown}
               isEnableActions={isEnableActions}
               isReadOnlyUser={isReadOnlyUser}
+              validateName={validateName}
               onToggle={() => {
                 // Trigger re-render to show/hide children
                 setRebuildTrigger((prev) => prev + 1);
