@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import path from 'path';
 
@@ -10,7 +10,7 @@ import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
 import { toastSuccess } from '~/client/util/toastr';
-import { ROOT_PAGE_VIRTUAL_ID, usePageTreeInformationUpdate, RenameInput } from '~/features/page-tree';
+import { ROOT_PAGE_VIRTUAL_ID, usePageTreeInformationUpdate, usePageRename } from '~/features/page-tree';
 import type { IPageForItem } from '~/interfaces/page';
 import type { OnDeletedFunction, OnDuplicatedFunction } from '~/interfaces/ui';
 import { useCurrentPagePath, useFetchCurrentPage } from '~/states/page';
@@ -21,7 +21,7 @@ import { mutateAllPageInfo } from '~/stores/page';
 import { mutatePageTree, mutatePageList } from '~/stores/page-listing';
 import { mutateSearching } from '~/stores/search';
 
-import type { TreeItemProps, TreeItemToolProps } from '../../TreeItem';
+import type { TreeItemProps } from '../../TreeItem';
 import { TreeItemLayout } from '../../TreeItem';
 
 import { CountBadgeForPageTreeItem } from './CountBadgeForPageTreeItem';
@@ -42,7 +42,6 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
   isWipPageShown,
   isEnableActions = false,
   isReadOnlyUser = false,
-  validateName,
   onToggle,
 }) => {
   const { t } = useTranslation();
@@ -106,20 +105,8 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
 
   const { Control } = usePageItemControl();
 
-  // Check if item is in renaming mode
-  const isRenaming = item.isRenaming?.() ?? false;
-
-  // Create RenameInput as AlternativeComponent
-  // RenameAlternative component with explicit props validation for 'item'
-  const RenameAlternative: FC<TreeItemToolProps> = useMemo(() => {
-    const RenameAlternativeComponent: FC<{ item: TreeItemToolProps['item'] }> = ({ item: itemInstance }) => (
-      <RenameInput
-        inputProps={itemInstance.getRenameInputProps()}
-        validateName={validateName}
-      />
-    );
-    return RenameAlternativeComponent;
-  }, [validateName]);
+  // Rename feature from usePageRename hook
+  const { isRenaming, RenameAlternativeComponent } = usePageRename();
 
   const itemSelectedHandler = useCallback((page: IPageForItem) => {
     if (page.path == null || page._id == null) return;
@@ -151,8 +138,8 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
       onClickDeleteMenuItem={onClickDeleteMenuItem}
       customEndComponents={[CountBadgeForPageTreeItem]}
       customHoveredEndComponents={[Control]}
-      showAlternativeContent={isRenaming}
-      customAlternativeComponents={[RenameAlternative]}
+      showAlternativeContent={isRenaming(item)}
+      customAlternativeComponents={[RenameAlternativeComponent]}
     />
   );
 };

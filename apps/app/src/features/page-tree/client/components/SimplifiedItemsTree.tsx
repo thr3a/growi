@@ -55,7 +55,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   const dataLoader = useDataLoader(rootPageId, allPagesCount);
 
   // Page rename hook
-  const { rename, validateName, getPageName } = usePageRename();
+  const { rename, getPageName } = usePageRename();
 
   // onRename handler for headless-tree
   const handleRename = useCallback(
@@ -150,7 +150,6 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
               isWipPageShown={isWipPageShown}
               isEnableActions={isEnableActions}
               isReadOnlyUser={isReadOnlyUser}
-              validateName={validateName}
               onToggle={() => {
                 // Trigger re-render to show/hide children
                 setRebuildTrigger((prev) => prev + 1);

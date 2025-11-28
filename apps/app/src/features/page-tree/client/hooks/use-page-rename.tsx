@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import type { FC } from 'react';
+import { useCallback, useMemo } from 'react';
 import { pathUtils } from '@growi/core/dist/utils';
 import type { ItemInstance } from '@headless-tree/core';
 import { useTranslation } from 'next-i18next';
@@ -14,6 +15,8 @@ import {
 import type { IPageForItem } from '~/interfaces/page';
 import { mutatePageTree } from '~/stores/page-listing';
 
+import { RenameInput } from '../components/RenameInput';
+import type { TreeItemToolProps } from '../interfaces';
 import { usePageTreeInformationUpdate } from '../states/page-tree-update';
 
 type RenameResult = {
@@ -26,9 +29,6 @@ type RenameResult = {
 type UsePageRenameReturn = {
   /**
    * Rename a page
-   * @param item The item instance from headless-tree
-   * @param newName The new page name (basename only, not full path)
-   * @returns Promise with rename result
    */
   rename: (
     item: ItemInstance<IPageForItem>,
@@ -37,8 +37,6 @@ type UsePageRenameReturn = {
 
   /**
    * Validate page name
-   * @param name The page name to validate
-   * @returns Validation result or null if valid
    */
   validateName: (name: string) => InputValidationResult | null;
 
@@ -46,6 +44,16 @@ type UsePageRenameReturn = {
    * Get the current page name (basename) from item
    */
   getPageName: (item: ItemInstance<IPageForItem>) => string;
+
+  /**
+   * Check if item is in renaming mode
+   */
+  isRenaming: (item: ItemInstance<IPageForItem>) => boolean;
+
+  /**
+   * RenameInput component to use as AlternativeComponent
+   */
+  RenameAlternativeComponent: FC<TreeItemToolProps>;
 };
 
 /**
@@ -72,6 +80,24 @@ export const usePageRename = (): UsePageRenameReturn => {
     },
     [inputValidator],
   );
+
+  const isRenaming = useCallback(
+    (item: ItemInstance<IPageForItem>): boolean => {
+      return item.isRenaming?.() ?? false;
+    },
+    [],
+  );
+
+  // RenameInput as AlternativeComponent
+  const RenameAlternativeComponent: FC<TreeItemToolProps> = useMemo(() => {
+    const Component: FC<TreeItemToolProps> = ({ item }) => (
+      <RenameInput
+        inputProps={item.getRenameInputProps()}
+        validateName={validateName}
+      />
+    );
+    return Component;
+  }, [validateName]);
 
   const rename = useCallback(
     async (
@@ -129,5 +155,7 @@ export const usePageRename = (): UsePageRenameReturn => {
     rename,
     validateName,
     getPageName,
+    isRenaming,
+    RenameAlternativeComponent,
   };
 };
