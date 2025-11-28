@@ -71,6 +71,11 @@ export const useDataLoader = (
         ];
       }
 
+      // Placeholder node has no children
+      if (itemId === CREATING_PAGE_VIRTUAL_ID) {
+        return [];
+      }
+
       // For all pages (including root), fetch children using their _id
       const response = await apiv3Get<{ children: IPageForTreeItem[] }>(
         '/page-listing/children',

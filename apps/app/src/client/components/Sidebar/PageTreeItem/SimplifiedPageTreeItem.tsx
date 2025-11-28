@@ -13,6 +13,7 @@ import { toastSuccess } from '~/client/util/toastr';
 import {
   CREATING_PAGE_VIRTUAL_ID,
   ROOT_PAGE_VIRTUAL_ID, usePageTreeInformationUpdate, usePageRename, usePageCreate,
+  NameInputAlternativeComponent,
 } from '~/features/page-tree';
 import type { IPageForItem } from '~/interfaces/page';
 import type { OnDeletedFunction, OnDuplicatedFunction } from '~/interfaces/ui';
@@ -109,10 +110,10 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
   const { Control } = usePageItemControl();
 
   // Rename feature from usePageRename hook
-  const { isRenaming, RenameAlternativeComponent } = usePageRename();
+  const { isRenaming } = usePageRename();
 
   // Page create feature
-  const { CreateAlternativeComponent, cancelCreating } = usePageCreate();
+  const { cancelCreating } = usePageCreate();
 
   // Check if this is the creating placeholder node
   const isCreatingPlaceholder = itemData._id === CREATING_PAGE_VIRTUAL_ID;
@@ -177,8 +178,8 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
       onClickDeleteMenuItem={onClickDeleteMenuItem}
       customEndComponents={[CountBadgeForPageTreeItem]}
       customHoveredEndComponents={[Control]}
-      showAlternativeContent={isRenaming(item) || showCreateInput}
-      customAlternativeComponents={showCreateInput ? [CreateAlternativeComponent] : [RenameAlternativeComponent]}
+      showAlternativeContent={isRenaming(item) || isCreatingPlaceholder}
+      customAlternativeComponents={[NameInputAlternativeComponent]}
     />
   );
 };

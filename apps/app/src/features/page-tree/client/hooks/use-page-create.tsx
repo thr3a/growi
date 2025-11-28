@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { Origin } from '@growi/core';
 import { pagePathUtils, pathUtils } from '@growi/core/dist/utils';
 import type { ItemInstance } from '@headless-tree/core';
@@ -8,16 +8,10 @@ import { join } from 'pathe';
 
 import { useCreatePage } from '~/client/services/create-page';
 import { toastError, toastSuccess, toastWarning } from '~/client/util/toastr';
-import type { InputValidationResult } from '~/client/util/use-input-validator';
-import {
-  useInputValidator,
-  ValidationTarget,
-} from '~/client/util/use-input-validator';
 import type { IPageForItem } from '~/interfaces/page';
 import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
 import { shouldCreateWipPage } from '~/utils/should-create-wip-page';
 
-import { CreateInput } from '../components/CreateInput';
 import type { TreeItemToolProps } from '../interfaces';
 import {
   CREATING_PAGE_VIRTUAL_ID,
@@ -56,11 +50,6 @@ type UsePageCreateReturn = {
   isCreatingPlaceholder: (item: ItemInstance<IPageForItem>) => boolean;
 
   /**
-   * Validate page name
-   */
-  validateName: (name: string) => InputValidationResult | null;
-
-  /**
    * Start creating a new page under the specified parent
    */
   startCreating: (parentItem: ItemInstance<IPageForItem>) => void;
@@ -74,12 +63,6 @@ type UsePageCreateReturn = {
    * Check if a child is being created under this item
    */
   isCreatingChild: (item: ItemInstance<IPageForItem>) => boolean;
-
-  /**
-   * Alternative component for creating a child page (used in TreeItemLayout)
-   * This renders the CreateInput using item.getRenameInputProps()
-   */
-  CreateAlternativeComponent: FC<TreeItemToolProps>;
 };
 
 /**
@@ -89,21 +72,12 @@ type UsePageCreateReturn = {
 export const usePageCreate = (): UsePageCreateReturn => {
   const { t } = useTranslation();
   const { create: createPage } = useCreatePage();
-  const inputValidator = useInputValidator(ValidationTarget.PAGE);
   const { notifyUpdateItems } = usePageTreeInformationUpdate();
   const creatingParentId = useCreatingParentId();
   const {
     startCreating: startCreatingAction,
     cancelCreating: cancelCreatingAction,
   } = usePageTreeCreateActions();
-
-  const validateName = useCallback(
-    (name: string): InputValidationResult | null => {
-      const result = inputValidator(name);
-      return result ?? null;
-    },
-    [inputValidator],
-  );
 
   // Wrapped cancelCreating that also notifies tree to remove placeholder
   const cancelCreating = useCallback(() => {
@@ -224,28 +198,12 @@ export const usePageCreate = (): UsePageCreateReturn => {
     [create, cancelCreating],
   );
 
-  // CreateInput as alternative component for TreeItemLayout
-  // This uses item.getRenameInputProps() from headless-tree's renamingFeature
-  // Note: SimplifiedPageTreeItem ensures item.isRenaming() is true before rendering this
-  const CreateAlternativeComponent: FC<TreeItemToolProps> = useMemo(() => {
-    const Component: FC<TreeItemToolProps> = ({ item }) => (
-      <CreateInput
-        inputProps={item.getRenameInputProps()}
-        validateName={validateName}
-        className="flex-grow-1"
-      />
-    );
-    return Component;
-  }, [validateName]);
-
   return {
     create,
     createFromPlaceholder,
     isCreatingPlaceholder,
-    validateName,
     startCreating,
     cancelCreating,
     isCreatingChild,
-    CreateAlternativeComponent,
   };
 };

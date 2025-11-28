@@ -1,9 +1,11 @@
 // Components
-export { CreateInput } from './client/components/CreateInput';
-export { RenameInput } from './client/components/RenameInput';
 export { SimpleItemContent } from './client/components/SimpleItemContent';
 export { SimplifiedItemsTree } from './client/components/SimplifiedItemsTree';
 export { TreeItemLayout } from './client/components/TreeItemLayout';
+export {
+  NameInputAlternativeComponent,
+  TreeNameInput,
+} from './client/components/TreeNameInput';
 // Hooks
 export { useDataLoader } from './client/hooks/use-data-loader';
 export { usePageCreate } from './client/hooks/use-page-create';
