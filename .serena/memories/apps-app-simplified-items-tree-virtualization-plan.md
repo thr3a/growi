@@ -185,10 +185,12 @@ src/client/components/Common/SimplifiedItemsTree/
 
 **実装方針**: 既存実装よりも @headless-tree の機能を使って新規実装、APIは既存を使用
 
-6. **Create** ⏳ 次のタスク
-   - @headless-tree/core の renamingFeature を活用
-   - 仮のノードを追加してから renamingFeature によりページ名を入力、確定したら API を呼び出してページの実態を作成する
-   - Rename の実装パターンを参考にする
+6. **Create** ✅ 完了
+   - Jotai atom で「作成中の親ノードID」を状態管理
+   - コンテキストメニューから「作成」を選択 → 親ノードが展開され、子として CreateInput が表示
+   - Enter で確定 → POST /page API 呼び出し → 作成されたページに遷移
+   - Escape またはブラー → キャンセル
+   - **実装詳細は後述「Create 実装詳細」セクション参照**
 
 7. **Drag and Drop**
    - @headless-tree/core の dragAndDropFeature を活用
@@ -307,6 +309,88 @@ usePageRename フック
 4. **API 呼び出しタイミング**
    - Rename: 既存ページの更新なので、確定時に PUT /pages/rename
    - Create: 新規ページ作成なので、確定時に POST /pages で作成
+
+---
+
+## 📝 Create 実装詳細（2025-11-28 完了）
+
+### 実装アーキテクチャ
+
+**Jotai atom で作成中の親ノードIDを管理し、CreateInput を条件付き表示**
+
+```
+SimplifiedPageTreeItem
+├── TreeItemLayout (既存)
+└── CreateInputComponent (作成中のみ表示)
+    └── CreateInput (入力フォーム)
+
+page-tree-create.ts (Jotai atom)
+├── creatingParentIdAtom: 作成中の親ノードID
+├── useCreatingParentId(): 現在の作成中親ID取得
+├── useIsCreatingChild(parentId): 特定アイテムが作成中か判定
+└── usePageTreeCreateActions(): startCreating, cancelCreating
+
+usePageCreate フック
+├── create() → POST /page API呼び出し、toast表示、ツリー更新、ページ遷移
+├── validateName() → ページ名バリデーション
+├── startCreating() → 親を展開し、作成モード開始
+├── cancelCreating() → 作成モードキャンセル
+├── isCreatingChild() → 作成中判定
+└── CreateInputComponent → SimplifiedPageTreeItem で使用
+```
+
+### 実装ファイル
+
+1. **`features/page-tree/client/states/page-tree-create.ts`** (新規)
+   - Jotai atom による状態管理
+   - `creatingParentIdAtom`: 作成中の親ノードID
+   - `useCreatingParentId`: 現在の作成中親ID取得フック
+   - `useIsCreatingChild`: 特定アイテムが作成中か判定フック
+   - `usePageTreeCreateActions`: 作成アクション（startCreating, cancelCreating）
+
+2. **`features/page-tree/client/hooks/use-page-create.tsx`** (新規)
+   - Create ビジネスロジックを集約したカスタムフック
+   - `create`: POST /page API 呼び出し、ページ作成
+   - `validateName`: useInputValidator を使用したバリデーション
+   - `startCreating`: 親を展開し、作成モード開始
+   - `cancelCreating`: 作成モードキャンセル
+   - `isCreatingChild`: 特定アイテムが作成中か判定
+   - `CreateInputComponent`: SimplifiedPageTreeItem で使用するコンポーネント
+
+3. **`features/page-tree/client/components/CreateInput.tsx`** (新規)
+   - ページ名入力 UI コンポーネント（~90行）
+   - Auto focus on mount
+   - Enter で確定、Escape でキャンセル
+   - リアルタイムバリデーション（300ms デバウンス）
+   - style prop でインデント制御
+
+4. **`features/page-tree/client/components/CreateInput.module.scss`** (新規)
+   - CreateInput のスタイル定義
+
+5. **`client/components/Sidebar/PageTreeItem/SimplifiedPageTreeItem.tsx`** (変更)
+   - `usePageCreate()` から `isCreatingChild`, `CreateInputComponent` を取得
+   - TreeItemLayout の後に CreateInputComponent を条件付き表示
+
+6. **`client/components/Sidebar/PageTreeItem/use-page-item-control.tsx`** (変更)
+   - `usePageCreate()` から `startCreating` を取得
+   - `additionalMenuItemOnTopRenderer` で「作成」メニュー項目を追加
+
+7. **`features/page-tree/index.ts`** (変更)
+   - CreateInput, usePageCreate, page-tree-create 状態をエクスポート
+
+### キーポイント
+
+1. **状態管理**: Jotai atom でシンプルに管理（作成中の親ノードIDのみ）
+2. **表示位置**: 親アイテムの直下（子の先頭）に表示
+3. **インデント**: 親のレベル + 1 でインデント
+4. **フォーカス**: マウント時に自動フォーカス
+5. **キャンセル**: Escape キーまたはブラーでキャンセル
+
+### Drag and Drop 実装への引き継ぎ事項
+
+1. **@headless-tree/core の dragAndDropFeature を活用**
+2. **既存の移動 API を使用**
+3. **ツリー更新は notifyUpdateItems で対応**
 
 ---
 
@@ -437,9 +521,9 @@ usePageRename フック
 
 ## 📊 現在の進捗状況（2025-11-28 更新）
 
-**完了**: M1 ✅、M2 ✅、M3-A ✅、M3-B ✅、M3-C Rename ✅、ディレクトリ再編成 ✅  
-**次のステップ**: M3-C Create（ページ新規作成機能）  
-**その後**: M3-C Drag and Drop → M4 デグレチェック
+**完了**: M1 ✅、M2 ✅、M3-A ✅、M3-B ✅、M3-C Rename ✅、M3-C Create ✅、ディレクトリ再編成 ✅  
+**次のステップ**: M3-C Drag and Drop（ページ移動機能）  
+**その後**: M4 デグレチェック
 
 **実装済みコンポーネント**:
 - `SimplifiedItemsTree.tsx`: @headless-tree/react + @tanstack/react-virtual 統合済み
@@ -451,7 +535,7 @@ usePageRename フック
 **実装済み機能**:
 - ✅ WIPページフィルター
 - ✅ descendantCountバッジ表示
-- ✅ hover時の操作ボタン（duplicate/delete/rename）
+- ✅ hover時の操作ボタン（duplicate/delete/rename/create）
 - ✅ 選択ページまでの自動展開
 - ✅ 選択ページへの初期スクロール
 - ✅ **Rename（ページ名変更）** - renamingFeature + hotkeysCoreFeature
@@ -459,10 +543,14 @@ usePageRename フック
   - F2 キーボードショートカット
   - Enter で確定、Escape でキャンセル
   - リアルタイムバリデーション
+- ✅ **Create（ページ新規作成）** - Jotai atom + CreateInput
+  - コンテキストメニューから「作成」を選択
+  - 親ノード展開後、子として入力フォーム表示
+  - Enter で確定（POST /page API）、Escape でキャンセル
+  - 作成成功後、新規ページに遷移
 
 **未実装機能**:
-- ⏳ Create（ページ新規作成）- 次のタスク
-- ⏳ Drag and Drop（ページ移動）
+- ⏳ Drag and Drop（ページ移動）- 次のタスク
 
 **既知の課題**:
 1. ~~選択ページの祖先が自動展開されない~~ → M3-B で解決済み ✅
@@ -552,4 +640,4 @@ import { ROOT_PAGE_VIRTUAL_ID, usePageTreeInformationUpdate } from '~/features/p
 
 ## 📝 最終更新日
 
-2025-11-28 (Rename 実装完了、Create 実装への引き継ぎ事項追記)
+2025-11-28 (Create 実装完了、Drag and Drop 実装への引き継ぎ事項追記)
