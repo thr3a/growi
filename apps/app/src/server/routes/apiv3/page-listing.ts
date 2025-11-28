@@ -1,12 +1,10 @@
-import type {
-  IPageInfoForListing, IPageInfo, IUserHasId,
-} from '@growi/core';
+import type { IPageInfo, IPageInfoForListing, IUserHasId } from '@growi/core';
 import { getIdForRef, isIPageInfoForEntity } from '@growi/core';
 import { SCOPE } from '@growi/core/dist/interfaces';
 import { ErrorV3 } from '@growi/core/dist/models';
 import type { Request, Router } from 'express';
 import express from 'express';
-import { query, oneOf } from 'express-validator';
+import { oneOf, query } from 'express-validator';
 import type { HydratedDocument } from 'mongoose';
 import mongoose from 'mongoose';
 
@@ -20,9 +18,7 @@ import loggerFactory from '~/utils/logger';
 import type Crowi from '../../crowi';
 import { apiV3FormValidator } from '../../middlewares/apiv3-form-validator';
 import type { PageDocument, PageModel } from '../../models/page';
-
 import type { ApiV3Response } from './interfaces/apiv3-response';
-
 
 const logger = loggerFactory('growi:routes:apiv3:page-tree');
 
@@ -30,29 +26,29 @@ const logger = loggerFactory('growi:routes:apiv3:page-tree');
  * Types & Interfaces
  */
 interface AuthorizedRequest extends Request {
-  user?: IUserHasId,
+  user?: IUserHasId;
 }
 
 /*
  * Validators
  */
 const validator = {
-  pagePathRequired: [
-    query('path').isString().withMessage('path is required'),
-  ],
-  pageIdOrPathRequired: oneOf([
-    query('id').isMongoId(),
-    query('path').isString(),
-  ], 'id or path is required'),
+  pagePathRequired: [query('path').isString().withMessage('path is required')],
+  pageIdOrPathRequired: oneOf(
+    [query('id').isMongoId(), query('path').isString()],
+    'id or path is required',
+  ),
   pageIdsOrPathRequired: [
     // type check independent of existence check
-    query('pageIds').isArray().optional(),
+    query('pageIds')
+      .isArray()
+      .optional(),
     query('path').isString().optional(),
     // existence check
-    oneOf([
-      query('pageIds').exists(),
-      query('path').exists(),
-    ], 'pageIds or path is required'),
+    oneOf(
+      [query('pageIds').exists(), query('path').exists()],
+      'pageIds or path is required',
+    ),
   ],
   infoParams: [
     query('attachBookmarkCount').isBoolean().optional(),
@@ -64,10 +60,12 @@ const validator = {
  * Routes
  */
 const routerFactory = (crowi: Crowi): Router => {
-  const loginRequired = require('../../middlewares/login-required')(crowi, true);
+  const loginRequired = require('../../middlewares/login-required')(
+    crowi,
+    true,
+  );
 
   const router = express.Router();
-
 
   /**
    * @swagger
@@ -91,16 +89,20 @@ const routerFactory = (crowi: Crowi): Router => {
    *                 rootPage:
    *                   $ref: '#/components/schemas/PageForTreeItem'
    */
-  router.get('/root',
-    accessTokenParser([SCOPE.READ.FEATURES.PAGE], { acceptLegacy: true }), loginRequired, async(req: AuthorizedRequest, res: ApiV3Response) => {
+  router.get(
+    '/root',
+    accessTokenParser([SCOPE.READ.FEATURES.PAGE], { acceptLegacy: true }),
+    loginRequired,
+    async (req: AuthorizedRequest, res: ApiV3Response) => {
       try {
-        const rootPage: IPageForTreeItem = await pageListingService.findRootByViewer(req.user);
+        const rootPage: IPageForTreeItem =
+          await pageListingService.findRootByViewer(req.user);
         return res.apiv3({ rootPage });
-      }
-      catch (err) {
+      } catch (err) {
         return res.apiv3Err(new ErrorV3('rootPage not found'));
       }
-    });
+    },
+  );
 
   /**
    * @swagger
@@ -138,25 +140,39 @@ const routerFactory = (crowi: Crowi): Router => {
   /*
    * In most cases, using id should be prioritized
    */
-  router.get('/children',
+  router.get(
+    '/children',
     accessTokenParser([SCOPE.READ.FEATURES.PAGE], { acceptLegacy: true }),
-    loginRequired, validator.pageIdOrPathRequired, apiV3FormValidator, async(req: AuthorizedRequest, res: ApiV3Response) => {
+    loginRequired,
+    validator.pageIdOrPathRequired,
+    apiV3FormValidator,
+    async (req: AuthorizedRequest, res: ApiV3Response) => {
       const { id, path } = req.query;
 
-      const hideRestrictedByOwner = await configManager.getConfig('security:list-policy:hideRestrictedByOwner');
-      const hideRestrictedByGroup = await configManager.getConfig('security:list-policy:hideRestrictedByGroup');
+      const hideRestrictedByOwner = await configManager.getConfig(
+        'security:list-policy:hideRestrictedByOwner',
+      );
+      const hideRestrictedByGroup = await configManager.getConfig(
+        'security:list-policy:hideRestrictedByGroup',
+      );
 
       try {
-        const pages = await pageListingService.findChildrenByParentPathOrIdAndViewer(
-          (id || path) as string, req.user, !hideRestrictedByOwner, !hideRestrictedByGroup,
-        );
+        const pages =
+          await pageListingService.findChildrenByParentPathOrIdAndViewer(
+            (id || path) as string,
+            req.user,
+            !hideRestrictedByOwner,
+            !hideRestrictedByGroup,
+          );
         return res.apiv3({ children: pages });
-      }
-      catch (err) {
+      } catch (err) {
         logger.error('Error occurred while finding children.', err);
-        return res.apiv3Err(new ErrorV3('Error occurred while finding children.'));
+        return res.apiv3Err(
+          new ErrorV3('Error occurred while finding children.'),
+        );
       }
-    });
+    },
+  );
 
   /**
    * @swagger
@@ -186,21 +202,65 @@ const routerFactory = (crowi: Crowi): Router => {
    *                 item:
    *                   $ref: '#/components/schemas/PageForTreeItem'
    */
-  router.get('/item',
+  router.get(
+    '/item',
     accessTokenParser([SCOPE.READ.FEATURES.PAGE], { acceptLegacy: true }),
-    loginRequired, validator.pageIdOrPathRequired, apiV3FormValidator, async(req: AuthorizedRequest, res: ApiV3Response) => {
-      const { id } = req.query;
+    validator.pageIdsOrPathRequired,
+    validator.infoParams,
+    apiV3FormValidator,
+    async (req: AuthorizedRequest, res: ApiV3Response) => {
+      const {
+        pageIds,
+        path,
+        attachBookmarkCount: attachBookmarkCountParam,
+        attachShortBody: attachShortBodyParam,
+      } = req.query;
 
-      if (id == null) {
-        return res.apiv3Err(new ErrorV3('id parameter is required'));
-      }
+      const attachBookmarkCount: boolean = attachBookmarkCountParam === 'true';
+      const attachShortBody: boolean = attachShortBodyParam === 'true';
+
+      const Page = mongoose.model<HydratedDocument<PageDocument>, PageModel>(
+        'Page',
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Bookmark = mongoose.model<any, any>('Bookmark');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const pageService = crowi.pageService;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const pageGrantService: IPageGrantService = crowi.pageGrantService!;
 
       try {
-        const Page = mongoose.model<HydratedDocument<PageDocument>, PageModel>('Page');
-        const page = await Page.findByIdAndViewer(id as string, req.user, null, true);
+        const pages =
+          pageIds != null
+            ? await Page.findByIdsAndViewer(
+                pageIds as string[],
+                req.user,
+                null,
+                true,
+              )
+            : await Page.findByPathAndViewer(
+                path as string,
+                req.user,
+                null,
+                false,
+                true,
+              );
 
-        if (page == null) {
-          return res.apiv3Err(new ErrorV3('Page not found'), 404);
+        const foundIds = pages.map((page) => page._id);
+
+        let shortBodiesMap;
+        if (attachShortBody) {
+          shortBodiesMap = await pageService.shortBodiesMapByPageIds(
+            foundIds,
+            req.user,
+          );
+        }
+
+        let bookmarkCountMap;
+        if (attachBookmarkCount) {
+          bookmarkCountMap = (await Bookmark.getPageIdToCountMap(
+            foundIds,
+          )) as Record<string, number>;
         }
 
         const item: IPageForTreeItem = {
@@ -215,12 +275,14 @@ const routerFactory = (crowi: Crowi): Router => {
         };
 
         return res.apiv3({ item });
-      }
-      catch (err) {
+      } catch (err) {
         logger.error('Error occurred while fetching page item.', err);
-        return res.apiv3Err(new ErrorV3('Error occurred while fetching page item.'));
+        return res.apiv3Err(
+          new ErrorV3('Error occurred while fetching page item.'),
+        );
       }
-    });
+    },
+  );
 
   return router;
 };
