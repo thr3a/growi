@@ -19,16 +19,16 @@ import styles from './TreeItemLayout.module.scss';
 
 const moduleClass = styles['tree-item-layout'] ?? '';
 
+const indentSize = 10; // in px
+
 
 type TreeItemLayoutProps = TreeItemProps & {
   className?: string,
-  indentSize?: number,
 }
 
 export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
   const {
     className, itemClassName,
-    indentSize = 10,
     item,
     targetPath, targetPathOrId,
     isEnableActions, isReadOnlyUser, isWipPageShown = true,
@@ -126,8 +126,8 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
     <div
       id={`tree-item-layout-${page._id}`}
       data-testid="grw-pagetree-item-container"
-      className={`${moduleClass} ${className} level-${itemLevel}`}
-      style={{ paddingLeft: `${itemLevel > 1 ? indentSize : 0}px` }}
+      className={`${moduleClass} ${className}`}
+      style={{ paddingLeft: `${itemLevel > 0 ? indentSize * itemLevel : 0}px` }}
     >
       <li
         role="button"
