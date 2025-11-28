@@ -360,4 +360,7 @@ describe('SimplifiedItemsTree', () => {
       document.body.removeChild(scrollerElem);
     });
   });
+
+  // NOTE: Page creation placeholder tests are covered in use-data-loader.spec.tsx
+  // The dataLoader is responsible for prepending placeholder nodes when creatingParentId is set
 });

@@ -20,13 +20,17 @@ vi.mock('~/client/util/apiv3-client', () => ({
   apiv3Get: (...args: unknown[]) => mockApiv3Get(...args),
 }));
 
+// Mutable state for creating parent info
+let mockCreatingParentId: string | null = null;
+let mockCreatingParentPath: string | null = null;
+
 // Mock the page-tree-create state hooks
 vi.mock('../states/page-tree-create', async () => {
   const actual = await vi.importActual('../states/page-tree-create');
   return {
     ...actual,
-    useCreatingParentId: () => null,
-    useCreatingParentPath: () => null,
+    useCreatingParentId: () => mockCreatingParentId,
+    useCreatingParentPath: () => mockCreatingParentPath,
   };
 });
 
@@ -66,6 +70,9 @@ describe('use-data-loader', () => {
     clearChildrenCache();
     // Reset mock
     mockApiv3Get.mockReset();
+    // Reset creating state
+    mockCreatingParentId = null;
+    mockCreatingParentPath = null;
   });
 
   describe('useDataLoader', () => {
@@ -411,6 +418,146 @@ describe('use-data-loader', () => {
       await getDataLoader(result).getChildrenWithData('parent-1');
       await getDataLoader(result).getChildrenWithData('parent-2');
       expect(mockApiv3Get).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  describe('placeholder node for page creation', () => {
+    test('should prepend placeholder node when parent is in creating mode', async () => {
+      const mockChildren = [createMockPage('existing-child', '/parent/existing')];
+      mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
+
+      // Set creating state BEFORE rendering the hook
+      mockCreatingParentId = 'parent-id';
+      mockCreatingParentPath = '/parent';
+
+      const { result } = renderHook(() =>
+        useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+      );
+
+      const children = await getDataLoader(result).getChildrenWithData('parent-id');
+
+      // Should have placeholder + existing children
+      expect(children).toHaveLength(2);
+      // Placeholder should be first
+      expect(children[0].id).toBe(CREATING_PAGE_VIRTUAL_ID);
+      expect(children[0].data._id).toBe(CREATING_PAGE_VIRTUAL_ID);
+      expect(children[0].data.parent).toBe('parent-id');
+      expect(children[0].data.path).toBe('/parent/');
+      // Existing child should be second
+      expect(children[1].id).toBe('existing-child');
+    });
+
+    test('should not add placeholder when parent is not in creating mode', async () => {
+      const mockChildren = [createMockPage('existing-child', '/parent/existing')];
+      mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
+
+      // Creating state is null (not creating)
+      mockCreatingParentId = null;
+      mockCreatingParentPath = null;
+
+      const { result } = renderHook(() =>
+        useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+      );
+
+      const children = await getDataLoader(result).getChildrenWithData('parent-id');
+
+      // Should only have existing children, no placeholder
+      expect(children).toHaveLength(1);
+      expect(children[0].id).toBe('existing-child');
+    });
+
+    test('should not add placeholder to different parent', async () => {
+      const mockChildren = [createMockPage('existing-child', '/other/existing')];
+      mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
+
+      // Creating under 'parent-id', but fetching children of 'other-id'
+      mockCreatingParentId = 'parent-id';
+      mockCreatingParentPath = '/parent';
+
+      const { result } = renderHook(() =>
+        useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+      );
+
+      const children = await getDataLoader(result).getChildrenWithData('other-id');
+
+      // Should only have existing children, no placeholder
+      expect(children).toHaveLength(1);
+      expect(children[0].id).toBe('existing-child');
+    });
+
+    test('should add placeholder to empty parent (no existing children)', async () => {
+      // Parent has no existing children
+      mockApiv3Get.mockResolvedValue({ data: { children: [] } });
+
+      // Set creating state
+      mockCreatingParentId = 'empty-parent-id';
+      mockCreatingParentPath = '/empty-parent';
+
+      const { result } = renderHook(() =>
+        useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+      );
+
+      const children = await getDataLoader(result).getChildrenWithData('empty-parent-id');
+
+      // Should have only the placeholder
+      expect(children).toHaveLength(1);
+      expect(children[0].id).toBe(CREATING_PAGE_VIRTUAL_ID);
+      expect(children[0].data.parent).toBe('empty-parent-id');
+      expect(children[0].data.path).toBe('/empty-parent/');
+    });
+
+    test('should read creating state via refs when called after state change', async () => {
+      const mockChildren = [createMockPage('existing-child', '/parent/existing')];
+      mockApiv3Get.mockResolvedValue({ data: { children: mockChildren } });
+
+      // Render hook WITHOUT creating state
+      const { result, rerender } = renderHook(() =>
+        useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+      );
+
+      // First call - no placeholder
+      clearChildrenCache();
+      const childrenBefore = await getDataLoader(result).getChildrenWithData('parent-id');
+      expect(childrenBefore).toHaveLength(1);
+      expect(childrenBefore[0].id).toBe('existing-child');
+
+      // Now set creating state
+      mockCreatingParentId = 'parent-id';
+      mockCreatingParentPath = '/parent';
+
+      // Rerender to update refs
+      rerender();
+
+      // Clear cache to force re-fetch
+      clearChildrenCache();
+
+      // Second call - should have placeholder because refs are updated
+      const childrenAfter = await getDataLoader(result).getChildrenWithData('parent-id');
+      expect(childrenAfter).toHaveLength(2);
+      expect(childrenAfter[0].id).toBe(CREATING_PAGE_VIRTUAL_ID);
+      expect(childrenAfter[1].id).toBe('existing-child');
+    });
+
+    test('dataLoader reference should remain stable when creating state changes', () => {
+      // Render hook WITHOUT creating state
+      const { result, rerender } = renderHook(() =>
+        useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+      );
+
+      const firstDataLoader = result.current;
+
+      // Change creating state
+      mockCreatingParentId = 'some-parent';
+      mockCreatingParentPath = '/some-parent';
+
+      // Rerender
+      rerender();
+
+      const secondDataLoader = result.current;
+
+      // DataLoader reference should be STABLE (same reference)
+      // This is critical to prevent headless-tree from refetching all data
+      expect(firstDataLoader).toBe(secondDataLoader);
     });
   });
 });
