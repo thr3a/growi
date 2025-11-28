@@ -91,7 +91,7 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
         && targetPath.startsWith(addTrailingSlash(page.path))
         && targetPath !== page.path; // Target Page does not need to be opened
 
-      if (isPathToTarget) {
+      if (page.path === '/' || isPathToTarget) {
         item.expand();
         onToggle?.();
       }
