@@ -209,7 +209,7 @@ module.exports = (crowi: Crowi) => {
         | IDataWithMeta<null, IPageNotFoundInfo> = {
         data: null,
       };
-      let pages: HydratedDocument<PageDocument>[] = [];
+      let pages: HydratedDocument<PageDocument>[] | undefined;
       try {
         if (isSharedPage) {
           const shareLink = await ShareLink.findOne({
