@@ -213,12 +213,7 @@ module.exports = (crowi: Crowi) => {
             );
           }
           return res.apiv3Err(
-            new ErrorV3(
-              'Page is not found',
-              'page-not-found',
-              undefined,
-              meta,
-            ),
+            new ErrorV3('Page is not found', 'page-not-found', undefined, meta),
             404,
           );
         }
