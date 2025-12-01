@@ -192,6 +192,60 @@ module.exports = (crowi: Crowi) => {
       const { pageId, path, findAll, revisionId, shareLinkId, includeEmpty } =
         req.query;
 
+      const respondWithSinglePage = async (
+        pageWithMeta:
+          | IDataWithMeta<HydratedDocument<PageDocument>, IPageInfoExt>
+          | IDataWithMeta<null, IPageNotFoundInfo>,
+      ) => {
+        let { data: page } = pageWithMeta;
+        const { meta } = pageWithMeta;
+
+        if (isIPageNotFoundInfo(meta)) {
+          if (meta.isForbidden) {
+            return res.apiv3Err(
+              new ErrorV3(
+                'Page is forbidden',
+                'page-is-forbidden',
+                undefined,
+                meta,
+              ),
+              403,
+            );
+          }
+          return res.apiv3Err(
+            new ErrorV3(
+              'Page is not found',
+              'page-not-found',
+              undefined,
+              meta,
+            ),
+            404,
+          );
+        }
+
+        if (page != null) {
+          try {
+            page.initLatestRevisionField(revisionId);
+
+            // populate
+            page = await page.populateDataToShowRevision();
+          } catch (err) {
+            logger.error('populate-page-failed', err);
+            return res.apiv3Err(
+              new ErrorV3(
+                'Failed to populate page',
+                'populate-page-failed',
+                undefined,
+                { err, meta },
+              ),
+              500,
+            );
+          }
+        }
+
+        return res.apiv3({ page, pages: undefined, meta });
+      };
+
       const isValid =
         (shareLinkId != null && pageId != null && path == null) ||
         (shareLinkId == null && (pageId != null || path != null));
@@ -204,12 +258,6 @@ module.exports = (crowi: Crowi) => {
         );
       }
 
-      let pageWithMeta:
-        | IDataWithMeta<HydratedDocument<PageDocument>, IPageInfoExt>
-        | IDataWithMeta<null, IPageNotFoundInfo> = {
-        data: null,
-      };
-      let pages: HydratedDocument<PageDocument>[] | undefined;
       try {
         if (isSharedPage) {
           const shareLink = await ShareLink.findOne({
@@ -218,78 +266,41 @@ module.exports = (crowi: Crowi) => {
           if (shareLink == null) {
             return res.apiv3Err('ShareLink is not found', 404);
           }
-          pageWithMeta = await pageService.findPageAndMetaDataByViewer(
-            getIdStringForRef(shareLink.relatedPage),
-            path,
-            user,
-            true,
+          return respondWithSinglePage(
+            await pageService.findPageAndMetaDataByViewer(
+              getIdStringForRef(shareLink.relatedPage),
+              path,
+              user,
+              true,
+            ),
           );
-        } else if (!findAll) {
-          pageWithMeta = await pageService.findPageAndMetaDataByViewer(
-            pageId,
-            path,
-            user,
-          );
-        } else {
-          pages = await Page.findByPathAndViewer(
+        }
+
+        if (findAll != null) {
+          const pages = await Page.findByPathAndViewer(
             path,
             user,
             null,
             false,
             includeEmpty,
           );
+
+          if (pages.length === 0) {
+            return res.apiv3Err(
+              new ErrorV3('Page is not found', 'page-not-found'),
+              404,
+            );
+          }
+          return res.apiv3({ page: undefined, pages, meta: undefined });
         }
+
+        return respondWithSinglePage(
+          await pageService.findPageAndMetaDataByViewer(pageId, path, user),
+        );
       } catch (err) {
         logger.error('get-page-failed', err);
         return res.apiv3Err(err, 500);
       }
-
-      let { data: page } = pageWithMeta;
-      const { meta } = pageWithMeta;
-
-      // not found or forbidden
-      if (
-        isIPageNotFoundInfo(meta) ||
-        (Array.isArray(pages) && pages.length === 0)
-      ) {
-        if (isIPageNotFoundInfo(meta) && meta.isForbidden) {
-          return res.apiv3Err(
-            new ErrorV3(
-              'Page is forbidden',
-              'page-is-forbidden',
-              undefined,
-              meta,
-            ),
-            403,
-          );
-        }
-        return res.apiv3Err(
-          new ErrorV3('Page is not found', 'page-not-found', undefined, meta),
-          404,
-        );
-      }
-
-      if (page != null) {
-        try {
-          page.initLatestRevisionField(revisionId);
-
-          // populate
-          page = await page.populateDataToShowRevision();
-        } catch (err) {
-          logger.error('populate-page-failed', err);
-          return res.apiv3Err(
-            new ErrorV3(
-              'Failed to populate page',
-              'populate-page-failed',
-              undefined,
-              { err, meta },
-            ),
-            500,
-          );
-        }
-      }
-
-      return res.apiv3({ page, pages, meta });
     },
   );
 
