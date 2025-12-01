@@ -806,7 +806,6 @@
     "related_username": "関連付けられているユーザーの ",
     "cannot_invite_maximum_users": "ユーザーが上限に達したため招待できません。",
     "user_statistics": {
-      "title": "ユーザー統計",
       "total": "総ユーザー数",
       "active": "アクティブ",
       "inactive": "非アクティブ"
