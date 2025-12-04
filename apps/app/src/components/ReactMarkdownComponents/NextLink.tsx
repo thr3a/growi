@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import type { AnchorHTMLAttributes, JSX } from 'react';
 import type { LinkProps } from 'next/link';
 import Link from 'next/link';
 import { pagePathUtils } from '@growi/core/dist/utils';
@@ -23,6 +23,10 @@ const isExternalLink = (href: string, siteUrl: string | undefined): boolean => {
   }
 };
 
+const isTargetSelf = (target: string | undefined): boolean => {
+  return target === undefined || target === '_self';
+};
+
 const isCreatablePage = (href: string) => {
   try {
     const url = new URL(href, 'http://example.com');
@@ -34,15 +38,16 @@ const isCreatablePage = (href: string) => {
   }
 };
 
-type Props = Omit<LinkProps, 'href'> & {
-  children: React.ReactNode;
-  id?: string;
-  href?: string;
-  className?: string;
-};
+type Props = AnchorHTMLAttributes<HTMLAnchorElement> &
+  Omit<LinkProps, 'href'> & {
+    children: React.ReactNode;
+    id?: string;
+    href?: string;
+    className?: string;
+  };
 
 export const NextLink = (props: Props): JSX.Element => {
-  const { id, href, children, className, onClick, ...rest } = props;
+  const { id, href, children, className, target, onClick, ...rest } = props;
 
   const siteUrl = useSiteUrl();
 
@@ -56,19 +61,24 @@ export const NextLink = (props: Props): JSX.Element => {
     Object.entries(rest).filter(([key]) => key.startsWith('data-')),
   );
 
-  if (isExternalLink(href, siteUrl)) {
+  if (isExternalLink(href, siteUrl) || !isTargetSelf(target)) {
     return (
       <a
         id={id}
         href={href}
         className={className}
-        target="_blank"
+        target={target ?? '_blank'}
         onClick={onClick}
         rel="noopener noreferrer"
         {...dataAttributes}
       >
-        {children}&nbsp;
-        <span className="growi-custom-icons">external_link</span>
+        {children}
+        {target === '_blank' && (
+          <span style={{ userSelect: 'none' }}>
+            &nbsp;
+            <span className="growi-custom-icons">external_link</span>
+          </span>
+        )}
       </a>
     );
   }
