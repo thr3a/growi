@@ -8,7 +8,7 @@ import loggerFactory from '~/utils/logger';
 
 const logger = loggerFactory('growi:components:NextLink');
 
-const isAnchorLink = (href: string): boolean => {
+const hasAnchorLink = (href: string): boolean => {
   return href.toString().length > 0 && href[0] === '#';
 };
 
@@ -21,10 +21,6 @@ const isExternalLink = (href: string, siteUrl: string | undefined): boolean => {
     logger.debug(err);
     return false;
   }
-};
-
-const isTargetSelf = (target: string | undefined): boolean => {
-  return target === undefined || target === '_self';
 };
 
 const isCreatablePage = (href: string) => {
@@ -61,13 +57,13 @@ export const NextLink = (props: Props): JSX.Element => {
     Object.entries(rest).filter(([key]) => key.startsWith('data-')),
   );
 
-  if (isExternalLink(href, siteUrl) || !isTargetSelf(target)) {
+  if (isExternalLink(href, siteUrl) || target === '_blank') {
     return (
       <a
         id={id}
         href={href}
         className={className}
-        target={target ?? '_blank'}
+        target="_blank"
         onClick={onClick}
         rel="noopener noreferrer"
         {...dataAttributes}
@@ -84,12 +80,13 @@ export const NextLink = (props: Props): JSX.Element => {
   }
 
   // when href is an anchor link or not-creatable path
-  if (isAnchorLink(href) || !isCreatablePage(href)) {
+  if (hasAnchorLink(href) || !isCreatablePage(href) || target != null) {
     return (
       <a
         id={id}
         href={href}
         className={className}
+        target={target}
         onClick={onClick}
         {...dataAttributes}
       >
