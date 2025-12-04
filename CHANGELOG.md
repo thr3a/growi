@@ -1,8 +1,19 @@
 # Changelog
 
-## [Unreleased](https://github.com/growilabs/compare/v7.3.7...HEAD)
+## [Unreleased](https://github.com/growilabs/compare/v7.3.8...HEAD)
 
 *Please do not manually update this file. We've automated the process.*
+
+## [v7.3.8](https://github.com/growilabs/compare/v7.3.7...v7.3.8) - 2025-12-04
+
+### 💎 Features
+
+* feat: Enable page bulk export for GROWI.cloud (#10292) @arafubeatbox
+* feat: Users statistics table for admin (#10539) @riona-k
+
+### 🧰 Maintenance
+
+* ci(deps): bump validator from 13.15.20 to 13.15.22 (#10560) @[dependabot[bot]](https://github.com/apps/dependabot)
 
 ## [v7.3.7](https://github.com/growilabs/compare/v7.3.6...v7.3.7) - 2025-11-25
 
