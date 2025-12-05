@@ -30,6 +30,17 @@ import styles from './AiAssistantManagementPageTreeSelection.module.scss';
 const moduleClass =
   styles['grw-ai-assistant-management-page-tree-selection'] ?? '';
 
+/**
+ * Convert a page path to a glob pattern for selecting descendants.
+ * Handles the root page case where '//*' should become '/*'.
+ */
+const toPagePathGlob = (path: string): string => {
+  if (path === '/') {
+    return '/*';
+  }
+  return `${path}/*`;
+};
+
 type Props = {
   baseSelectedPages: SelectablePage[];
   updateBaseSelectedPages: (pages: SelectablePage[]) => void;
@@ -69,7 +80,7 @@ export const AiAssistantManagementPageTreeSelection = (
       const currentCheckedPaths = new Set(
         checkedPages
           .filter((page) => isSelectablePage(page) && page.path != null)
-          .map((page) => `${page.path}/*`),
+          .map((page) => toPagePathGlob(page.path as string)),
       );
 
       // Get currently selected page paths
@@ -80,7 +91,7 @@ export const AiAssistantManagementPageTreeSelection = (
         if (!isSelectablePage(page) || page.path == null) {
           return;
         }
-        const pagePathWithGlob = `${page.path}/*`;
+        const pagePathWithGlob = toPagePathGlob(page.path);
         if (!currentSelectedPaths.has(pagePathWithGlob)) {
           const clonedPage = { ...page, path: pagePathWithGlob };
           addPage(clonedPage as SelectablePage);
