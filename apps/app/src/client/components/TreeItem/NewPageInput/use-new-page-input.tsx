@@ -16,11 +16,11 @@ import { useCreatePage } from '~/client/services/create-page';
 import { toastWarning, toastError, toastSuccess } from '~/client/util/toastr';
 import type { InputValidationResult } from '~/client/util/use-input-validator';
 import { ValidationTarget, useInputValidator } from '~/client/util/use-input-validator';
-import { usePageTreeDescCountMap } from '~/features/page-tree';
+import { usePageTreeDescCountMap } from '~/features/page-tree/states';
 import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
 
 import { shouldCreateWipPage } from '../../../../utils/should-create-wip-page';
-import type { TreeItemToolProps } from '../interfaces';
+import type { TreeItemToolProps } from '..';
 
 import { NewPageCreateButton } from './NewPageCreateButton';
 

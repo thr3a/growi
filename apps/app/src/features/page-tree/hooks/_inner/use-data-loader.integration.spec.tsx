@@ -20,12 +20,10 @@ import { createStore, Provider } from 'jotai';
 
 import type { IPageForTreeItem } from '~/interfaces/page';
 
-import { invalidatePageTreeChildren } from '../services';
+import { CREATING_PAGE_VIRTUAL_ID } from '../../constants';
+import { invalidatePageTreeChildren } from '../../services';
 // Re-import the actions hook to use real implementation
-import {
-  CREATING_PAGE_VIRTUAL_ID,
-  usePageTreeCreateActions,
-} from '../states/page-tree-create';
+import { usePageTreeCreateActions } from '../../states/_inner';
 import { useDataLoader } from './use-data-loader';
 
 /**

@@ -1,4 +1,4 @@
-@use '../../../../features/page-tree/client/components/tree-item-variables';
+@use '../../../../features/page-tree/components/tree-item-variables';
 
 .new-page-input-container {
   width: calc(100% - tree-item-variables.$btn-triangle-min-width);

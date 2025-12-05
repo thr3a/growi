@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import { useCallback } from 'react';
 import { pathUtils } from '@growi/core/dist/utils';
 import type { ItemInstance } from '@headless-tree/core';
@@ -10,7 +9,7 @@ import { toastError, toastSuccess } from '~/client/util/toastr';
 import type { IPageForItem } from '~/interfaces/page';
 import { mutatePageTree } from '~/stores/page-listing';
 
-import { CREATING_PAGE_VIRTUAL_ID } from '../states/page-tree-create';
+import { CREATING_PAGE_VIRTUAL_ID } from '../constants';
 import { usePageTreeInformationUpdate } from '../states/page-tree-update';
 
 type RenameResult = {

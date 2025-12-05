@@ -14,12 +14,12 @@ import type { IPageForItem } from '~/interfaces/page';
 import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
 import { shouldCreateWipPage } from '~/utils/should-create-wip-page';
 
+import { CREATING_PAGE_VIRTUAL_ID } from '../constants';
 import type { TreeItemToolProps } from '../interfaces';
 import {
-  CREATING_PAGE_VIRTUAL_ID,
   useCreatingParentId,
   usePageTreeCreateActions,
-} from '../states/page-tree-create';
+} from '../states/_inner';
 import { usePageTreeInformationUpdate } from '../states/page-tree-update';
 
 // Inner component for CreateButton to properly use hooks
@@ -28,7 +28,10 @@ type CreateButtonInnerProps = {
   onStartCreating: (item: ItemInstance<IPageForItem>) => void;
 };
 
-const CreateButtonInner: FC<CreateButtonInnerProps> = ({ item, onStartCreating }) => {
+const CreateButtonInner: FC<CreateButtonInnerProps> = ({
+  item,
+  onStartCreating,
+}) => {
   const buttonId = useId();
   const creatingParentId = useCreatingParentId();
   const isCreating = creatingParentId != null;

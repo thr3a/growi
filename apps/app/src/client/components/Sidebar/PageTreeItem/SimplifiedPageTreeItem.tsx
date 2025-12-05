@@ -11,11 +11,11 @@ import { useRouter } from 'next/router';
 
 import { toastSuccess } from '~/client/util/toastr';
 import {
-  CREATING_PAGE_VIRTUAL_ID,
-  ROOT_PAGE_VIRTUAL_ID, usePageTreeInformationUpdate, usePageRename, usePageCreate,
+  usePageTreeInformationUpdate, usePageRename, usePageCreate,
   usePlaceholderRenameEffect,
-  NameInputAlternativeComponent,
+  CREATING_PAGE_VIRTUAL_ID,
 } from '~/features/page-tree';
+import { NameInputAlternativeComponent } from '~/features/page-tree/components';
 import type { IPageForItem } from '~/interfaces/page';
 import type { OnDeletedFunction, OnDuplicatedFunction } from '~/interfaces/ui';
 import { useCurrentPagePath, useFetchCurrentPage } from '~/states/page';
@@ -70,8 +70,8 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
       mutatePageList();
 
       // Notify headless-tree update
-      const parentId = itemData.parent != null ? getIdStringForRef(itemData.parent) : ROOT_PAGE_VIRTUAL_ID;
-      notifyUpdateItems([parentId]);
+      const parentIds = itemData.parent != null ? [getIdStringForRef(itemData.parent)] : undefined;
+      notifyUpdateItems(parentIds);
     };
 
     openDuplicateModal(page, { onDuplicated: duplicatedHandler });
@@ -101,8 +101,8 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
       }
 
       // Notify headless-tree update
-      const parentId = itemData.parent != null ? getIdStringForRef(itemData.parent) : ROOT_PAGE_VIRTUAL_ID;
-      notifyUpdateItems([parentId]);
+      const parentIds = itemData.parent != null ? [getIdStringForRef(itemData.parent)] : undefined;
+      notifyUpdateItems(parentIds);
     };
 
     openDeleteModal([page], { onDeleted: onDeletedHandler });

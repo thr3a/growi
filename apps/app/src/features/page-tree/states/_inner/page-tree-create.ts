@@ -3,10 +3,7 @@ import { atom, useAtomValue, useSetAtom } from 'jotai';
 
 import type { IPageForTreeItem } from '~/interfaces/page';
 
-/**
- * Virtual ID for the placeholder node during page creation
- */
-export const CREATING_PAGE_VIRTUAL_ID = '__creating_page_placeholder__';
+import { CREATING_PAGE_VIRTUAL_ID } from '../../constants';
 
 /**
  * Create a placeholder page data for the creating node

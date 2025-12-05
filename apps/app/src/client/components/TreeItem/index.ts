@@ -1,10 +1,8 @@
 // Re-export from features/page-tree (new implementation)
-export {
-  TreeItemLayout,
-  SimpleItemContent,
-  type TreeItemProps,
-  type TreeItemToolProps,
-} from '~/features/page-tree';
+// Components
+export { TreeItemLayout, SimpleItemContent } from '~/features/page-tree/components';
+// Interfaces
+export type { TreeItemProps, TreeItemToolProps } from '~/features/page-tree/interfaces';
 
 // Legacy exports (for old implementation - will be deprecated)
 export * from './NewPageInput';

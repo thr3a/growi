@@ -3,9 +3,9 @@ import type { ItemInstance, TreeConfig } from '@headless-tree/core';
 
 import type { IPageForTreeItem } from '~/interfaces/page';
 
-import { useCreatingParentId } from '../states/page-tree-create';
-import { usePageCreate } from './use-page-create';
-import { usePageRename } from './use-page-rename';
+import { useCreatingParentId } from '../../states/_inner';
+import { usePageCreate } from '../use-page-create';
+import { usePageRename } from '../use-page-rename';
 
 type UseTreeItemHandlersReturn = {
   /**

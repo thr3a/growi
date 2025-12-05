@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import type { TreeInstance } from '@headless-tree/core';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
-import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
+import { ROOT_PAGE_VIRTUAL_ID } from '../constants/_inner-constants';
 import { invalidatePageTreeChildren } from '../services';
 
 // Update generation number
@@ -26,8 +26,8 @@ export const usePageTreeInformationUpdate = () => {
 
   // Notify update for specific items
   const notifyUpdateItems = useCallback(
-    (itemIds: string[]) => {
-      setLastUpdatedIds(itemIds);
+    (itemIds?: string[]) => {
+      setLastUpdatedIds(itemIds ?? [ROOT_PAGE_VIRTUAL_ID]);
       setGeneration((prev) => prev + 1);
     },
     [setGeneration, setLastUpdatedIds],

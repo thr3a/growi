@@ -3,7 +3,7 @@ import type { TreeInstance } from '@headless-tree/core';
 
 import type { IPageForTreeItem } from '~/interfaces/page';
 
-import { invalidatePageTreeChildren } from '../services';
+import { invalidatePageTreeChildren } from '../../services';
 
 type UseExpandParentOnCreateParams = {
   tree: TreeInstance<IPageForTreeItem>;

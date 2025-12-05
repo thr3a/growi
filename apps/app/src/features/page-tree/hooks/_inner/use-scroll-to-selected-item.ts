@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-
 import type { Virtualizer } from '@tanstack/react-virtual';
 
 import type { IPageForTreeItem } from '~/interfaces/page';
@@ -20,13 +19,18 @@ export const useScrollToSelectedItem = ({
 
     const selectedIndex = items.findIndex((item) => {
       const itemData = item.getItemData();
-      return itemData._id === targetPathOrId || itemData.path === targetPathOrId;
+      return (
+        itemData._id === targetPathOrId || itemData.path === targetPathOrId
+      );
     });
 
     if (selectedIndex !== -1) {
       // Use a small delay to ensure the virtualizer is ready
       setTimeout(() => {
-        virtualizer.scrollToIndex(selectedIndex, { align: 'center', behavior: 'smooth' });
+        virtualizer.scrollToIndex(selectedIndex, {
+          align: 'center',
+          behavior: 'smooth',
+        });
       }, 100);
     }
   }, [targetPathOrId, items, virtualizer]);

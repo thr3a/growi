@@ -9,8 +9,8 @@ import {
   ValidationTarget,
 } from '~/client/util/use-input-validator';
 
+import { CREATING_PAGE_VIRTUAL_ID } from '../constants';
 import type { TreeItemToolProps } from '../interfaces';
-import { CREATING_PAGE_VIRTUAL_ID } from '../states/page-tree-create';
 
 import styles from './TreeNameInput.module.scss';
 
@@ -86,7 +86,9 @@ export const TreeNameInput: FC<TreeNameInputProps> = ({
  * Alternative component for TreeItemLayout that renders TreeNameInput
  * Used for both rename and create operations
  */
-export const NameInputAlternativeComponent: FC<TreeItemToolProps> = ({ item }) => {
+export const NameInputAlternativeComponent: FC<TreeItemToolProps> = ({
+  item,
+}) => {
   const { t } = useTranslation();
   const inputValidator = useInputValidator(ValidationTarget.PAGE);
 

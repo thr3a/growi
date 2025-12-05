@@ -12,18 +12,20 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import type { IPageForTreeItem } from '~/interfaces/page';
 import { useSWRxRootPage } from '~/stores/page-listing';
 
-import { ROOT_PAGE_VIRTUAL_ID } from '../../constants';
-import { useAutoExpandAncestors } from '../hooks/use-auto-expand-ancestors';
-import { useDataLoader } from '../hooks/use-data-loader';
-import { useExpandParentOnCreate } from '../hooks/use-expand-parent-on-create';
-import { useScrollToSelectedItem } from '../hooks/use-scroll-to-selected-item';
-import { useTreeItemHandlers } from '../hooks/use-tree-item-handlers';
+import { ROOT_PAGE_VIRTUAL_ID } from '../constants/_inner-constants';
+import {
+  useAutoExpandAncestors,
+  useDataLoader,
+  useExpandParentOnCreate,
+  useScrollToSelectedItem,
+  useTreeItemHandlers,
+} from '../hooks/_inner';
 import type { TreeItemProps } from '../interfaces';
+import { useTriggerTreeRebuild } from '../states/_inner';
 import {
   usePageTreeInformationGeneration,
   usePageTreeRevalidationEffect,
 } from '../states/page-tree-update';
-import { useTriggerTreeRebuild } from '../states/tree-rebuild';
 
 // Stable features array to avoid recreating on every render
 const TREE_FEATURES = [
