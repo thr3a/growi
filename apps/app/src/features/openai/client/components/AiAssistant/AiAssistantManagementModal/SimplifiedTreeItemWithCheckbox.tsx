@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 
-import type { TreeItemProps } from '~/features/page-tree';
-import { SimpleItemContent } from '~/features/page-tree/components';
+import type { TreeItemProps, TreeItemToolProps } from '~/features/page-tree';
+import { TreeItemLayout } from '~/features/page-tree/components';
 
 import styles from './AiAssistantManagementPageTreeSelection.module.scss';
 
@@ -14,72 +14,46 @@ type SimplifiedTreeItemWithCheckboxProps = TreeItemProps & {
   key?: React.Key | null;
 };
 
-const indentSize = 10; // in px
+// Checkbox component to be used as customEndComponents
+const TreeItemCheckbox: FC<TreeItemToolProps> = ({ item }) => {
+  // Get checkbox props from headless-tree
+  // biome-ignore lint/suspicious/noExplicitAny: checkboxesFeature adds these methods dynamically
+  const checkboxProps = (item as any).getCheckboxProps?.() ?? {};
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    // biome-ignore lint/suspicious/noExplicitAny: checkboxesFeature adds these methods dynamically
+    (item as any).toggleCheckedState?.();
+  };
+
+  // Prevent click events from bubbling up to the li element
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
+  return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: click handler only prevents propagation
+    // biome-ignore lint/a11y/noStaticElementInteractions: wrapper div to stop click propagation
+    <div onClick={handleClick} className="d-flex align-items-center">
+      <input
+        type="checkbox"
+        className={`form-check-input ${checkboxClass}`}
+        checked={checkboxProps.checked ?? false}
+        onChange={handleCheckboxChange}
+      />
+    </div>
+  );
+};
 
 export const SimplifiedTreeItemWithCheckbox: FC<
   SimplifiedTreeItemWithCheckboxProps
 > = (props) => {
-  const { item, onToggle } = props;
-
-  const page = item.getItemData();
-  const itemLevel = item.getItemMeta().level;
-  const hasDescendants = item.isFolder();
-
-  // Get checkbox props from headless-tree
-  const checkboxProps = (item as any).getCheckboxProps?.() ?? {};
-
-  const handleToggleExpand = () => {
-    if (item.isExpanded()) {
-      item.collapse();
-    } else {
-      item.expand();
-    }
-    onToggle?.();
-  };
-
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    (item as any).toggleCheckedState?.();
-    onToggle?.();
-  };
-
   return (
-    <div
-      className="tree-item-layout text-muted"
-      style={{ paddingLeft: `${itemLevel > 0 ? indentSize * itemLevel : 0}px` }}
-    >
-      <li className="list-group-item list-group-item-action border-0 py-0 ps-0 d-flex align-items-center rounded-1">
-        <div
-          className="btn-triangle-container d-flex justify-content-center"
-          style={{ minWidth: '24px' }}
-        >
-          {hasDescendants && (
-            <button
-              type="button"
-              className={`btn p-0 ${item.isExpanded() ? 'open' : ''}`}
-              onClick={handleToggleExpand}
-              style={{
-                border: 0,
-                transition: 'all 0.2s ease-out',
-                transform: item.isExpanded() ? 'rotate(90deg)' : 'rotate(0deg)',
-              }}
-            >
-              <span className="material-symbols-outlined fs-5">
-                arrow_right
-              </span>
-            </button>
-          )}
-        </div>
-
-        <SimpleItemContent page={page} />
-
-        <input
-          type="checkbox"
-          className={`form-check-input ${checkboxClass}`}
-          checked={checkboxProps.checked ?? false}
-          onChange={handleCheckboxChange}
-        />
-      </li>
-    </div>
+    <TreeItemLayout
+      {...props}
+      className="text-muted"
+      customEndComponents={[TreeItemCheckbox]}
+      customHoveredEndComponents={[TreeItemCheckbox]}
+    />
   );
 };
