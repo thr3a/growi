@@ -12,9 +12,6 @@ import {
 import { CREATING_PAGE_VIRTUAL_ID } from '../constants/_inner';
 import type { TreeItemToolProps } from '../interfaces';
 
-import styles from './TreeNameInput.module.scss';
-
-const moduleClass = styles['tree-name-input'] ?? '';
 
 type TreeNameInputProps = {
   /**
@@ -58,7 +55,7 @@ const TreeNameInputSubstance: FC<TreeNameInputProps> = ({
   const isInvalid = validationResult != null;
 
   return (
-    <div className={`${moduleClass} ${className ?? ''} flex-fill`}>
+    <div className={`${className ?? ''} flex-fill`}>
       <input
         {...inputProps}
         onChange={(e) => {
