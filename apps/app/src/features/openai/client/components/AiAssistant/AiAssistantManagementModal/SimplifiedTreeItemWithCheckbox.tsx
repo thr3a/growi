@@ -7,7 +7,7 @@ import styles from './SimplifiedTreeItemWithCheckbox.module.scss';
 
 const moduleClass = styles['page-tree-item'] ?? '';
 
-export const simplifiedTreeItemWithCheckboxSize = 40; // in px
+export const simplifiedTreeItemWithCheckboxSize = 36; // in px
 
 type SimplifiedTreeItemWithCheckboxProps = TreeItemProps & {
   key?: React.Key | null;
