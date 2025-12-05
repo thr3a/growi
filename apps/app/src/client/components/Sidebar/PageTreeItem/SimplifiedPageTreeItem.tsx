@@ -14,7 +14,7 @@ import {
   usePageTreeInformationUpdate, usePageRename, usePageCreate,
   usePlaceholderRenameEffect,
 } from '~/features/page-tree';
-import { NameInputAlternativeComponent } from '~/features/page-tree/components';
+import { TreeNameInput } from '~/features/page-tree/components';
 import type { IPageForItem } from '~/interfaces/page';
 import type { OnDeletedFunction, OnDuplicatedFunction } from '~/interfaces/ui';
 import { useCurrentPagePath, useFetchCurrentPage } from '~/states/page';
@@ -152,7 +152,7 @@ export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
       customEndComponents={[CountBadgeForPageTreeItem]}
       customHoveredEndComponents={[Control, CreateButton]}
       showAlternativeContent={isRenaming(item) || isCreatingPlaceholder(item)}
-      customAlternativeComponents={[NameInputAlternativeComponent]}
+      customAlternativeComponents={[TreeNameInput]}
     />
   );
 };

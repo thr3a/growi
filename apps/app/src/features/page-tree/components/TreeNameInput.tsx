@@ -42,7 +42,7 @@ type TreeNameInputProps = {
  * Unified input component for tree item name editing (rename/create)
  * Uses headless-tree's renamingFeature for keyboard handling (Enter/Escape)
  */
-export const TreeNameInput: FC<TreeNameInputProps> = ({
+const TreeNameInputSubstance: FC<TreeNameInputProps> = ({
   inputProps,
   validateName,
   placeholder,
@@ -83,10 +83,10 @@ export const TreeNameInput: FC<TreeNameInputProps> = ({
 };
 
 /**
- * Alternative component for TreeItemLayout that renders TreeNameInput
- * Used for both rename and create operations
+ * Tree item name input component for rename/create mode
+ * Wraps TreeNameInputSubstance with headless-tree's item props
  */
-export const NameInputAlternativeComponent: FC<TreeItemToolProps> = ({
+export const TreeNameInput: FC<TreeItemToolProps> = ({
   item,
 }) => {
   const { t } = useTranslation();
@@ -101,7 +101,7 @@ export const NameInputAlternativeComponent: FC<TreeItemToolProps> = ({
   const placeholder = isCreating ? t('Input page name') : undefined;
 
   return (
-    <TreeNameInput
+    <TreeNameInputSubstance
       inputProps={item.getRenameInputProps()}
       validateName={validateName}
       placeholder={placeholder}
