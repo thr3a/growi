@@ -17,7 +17,6 @@ export const DisplaySwitcher = (): JSX.Element => {
 
   const { editorMode } = useEditorMode();
   const isEditable = useIsEditable();
-
   const revisionIdFromUrl = useRevisionIdFromUrl();
 
   useHashChangedEffect();
