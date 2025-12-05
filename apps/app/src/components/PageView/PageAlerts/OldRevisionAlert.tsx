@@ -3,7 +3,11 @@ import { useRouter } from 'next/router';
 import { returnPathForURL } from '@growi/core/dist/utils/path-utils';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentPageData, useFetchCurrentPage, useRevisionIdFromUrl } from '~/states/page';
+import {
+  useCurrentPageData,
+  useFetchCurrentPage,
+  useRevisionIdFromUrl,
+} from '~/states/page';
 
 export const OldRevisionAlert = (): JSX.Element => {
   const router = useRouter();
