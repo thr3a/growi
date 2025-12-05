@@ -284,7 +284,7 @@ const PrivateLegacyPages = (): JSX.Element => {
   // biome-ignore lint/correctness/useExhaustiveDependencies: only run on mount
   useEffect(() => {
     setSearchKeyword(initQ);
-  }, [])
+  }, []);
 
   const { data, conditions, mutate } = useSWRxSearch(
     keyword,
