@@ -1,12 +1,5 @@
 import type { FC } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  asyncDataLoaderFeature,
-  checkboxesFeature,
-  hotkeysCoreFeature,
-  renamingFeature,
-  selectionFeature,
-} from '@headless-tree/core';
+import { useMemo } from 'react';
 import { useTree } from '@headless-tree/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -16,28 +9,17 @@ import { useSWRxRootPage } from '~/stores/page-listing';
 import { ROOT_PAGE_VIRTUAL_ID } from '../constants/_inner';
 import {
   useAutoExpandAncestors,
+  useCheckboxChangeNotification,
+  useCheckboxState,
   useDataLoader,
   useExpandParentOnCreate,
   useScrollToSelectedItem,
+  useTreeFeatures,
   useTreeItemHandlers,
+  useTreeRevalidation,
 } from '../hooks/_inner';
 import type { TreeItemProps } from '../interfaces';
 import { useTriggerTreeRebuild } from '../states/_inner';
-import {
-  usePageTreeInformationGeneration,
-  usePageTreeRevalidationEffect,
-} from '../states/page-tree-update';
-
-// Base features for all tree variants
-const BASE_FEATURES = [
-  asyncDataLoaderFeature,
-  selectionFeature,
-  hotkeysCoreFeature,
-  renamingFeature,
-];
-
-// Features with checkboxes support
-const FEATURES_WITH_CHECKBOXES = [...BASE_FEATURES, checkboxesFeature];
 
 // Stable createLoadingItemData function
 const createLoadingItemData = (): IPageForTreeItem => ({
@@ -59,7 +41,8 @@ type Props = {
   CustomTreeItem: React.FunctionComponent<TreeItemProps>;
   estimateTreeItemSize: () => number;
   scrollerElem?: HTMLElement | null;
-  // Checkbox feature options
+  // Feature options
+  enableRenaming?: boolean;
   enableCheckboxes?: boolean;
   initialCheckedItems?: string[];
   onCheckedItemsChange?: (checkedItems: IPageForTreeItem[]) => void;
@@ -75,6 +58,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     CustomTreeItem,
     estimateTreeItemSize,
     scrollerElem,
+    enableRenaming = false,
     enableCheckboxes = false,
     initialCheckedItems = [],
     onCheckedItemsChange,
@@ -90,9 +74,20 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   const dataLoader = useDataLoader(rootPageId, allPagesCount);
 
   // Tree item handlers (rename, create, etc.) with stable callbacks for headless-tree
-  // Note: triggerTreeRebuild is stable (from useSetAtom), so no need for useCallback wrapper
   const { getItemName, isItemFolder, handleRename, creatingParentId } =
     useTreeItemHandlers(triggerTreeRebuild);
+
+  // Configure tree features based on options
+  const features = useTreeFeatures({
+    enableRenaming,
+    enableCheckboxes,
+  });
+
+  // Manage checkbox state (must be called before useTree to get setCheckedItems)
+  const { checkedItemIds, setCheckedItems } = useCheckboxState({
+    enabled: enableCheckboxes,
+    initialCheckedItems,
+  });
 
   // Stable initial state
   // biome-ignore lint/correctness/useExhaustiveDependencies: initialCheckedItems is intentionally not in deps to avoid reinitializing on every change
@@ -104,15 +99,6 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     [enableCheckboxes],
   );
 
-  // State to track checked items for re-rendering
-  const [checkedItemIds, setCheckedItemIds] =
-    useState<string[]>(initialCheckedItems);
-
-  // Callback to update checked items state (triggers re-render)
-  const handleSetCheckedItems = useCallback((itemIds: string[]) => {
-    setCheckedItemIds(itemIds);
-  }, []);
-
   const tree = useTree<IPageForTreeItem>({
     rootItemId: ROOT_PAGE_VIRTUAL_ID,
     getItemName,
@@ -121,37 +107,23 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     createLoadingItemData,
     dataLoader,
     onRename: handleRename,
-    features: enableCheckboxes ? FEATURES_WITH_CHECKBOXES : BASE_FEATURES,
-    // Checkbox configuration: prevent folder auto-check to avoid selecting all descendants
+    features,
+    // Checkbox configuration
     canCheckFolders: enableCheckboxes,
     propagateCheckedState: false,
-    // Custom setter to track checked items changes
-    setCheckedItems: enableCheckboxes ? handleSetCheckedItems : undefined,
+    setCheckedItems,
   });
 
   // Notify parent when checked items change
-  useEffect(() => {
-    if (!enableCheckboxes || onCheckedItemsChange == null) {
-      return;
-    }
-
-    const checkedPages = checkedItemIds
-      .map((id) => tree.getItemInstance(id)?.getItemData())
-      .filter((page): page is IPageForTreeItem => page != null);
-    onCheckedItemsChange(checkedPages);
-  }, [enableCheckboxes, checkedItemIds, onCheckedItemsChange, tree]);
-
-  // Track local generation number
-  const localGenerationRef = useRef(1);
-  const globalGeneration = usePageTreeInformationGeneration();
-
-  // Refetch data when global generation is updated
-  usePageTreeRevalidationEffect(tree, localGenerationRef.current, {
-    // Update local generation number after revalidation
-    onRevalidated: () => {
-      localGenerationRef.current = globalGeneration;
-    },
+  useCheckboxChangeNotification({
+    enabled: enableCheckboxes,
+    checkedItemIds,
+    tree,
+    onCheckedItemsChange,
   });
+
+  // Handle tree revalidation and items count tracking
+  useTreeRevalidation({ tree, triggerTreeRebuild });
 
   // Expand parent item when page creation is initiated
   useExpandParentOnCreate({
@@ -162,18 +134,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
 
   const items = tree.getItems();
 
-  // Track items count to detect when async data loading completes
-  const prevItemsCountRef = useRef(items.length);
-  useEffect(() => {
-    if (items.length !== prevItemsCountRef.current) {
-      prevItemsCountRef.current = items.length;
-      // Trigger re-render when items count changes (e.g., after async load completes)
-      triggerTreeRebuild();
-    }
-  }, [items.length, triggerTreeRebuild]);
-
   // Auto-expand items that are ancestors of targetPath
-  // Note: triggerTreeRebuild is stable, no need for useCallback wrapper
   useAutoExpandAncestors({
     items,
     targetPath,
@@ -206,7 +167,7 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
           return null;
         }
 
-        const props = item.getProps();
+        const treeItemProps = item.getProps();
 
         return (
           <div
@@ -214,8 +175,8 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
             data-index={virtualItem.index}
             ref={(node) => {
               virtualizer.measureElement(node);
-              if (node && props.ref) {
-                (props.ref as (node: HTMLElement) => void)(node);
+              if (node && treeItemProps.ref) {
+                (treeItemProps.ref as (node: HTMLElement) => void)(node);
               }
             }}
           >
