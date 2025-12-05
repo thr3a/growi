@@ -37,6 +37,14 @@ const creatingParentInfoAtom = atom<CreatingParentInfo>(null);
 let isCreatingFlag = false;
 
 /**
+ * Reset the creating flag (for testing purposes only)
+ * @internal
+ */
+export const resetCreatingFlagForTesting = (): void => {
+  isCreatingFlag = false;
+};
+
+/**
  * Hook to get the current creating parent ID
  */
 export const useCreatingParentId = (): string | null => {

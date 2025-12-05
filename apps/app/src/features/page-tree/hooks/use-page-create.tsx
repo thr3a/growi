@@ -28,7 +28,10 @@ type CreateButtonInnerProps = {
   onStartCreating: (item: ItemInstance<IPageForItem>) => void;
 };
 
-const CreateButtonInner: FC<CreateButtonInnerProps> = ({
+/**
+ * @internal Exported for testing purposes
+ */
+export const CreateButtonInner: FC<CreateButtonInnerProps> = ({
   item,
   onStartCreating,
 }) => {
