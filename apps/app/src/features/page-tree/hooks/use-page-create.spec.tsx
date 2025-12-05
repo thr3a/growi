@@ -22,7 +22,7 @@ vi.mock('~/client/components/NotAvailableForReadOnlyUser', () => ({
 }));
 
 // Mock useCreatingParentId to control isCreating state
-const mockUseCreatingParentId = vi.fn(() => null);
+const mockUseCreatingParentId = vi.fn<() => string | null>(() => null);
 vi.mock('../states/_inner', () => ({
   useCreatingParentId: () => mockUseCreatingParentId(),
   usePageTreeCreateActions: vi.fn(() => ({
@@ -168,7 +168,8 @@ describe('CreateButtonInner', () => {
       const parentClickHandler = vi.fn();
 
       render(
-        // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+        // biome-ignore lint/a11y/noStaticElementInteractions: ignore
+        // biome-ignore lint/a11y/useKeyWithClickEvents: ignore
         <div onClick={parentClickHandler}>
           <CreateButtonInner
             item={mockItem}
