@@ -2,8 +2,10 @@ import { renderHook } from '@testing-library/react';
 
 import type { IPageForTreeItem } from '~/interfaces/page';
 
-import { CREATING_PAGE_VIRTUAL_ID } from '../../constants';
-import { ROOT_PAGE_VIRTUAL_ID } from '../../constants/_inner-constants';
+import {
+  CREATING_PAGE_VIRTUAL_ID,
+  ROOT_PAGE_VIRTUAL_ID,
+} from '../../constants/_inner';
 import { invalidatePageTreeChildren } from '../../services';
 import { useDataLoader } from './use-data-loader';
 

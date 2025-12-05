@@ -4,8 +4,10 @@ import type { TreeDataLoader } from '@headless-tree/core';
 import { apiv3Get } from '~/client/util/apiv3-client';
 import type { IPageForTreeItem } from '~/interfaces/page';
 
-import { CREATING_PAGE_VIRTUAL_ID } from '../../constants';
-import { ROOT_PAGE_VIRTUAL_ID } from '../../constants/_inner-constants';
+import {
+  CREATING_PAGE_VIRTUAL_ID,
+  ROOT_PAGE_VIRTUAL_ID,
+} from '../../constants/_inner';
 import { type ChildrenData, fetchAndCacheChildren } from '../../services';
 import {
   createPlaceholderPageData,

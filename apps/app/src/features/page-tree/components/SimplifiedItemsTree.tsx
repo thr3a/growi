@@ -12,7 +12,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import type { IPageForTreeItem } from '~/interfaces/page';
 import { useSWRxRootPage } from '~/stores/page-listing';
 
-import { ROOT_PAGE_VIRTUAL_ID } from '../constants/_inner-constants';
+import { ROOT_PAGE_VIRTUAL_ID } from '../constants/_inner';
 import {
   useAutoExpandAncestors,
   useDataLoader,

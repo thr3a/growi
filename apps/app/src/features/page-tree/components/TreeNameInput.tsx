@@ -9,7 +9,7 @@ import {
   ValidationTarget,
 } from '~/client/util/use-input-validator';
 
-import { CREATING_PAGE_VIRTUAL_ID } from '../constants';
+import { CREATING_PAGE_VIRTUAL_ID } from '../constants/_inner';
 import type { TreeItemToolProps } from '../interfaces';
 
 import styles from './TreeNameInput.module.scss';

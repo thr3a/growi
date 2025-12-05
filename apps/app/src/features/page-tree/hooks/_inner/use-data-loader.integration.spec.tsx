@@ -20,7 +20,7 @@ import { createStore, Provider } from 'jotai';
 
 import type { IPageForTreeItem } from '~/interfaces/page';
 
-import { CREATING_PAGE_VIRTUAL_ID } from '../../constants';
+import { CREATING_PAGE_VIRTUAL_ID } from '../../constants/_inner';
 import { invalidatePageTreeChildren } from '../../services';
 // Re-import the actions hook to use real implementation
 import { usePageTreeCreateActions } from '../../states/_inner';

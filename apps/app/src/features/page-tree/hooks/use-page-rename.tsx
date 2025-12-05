@@ -9,7 +9,7 @@ import { toastError, toastSuccess } from '~/client/util/toastr';
 import type { IPageForItem } from '~/interfaces/page';
 import { mutatePageTree } from '~/stores/page-listing';
 
-import { CREATING_PAGE_VIRTUAL_ID } from '../constants';
+import { CREATING_PAGE_VIRTUAL_ID } from '../constants/_inner';
 import { usePageTreeInformationUpdate } from '../states/page-tree-update';
 
 type RenameResult = {

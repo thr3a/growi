@@ -3,9 +3,10 @@ import type { ItemInstance } from '@headless-tree/core';
 
 import type { IPageForItem } from '~/interfaces/page';
 
+import { CREATING_PAGE_VIRTUAL_ID } from '../constants/_inner';
+
 type UsePlaceholderRenameEffectParams = {
   item: ItemInstance<IPageForItem>;
-  isPlaceholder: boolean;
   onCancelCreate: () => void;
 };
 
@@ -22,9 +23,11 @@ type UsePlaceholderRenameEffectParams = {
  */
 export const usePlaceholderRenameEffect = ({
   item,
-  isPlaceholder,
   onCancelCreate,
 }: UsePlaceholderRenameEffectParams): void => {
+  // Check if this is the creating placeholder node
+  const isPlaceholder = item.getItemData()._id === CREATING_PAGE_VIRTUAL_ID;
+
   // Track if renaming mode was ever activated for this placeholder
   const wasRenamingRef = useRef(false);
   const isRenamingNow = item.isRenaming();
