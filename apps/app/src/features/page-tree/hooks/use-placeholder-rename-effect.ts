@@ -30,28 +30,30 @@ export const usePlaceholderRenameEffect = ({
 
   // Track if renaming mode was ever activated for this placeholder
   const wasRenamingRef = useRef(false);
-  const isRenamingNow = item.isRenaming();
+  const isRenaming = item.isRenaming();
 
   // Start renaming mode on placeholder node to enable getRenameInputProps()
+  // Note: isRenaming is included in deps to ensure this effect re-runs
+  // when renaming state changes (e.g., after rapid clicks reset the state)
   useEffect(() => {
-    if (isPlaceholder && !item.isRenaming()) {
+    if (isPlaceholder && !isRenaming) {
       item.startRenaming();
     }
-  }, [isPlaceholder, item]);
+  }, [isPlaceholder, item, isRenaming]);
 
   // Track when renaming becomes active
   useEffect(() => {
-    if (isPlaceholder && isRenamingNow) {
+    if (isPlaceholder && isRenaming) {
       wasRenamingRef.current = true;
     }
-  }, [isPlaceholder, isRenamingNow]);
+  }, [isPlaceholder, isRenaming]);
 
   // Cancel creating when renaming mode ends on placeholder node (Esc key pressed)
   useEffect(() => {
     // Only cancel if renaming was previously active and is now inactive
-    if (isPlaceholder && wasRenamingRef.current && !isRenamingNow) {
+    if (isPlaceholder && wasRenamingRef.current && !isRenaming) {
       onCancelCreate();
       wasRenamingRef.current = false;
     }
-  }, [isPlaceholder, isRenamingNow, onCancelCreate]);
+  }, [isPlaceholder, isRenaming, onCancelCreate]);
 };

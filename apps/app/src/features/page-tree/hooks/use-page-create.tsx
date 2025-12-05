@@ -38,7 +38,6 @@ const CreateButtonInner: FC<CreateButtonInnerProps> = ({
 
   const page = item.getItemData();
   const isUsersTopPage = pagePathUtils.isUsersTopPage(page.path ?? '');
-
   if (isUsersTopPage) {
     return null;
   }
