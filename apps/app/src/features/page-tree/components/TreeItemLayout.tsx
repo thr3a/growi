@@ -98,6 +98,7 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
   const AlternativeComponents = props.customAlternativeComponents;
 
   if (!isWipPageShown && page.wip) {
+    // biome-ignore lint/complexity/noUselessFragments: ignore
     return <></>;
   }
 
