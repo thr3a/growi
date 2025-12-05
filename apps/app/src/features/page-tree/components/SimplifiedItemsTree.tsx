@@ -1,7 +1,8 @@
 import type { FC } from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   asyncDataLoaderFeature,
+  checkboxesFeature,
   hotkeysCoreFeature,
   renamingFeature,
   selectionFeature,
@@ -27,13 +28,16 @@ import {
   usePageTreeRevalidationEffect,
 } from '../states/page-tree-update';
 
-// Stable features array to avoid recreating on every render
-const TREE_FEATURES = [
+// Base features for all tree variants
+const BASE_FEATURES = [
   asyncDataLoaderFeature,
   selectionFeature,
   hotkeysCoreFeature,
   renamingFeature,
 ];
+
+// Features with checkboxes support
+const FEATURES_WITH_CHECKBOXES = [...BASE_FEATURES, checkboxesFeature];
 
 // Stable createLoadingItemData function
 const createLoadingItemData = (): IPageForTreeItem => ({
@@ -55,6 +59,10 @@ type Props = {
   CustomTreeItem: React.FunctionComponent<TreeItemProps>;
   estimateTreeItemSize: () => number;
   scrollerElem?: HTMLElement | null;
+  // Checkbox feature options
+  enableCheckboxes?: boolean;
+  initialCheckedItems?: string[];
+  onCheckedItemsChange?: (checkedItems: IPageForTreeItem[]) => void;
 };
 
 export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
@@ -67,6 +75,9 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     CustomTreeItem,
     estimateTreeItemSize,
     scrollerElem,
+    enableCheckboxes = false,
+    initialCheckedItems = [],
+    onCheckedItemsChange,
   } = props;
 
   const triggerTreeRebuild = useTriggerTreeRebuild();
@@ -84,10 +95,23 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     useTreeItemHandlers(triggerTreeRebuild);
 
   // Stable initial state
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialCheckedItems is intentionally not in deps to avoid reinitializing on every change
   const initialState = useMemo(
-    () => ({ expandedItems: [ROOT_PAGE_VIRTUAL_ID] }),
-    [],
+    () => ({
+      expandedItems: [ROOT_PAGE_VIRTUAL_ID],
+      ...(enableCheckboxes ? { checkedItems: initialCheckedItems } : {}),
+    }),
+    [enableCheckboxes],
   );
+
+  // State to track checked items for re-rendering
+  const [checkedItemIds, setCheckedItemIds] =
+    useState<string[]>(initialCheckedItems);
+
+  // Callback to update checked items state (triggers re-render)
+  const handleSetCheckedItems = useCallback((itemIds: string[]) => {
+    setCheckedItemIds(itemIds);
+  }, []);
 
   const tree = useTree<IPageForTreeItem>({
     rootItemId: ROOT_PAGE_VIRTUAL_ID,
@@ -97,8 +121,25 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     createLoadingItemData,
     dataLoader,
     onRename: handleRename,
-    features: TREE_FEATURES,
+    features: enableCheckboxes ? FEATURES_WITH_CHECKBOXES : BASE_FEATURES,
+    // Checkbox configuration: prevent folder auto-check to avoid selecting all descendants
+    canCheckFolders: enableCheckboxes,
+    propagateCheckedState: false,
+    // Custom setter to track checked items changes
+    setCheckedItems: enableCheckboxes ? handleSetCheckedItems : undefined,
   });
+
+  // Notify parent when checked items change
+  useEffect(() => {
+    if (!enableCheckboxes || onCheckedItemsChange == null) {
+      return;
+    }
+
+    const checkedPages = checkedItemIds
+      .map((id) => tree.getItemInstance(id)?.getItemData())
+      .filter((page): page is IPageForTreeItem => page != null);
+    onCheckedItemsChange(checkedPages);
+  }, [enableCheckboxes, checkedItemIds, onCheckedItemsChange, tree]);
 
   // Track local generation number
   const localGenerationRef = useRef(1);

@@ -8,4 +8,15 @@
       padding: 0.4rem 1rem !important;
     }
   }
+
+  .page-tree-container {
+    height: 300px;
+    overflow-y: auto;
+  }
+}
+
+.tree-item-checkbox {
+  margin-right: 0.5rem;
+  margin-left: auto;
+  cursor: pointer;
 }

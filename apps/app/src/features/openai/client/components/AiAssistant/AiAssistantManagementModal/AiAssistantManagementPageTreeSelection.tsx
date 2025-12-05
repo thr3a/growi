@@ -1,13 +1,11 @@
-import React, { memo, Suspense, useCallback } from 'react';
+import { Suspense, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ModalBody } from 'reactstrap';
 import SimpleBar from 'simplebar-react';
 
-import { ItemsTree } from '~/client/components/ItemsTree';
 import ItemsTreeContentSkeleton from '~/client/components/ItemsTree/ItemsTreeContentSkeleton';
-import type { TreeItemProps } from '~/client/components/TreeItem';
-import { TreeItemLayout } from '~/client/components/TreeItem';
-import type { IPageForItem } from '~/interfaces/page';
+import { SimplifiedItemsTree } from '~/features/page-tree/components';
+import type { IPageForTreeItem } from '~/interfaces/page';
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 
 import {
@@ -22,81 +20,15 @@ import {
 } from '../../../states/modal/ai-assistant-management';
 import { AiAssistantManagementHeader } from './AiAssistantManagementHeader';
 import { SelectablePageList } from './SelectablePageList';
+import {
+  SimplifiedTreeItemWithCheckbox,
+  simplifiedTreeItemWithCheckboxSize,
+} from './SimplifiedTreeItemWithCheckbox';
 
 import styles from './AiAssistantManagementPageTreeSelection.module.scss';
 
 const moduleClass =
   styles['grw-ai-assistant-management-page-tree-selection'] ?? '';
-
-const SelectablePageTree = memo(
-  (props: { onClickAddPageButton: (page: SelectablePage) => void }) => {
-    const { onClickAddPageButton } = props;
-
-    const isGuestUser = useIsGuestUser();
-    const isReadOnlyUser = useIsReadOnlyUser();
-
-    const pageTreeItemClickHandler = useCallback(
-      (page: IPageForItem) => {
-        if (!isSelectablePage(page)) {
-          return;
-        }
-
-        onClickAddPageButton(page);
-      },
-      [onClickAddPageButton],
-    );
-
-    const SelectPageButton = useCallback(
-      ({ page }: { page: IPageForItem }) => {
-        return (
-          <button
-            type="button"
-            className="border-0 rounded btn p-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              pageTreeItemClickHandler(page);
-            }}
-          >
-            <span className="material-symbols-outlined p-0 me-2 text-primary">
-              add_circle
-            </span>
-          </button>
-        );
-      },
-      [pageTreeItemClickHandler],
-    );
-
-    const PageTreeItem = useCallback(
-      (props: TreeItemProps) => {
-        const { itemNode } = props;
-        const { page } = itemNode;
-
-        return (
-          <TreeItemLayout
-            {...props}
-            itemClass={PageTreeItem}
-            className="text-muted"
-            customHoveredEndComponents={[
-              () => <SelectPageButton page={page} />,
-            ]}
-          />
-        );
-      },
-      [SelectPageButton],
-    );
-
-    return (
-      <div className="page-tree-item">
-        <ItemsTree
-          targetPath="/"
-          isEnableActions={!isGuestUser}
-          isReadOnlyUser={!!isReadOnlyUser}
-          CustomTreeItem={PageTreeItem}
-        />
-      </div>
-    );
-  },
-);
 
 type Props = {
   baseSelectedPages: SelectablePage[];
@@ -109,38 +41,60 @@ export const AiAssistantManagementPageTreeSelection = (
   const { baseSelectedPages, updateBaseSelectedPages } = props;
 
   const { t } = useTranslation();
+  const isGuestUser = useIsGuestUser();
+  const isReadOnlyUser = useIsReadOnlyUser();
   const aiAssistantManagementModalData = useAiAssistantManagementModalStatus();
   const { changePageMode } = useAiAssistantManagementModalActions();
   const isNewAiAssistant =
     aiAssistantManagementModalData?.aiAssistantData == null;
 
-  const {
-    selectedPages,
-    selectedPagesRef,
-    selectedPagesArray,
-    addPage,
-    removePage,
-  } = useSelectedPages(baseSelectedPages);
+  // Scroll container for virtualization
+  const [scrollerElem, setScrollerElem] = useState<HTMLElement | null>(null);
 
-  const addPageButtonClickHandler = useCallback(
-    (page: SelectablePage) => {
-      const pagePathWithGlob = `${page.path}/*`;
-      if (
-        selectedPagesRef.current == null ||
-        selectedPagesRef.current.has(pagePathWithGlob)
-      ) {
-        return;
-      }
+  const { selectedPages, selectedPagesArray, addPage, removePage } =
+    useSelectedPages(baseSelectedPages);
 
-      const clonedPage = { ...page };
-      clonedPage.path = pagePathWithGlob;
+  // Calculate initial checked items from baseSelectedPages
+  // Remove the /* suffix to match with page IDs
+  const initialCheckedItems = useMemo(() => {
+    return baseSelectedPages
+      .filter((page) => page._id != null)
+      .map((page) => page._id as string);
+  }, [baseSelectedPages]);
 
-      addPage(clonedPage);
+  // Handle checked items change from tree
+  const handleCheckedItemsChange = useCallback(
+    (checkedPages: IPageForTreeItem[]) => {
+      // Get current checked page IDs (with /* suffix paths)
+      const currentCheckedPaths = new Set(
+        checkedPages
+          .filter((page) => isSelectablePage(page) && page.path != null)
+          .map((page) => `${page.path}/*`),
+      );
+
+      // Get currently selected page paths
+      const currentSelectedPaths = new Set(selectedPages.keys());
+
+      // Add newly checked pages
+      checkedPages.forEach((page) => {
+        if (!isSelectablePage(page) || page.path == null) {
+          return;
+        }
+        const pagePathWithGlob = `${page.path}/*`;
+        if (!currentSelectedPaths.has(pagePathWithGlob)) {
+          const clonedPage = { ...page, path: pagePathWithGlob };
+          addPage(clonedPage as SelectablePage);
+        }
+      });
+
+      // Remove unchecked pages
+      selectedPagesArray.forEach((page) => {
+        if (page.path != null && !currentCheckedPaths.has(page.path)) {
+          removePage(page);
+        }
+      });
     },
-    [
-      addPage,
-      selectedPagesRef, // Prevent flickering (use ref to avoid method recreation)
-    ],
+    [selectedPages, selectedPagesArray, addPage, removePage],
   );
 
   const nextButtonClickHandler = useCallback(() => {
@@ -156,6 +110,11 @@ export const AiAssistantManagementPageTreeSelection = (
     selectedPages,
     updateBaseSelectedPages,
   ]);
+
+  const estimateTreeItemSize = useCallback(
+    () => simplifiedTreeItemWithCheckboxSize,
+    [],
+  );
 
   return (
     <div className={moduleClass}>
@@ -178,13 +137,25 @@ export const AiAssistantManagementPageTreeSelection = (
           {t('modal_ai_assistant.search_reference_pages_by_keyword')}
         </h4>
 
-        <Suspense fallback={<ItemsTreeContentSkeleton />}>
-          <div className="px-4">
-            <SelectablePageTree
-              onClickAddPageButton={addPageButtonClickHandler}
-            />
+        <div className="px-4">
+          <div className="page-tree-container" ref={setScrollerElem}>
+            {scrollerElem != null && (
+              <Suspense fallback={<ItemsTreeContentSkeleton />}>
+                <SimplifiedItemsTree
+                  targetPath="/"
+                  isEnableActions={!isGuestUser}
+                  isReadOnlyUser={!!isReadOnlyUser}
+                  CustomTreeItem={SimplifiedTreeItemWithCheckbox}
+                  estimateTreeItemSize={estimateTreeItemSize}
+                  scrollerElem={scrollerElem}
+                  enableCheckboxes
+                  initialCheckedItems={initialCheckedItems}
+                  onCheckedItemsChange={handleCheckedItemsChange}
+                />
+              </Suspense>
+            )}
           </div>
-        </Suspense>
+        </div>
 
         <h4 className="text-center fw-bold mb-3 mt-4">
           {t('modal_ai_assistant.reference_pages')}
