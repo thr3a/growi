@@ -32,6 +32,10 @@ type CreatingParentInfo = {
 
 const creatingParentInfoAtom = atom<CreatingParentInfo>(null);
 
+// Module-level flag for synchronous guard against rapid clicks
+// This is shared across all hook instances
+let isCreatingFlag = false;
+
 /**
  * Hook to get the current creating parent ID
  */
@@ -75,12 +79,19 @@ export const usePageTreeCreateActions = (): PageTreeCreateActions => {
 
   const startCreating = useCallback(
     (parentId: string, parentPath: string) => {
+      // Synchronous check to prevent rapid clicks
+      // Uses module-level flag shared across all hook instances
+      if (isCreatingFlag) {
+        return;
+      }
+      isCreatingFlag = true;
       setCreatingParentInfo({ id: parentId, path: parentPath });
     },
     [setCreatingParentInfo],
   );
 
   const cancelCreating = useCallback(() => {
+    isCreatingFlag = false;
     setCreatingParentInfo(null);
   }, [setCreatingParentInfo]);
 

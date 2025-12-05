@@ -42,6 +42,12 @@ const CreateButtonInner: FC<CreateButtonInnerProps> = ({
     return null;
   }
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Prevent focus change which would trigger blur on the input field
+    // and cause cancelCreating to be called
+    e.preventDefault();
+  };
+
   const handleClick = (e: React.MouseEvent) => {
     // Always stop propagation to prevent parent item click handlers
     e.stopPropagation();
@@ -59,6 +65,7 @@ const CreateButtonInner: FC<CreateButtonInnerProps> = ({
           id={`page-create-button-in-page-tree-${buttonId}`}
           type="button"
           className="border-0 rounded btn btn-page-item-control p-0"
+          onMouseDown={handleMouseDown}
           onClick={handleClick}
         >
           <span className="material-symbols-outlined p-0">add_circle</span>
