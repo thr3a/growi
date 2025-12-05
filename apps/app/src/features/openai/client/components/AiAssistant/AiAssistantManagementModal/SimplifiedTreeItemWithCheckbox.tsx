@@ -3,10 +3,9 @@ import type { FC } from 'react';
 import type { TreeItemProps, TreeItemToolProps } from '~/features/page-tree';
 import { TreeItemLayout } from '~/features/page-tree/components';
 
-import styles from './AiAssistantManagementPageTreeSelection.module.scss';
+import styles from './SimplifiedTreeItemWithCheckbox.module.scss';
 
-// Reuse the module class from the parent component
-const checkboxClass = styles['tree-item-checkbox'] ?? '';
+const moduleClass = styles['page-tree-item'] ?? '';
 
 export const simplifiedTreeItemWithCheckboxSize = 36; // in px
 
@@ -34,10 +33,12 @@ const TreeItemCheckbox: FC<TreeItemToolProps> = ({ item }) => {
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: click handler only prevents propagation
     // biome-ignore lint/a11y/noStaticElementInteractions: wrapper div to stop click propagation
-    <div onClick={handleClick} className="d-flex align-items-center">
-      <input
+    <div onClick={handleClick} className="form-check form-switch d-flex align-items-center">
+      <input className="form-check-input"
         type="checkbox"
-        className={`form-check-input ${checkboxClass}`}
+        role="switch"
+        aria-checked={checkboxProps.checked ?? false}
+        aria-label="Toggle selection"
         checked={checkboxProps.checked ?? false}
         onChange={handleCheckboxChange}
       />
@@ -51,7 +52,7 @@ export const SimplifiedTreeItemWithCheckbox: FC<
   return (
     <TreeItemLayout
       {...props}
-      className="text-muted"
+      className={moduleClass}
       customEndComponents={[TreeItemCheckbox]}
       customHoveredEndComponents={[TreeItemCheckbox]}
     />
