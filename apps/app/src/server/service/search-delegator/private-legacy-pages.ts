@@ -85,16 +85,24 @@ class PrivateLegacyPagesDelegator
     const { match, not_match: notMatch, prefix, not_prefix: notPrefix } = terms;
 
     if (match.length > 0) {
-      match.forEach((m) => builder.addConditionToListByMatch(m));
+      for (const m of match) {
+        builder.addConditionToListByMatch(m);
+      }
     }
     if (notMatch.length > 0) {
-      notMatch.forEach((nm) => builder.addConditionToListByNotMatch(nm));
+      for (const nm of notMatch) {
+        builder.addConditionToListByNotMatch(nm);
+      }
     }
     if (prefix.length > 0) {
-      prefix.forEach((p) => builder.addConditionToListByStartWith(p));
+      for (const p of prefix) {
+        builder.addConditionToListByStartWith(p);
+      }
     }
     if (notPrefix.length > 0) {
-      notPrefix.forEach((np) => builder.addConditionToListByNotStartWith(np));
+      for (const np of notPrefix) {
+        builder.addConditionToListByNotStartWith(np);
+      }
     }
 
     return builder;

@@ -141,9 +141,9 @@ class NchanDelegator extends AbstractS2sMessagingService {
       logger.info('WebSocket client connected.');
     });
 
-    this.handlableList.forEach((handlable) =>
-      this.registerMessageHandlerToSocket(handlable),
-    );
+    this.handlableList.forEach((handlable) => {
+      this.registerMessageHandlerToSocket(handlable);
+    });
 
     this.socket = socket;
   }

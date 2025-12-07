@@ -68,7 +68,7 @@ export class LinkSharedEventHandler
       unfurlData.map(async (data: DataForUnfurl) => {
         const toUrl = urljoin(origin, data.id);
 
-        let targetUrl;
+        let targetUrl: string;
         if (data.isPermalink) {
           targetUrl = urljoin(origin, data.id);
         } else {
@@ -183,15 +183,16 @@ export class LinkSharedEventHandler
     const Page = this.crowi.model('Page');
     const unfurlData: DataForUnfurl[] = [];
 
-    pages.forEach((page) => {
+    for (const page of pages) {
       // not send non-public page
       if (page.grant !== PageGrant.GRANT_PUBLIC) {
-        return unfurlData.push({
+        unfurlData.push({
           isPublic: false,
           isPermalink,
           id: page._id.toString(),
           path: page.path,
         });
+        continue;
       }
 
       // public page
@@ -206,7 +207,7 @@ export class LinkSharedEventHandler
         updatedAt,
         commentCount,
       });
-    });
+    }
 
     return unfurlData;
   }

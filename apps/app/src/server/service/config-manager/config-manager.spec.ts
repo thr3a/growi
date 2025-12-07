@@ -32,7 +32,7 @@ describe('ConfigManager test', () => {
   });
 
   describe('updateConfig()', () => {
-    let loadConfigsSpy;
+    let loadConfigsSpy: ReturnType<typeof vi.spyOn>;
     beforeEach(async () => {
       loadConfigsSpy = vi.spyOn(configManager, 'loadConfigs');
       // Reset mocks
@@ -122,7 +122,7 @@ describe('ConfigManager test', () => {
   });
 
   describe('updateConfigs()', () => {
-    let loadConfigsSpy;
+    let loadConfigsSpy: ReturnType<typeof vi.spyOn>;
     beforeEach(async () => {
       loadConfigsSpy = vi.spyOn(configManager, 'loadConfigs');
       // Reset mocks

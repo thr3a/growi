@@ -182,7 +182,7 @@ class ElasticsearchDelegator
   getConnectionInfo() {
     let indexName = 'crowi';
     let host: string | undefined;
-    let auth;
+    let auth: { username: string; password: string } | undefined;
 
     const elasticsearchUri = configManager.getConfig('app:elasticsearchUri');
 
@@ -642,7 +642,9 @@ class ElasticsearchDelegator
 
   deletePages(pages) {
     const body = [];
-    pages.forEach((page) => this.prepareBodyForDelete(body, page));
+    pages.forEach((page) => {
+      this.prepareBodyForDelete(body, page);
+    });
 
     logger.debug('deletePages(): Sending Request to ES', body);
     return this.client.bulk({
