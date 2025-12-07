@@ -570,12 +570,12 @@ export class G2GTransferPusherService implements Pusher {
    * Transfer attachment to dest GROWI
    * @param {TransferKey} tk Transfer key
    * @param {any} attachment Attachment model instance
-   * @param {Readable} fileStream Attachment data(loaded from storage)
+   * @param {NodeJS.ReadableStream} fileStream Attachment data(loaded from storage)
    */
   private async doTransferAttachment(
     tk: TransferKey,
     attachment: any,
-    fileStream: Readable,
+    fileStream: NodeJS.ReadableStream,
   ): Promise<void> {
     // Use FormData to immitate browser's form data object
     const form = new FormData();
@@ -677,7 +677,7 @@ export class G2GTransferReceiverService implements Receiver {
     );
 
     // Save TransferKey document
-    let tkd: HydratedDocument<ITransferKey>;
+    let tkd: any;
     try {
       tkd = await TransferKeyModel.create({
         _id: uuid,
