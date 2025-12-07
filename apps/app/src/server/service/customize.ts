@@ -21,7 +21,7 @@ const logger = loggerFactory('growi:service:CustomizeService');
 /**
  * the service class of CustomizeService
  */
-class CustomizeService implements S2sMessageHandlable {
+export class CustomizeService implements S2sMessageHandlable {
   s2sMessagingService: any;
 
   appService: any;
@@ -162,5 +162,3 @@ class CustomizeService implements S2sMessageHandlable {
     }
   }
 }
-
-module.exports = CustomizeService;
