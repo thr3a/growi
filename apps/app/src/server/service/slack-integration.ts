@@ -282,7 +282,7 @@ export class SlackIntegrationService implements S2sMessageHandlable {
     const { growiCommandType } = growiCommand;
     const modulePath = `./slack-command-handler/${growiCommandType}`;
 
-    let handler;
+    let handler: any;
     try {
       handler = require(modulePath)(this.crowi);
     } catch (err) {
@@ -317,7 +317,7 @@ export class SlackIntegrationService implements S2sMessageHandlable {
 
     const modulePath = `./slack-command-handler/${commandName}`;
 
-    let handler;
+    let handler: any;
     try {
       handler = require(modulePath)(this.crowi);
     } catch (err) {
@@ -349,7 +349,7 @@ export class SlackIntegrationService implements S2sMessageHandlable {
 
     const modulePath = `./slack-command-handler/${commandName}`;
 
-    let handler;
+    let handler: any;
     try {
       handler = require(modulePath)(this.crowi);
     } catch (err) {

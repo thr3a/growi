@@ -589,7 +589,9 @@ class SearchService implements SearchQueryParser, SearchResolver {
         }
 
         // increment elasticSearchResult
-        let elasticSearchResult;
+        let elasticSearchResult:
+          | { snippet: string | null; highlightedPath: string | null }
+          | undefined;
         const highlightData = data._highlight;
         if (highlightData != null) {
           const snippet = this.canShowSnippet(pageData, user, userGroups)

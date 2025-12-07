@@ -8,7 +8,7 @@ import { configManager } from './config-manager';
 import PassportService from './passport';
 
 describe('PassportService test', () => {
-  let crowiMock;
+  let crowiMock: Crowi;
 
   beforeAll(async () => {
     crowiMock = mock<Crowi>({

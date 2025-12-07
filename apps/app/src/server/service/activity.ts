@@ -110,33 +110,39 @@ class ActivityService {
     // Set base action group
     switch (auditLogActionGroupSize) {
       case ActionGroupSize.Small:
-        AllSmallGroupActions.forEach((action) =>
-          availableActionsSet.add(action),
-        );
+        AllSmallGroupActions.forEach((action) => {
+          availableActionsSet.add(action);
+        });
         break;
       case ActionGroupSize.Medium:
-        AllMediumGroupActions.forEach((action) =>
-          availableActionsSet.add(action),
-        );
+        AllMediumGroupActions.forEach((action) => {
+          availableActionsSet.add(action);
+        });
         break;
       case ActionGroupSize.Large:
-        AllLargeGroupActions.forEach((action) =>
-          availableActionsSet.add(action),
-        );
+        AllLargeGroupActions.forEach((action) => {
+          availableActionsSet.add(action);
+        });
         break;
     }
 
     // Add additionalActions
     const additionalActions = parseActionString(auditLogAdditionalActions);
-    additionalActions.forEach((action) => availableActionsSet.add(action));
+    additionalActions.forEach((action) => {
+      availableActionsSet.add(action);
+    });
 
     // Delete excludeActions
     const excludeActions = parseActionString(auditLogExcludeActions);
-    excludeActions.forEach((action) => availableActionsSet.delete(action));
+    excludeActions.forEach((action) => {
+      availableActionsSet.delete(action);
+    });
 
     // Add essentialActions
     if (isIncludeEssentialActions) {
-      AllEssentialActions.forEach((action) => availableActionsSet.add(action));
+      AllEssentialActions.forEach((action) => {
+        availableActionsSet.add(action);
+      });
     }
 
     return Array.from(availableActionsSet);
