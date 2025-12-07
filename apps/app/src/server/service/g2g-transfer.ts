@@ -427,7 +427,7 @@ export class G2GTransferPusherService implements Pusher {
     for await (const attachmentBatch of attachmentsCursor.pipe(batchStream)) {
       for await (const attachment of attachmentBatch) {
         logger.debug(`processing attachment: ${attachment}`);
-        let fileStream: Readable;
+        let fileStream: NodeJS.ReadableStream;
         try {
           // get read stream of each attachment
           fileStream = await fileUploadService.findDeliveryFile(attachment);
