@@ -10,7 +10,6 @@ import mongoose, {
   Types as MongooseTypes,
 } from 'mongoose';
 import { basename } from 'path';
-import type { Readable } from 'stream';
 
 import { G2G_PROGRESS_STATUS } from '~/interfaces/g2g-transfer';
 import type { ITransferKey } from '~/interfaces/transfer-key';
