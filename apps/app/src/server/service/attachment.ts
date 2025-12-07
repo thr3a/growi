@@ -1,4 +1,5 @@
 import type { IAttachment, Ref } from '@growi/core/dist/interfaces';
+import type { ReadStream } from 'fs';
 import type { HydratedDocument } from 'mongoose';
 
 import loggerFactory from '~/utils/logger';
@@ -15,7 +16,7 @@ const mongoose = require('mongoose');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = loggerFactory('growi:service:AttachmentService');
 
-const createReadStream = (filePath) => {
+const createReadStream = (filePath: string): ReadStream => {
   return fs.createReadStream(filePath, {
     flags: 'r',
     encoding: null,
@@ -78,8 +79,8 @@ export class AttachmentService implements IAttachmentService {
     }
 
     // create an Attachment document and upload file
-    let attachment;
-    let readStreamForCreateAttachmentDocument;
+    let attachment: IAttachmentDocument;
+    let readStreamForCreateAttachmentDocument: ReadStream | null = null;
     try {
       readStreamForCreateAttachmentDocument = createReadStream(file.path);
       attachment = Attachment.createWithoutSave(
@@ -113,7 +114,7 @@ export class AttachmentService implements IAttachmentService {
       disposeTmpFileCallback?.(file);
       throw err;
     } finally {
-      readStreamForCreateAttachmentDocument.destroy();
+      readStreamForCreateAttachmentDocument?.destroy();
     }
 
     return attachment;
