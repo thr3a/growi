@@ -3,11 +3,11 @@ import type { PipelineStage, Query } from 'mongoose';
 
 import type { PageModel } from '~/server/models/page';
 
-export const aggregatePipelineToIndex = (maxBodyLengthToIndex: number, query?: Query<PageModel, IPage>): PipelineStage[] => {
-
-  const basePipeline = query == null
-    ? []
-    : [{ $match: query.getQuery() }];
+export const aggregatePipelineToIndex = (
+  maxBodyLengthToIndex: number,
+  query?: Query<PageModel, IPage>,
+): PipelineStage[] => {
+  const basePipeline = query == null ? [] : [{ $match: query.getQuery() }];
 
   return [
     ...basePipeline,
