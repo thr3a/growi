@@ -58,6 +58,7 @@ export class UserNotificationService {
     const siteUrl = growiInfoService.getSiteUrl();
 
     const promises = slackChannels.map(async (chan) => {
+      // biome-ignore lint/suspicious/noImplicitAnyLet: ignore
       let messageObj;
       if (mode === 'comment') {
         messageObj = prepareSlackMessageForComment(

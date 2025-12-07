@@ -110,6 +110,7 @@ export const aggregatePipelineToIndex = (
         'revision.body': {
           $cond: {
             if: { $lte: ['$bodyLength', maxBodyLengthToIndex] },
+            // biome-ignore lint/suspicious/noThenProperty: ignore
             then: '$revision.body',
             else: '',
           },
@@ -121,6 +122,7 @@ export const aggregatePipelineToIndex = (
             in: {
               $cond: {
                 if: { $lte: ['$$comment.commentLength', maxBodyLengthToIndex] },
+                // biome-ignore lint/suspicious/noThenProperty: ignore
                 then: '$$comment.comment',
                 else: '',
               },
