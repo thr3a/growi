@@ -516,9 +516,6 @@ module.exports = (crowi) => {
         bulkExportDownloadExpirationSeconds: configManager.getConfig(
           'app:bulkExportDownloadExpirationSeconds',
         ),
-        // TODO: remove this property when bulk export can be relased for cloud (https://redmine.weseek.co.jp/issues/163220)
-        isBulkExportDisabledForCloud:
-          configManager.getConfig('app:growiCloudUri') != null,
       };
       return res.apiv3({ appSettingsParams });
     },
