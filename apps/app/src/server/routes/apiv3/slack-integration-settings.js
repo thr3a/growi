@@ -15,12 +15,12 @@ import {
 
 import { SupportedAction } from '~/interfaces/activity';
 import { accessTokenParser } from '~/server/middlewares/access-token-parser';
+import axios from '~/utils/axios';
 import loggerFactory from '~/utils/logger';
 
 import { generateAddActivityMiddleware } from '../../middlewares/add-activity';
 import { apiV3FormValidator } from '../../middlewares/apiv3-form-validator';
 
-const axios = require('axios');
 const express = require('express');
 const { body, param } = require('express-validator');
 const urljoin = require('url-join');

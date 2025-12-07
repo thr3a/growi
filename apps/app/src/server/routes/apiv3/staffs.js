@@ -1,8 +1,8 @@
-import axios from 'axios';
 import { addHours } from 'date-fns/addHours';
 import { isAfter } from 'date-fns/isAfter';
 import { Router } from 'express';
 
+import axios from '~/utils/axios';
 import loggerFactory from '~/utils/logger';
 
 const logger = loggerFactory('growi:routes:apiv3:staffs'); // eslint-disable-line no-unused-vars
