@@ -17,6 +17,7 @@ import { Strategy as SamlStrategy } from 'passport-saml';
 import urljoin from 'url-join';
 
 import type { IExternalAuthProviderType } from '~/interfaces/external-auth-provider';
+import axios from '~/utils/axios';
 import loggerFactory from '~/utils/logger';
 
 import S2sMessage from '../models/vo/s2s-message';
@@ -812,11 +813,10 @@ class PassportService implements S2sMessageHandlable {
   async isOidcHostReachable(issuerHost: string): Promise<boolean | undefined> {
     try {
       const metadataUrl = this.getOIDCMetadataURL(issuerHost);
-      const client = require('axios').default;
-      axiosRetry(client, {
+      axiosRetry(axios, {
         retries: 3,
       });
-      const response = await client.get(metadataUrl);
+      const response = await axios.get(metadataUrl);
       // Check for valid OIDC Issuer configuration
       if (!response.data.issuer) {
         logger.debug('OidcStrategy: Invalid OIDC Issuer configurations');

@@ -1,4 +1,5 @@
 function getAxios(team, token) {
+  // biome-ignore lint/style/noRestrictedImports: TODO: check effects of using custom axios
   return require('axios').create({
     baseURL: `https://${team}.qiita.com/api/v2`,
     headers: {

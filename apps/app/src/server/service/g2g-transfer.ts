@@ -1,14 +1,19 @@
 import { ConfigSource } from '@growi/core';
 import type { IUser } from '@growi/core/dist/interfaces';
+// biome-ignore lint/style/noRestrictedImports: TODO: check effects of using custom axios
 import rawAxios, { type AxiosRequestConfig } from 'axios';
 import FormData from 'form-data';
 import type { ReadStream } from 'fs';
 import { createReadStream } from 'fs';
-import mongoose, { Types as MongooseTypes } from 'mongoose';
+import mongoose, {
+  type HydratedDocument,
+  Types as MongooseTypes,
+} from 'mongoose';
 import { basename } from 'path';
 import type { Readable } from 'stream';
 
 import { G2G_PROGRESS_STATUS } from '~/interfaces/g2g-transfer';
+import type { ITransferKey } from '~/interfaces/transfer-key';
 import { GrowiArchiveImportOption } from '~/models/admin/growi-archive-import-option';
 import { ImportMode } from '~/models/admin/import-mode';
 import TransferKeyModel from '~/server/models/transfer-key';
@@ -422,7 +427,7 @@ export class G2GTransferPusherService implements Pusher {
     for await (const attachmentBatch of attachmentsCursor.pipe(batchStream)) {
       for await (const attachment of attachmentBatch) {
         logger.debug(`processing attachment: ${attachment}`);
-        let fileStream;
+        let fileStream: Readable;
         try {
           // get read stream of each attachment
           fileStream = await fileUploadService.findDeliveryFile(attachment);
@@ -672,7 +677,7 @@ export class G2GTransferReceiverService implements Receiver {
     );
 
     // Save TransferKey document
-    let tkd;
+    let tkd: HydratedDocument<ITransferKey>;
     try {
       tkd = await TransferKeyModel.create({
         _id: uuid,
