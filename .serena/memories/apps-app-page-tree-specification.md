@@ -13,31 +13,54 @@ GROWIのPageTreeは、`@headless-tree/react` と `@tanstack/react-virtual` を�
 
 ```
 src/features/page-tree/
-├── index.ts                           # メインエクスポート
-├── client/
-│   ├── components/
-│   │   ├── SimplifiedItemsTree.tsx    # コアvirtualizedツリーコンポーネント
-│   │   ├── TreeItemLayout.tsx         # 汎用ツリーアイテムレイアウト
-│   │   ├── TreeItemLayout.module.scss
-│   │   ├── SimpleItemContent.tsx      # シンプルなアイテムコンテンツ表示
-│   │   ├── SimpleItemContent.module.scss
-│   │   ├── RenameInput.tsx            # リネーム入力UIコンポーネント
-│   │   ├── CreateInput.tsx            # 新規作成入力UIコンポーネント
-│   │   ├── CreateInput.module.scss
-│   │   └── _tree-item-variables.scss  # SCSS変数
-│   ├── hooks/
-│   │   ├── use-data-loader.ts         # データローダーフック
-│   │   ├── use-scroll-to-selected-item.ts # スクロール制御フック
-│   │   ├── use-page-rename.tsx        # Renameビジネスロジック
-│   │   └── use-page-create.tsx        # Createビジネスロジック
-│   ├── interfaces/
-│   │   └── index.ts                   # TreeItemProps, TreeItemToolProps
-│   └── states/
-│       ├── page-tree-update.ts        # ツリー更新状態（Jotai）
-│       ├── page-tree-desc-count-map.ts # 子孫カウント状態（Jotai）
-│       └── page-tree-create.ts        # 作成中状態（Jotai）
+├── index.ts                                # メインエクスポート
+├── components/
+│   ├── SimplifiedItemsTree.tsx             # コアvirtualizedツリーコンポーネント
+│   ├── SimplifiedItemsTree.spec.tsx        # テスト
+│   ├── TreeItemLayout.tsx                  # 汎用ツリーアイテムレイアウト
+│   ├── TreeItemLayout.module.scss
+│   ├── SimpleItemContent.tsx               # シンプルなアイテムコンテンツ表示
+│   ├── SimpleItemContent.module.scss
+│   ├── TreeNameInput.tsx                   # リネーム/新規作成用入力コンポーネント
+│   ├── _tree-item-variables.scss           # SCSS変数
+│   └── index.ts
+├── hooks/
+│   ├── use-page-rename.tsx                 # Renameビジネスロジック
+│   ├── use-page-create.tsx                 # Createビジネスロジック
+│   ├── use-page-create.spec.tsx
+│   ├── use-page-dnd.tsx                    # Drag & Dropビジネスロジック
+│   ├── use-page-dnd.spec.ts
+│   ├── use-page-dnd.module.scss            # D&D用スタイル
+│   ├── use-placeholder-rename-effect.ts    # プレースホルダーリネームエフェクト
+│   ├── use-socket-update-desc-count.ts     # Socket.ioリアルタイム更新フック
+│   ├── index.ts
+│   └── _inner/
+│       ├── use-data-loader.ts              # データローダーフック
+│       ├── use-data-loader.spec.tsx
+│       ├── use-data-loader.integration.spec.tsx
+│       ├── use-scroll-to-selected-item.ts  # スクロール制御フック
+│       ├── use-tree-features.ts            # Feature設定フック
+│       ├── use-tree-revalidation.ts        # ツリー再検証フック
+│       ├── use-tree-item-handlers.tsx      # アイテムハンドラーフック
+│       ├── use-auto-expand-ancestors.ts    # 祖先自動展開フック
+│       ├── use-auto-expand-ancestors.spec.tsx
+│       ├── use-expand-parent-on-create.ts  # 作成時親展開フック
+│       ├── use-checkbox-state.ts           # チェックボックス状態フック
+│       └── index.ts
+├── interfaces/
+│   └── index.ts                            # TreeItemProps, TreeItemToolProps
+├── states/
+│   ├── page-tree-update.ts                 # ツリー更新状態（Jotai）
+│   ├── page-tree-desc-count-map.ts         # 子孫カウント状態（Jotai）
+│   ├── index.ts
+│   └── _inner/
+│       ├── page-tree-create.ts             # 作成中状態（Jotai）
+│       ├── page-tree-create.spec.tsx
+│       └── tree-rebuild.ts                 # ツリー再構築状態
+├── services/
+│   └── page-tree-children.ts               # 子ページ取得サービス
 └── constants/
-    └── index.ts                       # ROOT_PAGE_VIRTUAL_ID
+    └── _inner.ts                           # ROOT_PAGE_VIRTUAL_ID
 ```
 
 ### 1.2 Sidebar専用コンポーネント（移動しなかったファイル）
@@ -54,7 +77,7 @@ src/features/page-tree/
 
 ### 2.1 SimplifiedItemsTree
 
-**ファイル**: `features/page-tree/client/components/SimplifiedItemsTree.tsx`
+**ファイル**: `features/page-tree/components/SimplifiedItemsTree.tsx`
 
 Virtualizedツリーのコアコンポーネント。`@headless-tree/react` と `@tanstack/react-virtual` を統合。
 
@@ -84,6 +107,7 @@ interface SimplifiedItemsTreeProps {
 - `renamingFeature` - リネーム機能
 - `hotkeysCoreFeature` - キーボードショートカット
 - `checkboxesFeature` - チェックボックス（オプション）
+- `dragAndDropFeature` - ドラッグ&ドロップ（オプション）
 
 #### 重要な実装詳細
 
@@ -93,7 +117,7 @@ interface SimplifiedItemsTreeProps {
 
 ### 2.2 TreeItemLayout
 
-**ファイル**: `features/page-tree/client/components/TreeItemLayout.tsx`
+**ファイル**: `features/page-tree/components/TreeItemLayout.tsx`
 
 汎用的なツリーアイテムレイアウト。展開/折りたたみ、アイコン、カスタムコンポーネントを配置。
 
@@ -148,8 +172,8 @@ Sidebar用のツリーアイテム実装。TreeItemLayoutを使用し、Rename/C
 ### 3.1 Rename（ページ名変更）
 
 **実装ファイル**:
-- `features/page-tree/client/hooks/use-page-rename.tsx`
-- `features/page-tree/client/components/RenameInput.tsx`
+- `features/page-tree/hooks/use-page-rename.tsx`
+- `features/page-tree/components/TreeNameInput.tsx`
 
 #### 使用方法
 
@@ -172,9 +196,9 @@ const { rename, isRenaming, RenameAlternativeComponent } = usePageRename(item);
 ### 3.2 Create（ページ新規作成）
 
 **実装ファイル**:
-- `features/page-tree/client/hooks/use-page-create.tsx`
-- `features/page-tree/client/components/CreateInput.tsx`
-- `features/page-tree/client/states/page-tree-create.ts`
+- `features/page-tree/hooks/use-page-create.tsx`
+- `features/page-tree/components/TreeNameInput.tsx`
+- `features/page-tree/states/_inner/page-tree-create.ts`
 
 #### 状態管理（Jotai）
 
@@ -201,7 +225,106 @@ const { isCreatingChild, CreateInputComponent, startCreating } = usePageCreate(i
 - **確定**: Enter → POST /page API → 新規ページに遷移
 - **キャンセル**: Escape or ブラー
 
-### 3.3 Checkboxes（AI Assistant用）
+### 3.3 Drag and Drop（ページ移動）
+
+**実装ファイル**:
+- `features/page-tree/hooks/use-page-dnd.tsx`
+- `features/page-tree/hooks/use-page-dnd.module.scss`
+- `features/page-tree/hooks/_inner/use-tree-features.ts`
+
+#### 機能概要
+
+ページをドラッグ&ドロップして別のページの子として移動する機能。複数選択D&Dにも対応。
+
+#### 使用方法
+
+```typescript
+<SimplifiedItemsTree
+  enableDragAndDrop={true}
+  // ...他のprops
+/>
+```
+
+#### 主要コンポーネント
+
+- `usePageDnd()`: D&Dロジックを提供するフック
+  - `canDrag`: ドラッグ可否判定
+  - `canDrop`: ドロップ可否判定
+  - `onDrop`: ドロップ時の処理（APIコール、ツリー更新）
+  - `renderDragLine`: ドラッグライン描画
+
+#### バリデーションロジック
+
+**canDrag チェック項目**:
+1. 祖先-子孫関係チェック: 選択されたアイテム間に祖先-子孫関係がある場合は禁止
+2. 保護ページチェック: `pagePathUtils.isUsersProtectedPages(path)`が`true`の場合は禁止
+
+**canDrop チェック項目**:
+1. ユーザートップページチェック: `pagePathUtils.isUsersTopPage(targetPath)`が`true`の場合は禁止
+2. 移動可否チェック: `pagePathUtils.canMoveByPath(fromPath, newPath)`で検証
+
+#### エラーハンドリング
+
+- `operation__blocked`エラー: 「このページは現在移動できません」トースト表示
+- その他のエラー: 「ページの移動に失敗しました」トースト表示
+
+#### 制限事項
+
+- 並び替え（Reorder）は無効（子として追加のみ）
+- キーボードD&Dは非対応
+
+### 3.4 リアルタイム更新（Socket.io統合）
+
+**実装ファイル**:
+- `features/page-tree/hooks/use-socket-update-desc-count.ts`
+
+#### 機能概要
+
+Socket.ioを使用して、他のクライアントからのページ変更（作成、削除、移動）をリアルタイムで反映する機能。
+
+#### 使用方法
+
+`SimplifiedItemsTree`コンポーネント内で自動的に有効化されます。
+
+```typescript
+// SimplifiedItemsTree.tsx内で呼び出し
+useSocketUpdateDescCount();
+```
+
+#### 受信イベント
+
+- `UpdateDescCount`: ページの子孫カウント（descendantCount）の更新
+  - サーバーからページ作成/削除/移動時に発行される
+  - 受信データ（Record形式）をMap形式に変換してJotai stateに保存
+
+#### 実装詳細
+
+```typescript
+export const useSocketUpdateDescCount = (): void => {
+  const socket = useGlobalSocket();
+  const { update: updatePtDescCountMap } = usePageTreeDescCountMapAction();
+
+  useEffect(() => {
+    if (socket == null) return;
+
+    const handler = (data: UpdateDescCountRawData) => {
+      const newData: UpdateDescCountData = new Map(Object.entries(data));
+      updatePtDescCountMap(newData);
+    };
+
+    socket.on(SocketEventName.UpdateDescCount, handler);
+    return () => socket.off(SocketEventName.UpdateDescCount, handler);
+  }, [socket, updatePtDescCountMap]);
+};
+```
+
+#### 関連状態
+
+- `page-tree-desc-count-map.ts`: 子孫カウントを管理するJotai atom
+  - `usePageTreeDescCountMap()`: カウント取得
+  - `usePageTreeDescCountMapAction()`: カウント更新
+
+### 3.5 Checkboxes（AI Assistant用）
 
 **使用箇所**: `AiAssistantManagementPageTreeSelection.tsx`
 
@@ -327,19 +450,95 @@ const virtualizer = useVirtualizer({
 
 ## 6. パフォーマンス最適化
 
-### 6.1 Virtualization
+### 6.1 headless-tree のキャッシュ無効化と再取得
+
+#### 重要な知見
+
+`@headless-tree/core` の `asyncDataLoaderFeature` は内部キャッシュを持ち、`invalidateChildrenIds()` メソッドでキャッシュを無効化できます。
+
+**invalidateChildrenIds(optimistic?: boolean) の動作:**
+
+```typescript
+// 内部実装（feature.ts より）
+invalidateChildrenIds: async ({ tree, itemId }, optimistic) => {
+  if (!optimistic) {
+    delete getDataRef(tree).current.childrenIds?.[itemId];  // キャッシュ削除
+  }
+  await loadChildrenIds(tree, itemId);  // データ再取得
+  // loadChildrenIds 内で自動的に tree.rebuildTree() が呼ばれる
+};
+```
+
+**optimistic パラメータの影響:**
+
+| パラメータ | 動作 | 用途 |
+|-----------|------|------|
+| `false` (デフォルト) | ローディング状態を更新、再レンダリングをトリガー | 最後の呼び出しに使用 |
+| `true` | ローディング状態を更新しない、古いデータを表示し続ける | バッチ処理の途中に使用 |
+
+**パフォーマンス最適化パターン:**
+
+```typescript
+// ❌ 非効率: 全アイテムに optimistic=false
+items.forEach(item => item.invalidateChildrenIds(false));
+// → 各呼び出しで rebuildTree() が実行され、N回の再構築が発生
+
+// ✅ 効率的: 展開済みアイテムのみ対象、最後だけ optimistic=false
+const expandedItems = tree.getItems().filter(item => item.isExpanded());
+expandedItems.forEach(item => item.invalidateChildrenIds(true));  // 楽観的
+rootItem.invalidateChildrenIds(false);  // 最後に1回だけ再構築
+```
+
+**実際の実装 (page-tree-update.ts):**
+
+```typescript
+useEffect(() => {
+  if (globalGeneration <= generation) return;
+
+  const shouldUpdateAll = globalLastUpdatedItemIds == null;
+
+  if (shouldUpdateAll) {
+    // pendingリクエストキャッシュをクリア
+    invalidatePageTreeChildren();
+
+    // 展開済みアイテムのみ楽観的に無効化（rebuildTree回避）
+    const expandedItems = tree.getItems().filter(item => item.isExpanded());
+    expandedItems.forEach(item => item.invalidateChildrenIds(true));
+
+    // ルートのみ optimistic=false で再構築トリガー
+    getItemInstance(ROOT_PAGE_VIRTUAL_ID)?.invalidateChildrenIds(false);
+  } else {
+    // 部分更新: 指定アイテムのみ
+    invalidatePageTreeChildren(globalLastUpdatedItemIds);
+    globalLastUpdatedItemIds.forEach(itemId => {
+      getItemInstance(itemId)?.invalidateChildrenIds(false);
+    });
+  }
+
+  onRevalidatedRef.current?.();
+}, [globalGeneration, generation, getItemInstance, globalLastUpdatedItemIds, tree]);
+```
+
+#### 注意事項
+
+1. **invalidateChildrenIds は async 関数** - Promise を返すが、await しなくても動作する
+2. **loadChildrenIds 完了後に自動で rebuildTree()** - 明示的な呼び出し不要
+3. **optimistic=true でもデータは再取得される** - ただしローディングUIは表示されない
+4. **tree.getItems() は表示中のアイテムのみ** - 折りたたまれた子は含まれない
+
+### 6.2 Virtualization
 
 - **100k+アイテムでテスト済み**
 - `overscan: 5` で表示範囲外の先読み
 - `estimateSize: 32` でアイテム高さを推定
 
-### 6.2 非同期データローダーのキャッシング
+### 6.3 非同期データローダーのキャッシング
 
 - asyncDataLoaderFeatureが自動キャッシング
 - 展開済みアイテムは再取得なし
 - `invalidateChildrenIds()` で明示的に無効化可能
 
-### 6.3 ツリー更新
+### 6.4 ツリー更新
 
 ```typescript
 // Jotai atomでツリー更新を通知
@@ -369,13 +568,14 @@ await mutatePageTree();
 - ✅ Duplicate（hover時ボタン）
 - ✅ Delete（hover時ボタン）
 - ✅ Checkboxes（AI Assistant用）
+- ✅ Drag and Drop（ページ移動）
+- ✅ リアルタイム更新（Socket.io統合）
 
 ---
 
 ## 8. 未実装機能
 
-- ⏳ Drag and Drop（ページ移動）
-- ⏳ リアルタイム更新（Socket.io統合）
+なし（全機能実装済み）
 
 ---
 
@@ -414,3 +614,6 @@ await mutatePageTree();
 - 2025-11-10: 初版作成（Virtualization計画）
 - 2025-11-28: Rename/Create実装完了、ディレクトリ再編成
 - 2025-12-05: 仕様書として統合
+- 2025-12-08: Drag and Drop実装完了、ディレクトリ構成更新
+- 2025-12-08: リアルタイム更新（Socket.io統合）実装完了
+- 2025-12-08: headless-tree キャッシュ無効化の知見を追加（invalidateChildrenIds の optimistic パラメータ）
