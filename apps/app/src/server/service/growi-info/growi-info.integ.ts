@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { mock } from 'vitest-mock-extended';
 
-import type { IPage } from '^/../../packages/core/dist';
+import type { IPage, IUser } from '^/../../packages/core/dist';
 import pkg from '^/package.json';
 
 import type UserEvent from '~/server/events/user';
@@ -16,8 +16,8 @@ import { growiInfoService } from './growi-info';
 describe('GrowiInfoService', () => {
   const appVersion = pkg.version;
 
-  let User;
-  let Page;
+  let User: mongoose.Model<IUser>;
+  let Page: PageModel;
 
   beforeAll(async () => {
     process.env.APP_SITE_URL = 'http://growi.test.jp';

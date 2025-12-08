@@ -83,7 +83,7 @@ export class GrowiBridgeService {
     const parseStream = unzipStream.Parse();
     const unzipEntryStream = pipeline(readStream, parseStream, () => {});
 
-    let tapPromise;
+    let tapPromise: Promise<void> = Promise.resolve();
 
     unzipEntryStream.on('entry', (entry: Entry) => {
       const fileName = entry.path;

@@ -1,6 +1,5 @@
 import { Storage } from '@google-cloud/storage';
 import { toNonBlankStringOrUndefined } from '@growi/core/dist/interfaces';
-import axios from 'axios';
 import type { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import urljoin from 'url-join';
@@ -13,6 +12,7 @@ import {
   ResponseMode,
 } from '~/server/interfaces/attachment';
 import type { IAttachmentDocument } from '~/server/models/attachment';
+import axios from '~/utils/axios';
 import loggerFactory from '~/utils/logger';
 
 import { configManager } from '../../config-manager';

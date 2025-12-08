@@ -602,6 +602,8 @@ export class ImportService {
   deleteAllZipFiles(): void {
     fs.readdirSync(this.baseDir)
       .filter((file) => path.extname(file) === '.zip')
-      .forEach((file) => fs.unlinkSync(path.join(this.baseDir, file)));
+      .forEach((file) => {
+        fs.unlinkSync(path.join(this.baseDir, file));
+      });
   }
 }
