@@ -10,11 +10,10 @@ import { useGlobalSocket } from '~/states/socket-io';
 import { usePageTreeDescCountMapAction } from '../states/page-tree-desc-count-map';
 
 /**
- * Hook to listen for Socket.io UpdateDescCount events and update the page tree state
+ * Hook to listen for Socket.io UpdateDescCount events and update descendant count badges
  *
  * This hook subscribes to the UpdateDescCount socket event, which is emitted by the server
  * when descendant counts change (e.g., when pages are created, deleted, or moved).
- * The received data is converted from raw format (Record) to Map format and stored in Jotai state.
  */
 export const useSocketUpdateDescCount = (): void => {
   const socket = useGlobalSocket();
