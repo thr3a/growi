@@ -1,8 +1,10 @@
 import type { FC } from 'react';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTree } from '@headless-tree/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { useTranslation } from 'next-i18next';
 
+import { toastError, toastWarning } from '~/client/util/toastr';
 import type { IPageForTreeItem } from '~/interfaces/page';
 import { useSWRxRootPage } from '~/stores/page-listing';
 
@@ -18,6 +20,7 @@ import {
   useTreeItemHandlers,
   useTreeRevalidation,
 } from '../hooks/_inner';
+import { usePageDnd, useSetEnableDragAndDrop } from '../hooks/use-page-dnd';
 import type { TreeItemProps } from '../interfaces';
 import { useTriggerTreeRebuild } from '../states/_inner';
 
@@ -44,6 +47,7 @@ type Props = {
   // Feature options
   enableRenaming?: boolean;
   enableCheckboxes?: boolean;
+  enableDragAndDrop?: boolean;
   initialCheckedItems?: string[];
   onCheckedItemsChange?: (checkedItems: IPageForTreeItem[]) => void;
 };
@@ -60,10 +64,12 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     scrollerElem,
     enableRenaming = false,
     enableCheckboxes = false,
+    enableDragAndDrop = false,
     initialCheckedItems = [],
     onCheckedItemsChange,
   } = props;
 
+  const { t } = useTranslation();
   const triggerTreeRebuild = useTriggerTreeRebuild();
 
   const { data: rootPageResult } = useSWRxRootPage({ suspense: true });
@@ -81,7 +87,32 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   const features = useTreeFeatures({
     enableRenaming,
     enableCheckboxes,
+    enableDragAndDrop,
   });
+
+  // Page move (drag and drop) handlers
+  const { canDrag, canDrop, onDrop, renderDragLine } = usePageDnd();
+  const setEnableDragAndDrop = useSetEnableDragAndDrop();
+
+  // Set enable state for D&D
+  useEffect(() => {
+    setEnableDragAndDrop(enableDragAndDrop);
+  }, [enableDragAndDrop, setEnableDragAndDrop]);
+
+  // Wrap onDrop to show toast notifications
+  const handleDrop = useCallback(
+    async (...args: Parameters<typeof onDrop>) => {
+      const result = await onDrop(...args);
+      if (!result.success) {
+        if (result.errorType === 'operation_blocked') {
+          toastWarning(t('page_tree.move_blocked'));
+        } else {
+          toastError(t('page_tree.move_failed'));
+        }
+      }
+    },
+    [onDrop, t],
+  );
 
   // Manage checkbox state (must be called before useTree to get setCheckedItems)
   const { checkedItemIds, setCheckedItems } = useCheckboxState({
@@ -112,6 +143,13 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
     canCheckFolders: enableCheckboxes,
     propagateCheckedState: false,
     setCheckedItems,
+    // Drag and drop configuration (only when enabled)
+    ...(enableDragAndDrop && {
+      canDrag,
+      canDrop,
+      onDrop: handleDrop,
+      canDropInbetween: false, // No reordering, only drop as child
+    }),
   });
 
   // Notify parent when checked items change
@@ -167,7 +205,9 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
           return null;
         }
 
-        const treeItemProps = item.getProps();
+        const { ref: itemRef, ...itemProps } = item.getProps();
+        // Exclude onClick from itemProps to prevent conflicts
+        const { onClick: _onClick, ...itemPropsWithoutOnClick } = itemProps;
 
         return (
           <div
@@ -175,10 +215,12 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
             data-index={virtualItem.index}
             ref={(node) => {
               virtualizer.measureElement(node);
-              if (node && treeItemProps.ref) {
-                (treeItemProps.ref as (node: HTMLElement) => void)(node);
+              if (node && itemRef) {
+                (itemRef as (node: HTMLElement) => void)(node);
               }
             }}
+            // Apply props
+            {...itemPropsWithoutOnClick}
           >
             <CustomTreeItem
               item={item}
@@ -192,6 +234,8 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
           </div>
         );
       })}
+      {/* Drag line indicator (rendered by usePageDnd when D&D is enabled) */}
+      {renderDragLine(tree)}
     </div>
   );
 };

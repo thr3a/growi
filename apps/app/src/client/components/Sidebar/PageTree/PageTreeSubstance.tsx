@@ -119,6 +119,7 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
     <div className="pt-4">
       <SimplifiedItemsTree
         enableRenaming
+        enableDragAndDrop
         isEnableActions={!isGuestUser}
         isReadOnlyUser={!!isReadOnlyUser}
         isWipPageShown={isWipPageShown}

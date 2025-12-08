@@ -3,6 +3,7 @@ import type { FeatureImplementation } from '@headless-tree/core';
 import {
   asyncDataLoaderFeature,
   checkboxesFeature,
+  dragAndDropFeature,
   hotkeysCoreFeature,
   renamingFeature,
   selectionFeature,
@@ -11,6 +12,7 @@ import {
 export type UseTreeFeaturesOptions = {
   enableRenaming?: boolean;
   enableCheckboxes?: boolean;
+  enableDragAndDrop?: boolean;
 };
 
 /**
@@ -20,7 +22,11 @@ export type UseTreeFeaturesOptions = {
 export const useTreeFeatures = (
   options: UseTreeFeaturesOptions = {},
 ): FeatureImplementation<unknown>[] => {
-  const { enableRenaming = true, enableCheckboxes = false } = options;
+  const {
+    enableRenaming = true,
+    enableCheckboxes = false,
+    enableDragAndDrop = false,
+  } = options;
 
   return useMemo(() => {
     const features: FeatureImplementation<unknown>[] = [
@@ -37,6 +43,10 @@ export const useTreeFeatures = (
       features.push(checkboxesFeature);
     }
 
+    if (enableDragAndDrop) {
+      features.push(dragAndDropFeature);
+    }
+
     return features;
-  }, [enableRenaming, enableCheckboxes]);
+  }, [enableRenaming, enableCheckboxes, enableDragAndDrop]);
 };

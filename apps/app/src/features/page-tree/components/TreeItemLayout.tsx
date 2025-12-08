@@ -1,6 +1,8 @@
+import type {
+  JSX,
+  MouseEvent,
+} from 'react';
 import {
-  type JSX,
-  type MouseEvent,
   useCallback,
   useMemo,
 } from 'react';
@@ -84,6 +86,9 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
     return page._id === targetPathOrId || page.path === targetPathOrId;
   }, [page, targetPathOrId]);
 
+  // Check if this item is a drag target (being dragged over)
+  const isDragTarget = item.isDragTarget?.() ?? false;
+
   const toolProps: TreeItemToolProps = {
     item,
     isEnableActions,
@@ -113,6 +118,7 @@ export const TreeItemLayout = (props: TreeItemLayoutProps): JSX.Element => {
       <li
         className={`list-group-item list-group-item-action
           ${isSelected ? 'active' : ''}
+          ${isDragTarget ? 'drag-target' : ''}
           ${itemClassName ?? ''}
           border-0 py-0 ps-0 d-flex align-items-center rounded-1`}
         id={`grw-pagetree-list-${page._id}`}

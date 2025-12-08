@@ -12,6 +12,13 @@
           display: flex !important;
         }
       }
+
+      // Drag target state styling
+      &.drag-target {
+        background-color: var(--bs-list-group-active-bg) !important;
+        outline: 3px dashed var(--bs-list-group-active-border-color);
+        outline-offset: -4px;
+      }
     }
   }
 }
