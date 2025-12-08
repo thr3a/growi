@@ -1,26 +1,25 @@
-import assert from 'assert';
-import type EventEmitter from 'events';
-import pathlib from 'path';
-import { Readable, Writable } from 'stream';
-import { pipeline } from 'stream/promises';
-
-import {
-  PageStatus, YDocStatus, getIdForRef,
+import {getIdForRef,
   getIdStringForRef,
+  PageStatus, YDocStatus, 
 } from '@growi/core';
-import { PageGrant, isIPageInfoForEntity } from '@growi/core/dist/interfaces';
-import type {
-  Ref, HasObjectId, IUserHasId, IUser,
-  IPage, IGrantedGroup, IRevisionHasId,
-  IPageNotFoundInfo, IPageInfoExt, IPageInfo, IPageInfoForEntity, IPageInfoForOperation,
-  IDataWithRequiredMeta,
+import type {HasObjectId, 
+  IDataWithRequiredMeta,IGrantedGroup, 
+  IPage, IPageInfo, IPageInfoExt, IPageInfoForEntity, IPageInfoForOperation,
+  IPageNotFoundInfo, IRevisionHasId,IUser,IUserHasId, 
+  Ref, 
 } from '@growi/core/dist/interfaces';
+import { isIPageInfoForEntity, PageGrant } from '@growi/core/dist/interfaces';
 import {
   pagePathUtils, pathUtils,
 } from '@growi/core/dist/utils';
+import assert from 'assert';
 import escapeStringRegexp from 'escape-string-regexp';
+import type EventEmitter from 'events';
 import type { Cursor, HydratedDocument } from 'mongoose';
 import mongoose from 'mongoose';
+import pathlib from 'path';
+import { Readable, Writable } from 'stream';
+import { pipeline } from 'stream/promises';
 
 import { Comment } from '~/features/comment/server';
 import type { ExternalUserGroupDocument } from '~/features/external-user-group/server/models/external-user-group';
@@ -37,12 +36,12 @@ import {
 import type { PopulatedGrantedGroup } from '~/interfaces/page-grant';
 import { PageActionStage, PageActionType } from '~/interfaces/page-operation';
 import { PageActionOnGroupDelete } from '~/interfaces/user-group';
-import { SocketEventName, type PageMigrationErrorData, type UpdateDescCountRawData } from '~/interfaces/websocket';
+import { type PageMigrationErrorData, SocketEventName, type UpdateDescCountRawData } from '~/interfaces/websocket';
 import type { CurrentPageYjsData } from '~/interfaces/yjs';
 import type Crowi from '~/server/crowi';
 import type { CreateMethod } from '~/server/models/page';
-import {
-  type PageModel, type PageDocument, pushRevision, PageQueryBuilder,
+import {type PageDocument, 
+  type PageModel, PageQueryBuilder,pushRevision, 
 } from '~/server/models/page';
 import type { PageTagRelationDocument } from '~/server/models/page-tag-relation';
 import PageTagRelation from '~/server/models/page-tag-relation';
@@ -71,7 +70,6 @@ import { configManager } from '../config-manager';
 import type { IPageGrantService } from '../page-grant';
 import { preNotifyService } from '../pre-notify';
 import { getYjsService } from '../yjs';
-
 import { BULK_REINDEX_SIZE, LIMIT_FOR_MULTIPLE_PAGE_OP } from './consts';
 import type { IPageService } from './page-service';
 import { shouldUseV4Process } from './should-use-v4-process';
@@ -3075,7 +3073,7 @@ class PageService implements IPageService {
       }
     }
     finally {
-      await Page.deleteMany({ path: { $regex: new RegExp('growi_check_is_path_index_unique', 'g') } });
+      await Page.deleteMany({ path: { $regex: /growi_check_is_path_index_unique/g } });
     }
 
 
@@ -4360,7 +4358,7 @@ class PageService implements IPageService {
 
     // https://regex101.com/r/KYZWls/1
     // ex. /trash/.*
-    const regexp = new RegExp('^/trash\\/.*$');
+    const regexp = /^\/trash\\/.*$/;
     const queryBuilder = new PageQueryBuilder(Page.find({ path: { $regex: regexp } }), true);
 
     await queryBuilder.addViewerCondition(user, userGroups);
