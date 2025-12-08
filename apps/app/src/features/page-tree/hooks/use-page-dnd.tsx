@@ -238,7 +238,9 @@ export const usePageDnd = (): UsePageDndResult => {
       // Invalidate headless-tree items (source parents and target)
       notifyUpdateItems(Array.from(parentIdsToInvalidate));
 
-      // Expand drop target
+      // Invalidate target item's data (descendantCount changed) and expand it
+      // Use await to ensure data is refreshed before expanding
+      await targetItem.invalidateItemData();
       targetItem.expand();
 
       return { success: true };
