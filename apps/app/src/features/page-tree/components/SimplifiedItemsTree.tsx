@@ -21,6 +21,7 @@ import {
   useTreeRevalidation,
 } from '../hooks/_inner';
 import { usePageDnd, useSetEnableDragAndDrop } from '../hooks/use-page-dnd';
+import { useSocketUpdateDescCount } from '../hooks/use-socket-update-desc-count';
 import type { TreeItemProps } from '../interfaces';
 import { useTriggerTreeRebuild } from '../states/_inner';
 
@@ -93,6 +94,9 @@ export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
   // Page move (drag and drop) handlers
   const { canDrag, canDrop, onDrop, renderDragLine } = usePageDnd();
   const setEnableDragAndDrop = useSetEnableDragAndDrop();
+
+  // Subscribe to Socket.io UpdateDescCount events
+  useSocketUpdateDescCount();
 
   // Set enable state for D&D
   useEffect(() => {
