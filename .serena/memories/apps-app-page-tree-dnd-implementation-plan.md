@@ -80,7 +80,7 @@ export const useTreeFeatures = (options: UseTreeFeaturesOptions = {}) => {
 ```typescript
 import type { ItemInstance, DragTarget } from '@headless-tree/core';
 import { pagePathUtils } from '@growi/core/dist/utils';
-import nodePath from 'path';
+import { basename, join } from 'pathe';
 
 import { apiv3Put } from '~/client/util/apiv3-client';
 import { toastWarning, toastError } from '~/client/util/toastr';
@@ -89,8 +89,8 @@ import { mutatePageTree } from '~/stores/page-listing';
 
 // 移動後のパスを計算
 const getNewPathAfterMoved = (fromPath: string, newParentPath: string): string => {
-  const pageTitle = nodePath.basename(fromPath);
-  return nodePath.join(newParentPath, pageTitle);
+  const pageTitle = basename(fromPath);
+  return join(newParentPath, pageTitle);
 };
 
 // 祖先-子孫関係をチェック（複数選択時の禁止条件）
@@ -109,7 +109,7 @@ const hasAncestorDescendantRelation = (items: ItemInstance<IPageForTreeItem>[]):
   return false;
 };
 
-export const usePageMove = (t: TFunction) => {
+export const usePageDnd = (t: TFunction) => {
   
   // ドラッグ可能かの判定
   const canDrag = useCallback((items: ItemInstance<IPageForTreeItem>[]): boolean => {
@@ -212,7 +212,7 @@ interface SimplifiedItemsTreeProps {
 #### useTree設定
 
 ```typescript
-const { canDrag, canDrop, onDrop } = usePageMove(t);
+const { canDrag, canDrop, onDrop } = usePageDnd(t);
 
 const tree = useTree<IPageForTreeItem>({
   rootItemId: ROOT_PAGE_VIRTUAL_ID,
@@ -268,14 +268,20 @@ const itemClassNames = [
 ].filter(Boolean).join(' ');
 ```
 
-#### SCSS（既存の`PageTreeItem.module.scss`を活用）
+#### SCSS
 
+**`TreeItemLayout.module.scss`に追加**:
 ```scss
-.drag-over {
-  background-color: rgba(var(--bs-primary-rgb), 0.1);
-  border: 1px dashed var(--bs-primary);
+// drag over state
+.tree-item-layout :global {
+  .drag-over {
+    background-color: var(--bs-list-group-action-active-bg);
+  }
 }
+```
 
+**`SimplifiedItemsTree.module.scss`を新規作成**（ドラッグライン用）:
+```scss
 .tree-drag-line {
   height: 2px;
   margin-top: -1px;
@@ -283,6 +289,13 @@ const itemClassNames = [
   pointer-events: none;
 }
 ```
+
+#### 旧実装ファイルの削除
+
+D&D実装完了後、以下の旧実装ファイルを削除する：
+- `components/Sidebar/PageTreeItem/PageTreeItem.tsx`
+- `components/Sidebar/PageTreeItem/PageTreeItem.module.scss`（`.drag-over`スタイルを含む）
+- その他の旧実装関連ファイル
 
 ---
 
@@ -327,7 +340,9 @@ const itemClassNames = [
 | `features/page-tree/hooks/use-page-move.ts` | 新規作成 |
 | `features/page-tree/hooks/use-page-move.test.ts` | 新規作成（単体テスト） |
 | `features/page-tree/client/components/SimplifiedItemsTree.tsx` | 修正 |
+| `features/page-tree/client/components/SimplifiedItemsTree.module.scss` | 新規作成 |
 | `features/page-tree/client/components/TreeItemLayout.tsx` | 修正 |
+| `features/page-tree/client/components/TreeItemLayout.module.scss` | 修正 |
 | `features/page-tree/index.ts` | 修正（export追加） |
 | Sidebar PageTree使用箇所 | 修正 |
 
