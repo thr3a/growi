@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { TreeInstance } from '@headless-tree/core';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
@@ -53,44 +53,46 @@ export const usePageTreeRevalidationEffect = (
   const globalGeneration = useAtomValue(generationAtom);
   const globalLastUpdatedItemIds = useAtomValue(lastUpdatedItemIdsAtom);
 
-  const { getItemInstance, rebuildTree } = tree;
+  const { getItemInstance } = tree;
+
+  // Use ref to avoid opts causing infinite loop in dependency array
+  const onRevalidatedRef = useRef(opts?.onRevalidated);
+  onRevalidatedRef.current = opts?.onRevalidated;
 
   useEffect(() => {
-    if (globalGeneration <= generation) return; // Already up to date
+    if (globalGeneration <= generation) {
+      return;
+    }
 
-    // Determine update scope
     const shouldUpdateAll = globalLastUpdatedItemIds == null;
 
     if (shouldUpdateAll) {
-      // Full tree update: clear all cache and refetch from root
+      // Full tree update: clear all pending requests
       invalidatePageTreeChildren();
-      const root = getItemInstance(ROOT_PAGE_VIRTUAL_ID);
-      root?.invalidateChildrenIds(true);
+
+      // Only invalidate expanded items (they are the ones with visible children)
+      // Using optimistic=true to avoid multiple rebuildTree calls and loading states
+      const expandedItems = tree.getItems().filter((item) => item.isExpanded());
+      expandedItems.forEach((item) => {
+        item.invalidateChildrenIds(true);
+      });
+
+      // Also invalidate root to refresh top-level
+      getItemInstance(ROOT_PAGE_VIRTUAL_ID)?.invalidateChildrenIds(false);
     } else {
-      // Partial update: clear cache for specified items and refetch children
+      // Partial update: only invalidate specified items
       invalidatePageTreeChildren(globalLastUpdatedItemIds);
       globalLastUpdatedItemIds.forEach((itemId) => {
-        const item = getItemInstance(itemId);
-        // Invalidate children to refresh child list
-        item?.invalidateChildrenIds(true);
+        getItemInstance(itemId)?.invalidateChildrenIds(false);
       });
     }
 
-    // Rebuild tree after a short delay to allow async data fetching to complete
-    // This ensures isItemFolder is re-evaluated with fresh children data
-    const timeoutId = setTimeout(() => {
-      rebuildTree();
-    }, 100);
-
-    opts?.onRevalidated?.();
-
-    return () => clearTimeout(timeoutId);
+    onRevalidatedRef.current?.();
   }, [
     globalGeneration,
     generation,
     getItemInstance,
     globalLastUpdatedItemIds,
-    rebuildTree,
-    opts,
+    tree,
   ]);
 };
