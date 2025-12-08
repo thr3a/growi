@@ -84,6 +84,7 @@ const contributors = [
           { name: 'riona-k' },
           { name: 'hiroki-hgs' },
           { name: 'taikou-m' },
+          { name: 'hikaru-n-cpu' },
         ],
       },
     ],
