@@ -1,12 +1,12 @@
 import {getIdForRef,
   getIdStringForRef,
-  PageStatus, YDocStatus, 
+  PageStatus, YDocStatus,
 } from '@growi/core';
-import type {HasObjectId, 
-  IDataWithRequiredMeta,IGrantedGroup, 
+import type {HasObjectId,
+  IDataWithRequiredMeta,IGrantedGroup,
   IPage, IPageInfo, IPageInfoExt, IPageInfoForEntity, IPageInfoForOperation,
-  IPageNotFoundInfo, IRevisionHasId,IUser,IUserHasId, 
-  Ref, 
+  IPageNotFoundInfo, IRevisionHasId,IUser,IUserHasId,
+  Ref,
 } from '@growi/core/dist/interfaces';
 import { isIPageInfoForEntity, PageGrant } from '@growi/core/dist/interfaces';
 import {
@@ -40,8 +40,8 @@ import { type PageMigrationErrorData, SocketEventName, type UpdateDescCountRawDa
 import type { CurrentPageYjsData } from '~/interfaces/yjs';
 import type Crowi from '~/server/crowi';
 import type { CreateMethod } from '~/server/models/page';
-import {type PageDocument, 
-  type PageModel, PageQueryBuilder,pushRevision, 
+import {type PageDocument,
+  type PageModel, PageQueryBuilder,pushRevision,
 } from '~/server/models/page';
 import type { PageTagRelationDocument } from '~/server/models/page-tag-relation';
 import PageTagRelation from '~/server/models/page-tag-relation';
