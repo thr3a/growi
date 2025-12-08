@@ -4,6 +4,7 @@ import React, {
 
 import { useTranslation } from 'next-i18next';
 
+import { usePageTreeInformationUpdate } from '~/features/page-tree/states/page-tree-update';
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 import { useCurrentPageId, useCurrentPagePath } from '~/states/page';
 import { useSidebarScrollerElem } from '~/states/ui/sidebar';
@@ -30,12 +31,15 @@ export const PageTreeHeader = memo(({ isWipPageShown, onWipPageShownChange }: He
 
   const { mutate: mutateRootPage } = useSWRxRootPage({ suspense: true });
   useSWRxV5MigrationStatus({ suspense: true });
+  const { notifyUpdateAllTrees } = usePageTreeInformationUpdate();
 
   const mutate = useCallback(() => {
     mutateRootPage();
     mutatePageTree();
     mutateRecentlyUpdated();
-  }, [mutateRootPage]);
+    // Notify headless-tree to rebuild with fresh data
+    notifyUpdateAllTrees();
+  }, [mutateRootPage, notifyUpdateAllTrees]);
 
   return (
     <>
