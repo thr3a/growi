@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   usePageTreeInformationGeneration,
@@ -21,18 +21,18 @@ type UseTreeRevalidationOptions = {
 export const useTreeRevalidation = (options: UseTreeRevalidationOptions) => {
   const { tree, triggerTreeRebuild } = options;
 
-  // Track local generation number
-  const localGenerationRef = useRef(1);
+  // Track local generation number with state to trigger re-renders
+  const [localGeneration, setLocalGeneration] = useState(1);
   const globalGeneration = usePageTreeInformationGeneration();
 
   // Refetch data when global generation is updated
   usePageTreeRevalidationEffect(
     tree as Parameters<typeof usePageTreeRevalidationEffect>[0],
-    localGenerationRef.current,
+    localGeneration,
     {
       // Update local generation number after revalidation
       onRevalidated: () => {
-        localGenerationRef.current = globalGeneration;
+        setLocalGeneration(globalGeneration);
       },
     },
   );
