@@ -13,7 +13,7 @@ import {
 } from '~/stores/page-listing';
 import loggerFactory from '~/utils/logger';
 
-import { SimplifiedItemsTree } from '../../ItemsTree';
+import { SimplifiedItemsTree } from '~/features/page-tree/components';
 import { SimplifiedPageTreeItem, simplifiedPageTreeItemSize } from '../PageTreeItem';
 import { SidebarHeaderReloadButton } from '../SidebarHeaderReloadButton';
 

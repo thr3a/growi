@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 
 import CountBadge from '~/client/components/Common/CountBadge';
-import type { TreeItemToolProps } from '~/client/components/TreeItem';
+import type { TreeItemToolProps } from '~/features/page-tree/interfaces';
 import { usePageTreeDescCountMap } from '~/features/page-tree/states';
 
 

@@ -13,7 +13,7 @@ import { useSWRMUTxCurrentUserBookmarks } from '~/stores/bookmark';
 import { useSWRMUTxPageInfo } from '~/stores/page';
 
 import { PageItemControl } from '../../Common/Dropdown/PageItemControl';
-import type { TreeItemToolProps } from '../../TreeItem';
+import type { TreeItemToolProps } from '~/features/page-tree/interfaces';
 
 
 type UsePageItemControl = {

@@ -25,8 +25,8 @@ import { mutateAllPageInfo } from '~/stores/page';
 import { mutatePageTree, mutatePageList } from '~/stores/page-listing';
 import { mutateSearching } from '~/stores/search';
 
-import type { TreeItemProps } from '../../TreeItem';
-import { TreeItemLayout } from '../../TreeItem';
+import type { TreeItemProps } from '~/features/page-tree/interfaces';
+import { TreeItemLayout } from '~/features/page-tree/components';
 
 import { CountBadgeForPageTreeItem } from './CountBadgeForPageTreeItem';
 import { usePageItemControl } from './use-page-item-control';
