@@ -277,10 +277,22 @@ const { isCreatingChild, CreateInputComponent, startCreating } = usePageCreate(i
 
 **実装ファイル**:
 - `features/page-tree/hooks/use-socket-update-desc-count.ts`
+- `features/page-tree/states/page-tree-desc-count-map.ts`
+- `features/page-tree/states/page-tree-update.ts`
 
-#### 機能概要
+#### 設計方針
 
-Socket.ioを使用して、他のクライアントからのページ変更（作成、削除、移動）をリアルタイムで反映する機能。
+**descendantCountバッジの更新** と **ツリー構造の更新** は別々の関心事として分離：
+
+| 更新タイプ | トリガー | 動作 | 対象 |
+|-----------|---------|------|------|
+| バッジ更新 | Socket.io `UpdateDescCount` | 数字のみ更新（軽量） | 全祖先 |
+| ツリー構造更新 | リロードボタン / 自分の操作後 | 子リスト再取得（重い） | 操作した本人のみ |
+
+**この分離の理由:**
+- 大規模環境で多くのユーザーが同時に操作する場合、全員のツリーが頻繁に再構築されるとパフォーマンス問題が発生
+- バッジ（数字）の更新は軽量なので全員にリアルタイム反映してもOK
+- ツリー構造の変更は操作した本人のウィンドウのみで即時反映し、他ユーザーはリロードボタンで対応
 
 #### 使用方法
 
@@ -296,6 +308,7 @@ useSocketUpdateDescCount();
 - `UpdateDescCount`: ページの子孫カウント（descendantCount）の更新
   - サーバーからページ作成/削除/移動時に発行される
   - 受信データ（Record形式）をMap形式に変換してJotai stateに保存
+  - **バッジ表示のみ更新、ツリー構造は更新しない**
 
 #### 実装詳細
 
@@ -308,6 +321,7 @@ export const useSocketUpdateDescCount = (): void => {
     if (socket == null) return;
 
     const handler = (data: UpdateDescCountRawData) => {
+      // バッジの数字のみ更新（ツリー構造は更新しない）
       const newData: UpdateDescCountData = new Map(Object.entries(data));
       updatePtDescCountMap(newData);
     };
@@ -318,11 +332,36 @@ export const useSocketUpdateDescCount = (): void => {
 };
 ```
 
+#### ツリー構造の更新
+
+ツリー構造（子リスト）の更新は以下のタイミングで行われる：
+
+1. **リロードボタン**: `notifyUpdateAllTrees()` を呼び出し、全ツリーを再取得
+2. **自分の操作後**: 
+   - Create/Delete/Move操作の完了コールバックで `notifyUpdateItems([parentId])` を呼び出し
+   - 操作した親ノードの子リストのみ再取得
+
+```typescript
+// リロードボタンの例
+const { notifyUpdateAllTrees } = usePageTreeInformationUpdate();
+const handleReload = () => notifyUpdateAllTrees();
+
+// 操作完了後の例（Create, Delete, Move）
+const { notifyUpdateItems } = usePageTreeInformationUpdate();
+const handleOperationComplete = (parentId: string) => notifyUpdateItems([parentId]);
+```
+
 #### 関連状態
 
 - `page-tree-desc-count-map.ts`: 子孫カウントを管理するJotai atom
-  - `usePageTreeDescCountMap()`: カウント取得
-  - `usePageTreeDescCountMapAction()`: カウント更新
+  - `usePageTreeDescCountMap()`: カウント取得（バッジ表示用）
+  - `usePageTreeDescCountMapAction()`: カウント更新（Socket.ioから）
+
+- `page-tree-update.ts`: ツリー更新を管理するJotai atom
+  - `generationAtom`: 更新世代番号
+  - `lastUpdatedItemIdsAtom`: 更新対象アイテムID（nullは全体更新）
+  - `usePageTreeInformationUpdate()`: 更新通知（notifyUpdateItems, notifyUpdateAllTrees）
+  - `usePageTreeRevalidationEffect()`: 更新検知と再取得実行
 
 ### 3.5 Checkboxes（AI Assistant用）
 
@@ -617,3 +656,4 @@ await mutatePageTree();
 - 2025-12-08: Drag and Drop実装完了、ディレクトリ構成更新
 - 2025-12-08: リアルタイム更新（Socket.io統合）実装完了
 - 2025-12-08: headless-tree キャッシュ無効化の知見を追加（invalidateChildrenIds の optimistic パラメータ）
+- 2025-12-08: Socket.io更新の設計方針を明確化（バッジ更新とツリー構造更新の分離）
