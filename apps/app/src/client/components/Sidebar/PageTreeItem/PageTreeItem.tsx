@@ -10,11 +10,12 @@ import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
 import { toastSuccess } from '~/client/util/toastr';
+import type { TreeItemProps } from '~/features/page-tree';
 import {
   usePageTreeInformationUpdate, usePageRename, usePageCreate,
   usePlaceholderRenameEffect,
 } from '~/features/page-tree';
-import { TreeNameInput } from '~/features/page-tree/components';
+import { TreeNameInput, TreeItemLayout } from '~/features/page-tree/components';
 import type { IPageForItem } from '~/interfaces/page';
 import type { OnDeletedFunction, OnDuplicatedFunction } from '~/interfaces/ui';
 import { useCurrentPagePath, useFetchCurrentPage } from '~/states/page';
@@ -25,8 +26,6 @@ import { mutateAllPageInfo } from '~/stores/page';
 import { mutatePageTree, mutatePageList } from '~/stores/page-listing';
 import { mutateSearching } from '~/stores/search';
 
-import type { TreeItemProps } from '~/features/page-tree/interfaces';
-import { TreeItemLayout } from '~/features/page-tree/components';
 
 import { CountBadgeForPageTreeItem } from './CountBadgeForPageTreeItem';
 import { usePageItemControl } from './use-page-item-control';
