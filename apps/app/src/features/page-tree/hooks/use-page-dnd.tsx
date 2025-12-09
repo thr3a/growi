@@ -117,7 +117,9 @@ export type UsePageDndProperties = {
  *
  * @returns Object with canDrag, canDrop, onDrop handlers and renderDragLine
  */
-export const usePageDnd = (isEnabled: boolean = false): UsePageDndProperties => {
+export const usePageDnd = (
+  isEnabled: boolean = false,
+): UsePageDndProperties => {
   const { notifyUpdateItems } = usePageTreeInformationUpdate();
 
   /**
@@ -266,4 +268,3 @@ export const usePageDnd = (isEnabled: boolean = false): UsePageDndProperties => 
     [canDrag, canDrop, onDrop, renderDragLine],
   );
 };
-
