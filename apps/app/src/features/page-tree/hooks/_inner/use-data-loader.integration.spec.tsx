@@ -23,7 +23,10 @@ import type { IPageForTreeItem } from '~/interfaces/page';
 import { CREATING_PAGE_VIRTUAL_ID } from '../../constants/_inner';
 import { invalidatePageTreeChildren } from '../../services';
 // Re-import the actions hook to use real implementation
-import { usePageTreeCreateActions } from '../../states/_inner';
+import {
+  resetCreatingFlagForTesting,
+  usePageTreeCreateActions,
+} from '../../states/_inner';
 import { useDataLoader } from './use-data-loader';
 
 /**
@@ -33,6 +36,14 @@ type DataLoaderWithChildrenData = ReturnType<typeof useDataLoader> & {
   getChildrenWithData: (
     itemId: string,
   ) => Promise<{ id: string; data: IPageForTreeItem }[]>;
+};
+
+/**
+ * Combined hook result type for testing both hooks together
+ */
+type CombinedHookResult = {
+  dataLoader: ReturnType<typeof useDataLoader>;
+  actions: ReturnType<typeof usePageTreeCreateActions>;
 };
 
 // Mock the apiv3Get function
@@ -63,9 +74,9 @@ const createMockPage = (
  * Helper to get typed dataLoader with getChildrenWithData
  */
 const getDataLoader = (result: {
-  current: ReturnType<typeof useDataLoader>;
+  current: CombinedHookResult;
 }): DataLoaderWithChildrenData => {
-  return result.current as DataLoaderWithChildrenData;
+  return result.current.dataLoader as DataLoaderWithChildrenData;
 };
 
 describe('use-data-loader integration with Jotai atoms', () => {
@@ -88,6 +99,8 @@ describe('use-data-loader integration with Jotai atoms', () => {
     store = createStore();
     // Clear pending requests before each test
     invalidatePageTreeChildren();
+    // Reset the creating flag for testing
+    resetCreatingFlagForTesting();
     // Reset mock
     mockApiv3Get.mockReset();
   });
@@ -101,34 +114,36 @@ describe('use-data-loader integration with Jotai atoms', () => {
 
       const wrapper = createWrapper();
 
-      // Render both hooks in the same wrapper to share the store
-      const { result: dataLoaderResult } = renderHook(
-        () => useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
-        { wrapper },
-      );
-
-      const { result: actionsResult } = renderHook(
-        () => usePageTreeCreateActions(),
+      // Render both hooks together in the same component to share the store
+      // and ensure refs are updated when atom state changes
+      const { result, rerender } = renderHook(
+        (): CombinedHookResult => ({
+          dataLoader: useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+          actions: usePageTreeCreateActions(),
+        }),
         { wrapper },
       );
 
       // First call - no placeholder (creating state is null)
       const childrenBefore =
-        await getDataLoader(dataLoaderResult).getChildrenWithData('parent-id');
+        await getDataLoader(result).getChildrenWithData('parent-id');
       expect(childrenBefore).toHaveLength(1);
       expect(childrenBefore[0].id).toBe('existing-child');
 
       // Set creating state using the actions hook
       act(() => {
-        actionsResult.current.startCreating('parent-id', '/parent');
+        result.current.actions.startCreating('parent-id', '/parent');
       });
+
+      // Rerender to update refs with the new atom state
+      rerender();
 
       // Clear pending requests to force re-fetch
       invalidatePageTreeChildren(['parent-id']);
 
       // Second call - should have placeholder because atom state changed
       const childrenAfter =
-        await getDataLoader(dataLoaderResult).getChildrenWithData('parent-id');
+        await getDataLoader(result).getChildrenWithData('parent-id');
       expect(childrenAfter).toHaveLength(2);
       expect(childrenAfter[0].id).toBe(CREATING_PAGE_VIRTUAL_ID);
       expect(childrenAfter[0].data.parent).toBe('parent-id');
@@ -144,37 +159,42 @@ describe('use-data-loader integration with Jotai atoms', () => {
 
       const wrapper = createWrapper();
 
-      const { result: dataLoaderResult } = renderHook(
-        () => useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
-        { wrapper },
-      );
-
-      const { result: actionsResult } = renderHook(
-        () => usePageTreeCreateActions(),
+      // Render both hooks together in the same component
+      const { result, rerender } = renderHook(
+        (): CombinedHookResult => ({
+          dataLoader: useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+          actions: usePageTreeCreateActions(),
+        }),
         { wrapper },
       );
 
       // Set creating state
       act(() => {
-        actionsResult.current.startCreating('parent-id', '/parent');
+        result.current.actions.startCreating('parent-id', '/parent');
       });
+
+      // Rerender to update refs
+      rerender();
 
       // Clear pending requests and fetch - should have placeholder
       invalidatePageTreeChildren(['parent-id']);
       const childrenWithPlaceholder =
-        await getDataLoader(dataLoaderResult).getChildrenWithData('parent-id');
+        await getDataLoader(result).getChildrenWithData('parent-id');
       expect(childrenWithPlaceholder).toHaveLength(2);
       expect(childrenWithPlaceholder[0].id).toBe(CREATING_PAGE_VIRTUAL_ID);
 
       // Cancel creating
       act(() => {
-        actionsResult.current.cancelCreating();
+        result.current.actions.cancelCreating();
       });
+
+      // Rerender to update refs
+      rerender();
 
       // Clear pending requests and fetch - should NOT have placeholder
       invalidatePageTreeChildren(['parent-id']);
       const childrenAfterCancel =
-        await getDataLoader(dataLoaderResult).getChildrenWithData('parent-id');
+        await getDataLoader(result).getChildrenWithData('parent-id');
       expect(childrenAfterCancel).toHaveLength(1);
       expect(childrenAfterCancel[0].id).toBe('existing-child');
     });
@@ -182,34 +202,36 @@ describe('use-data-loader integration with Jotai atoms', () => {
     test('dataLoader reference should remain stable when creating state changes via atom', async () => {
       const wrapper = createWrapper();
 
-      const { result: dataLoaderResult } = renderHook(
-        () => useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+      // Render both hooks together in the same component
+      const { result, rerender } = renderHook(
+        (): CombinedHookResult => ({
+          dataLoader: useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+          actions: usePageTreeCreateActions(),
+        }),
         { wrapper },
       );
 
-      const { result: actionsResult } = renderHook(
-        () => usePageTreeCreateActions(),
-        { wrapper },
-      );
-
-      const firstDataLoader = dataLoaderResult.current;
+      const firstDataLoader = result.current.dataLoader;
 
       // Change creating state via atom
       act(() => {
-        actionsResult.current.startCreating('some-parent', '/some-parent');
+        result.current.actions.startCreating('some-parent', '/some-parent');
       });
 
-      const secondDataLoader = dataLoaderResult.current;
+      // Rerender to update refs
+      rerender();
+
+      const secondDataLoader = result.current.dataLoader;
 
       // DataLoader reference should be STABLE (same reference)
       // This is critical to prevent headless-tree from refetching all data
       expect(firstDataLoader).toBe(secondDataLoader);
     });
 
-    test('should correctly read state changes without rerender', async () => {
-      // This test verifies that the dataLoader callbacks can read the latest
-      // atom state even without a React rerender. This is the critical behavior
-      // that was broken when using getDefaultStore() incorrectly.
+    test('should correctly read state changes after rerender', async () => {
+      // This test verifies that the dataLoader callbacks can read the updated
+      // atom state after a React rerender. The refs in useDataLoader are updated
+      // during the render cycle, so a rerender is needed to see state changes.
 
       const mockChildren = [
         createMockPage('existing-child', '/parent/existing'),
@@ -218,23 +240,25 @@ describe('use-data-loader integration with Jotai atoms', () => {
 
       const wrapper = createWrapper();
 
-      const { result: dataLoaderResult } = renderHook(
-        () => useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
-        { wrapper },
-      );
-
-      const { result: actionsResult } = renderHook(
-        () => usePageTreeCreateActions(),
+      // Render both hooks together in the same component
+      const { result, rerender } = renderHook(
+        (): CombinedHookResult => ({
+          dataLoader: useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+          actions: usePageTreeCreateActions(),
+        }),
         { wrapper },
       );
 
       // Get the dataLoader reference BEFORE state change
-      const dataLoader = getDataLoader(dataLoaderResult);
+      const dataLoader = getDataLoader(result);
 
       // Set creating state
       act(() => {
-        actionsResult.current.startCreating('parent-id', '/parent');
+        result.current.actions.startCreating('parent-id', '/parent');
       });
+
+      // Rerender to update refs
+      rerender();
 
       // Clear pending requests
       invalidatePageTreeChildren(['parent-id']);
@@ -256,25 +280,25 @@ describe('use-data-loader integration with Jotai atoms', () => {
 
       const wrapper = createWrapper();
 
-      const { result: dataLoaderResult } = renderHook(
-        () => useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+      // Render both hooks together in the same component
+      const { result, rerender } = renderHook(
+        (): CombinedHookResult => ({
+          dataLoader: useDataLoader(ROOT_PAGE_ID, ALL_PAGES_COUNT),
+          actions: usePageTreeCreateActions(),
+        }),
         { wrapper },
       );
 
-      const { result: actionsResult } = renderHook(
-        () => usePageTreeCreateActions(),
-        { wrapper },
-      );
-
-      const dataLoader = getDataLoader(dataLoaderResult);
+      const dataLoader = getDataLoader(result);
 
       // Sequence: start -> cancel -> start again -> cancel
       // Each time, the dataLoader should correctly reflect the state
 
       // 1. Start creating
       act(() => {
-        actionsResult.current.startCreating('parent-id', '/parent');
+        result.current.actions.startCreating('parent-id', '/parent');
       });
+      rerender();
       invalidatePageTreeChildren(['parent-id']);
       let children = await dataLoader.getChildrenWithData('parent-id');
       expect(children).toHaveLength(2);
@@ -282,8 +306,9 @@ describe('use-data-loader integration with Jotai atoms', () => {
 
       // 2. Cancel
       act(() => {
-        actionsResult.current.cancelCreating();
+        result.current.actions.cancelCreating();
       });
+      rerender();
       invalidatePageTreeChildren(['parent-id']);
       children = await dataLoader.getChildrenWithData('parent-id');
       expect(children).toHaveLength(1);
@@ -291,8 +316,9 @@ describe('use-data-loader integration with Jotai atoms', () => {
 
       // 3. Start again with different parent
       act(() => {
-        actionsResult.current.startCreating('other-parent', '/other');
+        result.current.actions.startCreating('other-parent', '/other');
       });
+      rerender();
       invalidatePageTreeChildren(['parent-id', 'other-parent']);
 
       // Original parent should NOT have placeholder
@@ -308,8 +334,9 @@ describe('use-data-loader integration with Jotai atoms', () => {
 
       // 4. Cancel again
       act(() => {
-        actionsResult.current.cancelCreating();
+        result.current.actions.cancelCreating();
       });
+      rerender();
       invalidatePageTreeChildren(['other-parent']);
       mockApiv3Get.mockResolvedValueOnce({ data: { children: [] } });
       children = await dataLoader.getChildrenWithData('other-parent');
