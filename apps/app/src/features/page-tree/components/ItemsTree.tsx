@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTree } from '@headless-tree/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useTranslation } from 'next-i18next';
@@ -11,8 +11,6 @@ import { useSWRxRootPage } from '~/stores/page-listing';
 import { ROOT_PAGE_VIRTUAL_ID } from '../constants/_inner';
 import {
   useAutoExpandAncestors,
-  useCheckboxChangeNotification,
-  useCheckboxState,
   useDataLoader,
   useExpandParentOnCreate,
   useScrollToSelectedItem,
@@ -20,7 +18,6 @@ import {
   useTreeItemHandlers,
   useTreeRevalidation,
 } from '../hooks/_inner';
-import { usePageDnd } from '../hooks/use-page-dnd';
 import { useSocketUpdateDescCount } from '../hooks/use-socket-update-desc-count';
 import type { TreeItemProps } from '../interfaces';
 import { useTriggerTreeRebuild } from '../states/_inner';
@@ -84,18 +81,16 @@ export const ItemsTree: FC<Props> = (props: Props) => {
   const { getItemName, isItemFolder, handleRename, creatingParentId } =
     useTreeItemHandlers(triggerTreeRebuild);
 
-  // Configure tree features based on options
-  const features = useTreeFeatures({
+  // Configure tree features and get checkbox state and D&D handlers
+  const { features, checkboxProperties, dndProperties } = useTreeFeatures({
     enableRenaming,
     enableCheckboxes,
     enableDragAndDrop,
+    initialCheckedItems,
   });
 
-  // Page move (drag and drop) handlers
-  const { canDrag, canDrop, onDrop, renderDragLine } = usePageDnd(enableDragAndDrop);
-
-  // Subscribe to Socket.io UpdateDescCount events
-  useSocketUpdateDescCount();
+  const { setCheckedItems, createNotifyEffect } = checkboxProperties;
+  const { canDrag, canDrop, onDrop, renderDragLine } = dndProperties;
 
   // Wrap onDrop to show toast notifications
   const handleDrop = useCallback(
@@ -111,12 +106,6 @@ export const ItemsTree: FC<Props> = (props: Props) => {
     },
     [onDrop, t],
   );
-
-  // Manage checkbox state (must be called before useTree to get setCheckedItems)
-  const { checkedItemIds, setCheckedItems } = useCheckboxState({
-    enabled: enableCheckboxes,
-    initialCheckedItems,
-  });
 
   // Stable initial state
   // biome-ignore lint/correctness/useExhaustiveDependencies: initialCheckedItems is intentionally not in deps to avoid reinitializing on every change
@@ -146,17 +135,19 @@ export const ItemsTree: FC<Props> = (props: Props) => {
       canDrag,
       canDrop,
       onDrop: handleDrop,
-      canDropInbetween: false, // No reordering, only drop as child
+      canDropInbetween: false,
     }),
   });
 
   // Notify parent when checked items change
-  useCheckboxChangeNotification({
-    enabled: enableCheckboxes,
-    checkedItemIds,
+  // biome-ignore lint/correctness/useExhaustiveDependencies: createNotifyEffect already includes checkedItemIds in its closure
+  useEffect(createNotifyEffect(tree, onCheckedItemsChange), [
+    createNotifyEffect,
     tree,
-    onCheckedItemsChange,
-  });
+  ]);
+
+  // Subscribe to Socket.io UpdateDescCount events
+  useSocketUpdateDescCount();
 
   // Handle tree revalidation and items count tracking
   useTreeRevalidation({ tree, triggerTreeRebuild });
@@ -232,7 +223,7 @@ export const ItemsTree: FC<Props> = (props: Props) => {
           </div>
         );
       })}
-      {/* Drag line indicator (rendered by usePageDnd when D&D is enabled) */}
+      {/* Drag line indicator (rendered by dndProperties when D&D is enabled) */}
       {renderDragLine(tree)}
     </div>
   );

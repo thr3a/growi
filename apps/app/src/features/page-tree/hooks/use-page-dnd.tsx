@@ -86,7 +86,7 @@ const DragLine: FC<DragLineProps> = ({ style, className }) => (
   />
 );
 
-export type UsePageDndResult = {
+export type UsePageDndProperties = {
   canDrag: (items: ItemInstance<IPageForTreeItem>[]) => boolean;
   canDrop: (
     items: ItemInstance<IPageForTreeItem>[],
@@ -117,7 +117,7 @@ export type UsePageDndResult = {
  *
  * @returns Object with canDrag, canDrop, onDrop handlers and renderDragLine
  */
-export const usePageDnd = (isEnabled: boolean = false): UsePageDndResult => {
+export const usePageDnd = (isEnabled: boolean = false): UsePageDndProperties => {
   const { notifyUpdateItems } = usePageTreeInformationUpdate();
 
   /**
