@@ -400,9 +400,6 @@ importers:
       ejs:
         specifier: ^3.1.10
         version: 3.1.10
-      esa-node:
-        specifier: ^0.2.2
-        version: 0.2.2
       escape-string-regexp:
         specifier: ^4.0.0
         version: 4.0.0
@@ -6606,10 +6603,6 @@ packages:
   axios-retry@3.9.1:
     resolution: {integrity: sha512-8PJDLJv7qTTMMwdnbMvrLYuvB47M81wRtxQmEdV5w4rgbTXTt+vtPkXwajOfOdSyv/wZICJOC+/UhXH4aQ/R+w==}
 
-  axios@0.18.1:
-    resolution: {integrity: sha512-0BfJq4NSfQXd+SkFdrvFbG7addhYSBA2mQwISr46pD6E5iqkWg02RAs8vyTT/j0RTnoYmeXauBuSv1qKwR179g==}
-    deprecated: Critical security vulnerability fixed in v0.21.1. For more information, see https://github.com/axios/axios/pull/3410
-
   axios@0.21.4:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
 
@@ -8619,9 +8612,6 @@ packages:
   es6-promise@3.3.1:
     resolution: {integrity: sha512-SOp9Phqvqn7jtEUxPWdWfWoLmyt2VaJ6MpvP9Comy1MceMXqE6bxvaTu4iaxpYYPzhny28Lc+M87/c2cPK6lDg==}
 
-  esa-node@0.2.2:
-    resolution: {integrity: sha512-QIwO62/WezCVKzKBY0chpPOreI//rqdeZyfPbg7bFLqaQKcVxYLoq84KhsXgjmfypOUtjUPXa2BE5cf3yqlnhQ==}
-
   esbuild@0.21.5:
     resolution: {integrity: sha512-mg3OPMV4hXywwpoDxu3Qda5xCKQi+vCTZq8S9J/EpkhB2HzKXq4SNFZE3+NK93JYxc8VMSep+lOUSC/RVKaBqw==}
     engines: {node: '>=12'}
@@ -9178,10 +9168,6 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
-
-  follow-redirects@1.5.10:
-    resolution: {integrity: sha512-0V5l4Cizzvqt5D44aTXbFZz+FtyXV1vrDN6qrelxtfYQKW0KO0W2T/hkE8xvGa/540LkZlkaUjO4ailYTFtHVQ==}
-    engines: {node: '>=4.0'}
 
   for-each@0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
@@ -22509,13 +22495,6 @@ snapshots:
       '@babel/runtime': 7.25.4
       is-retry-allowed: 2.2.0
 
-  axios@0.18.1:
-    dependencies:
-      follow-redirects: 1.5.10
-      is-buffer: 2.0.5
-    transitivePeerDependencies:
-      - supports-color
-
   axios@0.21.4:
     dependencies:
       follow-redirects: 1.15.9(debug@4.4.1)
@@ -24458,12 +24437,6 @@ snapshots:
 
   es6-promise@3.3.1: {}
 
-  esa-node@0.2.2:
-    dependencies:
-      axios: 0.18.1
-    transitivePeerDependencies:
-      - supports-color
-
   esbuild@0.21.5:
     optionalDependencies:
       '@esbuild/aix-ppc64': 0.21.5
@@ -25218,12 +25191,6 @@ snapshots:
   follow-redirects@1.15.9(debug@4.4.1):
     optionalDependencies:
       debug: 4.4.1(supports-color@5.5.0)
-
-  follow-redirects@1.5.10:
-    dependencies:
-      debug: 3.1.0
-    transitivePeerDependencies:
-      - supports-color
 
   for-each@0.3.3:
     dependencies:
