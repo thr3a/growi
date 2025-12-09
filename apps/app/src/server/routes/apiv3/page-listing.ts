@@ -205,62 +205,29 @@ const routerFactory = (crowi: Crowi): Router => {
   router.get(
     '/item',
     accessTokenParser([SCOPE.READ.FEATURES.PAGE], { acceptLegacy: true }),
-    validator.pageIdsOrPathRequired,
-    validator.infoParams,
+    loginRequired,
+    validator.pageIdOrPathRequired,
     apiV3FormValidator,
     async (req: AuthorizedRequest, res: ApiV3Response) => {
-      const {
-        pageIds,
-        path,
-        attachBookmarkCount: attachBookmarkCountParam,
-        attachShortBody: attachShortBodyParam,
-      } = req.query;
+      const { id } = req.query;
 
-      const attachBookmarkCount: boolean = attachBookmarkCountParam === 'true';
-      const attachShortBody: boolean = attachShortBodyParam === 'true';
-
-      const Page = mongoose.model<HydratedDocument<PageDocument>, PageModel>(
-        'Page',
-      );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const Bookmark = mongoose.model<any, any>('Bookmark');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const pageService = crowi.pageService;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const pageGrantService: IPageGrantService = crowi.pageGrantService!;
+      if (id == null) {
+        return res.apiv3Err(new ErrorV3('id parameter is required'));
+      }
 
       try {
-        const pages =
-          pageIds != null
-            ? await Page.findByIdsAndViewer(
-                pageIds as string[],
-                req.user,
-                null,
-                true,
-              )
-            : await Page.findByPathAndViewer(
-                path as string,
-                req.user,
-                null,
-                false,
-                true,
-              );
+        const Page = mongoose.model<HydratedDocument<PageDocument>, PageModel>(
+          'Page',
+        );
+        const page = await Page.findByIdAndViewer(
+          id as string,
+          req.user,
+          null,
+          true,
+        );
 
-        const foundIds = pages.map((page) => page._id);
-
-        let shortBodiesMap;
-        if (attachShortBody) {
-          shortBodiesMap = await pageService.shortBodiesMapByPageIds(
-            foundIds,
-            req.user,
-          );
-        }
-
-        let bookmarkCountMap;
-        if (attachBookmarkCount) {
-          bookmarkCountMap = (await Bookmark.getPageIdToCountMap(
-            foundIds,
-          )) as Record<string, number>;
+        if (page == null) {
+          return res.apiv3Err(new ErrorV3('Page not found'), 404);
         }
 
         const item: IPageForTreeItem = {
