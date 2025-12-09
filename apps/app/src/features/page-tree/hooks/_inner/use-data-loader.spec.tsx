@@ -30,8 +30,9 @@ let mockCreatingParentId: string | null = null;
 let mockCreatingParentPath: string | null = null;
 
 // Mock the page-tree-create state hooks
-vi.mock('../states/page-tree-create', async () => {
-  const actual = await vi.importActual('../states/page-tree-create');
+// Note: use-data-loader.ts imports from '../../states/_inner' which re-exports from page-tree-create.ts
+vi.mock('../../states/_inner/page-tree-create', async () => {
+  const actual = await vi.importActual('../../states/_inner/page-tree-create');
   return {
     ...actual,
     useCreatingParentId: () => mockCreatingParentId,
