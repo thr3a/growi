@@ -4336,7 +4336,7 @@ class PageService implements IPageService {
 
     // https://regex101.com/r/KYZWls/1
     // ex. /trash/.*
-    const regexp = /^\/trash\\/.*$/;
+    const regexp = /^\/trash\/.*$/;
     const queryBuilder = new PageQueryBuilder(Page.find({ path: { $regex: regexp } }), true);
 
     await queryBuilder.addViewerCondition(user, userGroups);
