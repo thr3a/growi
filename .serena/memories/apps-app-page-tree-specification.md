@@ -39,13 +39,13 @@ src/features/page-tree/
 │       ├── use-data-loader.spec.tsx
 │       ├── use-data-loader.integration.spec.tsx
 │       ├── use-scroll-to-selected-item.ts  # スクロール制御フック
-│       ├── use-tree-features.ts            # Feature設定フック
+│       ├── use-tree-features.ts            # Feature統合フック（checkbox・DnD含む）
 │       ├── use-tree-revalidation.ts        # ツリー再検証フック
 │       ├── use-tree-item-handlers.tsx      # アイテムハンドラーフック
 │       ├── use-auto-expand-ancestors.ts    # 祖先自動展開フック
 │       ├── use-auto-expand-ancestors.spec.tsx
 │       ├── use-expand-parent-on-create.ts  # 作成時親展開フック
-│       ├── use-checkbox-state.ts           # チェックボックス状態フック
+│       ├── use-checkbox.ts                 # チェックボックス状態フック
 │       └── index.ts
 ├── interfaces/
 │   └── index.ts                            # TreeItemProps, TreeItemToolProps
@@ -247,11 +247,15 @@ const { isCreatingChild, CreateInputComponent, startCreating } = usePageCreate(i
 
 #### 主要コンポーネント
 
-- `usePageDnd()`: D&Dロジックを提供するフック
+- `usePageDnd(isEnabled)`: D&Dロジックを提供するフック（`UsePageDndProperties`を返す）
   - `canDrag`: ドラッグ可否判定
   - `canDrop`: ドロップ可否判定
   - `onDrop`: ドロップ時の処理（APIコール、ツリー更新）
-  - `renderDragLine`: ドラッグライン描画
+  - `renderDragLine`: ドラッグライン描画（treeインスタンスを引数に取る）
+
+**統合方法**:
+- `useTreeFeatures`が内部で`usePageDnd`を呼び出し、`dndProperties`として返す
+- ItemsTree側で`dndProperties.renderDragLine(tree)`を呼び出してドラッグライン表示
 
 #### バリデーションロジック
 
@@ -267,6 +271,14 @@ const { isCreatingChild, CreateInputComponent, startCreating } = usePageCreate(i
 
 - `operation__blocked`エラー: 「このページは現在移動できません」トースト表示
 - その他のエラー: 「ページの移動に失敗しました」トースト表示
+
+#### ドロップ処理の流れ
+
+1. 移動APIコール: `/pages/rename`エンドポイントで各ページを新しいパスに移動
+2. SWRキャッシュ更新: `mutatePageTree()`でページツリーデータを再取得
+3. headless-tree更新: `notifyUpdateItems()`で親ノードの子リストを無効化
+4. ターゲット更新: `targetItem.invalidateItemData()`でdescendantCountを再取得
+5. 自動展開: `targetItem.expand()`でドロップ先を展開
 
 #### 制限事項
 
@@ -384,6 +396,17 @@ ItemsTreeのcheckboxesオプションを使用。
 
 #### 実装詳細
 
+**フック構成**:
+- `useTreeFeatures`: feature設定とチェックボックス・D&D機能を統合管理
+- `useCheckbox`: チェックボックス状態管理（`checkedItemIds`, `setCheckedItems`, `createNotifyEffect`）
+- `createNotifyEffect`: 親コンポーネントへの変更通知用ヘルパー関数を提供
+
+**循環依存の回避**:
+- `useTreeFeatures`はtreeインスタンスに依存しない
+- `createNotifyEffect`がtreeインスタンスとコールバックを受け取り、useEffectのコールバック関数を返す
+- ItemsTree側で`useEffect(createNotifyEffect(tree, onCheckedItemsChange), [createNotifyEffect, tree])`を呼び出す
+
+**設定**:
 - `checkboxesFeature` を条件付きで追加
 - `propagateCheckedState: false` で子への伝播を無効化
 - `canCheckFolders: true` でフォルダもチェック可能
@@ -657,3 +680,4 @@ await mutatePageTree();
 - 2025-12-08: リアルタイム更新（Socket.io統合）実装完了
 - 2025-12-08: headless-tree キャッシュ無効化の知見を追加（invalidateChildrenIds の optimistic パラメータ）
 - 2025-12-08: Socket.io更新の設計方針を明確化（バッジ更新とツリー構造更新の分離）
+- 2025-12-09: useTreeFeaturesリファクタリング完了（checkboxとDnD機能を統合、循環依存を回避）
