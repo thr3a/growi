@@ -127,7 +127,6 @@
     "diff_match_patch": "^0.1.1",
     "dotenv-flow": "^3.2.0",
     "ejs": "^3.1.10",
-    "esa-node": "^0.2.2",
     "escape-string-regexp": "^4.0.0",
     "expose-gc": "^1.0.0",
     "express": "^4.20.0",

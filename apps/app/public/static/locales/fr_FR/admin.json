@@ -577,23 +577,11 @@
         }
       }
     },
-    "esa_settings": {
-      "team_name": "Nom de l'équipe",
-      "access_token": "Jeton d'accès",
-      "test_connection": "Essai de la connection esa"
-    },
-    "qiita_settings": {
-      "team_name": "Nom de l'équipe",
-      "access_token": "Jeton d'accès",
-      "test_connection": "Essai de la connection qiita:team"
-    },
     "import": "Importer",
     "skip_username_and_email_when_overlapped": "Passe le nom et adresse courriel exactes dans le nouvel environnement",
     "prepare_new_account_for_migration": "Préparer le compte pour la migration",
     "archive_data_import_detail": "En savoir plus",
-    "admin_archive_data_import_guide_url": "https://docs.growi.org/en/admin-guide/management-cookbook/import.html",
-    "page_skip": "Les pages ayant le nom d'une page déjà existante ne seront pas importées.",
-    "Directory_hierarchy_tag": "Tag de hiérarchie"
+    "admin_archive_data_import_guide_url": "https://docs.growi.org/en/admin-guide/management-cookbook/import.html"
   },
   "export_management": {
     "export_archive_data": "Archive de données d'export",
