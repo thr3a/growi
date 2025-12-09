@@ -59,6 +59,7 @@ module.exports = {
     'src/server/routes/apiv3/security-settings/**',
     'src/server/routes/apiv3/app-settings/**',
     'src/server/routes/apiv3/page/**',
+    'src/server/routes/apiv3/*.js',
     'src/server/routes/apiv3/*.ts',
     'src/server/service/*.ts',
     'src/server/service/*.js',
