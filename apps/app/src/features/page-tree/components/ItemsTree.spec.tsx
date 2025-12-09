@@ -50,6 +50,10 @@ vi.mock('../states/page-tree-create', async () => {
 vi.mock('../states/page-tree-update', () => ({
   usePageTreeInformationGeneration: () => 1,
   usePageTreeRevalidationEffect: () => {},
+  usePageTreeInformationUpdate: () => ({
+    notifyUpdateItems: vi.fn(),
+    notifyUpdateAllTrees: vi.fn(),
+  }),
 }));
 
 // Mock usePageRename
