@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTree } from '@headless-tree/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useTranslation } from 'next-i18next';
@@ -20,7 +20,7 @@ import {
   useTreeItemHandlers,
   useTreeRevalidation,
 } from '../hooks/_inner';
-import { usePageDnd, useSetEnableDragAndDrop } from '../hooks/use-page-dnd';
+import { usePageDnd } from '../hooks/use-page-dnd';
 import { useSocketUpdateDescCount } from '../hooks/use-socket-update-desc-count';
 import type { TreeItemProps } from '../interfaces';
 import { useTriggerTreeRebuild } from '../states/_inner';
@@ -92,16 +92,10 @@ export const ItemsTree: FC<Props> = (props: Props) => {
   });
 
   // Page move (drag and drop) handlers
-  const { canDrag, canDrop, onDrop, renderDragLine } = usePageDnd();
-  const setEnableDragAndDrop = useSetEnableDragAndDrop();
+  const { canDrag, canDrop, onDrop, renderDragLine } = usePageDnd(enableDragAndDrop);
 
   // Subscribe to Socket.io UpdateDescCount events
   useSocketUpdateDescCount();
-
-  // Set enable state for D&D
-  useEffect(() => {
-    setEnableDragAndDrop(enableDragAndDrop);
-  }, [enableDragAndDrop, setEnableDragAndDrop]);
 
   // Wrap onDrop to show toast notifications
   const handleDrop = useCallback(

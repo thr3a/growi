@@ -6,7 +6,6 @@ import type {
   ItemInstance,
   TreeInstance,
 } from '@headless-tree/core';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { basename, join } from 'pathe';
 
 import { apiv3Put } from '~/client/util/apiv3-client';
@@ -70,11 +69,6 @@ export type PageMoveResult = {
 };
 
 /**
- * Atom to track if drag and drop is enabled
- */
-const enableDragAndDropAtom = atom(false);
-
-/**
  * Props for DragLine component
  */
 type DragLineProps = {
@@ -103,10 +97,6 @@ export type UsePageDndResult = {
     target: DragTarget<IPageForTreeItem>,
   ) => Promise<PageMoveResult>;
   /**
-   * Whether drag and drop is currently enabled
-   */
-  isEnabled: boolean;
-  /**
    * Render the drag line indicator
    * @param tree - The tree instance from headless-tree
    * @returns A DragLine component with proper positioning, or null if D&D is disabled
@@ -121,16 +111,14 @@ export type UsePageDndResult = {
  * - Determine if items can be dragged (canDrag)
  * - Determine if items can be dropped on a target (canDrop)
  * - Execute page move API call and tree refresh (onDrop)
- * - Track enable state (isEnabled)
  * - Provide drag line rendering (renderDragLine)
  *
  * Note: Toast notifications should be handled by the caller based on PageMoveResult
  *
- * @returns Object with canDrag, canDrop, onDrop handlers, isEnabled state, and renderDragLine
+ * @returns Object with canDrag, canDrop, onDrop handlers and renderDragLine
  */
-export const usePageDnd = (): UsePageDndResult => {
+export const usePageDnd = (isEnabled: boolean = false): UsePageDndResult => {
   const { notifyUpdateItems } = usePageTreeInformationUpdate();
-  const isEnabled = useAtomValue(enableDragAndDropAtom);
 
   /**
    * Determine if items can be dragged
@@ -273,17 +261,9 @@ export const usePageDnd = (): UsePageDndResult => {
       canDrag,
       canDrop,
       onDrop,
-      isEnabled,
       renderDragLine,
     }),
-    [canDrag, canDrop, onDrop, isEnabled, renderDragLine],
+    [canDrag, canDrop, onDrop, renderDragLine],
   );
 };
 
-/**
- * Hook to set drag and drop enabled state
- * Used by tree container to enable/disable D&D feature
- */
-export const useSetEnableDragAndDrop = (): ((enabled: boolean) => void) => {
-  return useSetAtom(enableDragAndDropAtom);
-};
