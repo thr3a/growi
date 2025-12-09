@@ -1,7 +1,6 @@
 import type { IPageToDeleteWithMeta } from '@growi/core';
 import type { CheckboxesFeatureDef, ItemInstance } from '@headless-tree/core';
 
-import type { InputValidationResult } from '~/client/util/use-input-validator';
 import type { IPageForTreeItem } from '~/interfaces/page';
 import type { IPageForPageDuplicateModal } from '~/states/ui/modal/page-duplicate';
 
@@ -17,11 +16,7 @@ type TreeItemBaseProps<
   onRenamed?(fromPath: string | undefined, toPath: string): void;
 };
 
-export type TreeItemToolProps = TreeItemBaseProps & {
-  stateHandlers?: {
-    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  };
-};
+export type TreeItemToolProps = TreeItemBaseProps;
 
 export type TreeItemWithCheckboxToolProps = TreeItemBaseProps<
   IPageForTreeItem,
@@ -44,7 +39,6 @@ export type TreeItemProps = TreeItemBaseProps & {
   customAlternativeComponents?: Array<
     React.FunctionComponent<TreeItemToolProps>
   >;
-  validateName?: (name: string) => InputValidationResult | null;
   onToggle?: () => void;
   onClick?(page: IPageForTreeItem): void;
   onWheelClick?(page: IPageForTreeItem): void;
