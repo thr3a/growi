@@ -1,6 +1,9 @@
 import type { FC } from 'react';
 
-import type { TreeItemProps, TreeItemToolProps } from '~/features/page-tree';
+import type {
+  TreeItemProps,
+  TreeItemWithCheckboxToolProps,
+} from '~/features/page-tree';
 import { TreeItemLayout } from '~/features/page-tree/components';
 
 import styles from './TreeItemWithCheckbox.module.scss';
@@ -9,20 +12,13 @@ const moduleClass = styles['page-tree-item'] ?? '';
 
 export const treeItemWithCheckboxSize = 36; // in px
 
-type TreeItemWithCheckboxProps = TreeItemProps & {
-  key?: React.Key | null;
-};
-
 // Checkbox component to be used as customEndComponents
-const TreeItemCheckbox: FC<TreeItemToolProps> = ({ item }) => {
-  // Get checkbox props from headless-tree
-  // biome-ignore lint/suspicious/noExplicitAny: checkboxesFeature adds these methods dynamically
-  const checkboxProps = (item as any).getCheckboxProps?.() ?? {};
+const TreeItemCheckbox: FC<TreeItemWithCheckboxToolProps> = ({ item }) => {
+  const checkboxProps = item.getCheckboxProps();
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
-    // biome-ignore lint/suspicious/noExplicitAny: checkboxesFeature adds these methods dynamically
-    (item as any).toggleCheckedState?.();
+    item.toggleCheckedState();
   };
 
   // Prevent click events from bubbling up to the li element
@@ -48,6 +44,10 @@ const TreeItemCheckbox: FC<TreeItemToolProps> = ({ item }) => {
       />
     </div>
   );
+};
+
+type TreeItemWithCheckboxProps = TreeItemProps & {
+  key?: React.Key | null;
 };
 
 export const TreeItemWithCheckbox: FC<TreeItemWithCheckboxProps> = (props) => {
