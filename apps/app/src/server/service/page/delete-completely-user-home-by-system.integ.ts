@@ -3,9 +3,12 @@ import mongoose from 'mongoose';
 import { vi } from 'vitest';
 import { mock } from 'vitest-mock-extended';
 
+import type { IPage } from '^/../../packages/core/dist';
+
 import { getPageSchema } from '~/server/models/obsolete-page';
 import { configManager } from '~/server/service/config-manager';
 
+import type { PageModel } from '../../models/page';
 import pageModel from '../../models/page';
 import { deleteCompletelyUserHomeBySystem } from './delete-completely-user-home-by-system';
 import type { IPageService } from './page-service';
@@ -25,7 +28,7 @@ const userSchema = new mongoose.Schema(
 const User = mongoose.model('User', userSchema);
 
 describe('delete-completely-user-home-by-system test', () => {
-  let Page;
+  let Page: PageModel;
 
   const initialEnv = process.env;
 
@@ -36,7 +39,7 @@ describe('delete-completely-user-home-by-system test', () => {
     // setup page model
     getPageSchema(null);
     pageModel(null);
-    Page = mongoose.model('Page');
+    Page = mongoose.model<IPage, PageModel>('Page');
 
     // setup config
     await configManager.loadConfigs();

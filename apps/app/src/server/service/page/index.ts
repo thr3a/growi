@@ -587,7 +587,7 @@ class PageService implements IPageService {
     /*
      * Resumable Operation
      */
-    let pageOp;
+    let pageOp: PageOperationDocument;
     try {
       pageOp = await PageOperation.create({
         actionType: PageActionType.Rename,
@@ -634,16 +634,16 @@ class PageService implements IPageService {
 
     // UserGroup & Owner validation
     // use the parent's grant when target page is an empty page
-    let grant;
-    let grantedUserIds;
-    let grantedGroupIds;
+    let grant: PageGrant;
+    let grantedUserIds: ObjectIdLike[] | undefined;
+    let grantedGroupIds: IGrantedGroup[];
     if (page.isEmpty) {
       const parent = await Page.findOne({ _id: page.parent });
       if (parent == null) {
         throw Error('parent not found');
       }
       grant = parent.grant;
-      grantedUserIds = parent.grantedUsers;
+      grantedUserIds = parent.grantedUsers.map(u => getIdForRef(u));
       grantedGroupIds = parent.grantedGroups;
     }
     else {
@@ -670,7 +670,7 @@ class PageService implements IPageService {
     await Page.takeOffFromTree(page._id);
 
     // 2. Find new parent
-    let newParent;
+    let newParent: PageDocument | undefined;
     // If renaming to under target, run getParentAndforceCreateEmptyTree to fill new ancestors
     if (this.isRenamingToUnderTarget(page.path, newPagePath)) {
       newParent = await this.getParentAndforceCreateEmptyTree(page, newPagePath);
@@ -682,7 +682,7 @@ class PageService implements IPageService {
     // 3. Put back target page to tree (also update the other attrs)
     const update: Partial<IPage> = {};
     update.path = newPagePath;
-    update.parent = newParent._id;
+    update.parent = newParent?._id;
     if (updateMetadata) {
       update.lastUpdateUser = user;
       update.updatedAt = new Date();
@@ -692,7 +692,7 @@ class PageService implements IPageService {
     // 5.increase parent's descendantCount.
     // see: https://dev.growi.org/62149d019311629d4ecd91cf#Handling%20of%20descendantCount%20in%20case%20of%20unexpected%20process%20interruption
     const nToIncreaseForOperationInterruption = 1;
-    await Page.incrementDescendantCountOfPageIds([newParent._id], nToIncreaseForOperationInterruption);
+    await Page.incrementDescendantCountOfPageIds([newParent?._id], nToIncreaseForOperationInterruption);
 
     // create page redirect
     if (options.createRedirectPage) {
@@ -907,18 +907,13 @@ class PageService implements IPageService {
       const newPagePath = page.path.replace(oldPagePathPrefix, newPagePathPrefix);
 
       // increment updatePathOperations
-      let update;
-      if (!page.isEmpty && updateMetadata) {
-        update = {
+      const update = !page.isEmpty && updateMetadata
+        ? {
           $set: { path: newPagePath, lastUpdateUser: user._id, updatedAt: new Date() },
-        };
-
-      }
-      else {
-        update = {
+        }
+        : {
           $set: { path: newPagePath },
         };
-      }
 
       if (!page.isEmpty && createRedirectPage) {
         // insert PageRedirect
@@ -1137,7 +1132,7 @@ class PageService implements IPageService {
     // 2. UserGroup & Owner validation
     // use the parent's grant when target page is an empty page
     let grant: PageGrant;
-    let grantedUserIds;
+    let grantedUserIds: ObjectIdLike[] | undefined;
     let grantedGroupIds: IGrantedGroup[];
 
     if (page.isEmpty) {
@@ -1146,12 +1141,12 @@ class PageService implements IPageService {
         throw Error('parent not found');
       }
       grant = parent.grant;
-      grantedUserIds = parent.grantedUsers;
+      grantedUserIds = parent.grantedUsers.map(u => getIdForRef(u));
       grantedGroupIds = onlyDuplicateUserRelatedResources ? (await this.pageGrantService.getUserRelatedGrantedGroups(parent, user)) : parent.grantedGroups;
     }
     else {
       grant = page.grant;
-      grantedUserIds = page.grantedUsers;
+      grantedUserIds = page.grantedUsers.map(u => getIdForRef(u));
       grantedGroupIds = onlyDuplicateUserRelatedResources ? (await this.pageGrantService.getUserRelatedGrantedGroups(page, user)) : page.grantedGroups;
     }
 
@@ -1210,7 +1205,7 @@ class PageService implements IPageService {
       /*
        * Resumable Operation
        */
-      let pageOp;
+      let pageOp: PageOperationDocument;
       try {
         pageOp = await PageOperation.create({
           actionType: PageActionType.Duplicate,
@@ -1629,7 +1624,7 @@ class PageService implements IPageService {
     const activity = await this.crowi.activityService.createActivity(parameters);
 
     // Delete target (only updating an existing document's properties )
-    let deletedPage;
+    let deletedPage: PageDocument | null;
     if (!page.isEmpty) {
       deletedPage = await this.deleteNonEmptyTarget(page, user);
     }
@@ -1651,7 +1646,7 @@ class PageService implements IPageService {
     await Page.removeLeafEmptyPagesRecursively(page.parent);
 
     if (isRecursively) {
-      let pageOp;
+      let pageOp: PageOperationDocument;
       try {
         pageOp = await PageOperation.create({
           actionType: PageActionType.Delete,
@@ -1784,18 +1779,13 @@ class PageService implements IPageService {
     pages.forEach((page) => {
       const newPath = Page.getDeletedPageName(page.path);
 
-      let operation;
-      // if empty, delete completely
-      if (page.isEmpty) {
-        operation = {
+      const operation = page.isEmpty
+        ? {
           deleteOne: {
             filter: { _id: page._id },
           },
-        };
-      }
-      // if not empty, set parent to null and update to trash
-      else {
-        operation = {
+        }
+        : {
           updateOne: {
             filter: { _id: page._id },
             update: {
@@ -1806,6 +1796,7 @@ class PageService implements IPageService {
           },
         };
 
+      if (!page.isEmpty) {
         insertPageRedirectOperations.push({
           insertOne: {
             document: {
@@ -1841,18 +1832,13 @@ class PageService implements IPageService {
     }
   }
 
-  /**
-   * Create delete stream and return deleted document count
-   */
+   /**
+    * Create delete stream and return deleted document count
+    */
   private async deleteDescendantsWithStream(targetPage, user, shouldUseV4Process = true, descendantsSubscribedSets?): Promise<number> {
-    let readStream;
-    if (shouldUseV4Process) {
-      readStream = await this.generateReadStreamToOperateOnlyDescendants(targetPage.path, user);
-    }
-    else {
-      const factory = new PageCursorsForDescendantsFactory(user, targetPage, true);
-      readStream = await factory.generateReadable();
-    }
+    const readStream = shouldUseV4Process
+      ? await this.generateReadStreamToOperateOnlyDescendants(targetPage.path, user)
+      : await new PageCursorsForDescendantsFactory(user, targetPage, true).generateReadable();
 
     const batchStream = createBatchStream(BULK_REINDEX_SIZE);
 
@@ -2000,7 +1986,7 @@ class PageService implements IPageService {
     }
 
     if (isRecursively) {
-      let pageOp;
+      let pageOp: PageOperationDocument;
       try {
         pageOp = await PageOperation.create({
           actionType: PageActionType.DeleteCompletely,
@@ -2100,19 +2086,13 @@ class PageService implements IPageService {
     return pages;
   }
 
-  /**
-   * Create delete completely stream
-   */
+   /**
+    * Create delete completely stream
+    */
   private async deleteCompletelyDescendantsWithStream(targetPage, user, options = {}, shouldUseV4Process = true, descendantsSubscribedSets?): Promise<number> {
-    let readStream;
-
-    if (shouldUseV4Process) { // pages don't have parents
-      readStream = await this.generateReadStreamToOperateOnlyDescendants(targetPage.path, user);
-    }
-    else {
-      const factory = new PageCursorsForDescendantsFactory(user, targetPage, true);
-      readStream = await factory.generateReadable();
-    }
+    const readStream = shouldUseV4Process // pages don't have parents
+      ? await this.generateReadStreamToOperateOnlyDescendants(targetPage.path, user)
+      : await new PageCursorsForDescendantsFactory(user, targetPage, true).generateReadable();
 
     const batchStream = createBatchStream(BULK_REINDEX_SIZE);
 
@@ -2282,7 +2262,7 @@ class PageService implements IPageService {
       this.activityEvent.emit('updated', activity, page, preNotify);
     }
     else {
-      let pageOp;
+      let pageOp: PageOperationDocument;
       try {
         pageOp = await PageOperation.create({
           actionType: PageActionType.Revert,
@@ -2622,7 +2602,7 @@ class PageService implements IPageService {
       _id: { $in: pageIds },
     };
 
-    let pages;
+    let pages: Array<{ _id: string; revisionData?: Array<{ revision?: string }> }>;
     try {
       pages = await Page
         .aggregate([
@@ -2712,30 +2692,22 @@ class PageService implements IPageService {
       );
     }
 
-    let page;
-    let systematicallyCreatedPage;
+    const notEmptyParent = pages[0] == null
+      ? await Page.findNotEmptyParentByPathRecursively(path)
+      : null;
 
-    const shouldCreateNewPage = pages[0] == null;
-    if (shouldCreateNewPage) {
-      const notEmptyParent = await Page.findNotEmptyParentByPathRecursively(path);
-
-      systematicallyCreatedPage = await this.forceCreateBySystem(
-        path,
-        '',
-        {
-          grant: notEmptyParent?.grant,
-          grantUserIds: notEmptyParent?.grantedUsers.map(u => getIdForRef(u)),
-          grantUserGroupIds: notEmptyParent?.grantedGroups,
-        },
-      );
-      page = systematicallyCreatedPage;
-    }
-    else {
-      page = pages[0];
-    }
+    const page = pages[0] ?? await this.forceCreateBySystem(
+      path,
+      '',
+      {
+        grant: notEmptyParent?.grant,
+        grantUserIds: notEmptyParent?.grantedUsers.map(u => getIdForRef(u)),
+        grantUserGroupIds: notEmptyParent?.grantedGroups,
+      },
+    );
 
     const grant = page.grant;
-    const grantedUserIds = page.grantedUsers;
+    const grantedUserIds = page.grantedUsers.map(u => getIdForRef(u));
     const grantedGroupIds = page.grantedGroups;
 
     /*
@@ -2758,7 +2730,7 @@ class PageService implements IPageService {
       );
     }
 
-    let pageOp;
+    let pageOp: PageOperationDocument;
     try {
       pageOp = await PageOperation.create({
         actionType: PageActionType.NormalizeParent,
@@ -2876,7 +2848,7 @@ class PageService implements IPageService {
       throw Error('Restricted pages can not be migrated');
     }
 
-    let normalizedPage;
+    let normalizedPage: PageDocument | null;
 
     // replace if empty page exists
     if (existingPage != null && existingPage.isEmpty) {
@@ -2892,7 +2864,9 @@ class PageService implements IPageService {
 
     // Update descendantCount
     const inc = 1;
-    await this.updateDescendantCountOfAncestors(normalizedPage.parent, inc, true);
+    if (normalizedPage != null && normalizedPage.parent != null) {
+      await this.updateDescendantCountOfAncestors(getIdForRef(normalizedPage.parent), inc, true);
+    }
 
     return normalizedPage;
   }
@@ -2905,8 +2879,8 @@ class PageService implements IPageService {
 
     const pagesToNormalize = omitDuplicateAreaPageFromPages(pages);
 
-    let normalizablePages;
-    let nonNormalizablePages;
+    let normalizablePages: PageDocument[];
+    let nonNormalizablePages: PageDocument[];
     try {
       [normalizablePages, nonNormalizablePages] = await this.pageGrantService.separateNormalizableAndNotNormalizablePages(user, pagesToNormalize);
     }
@@ -2949,7 +2923,7 @@ class PageService implements IPageService {
         throw Error('This page has already converted.');
       }
 
-      let pageOp;
+      let pageOp: PageOperationDocument;
       try {
         pageOp = await PageOperation.create({
           actionType: PageActionType.NormalizeParent,
@@ -3081,7 +3055,7 @@ class PageService implements IPageService {
   }
 
   async normalizeAllPublicPages(): Promise<void> {
-    let isUnique;
+    let isUnique: boolean;
     try {
       isUnique = await this._isPagePathIndexUnique();
     }
@@ -3865,7 +3839,7 @@ class PageService implements IPageService {
     this.pageEvent.emit('create', savedPage, user);
 
     // Directly run sub operation for now since it might be complex to handle main operation for creating pages -- Taichi Masuyama 2022.11.08
-    let pageOp;
+    let pageOp: PageOperationDocument;
     try {
       pageOp = await PageOperation.create({
         actionType: PageActionType.Create,
@@ -4286,7 +4260,7 @@ class PageService implements IPageService {
     }
 
     // Directly run sub operation for now since it might be complex to handle main operation for updating pages -- Taichi Masuyama 2022.11.08
-    let pageOp;
+    let pageOp: PageOperationDocument;
     try {
       pageOp = await PageOperation.create({
         actionType: PageActionType.Update,
