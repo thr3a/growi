@@ -1,11 +1,5 @@
-import type {
-  JSX,
-  MouseEvent,
-} from 'react';
-import {
-  useCallback,
-  useMemo,
-} from 'react';
+import type { JSX, MouseEvent } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import type { TreeItemProps, TreeItemToolProps } from '../interfaces';
 import { SimpleItemContent } from './SimpleItemContent';

@@ -12,7 +12,6 @@ import {
 import { CREATING_PAGE_VIRTUAL_ID } from '../constants/_inner';
 import type { TreeItemToolProps } from '../interfaces';
 
-
 type TreeNameInputProps = {
   /**
    * Props from headless-tree's getRenameInputProps()
@@ -83,9 +82,7 @@ const TreeNameInputSubstance: FC<TreeNameInputProps> = ({
  * Tree item name input component for rename/create mode
  * Wraps TreeNameInputSubstance with headless-tree's item props
  */
-export const TreeNameInput: FC<TreeItemToolProps> = ({
-  item,
-}) => {
+export const TreeNameInput: FC<TreeItemToolProps> = ({ item }) => {
   const { t } = useTranslation();
   const inputValidator = useInputValidator(ValidationTarget.PAGE);
 

@@ -28,7 +28,9 @@ const createMockItem = (
     setIsRenaming: (value: boolean) => {
       isRenaming = value;
     },
-  } as unknown as ItemInstance<IPageForItem> & { setIsRenaming: (value: boolean) => void };
+  } as unknown as ItemInstance<IPageForItem> & {
+    setIsRenaming: (value: boolean) => void;
+  };
 
   return item;
 };
@@ -36,7 +38,9 @@ const createMockItem = (
 describe('usePlaceholderRenameEffect', () => {
   describe('when item is a placeholder', () => {
     test('should call startRenaming when placeholder is not in renaming mode', () => {
-      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, { isRenaming: false });
+      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, {
+        isRenaming: false,
+      });
       const onCancelCreate = vi.fn();
 
       renderHook(() =>
@@ -51,7 +55,9 @@ describe('usePlaceholderRenameEffect', () => {
     });
 
     test('should not call startRenaming when placeholder is already in renaming mode', () => {
-      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, { isRenaming: true });
+      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, {
+        isRenaming: true,
+      });
       const onCancelCreate = vi.fn();
 
       renderHook(() =>
@@ -66,7 +72,9 @@ describe('usePlaceholderRenameEffect', () => {
     });
 
     test('should call onCancelCreate when renaming mode ends (ESC key simulation)', () => {
-      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, { isRenaming: false });
+      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, {
+        isRenaming: false,
+      });
       const onCancelCreate = vi.fn();
 
       const { rerender } = renderHook(() =>
@@ -95,7 +103,9 @@ describe('usePlaceholderRenameEffect', () => {
     });
 
     test('should not call onCancelCreate if renaming was never active', () => {
-      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, { isRenaming: false });
+      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, {
+        isRenaming: false,
+      });
       const onCancelCreate = vi.fn();
 
       // Mock startRenaming to NOT actually change isRenaming state
@@ -120,7 +130,9 @@ describe('usePlaceholderRenameEffect', () => {
     });
 
     test('should re-call startRenaming when isRenaming becomes false after rapid clicks', () => {
-      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, { isRenaming: false });
+      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, {
+        isRenaming: false,
+      });
       const onCancelCreate = vi.fn();
 
       const { rerender } = renderHook(() =>
@@ -189,7 +201,9 @@ describe('usePlaceholderRenameEffect', () => {
 
   describe('edge cases', () => {
     test('should handle multiple rerender cycles correctly', () => {
-      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, { isRenaming: false });
+      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, {
+        isRenaming: false,
+      });
       const onCancelCreate = vi.fn();
 
       const { rerender } = renderHook(() =>
@@ -220,7 +234,9 @@ describe('usePlaceholderRenameEffect', () => {
     });
 
     test('should not call onCancelCreate multiple times for the same cancel event', () => {
-      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, { isRenaming: false });
+      const mockItem = createMockItem(CREATING_PAGE_VIRTUAL_ID, {
+        isRenaming: false,
+      });
       const onCancelCreate = vi.fn();
 
       const { rerender } = renderHook(() =>

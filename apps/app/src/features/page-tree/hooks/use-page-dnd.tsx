@@ -1,7 +1,11 @@
 import type { CSSProperties, FC, ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
 import { pagePathUtils } from '@growi/core/dist/utils';
-import type { DragTarget, ItemInstance, TreeInstance } from '@headless-tree/core';
+import type {
+  DragTarget,
+  ItemInstance,
+  TreeInstance,
+} from '@headless-tree/core';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { basename, join } from 'pathe';
 
@@ -82,7 +86,10 @@ type DragLineProps = {
  * Drag line indicator component
  */
 const DragLine: FC<DragLineProps> = ({ style, className }) => (
-  <div style={style} className={`${styles['tree-drag-line']} ${className ?? ''}`} />
+  <div
+    style={style}
+    className={`${styles['tree-drag-line']} ${className ?? ''}`}
+  />
 );
 
 export type UsePageDndResult = {
@@ -193,7 +200,8 @@ export const usePageDnd = (): UsePageDndResult => {
       if (targetItem == null) return { success: false, errorType: 'unknown' };
 
       const targetPage = targetItem.getItemData();
-      if (targetPage.path == null) return { success: false, errorType: 'unknown' };
+      if (targetPage.path == null)
+        return { success: false, errorType: 'unknown' };
 
       // Collect parent IDs for tree invalidation
       const parentIdsToInvalidate = new Set<string>();
@@ -220,11 +228,11 @@ export const usePageDnd = (): UsePageDndResult => {
             isRenameRedirect: false,
             updateMetadata: true,
           });
-        }
-        catch (err) {
-          const errorType: PageMoveErrorType = (err as { code?: string }).code === 'operation__blocked'
-            ? 'operation_blocked'
-            : 'unknown';
+        } catch (err) {
+          const errorType: PageMoveErrorType =
+            (err as { code?: string }).code === 'operation__blocked'
+              ? 'operation_blocked'
+              : 'unknown';
           return { success: false, errorType };
         }
       }
@@ -260,13 +268,16 @@ export const usePageDnd = (): UsePageDndResult => {
     [isEnabled],
   );
 
-  return useMemo(() => ({
-    canDrag,
-    canDrop,
-    onDrop,
-    isEnabled,
-    renderDragLine,
-  }), [canDrag, canDrop, onDrop, isEnabled, renderDragLine]);
+  return useMemo(
+    () => ({
+      canDrag,
+      canDrop,
+      onDrop,
+      isEnabled,
+      renderDragLine,
+    }),
+    [canDrag, canDrop, onDrop, isEnabled, renderDragLine],
+  );
 };
 
 /**

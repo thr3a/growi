@@ -33,8 +33,12 @@ const TreeItemCheckbox: FC<TreeItemToolProps> = ({ item }) => {
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: click handler only prevents propagation
     // biome-ignore lint/a11y/noStaticElementInteractions: wrapper div to stop click propagation
-    <div onClick={handleClick} className="form-check form-switch d-flex align-items-center">
-      <input className="form-check-input"
+    <div
+      onClick={handleClick}
+      className="form-check form-switch d-flex align-items-center"
+    >
+      <input
+        className="form-check-input"
         type="checkbox"
         role="switch"
         aria-checked={checkboxProps.checked ?? false}
@@ -46,9 +50,7 @@ const TreeItemCheckbox: FC<TreeItemToolProps> = ({ item }) => {
   );
 };
 
-export const TreeItemWithCheckbox: FC<
-  TreeItemWithCheckboxProps
-> = (props) => {
+export const TreeItemWithCheckbox: FC<TreeItemWithCheckboxProps> = (props) => {
   return (
     <TreeItemLayout
       {...props}

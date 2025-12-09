@@ -37,11 +37,7 @@ export const SimpleItemContent = ({
           >
             warning
           </span>
-          <UncontrolledTooltip
-            placement="top"
-            target={spanId}
-            fade={false}
-          >
+          <UncontrolledTooltip placement="top" target={spanId} fade={false}>
             {t('tooltip.operation.attention.rename')}
           </UncontrolledTooltip>
         </>

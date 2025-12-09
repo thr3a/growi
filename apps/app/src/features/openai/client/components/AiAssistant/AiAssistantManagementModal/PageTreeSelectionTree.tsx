@@ -27,10 +27,7 @@ export const PageTreeSelectionTree = (props: Props): JSX.Element => {
   // Scroll container for virtualization
   const [scrollerElem, setScrollerElem] = useState<HTMLElement | null>(null);
 
-  const estimateTreeItemSize = useCallback(
-    () => treeItemWithCheckboxSize,
-    [],
-  );
+  const estimateTreeItemSize = useCallback(() => treeItemWithCheckboxSize, []);
 
   return (
     <div className="page-tree-container" ref={setScrollerElem}>
