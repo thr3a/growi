@@ -279,7 +279,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
     commonEachPropsResult,
     nextjsRoutingType === NextjsRoutingType.SAME_ROUTE
       ? await getServerSidePropsForSameRoute(context)
-      : await getServerSidePropsForInitial(context)
+      : await getServerSidePropsForInitial(context),
   );
 };
 
