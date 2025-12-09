@@ -531,7 +531,7 @@
     "page_path": "Chemin de page",
     "beta_warning": "Cette fonctionnalité est en beta.",
     "import_from": "Importer depuis {{from}}",
-    "import_growi_archive": "Importer une archive GROWI",
+    "import_growi_archive": "Importer les données d'archive",
     "error": {
       "only_upsert_available": "Seul l'option 'Upsert' est disponible pour les collections de pages"
     },

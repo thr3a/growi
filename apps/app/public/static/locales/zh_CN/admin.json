@@ -540,7 +540,7 @@
     "page_path": "相对路径",
     "beta_warning": "这个函数是Beta。",
     "import_from": "Import from {{from}}",
-    "import_growi_archive": "Import GROWI archive",
+    "import_archive_data": "导入存档数据",
     "error": {
       "only_upsert_available": "Only 'Upsert' option is available for pages collection."
     },

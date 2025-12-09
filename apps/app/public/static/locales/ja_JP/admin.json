@@ -540,7 +540,7 @@
     "page_path": "ページパス",
     "beta_warning": "この機能はベータ版です",
     "import_from": "{{from}} からインポート",
-    "import_growi_archive": "GROWI アーカイブをインポート",
+    "import_growi_archive": "データインポート",
     "error": {
       "only_upsert_available": "pages コレクションには 'Upsert' オプションのみ対応しています"
     },

@@ -531,7 +531,7 @@
     "page_path": "페이지 경로",
     "beta_warning": "이 기능은 베타입니다.",
     "import_from": "{{from}}에서 가져오기",
-    "import_growi_archive": "GROWI 아카이브 가져오기",
+    "import_growi_archive": "아카이브 데이터 가져오기",
     "error": {
       "only_upsert_available": "페이지 컬렉션에는 'Upsert' 옵션만 사용할 수 있습니다."
     },
