@@ -3561,7 +3561,11 @@ class PageService implements IPageService {
 
     // Update parent attrs
     const ancestorsMap = new Map(); // Map<path, page>
-    ancestors.forEach(page => !ancestorsMap.has(page.path) && ancestorsMap.set(page.path, page)); // the earlier element should be the true ancestor
+    for (const ancestor of ancestors) {
+      if (!ancestorsMap.has(ancestor.path)) {
+        ancestorsMap.set(ancestor.path, ancestor); // the earlier element should be the true ancestor
+      }
+    }
 
     const nonRootAncestors = ancestors.filter(page => !isTopPage(page.path));
     const operations = nonRootAncestors.map((page) => {
