@@ -9,7 +9,7 @@ import {
   Modal, ModalHeader, ModalBody, ModalFooter, Button,
 } from 'reactstrap';
 
-import { SimplifiedItemsTree } from '~/features/page-tree/components';
+import { ItemsTree } from '~/features/page-tree/components';
 import { useIsGuestUser, useIsReadOnlyUser } from '~/states/context';
 import { useCurrentPageData } from '~/states/page';
 import {
@@ -20,7 +20,7 @@ import {
 
 import ItemsTreeContentSkeleton from '../ItemsTree/ItemsTreeContentSkeleton';
 
-import { SimplifiedTreeItemForModal, simplifiedTreeItemForModalSize } from './SimplifiedTreeItemForModal';
+import { TreeItemForModal, treeItemForModalSize } from './TreeItemForModal';
 
 const PageSelectModalSubstance: FC = () => {
   const { close: closeModal } = usePageSelectModalActions();
@@ -91,13 +91,13 @@ const PageSelectModalSubstance: FC = () => {
             style={{ maxHeight: 'calc(85vh - 133px)', overflowY: 'auto' }}
           >
             {scrollerElem && (
-              <SimplifiedItemsTree
-                CustomTreeItem={SimplifiedTreeItemForModal}
+              <ItemsTree
+                CustomTreeItem={TreeItemForModal}
                 isEnableActions={!isGuestUser}
                 isReadOnlyUser={!!isReadOnlyUser}
                 targetPath={targetPath}
                 targetPathOrId={targetPath}
-                estimateTreeItemSize={() => simplifiedTreeItemForModalSize}
+                estimateTreeItemSize={() => treeItemForModalSize}
                 scrollerElem={scrollerElem}
               />
             )}

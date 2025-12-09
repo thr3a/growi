@@ -7,7 +7,7 @@ import type { IPageForTreeItem } from '~/interfaces/page';
 
 import type { TreeItemProps } from '../interfaces';
 import { invalidatePageTreeChildren } from '../services';
-import { SimplifiedItemsTree } from './SimplifiedItemsTree';
+import { ItemsTree } from './ItemsTree';
 
 // Mock the apiv3Get function
 const mockApiv3Get = vi.fn();
@@ -111,7 +111,7 @@ const TestWrapper: FC<{ children: React.ReactNode }> = ({ children }) => (
   <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
 );
 
-describe('SimplifiedItemsTree', () => {
+describe('ItemsTree', () => {
   beforeEach(() => {
     // Clear cache before each test
     invalidatePageTreeChildren();
@@ -159,7 +159,7 @@ describe('SimplifiedItemsTree', () => {
 
       render(
         <TestWrapper>
-          <SimplifiedItemsTree
+          <ItemsTree
             targetPath="/"
             isEnableActions={false}
             CustomTreeItem={TestTreeItem}
@@ -224,7 +224,7 @@ describe('SimplifiedItemsTree', () => {
 
       render(
         <TestWrapper>
-          <SimplifiedItemsTree
+          <ItemsTree
             targetPath="/"
             CustomTreeItem={TestTreeItem}
             estimateTreeItemSize={() => 32}
@@ -288,7 +288,7 @@ describe('SimplifiedItemsTree', () => {
 
       render(
         <TestWrapper>
-          <SimplifiedItemsTree
+          <ItemsTree
             targetPath="/"
             CustomTreeItem={TestTreeItem}
             estimateTreeItemSize={() => 32}
@@ -363,7 +363,7 @@ describe('SimplifiedItemsTree', () => {
 
       render(
         <TestWrapper>
-          <SimplifiedItemsTree
+          <ItemsTree
             targetPath="/Sandbox/Test"
             CustomTreeItem={TestTreeItem}
             estimateTreeItemSize={() => 32}
@@ -448,7 +448,7 @@ describe('SimplifiedItemsTree', () => {
 
       const { rerender } = render(
         <TestWrapper>
-          <SimplifiedItemsTree
+          <ItemsTree
             targetPath="/"
             isEnableActions={true}
             CustomTreeItem={TestTreeItem}
@@ -470,7 +470,7 @@ describe('SimplifiedItemsTree', () => {
       // Force re-render to simulate React re-renders that could trigger the loop
       rerender(
         <TestWrapper>
-          <SimplifiedItemsTree
+          <ItemsTree
             targetPath="/"
             isEnableActions={true}
             CustomTreeItem={TestTreeItem}
@@ -537,7 +537,7 @@ describe('SimplifiedItemsTree', () => {
       // Initial render without creating state
       render(
         <TestWrapper>
-          <SimplifiedItemsTree
+          <ItemsTree
             targetPath="/"
             isEnableActions={true}
             CustomTreeItem={TestTreeItem}
@@ -607,7 +607,7 @@ describe('SimplifiedItemsTree', () => {
 
       const { unmount } = render(
         <TestWrapper>
-          <SimplifiedItemsTree
+          <ItemsTree
             targetPath="/"
             isEnableActions={true}
             CustomTreeItem={TestTreeItem}
@@ -633,7 +633,7 @@ describe('SimplifiedItemsTree', () => {
 
       render(
         <TestWrapper>
-          <SimplifiedItemsTree
+          <ItemsTree
             targetPath="/"
             isEnableActions={true}
             CustomTreeItem={TestTreeItem}

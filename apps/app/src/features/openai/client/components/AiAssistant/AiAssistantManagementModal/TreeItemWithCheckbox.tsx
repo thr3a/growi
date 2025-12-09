@@ -3,13 +3,13 @@ import type { FC } from 'react';
 import type { TreeItemProps, TreeItemToolProps } from '~/features/page-tree';
 import { TreeItemLayout } from '~/features/page-tree/components';
 
-import styles from './SimplifiedTreeItemWithCheckbox.module.scss';
+import styles from './TreeItemWithCheckbox.module.scss';
 
 const moduleClass = styles['page-tree-item'] ?? '';
 
-export const simplifiedTreeItemWithCheckboxSize = 36; // in px
+export const treeItemWithCheckboxSize = 36; // in px
 
-type SimplifiedTreeItemWithCheckboxProps = TreeItemProps & {
+type TreeItemWithCheckboxProps = TreeItemProps & {
   key?: React.Key | null;
 };
 
@@ -46,8 +46,8 @@ const TreeItemCheckbox: FC<TreeItemToolProps> = ({ item }) => {
   );
 };
 
-export const SimplifiedTreeItemWithCheckbox: FC<
-  SimplifiedTreeItemWithCheckboxProps
+export const TreeItemWithCheckbox: FC<
+  TreeItemWithCheckboxProps
 > = (props) => {
   return (
     <TreeItemLayout

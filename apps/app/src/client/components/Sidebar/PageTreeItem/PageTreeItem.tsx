@@ -36,10 +36,10 @@ import styles from './PageTreeItem.module.scss';
 const moduleClass = styles['page-tree-item'] ?? '';
 
 
-export const simplifiedPageTreeItemSize = 40; // in px
+export const pageTreeItemSize = 40; // in px
 
 
-export const SimplifiedPageTreeItem: FC<TreeItemProps> = ({
+export const PageTreeItem: FC<TreeItemProps> = ({
   item,
   targetPath,
   targetPathOrId,

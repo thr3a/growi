@@ -158,7 +158,7 @@ export const usePageCreate = (): UsePageCreateReturn => {
       const parentId = parentItem.getId();
       const parentPath = parentItem.getItemData().path ?? '/';
 
-      // Set creating state - expansion will be handled by SimplifiedItemsTree
+      // Set creating state - expansion will be handled by ItemsTree
       startCreatingAction(parentId, parentPath);
     },
     [startCreatingAction],
@@ -245,7 +245,7 @@ export const usePageCreate = (): UsePageCreateReturn => {
     [t, createPage, notifyUpdateItems, cancelCreating],
   );
 
-  // Create from placeholder node (used by onRename handler in SimplifiedItemsTree)
+  // Create from placeholder node (used by onRename handler in ItemsTree)
   const createFromPlaceholder = useCallback(
     async (
       placeholderItem: ItemInstance<IPageForItem>,

@@ -10,13 +10,13 @@ import styles from './TreeItemForModal.module.scss';
 
 const moduleClass = styles['tree-item-for-modal'] ?? '';
 
-export const simplifiedTreeItemForModalSize = 36; // in px
+export const treeItemForModalSize = 36; // in px
 
-type SimplifiedTreeItemForModalProps = TreeItemProps & {
+type TreeItemForModalProps = TreeItemProps & {
   key?: React.Key | null;
 };
 
-export const SimplifiedTreeItemForModal: FC<SimplifiedTreeItemForModalProps> = (props) => {
+export const TreeItemForModal: FC<TreeItemForModalProps> = (props) => {
   const {
     item,
     targetPathOrId,

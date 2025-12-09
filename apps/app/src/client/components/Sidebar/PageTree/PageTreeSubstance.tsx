@@ -13,8 +13,8 @@ import {
 } from '~/stores/page-listing';
 import loggerFactory from '~/utils/logger';
 
-import { SimplifiedItemsTree } from '~/features/page-tree/components';
-import { SimplifiedPageTreeItem, simplifiedPageTreeItemSize } from '../PageTreeItem';
+import { ItemsTree } from '~/features/page-tree/components';
+import { PageTreeItem, pageTreeItemSize } from '../PageTreeItem';
 import { SidebarHeaderReloadButton } from '../SidebarHeaderReloadButton';
 
 import { PrivateLegacyPagesLink } from './PrivateLegacyPagesLink';
@@ -121,7 +121,7 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
 
   return (
     <div className="pt-4">
-      <SimplifiedItemsTree
+      <ItemsTree
         enableRenaming
         enableDragAndDrop
         isEnableActions={!isGuestUser}
@@ -129,8 +129,8 @@ export const PageTreeContent = memo(({ isWipPageShown }: PageTreeContentProps) =
         isWipPageShown={isWipPageShown}
         targetPath={path}
         targetPathOrId={targetPathOrId}
-        CustomTreeItem={SimplifiedPageTreeItem}
-        estimateTreeItemSize={() => simplifiedPageTreeItemSize}
+        CustomTreeItem={PageTreeItem}
+        estimateTreeItemSize={() => pageTreeItemSize}
         scrollerElem={sidebarScrollerElem}
       />
 

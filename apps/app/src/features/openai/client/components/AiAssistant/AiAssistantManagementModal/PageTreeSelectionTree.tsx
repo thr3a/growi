@@ -1,13 +1,13 @@
 import { Suspense, useCallback, useState } from 'react';
 
 import ItemsTreeContentSkeleton from '~/client/components/ItemsTree/ItemsTreeContentSkeleton';
-import { SimplifiedItemsTree } from '~/features/page-tree/components';
+import { ItemsTree } from '~/features/page-tree/components';
 import type { IPageForTreeItem } from '~/interfaces/page';
 
 import {
-  SimplifiedTreeItemWithCheckbox,
-  simplifiedTreeItemWithCheckboxSize,
-} from './SimplifiedTreeItemWithCheckbox';
+  TreeItemWithCheckbox,
+  treeItemWithCheckboxSize,
+} from './TreeItemWithCheckbox';
 
 type Props = {
   isEnableActions: boolean;
@@ -28,7 +28,7 @@ export const PageTreeSelectionTree = (props: Props): JSX.Element => {
   const [scrollerElem, setScrollerElem] = useState<HTMLElement | null>(null);
 
   const estimateTreeItemSize = useCallback(
-    () => simplifiedTreeItemWithCheckboxSize,
+    () => treeItemWithCheckboxSize,
     [],
   );
 
@@ -36,11 +36,11 @@ export const PageTreeSelectionTree = (props: Props): JSX.Element => {
     <div className="page-tree-container" ref={setScrollerElem}>
       {scrollerElem != null && (
         <Suspense fallback={<ItemsTreeContentSkeleton />}>
-          <SimplifiedItemsTree
+          <ItemsTree
             targetPath="/"
             isEnableActions={isEnableActions}
             isReadOnlyUser={isReadOnlyUser}
-            CustomTreeItem={SimplifiedTreeItemWithCheckbox}
+            CustomTreeItem={TreeItemWithCheckbox}
             estimateTreeItemSize={estimateTreeItemSize}
             scrollerElem={scrollerElem}
             enableCheckboxes

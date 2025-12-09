@@ -15,8 +15,8 @@ GROWIのPageTreeは、`@headless-tree/react` と `@tanstack/react-virtual` を�
 src/features/page-tree/
 ├── index.ts                                # メインエクスポート
 ├── components/
-│   ├── SimplifiedItemsTree.tsx             # コアvirtualizedツリーコンポーネント
-│   ├── SimplifiedItemsTree.spec.tsx        # テスト
+│   ├── ItemsTree.tsx                       # コアvirtualizedツリーコンポーネント
+│   ├── ItemsTree.spec.tsx                  # テスト
 │   ├── TreeItemLayout.tsx                  # 汎用ツリーアイテムレイアウト
 │   ├── TreeItemLayout.module.scss
 │   ├── SimpleItemContent.tsx               # シンプルなアイテムコンテンツ表示
@@ -67,7 +67,7 @@ src/features/page-tree/
 
 以下は `components/Sidebar/PageTreeItem/` に残留：
 
-- `SimplifiedPageTreeItem.tsx` - Sidebar専用の実装
+- `PageTreeItem.tsx` - Sidebar専用の実装
 - `CountBadgeForPageTreeItem.tsx` - PageTree専用バッジ
 - `use-page-item-control.tsx` - コンテキストメニュー制御
 
@@ -75,16 +75,16 @@ src/features/page-tree/
 
 ## 2. 主要コンポーネント
 
-### 2.1 SimplifiedItemsTree
+### 2.1 ItemsTree
 
-**ファイル**: `features/page-tree/components/SimplifiedItemsTree.tsx`
+**ファイル**: `features/page-tree/components/ItemsTree.tsx`
 
 Virtualizedツリーのコアコンポーネント。`@headless-tree/react` と `@tanstack/react-virtual` を統合。
 
 #### Props
 
 ```typescript
-interface SimplifiedItemsTreeProps {
+interface ItemsTreeProps {
   // 表示対象のターゲットパスまたはID
   targetPathOrId: string | null;
   // WIPページを表示するか
@@ -151,9 +151,9 @@ useEffect(() => {
 }, [targetPath, page.path, isExpanded, onToggle]);
 ```
 
-### 2.3 SimplifiedPageTreeItem
+### 2.3 PageTreeItem
 
-**ファイル**: `components/Sidebar/PageTreeItem/SimplifiedPageTreeItem.tsx`
+**ファイル**: `components/Sidebar/PageTreeItem/PageTreeItem.tsx`
 
 Sidebar用のツリーアイテム実装。TreeItemLayoutを使用し、Rename/Create/Control機能を統合。
 
@@ -215,7 +215,7 @@ usePageTreeCreateActions(): startCreating, cancelCreating
 ```typescript
 const { isCreatingChild, CreateInputComponent, startCreating } = usePageCreate(item);
 
-// SimplifiedPageTreeItemで使用
+// PageTreeItemで使用
 {isCreatingChild() && <CreateInputComponent />}
 ```
 
@@ -239,7 +239,7 @@ const { isCreatingChild, CreateInputComponent, startCreating } = usePageCreate(i
 #### 使用方法
 
 ```typescript
-<SimplifiedItemsTree
+<ItemsTree
   enableDragAndDrop={true}
   // ...他のprops
 />
@@ -296,10 +296,10 @@ const { isCreatingChild, CreateInputComponent, startCreating } = usePageCreate(i
 
 #### 使用方法
 
-`SimplifiedItemsTree`コンポーネント内で自動的に有効化されます。
+`ItemsTree`コンポーネント内で自動的に有効化されます。
 
 ```typescript
-// SimplifiedItemsTree.tsx内で呼び出し
+// ItemsTree.tsx内で呼び出し
 useSocketUpdateDescCount();
 ```
 
@@ -367,12 +367,12 @@ const handleOperationComplete = (parentId: string) => notifyUpdateItems([parentI
 
 **使用箇所**: `AiAssistantManagementPageTreeSelection.tsx`
 
-SimplifiedItemsTreeのcheckboxesオプションを使用。
+ItemsTreeのcheckboxesオプションを使用。
 
 #### Props
 
 ```typescript
-<SimplifiedItemsTree
+<ItemsTree
   enableCheckboxes={true}
   initialCheckedItems={['page-id-1', 'page-id-2']}
   onCheckedItemsChange={(checkedItems) => {

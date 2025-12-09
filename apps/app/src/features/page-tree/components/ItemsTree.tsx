@@ -53,7 +53,7 @@ type Props = {
   onCheckedItemsChange?: (checkedItems: IPageForTreeItem[]) => void;
 };
 
-export const SimplifiedItemsTree: FC<Props> = (props: Props) => {
+export const ItemsTree: FC<Props> = (props: Props) => {
   const {
     targetPath,
     targetPathOrId,

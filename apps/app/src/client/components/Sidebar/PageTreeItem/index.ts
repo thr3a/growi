@@ -1,1 +1,1 @@
-export * from './SimplifiedPageTreeItem';
+export * from './PageTreeItem';
