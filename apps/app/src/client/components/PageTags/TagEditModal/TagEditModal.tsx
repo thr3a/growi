@@ -30,7 +30,7 @@ const TagEditModalSubstance: React.FC<TagEditModalSubstanceProps> = (props: TagE
   const revisionId = tagEditModalData.revisionId;
   const updateStateAfterSave = useUpdateStateAfterSave(pageId);
   const { mutate: mutateTags } = useSWRxTagsInfo(pageId);
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>(initTags ?? []);
 
   // use to take initTags when redirect to other page
   useEffect(() => {
