@@ -37,25 +37,24 @@ type FetchPageArgs = {
 
 /**
  * Process path to handle URL decoding and hash fragment removal
+ *
+ * Note: new URL().pathname re-encodes the path, so we decode it at the end
+ * to ensure the final result is always decoded (e.g., "/path/にほんご")
  */
 const decodeAndRemoveFragment = (pathname?: string): string | undefined => {
   if (pathname == null) return;
 
-  // Decode path
-  let decodedPathname: string;
   try {
-    decodedPathname = decodeURIComponent(pathname);
-  } catch {
-    decodedPathname = pathname;
-  }
-
-  // Strip hash fragment from path to properly detect permalinks
-  try {
-    const url = new URL(decodedPathname, 'http://example.com');
-    return url.pathname;
+    const url = new URL(pathname, 'http://example.com');
+    return decodeURIComponent(url.pathname);
   } catch {
     // Fallback to simple split if URL parsing fails
-    return decodedPathname.split('#')[0];
+    const pathOnly = pathname.split('#')[0];
+    try {
+      return decodeURIComponent(pathOnly);
+    } catch {
+      return pathOnly;
+    }
   }
 };
 
@@ -177,7 +176,6 @@ export const useFetchCurrentPage = (): {
   error: Error | null;
 } => {
   const shareLinkId = useAtomValue(shareLinkIdAtom);
-  const revisionIdFromUrl = useAtomValue(revisionIdFromUrlAtom);
   const currentPageId = useAtomValue(currentPageIdAtom);
 
   const isLoading = useAtomValue(pageLoadingAtom);
@@ -197,6 +195,7 @@ export const useFetchCurrentPage = (): {
       ): Promise<IPagePopulatedToShowRevision | null> => {
         const currentPageId = get(currentPageIdAtom);
         const currentPageData = get(currentPageDataAtom);
+        const revisionIdFromUrl = get(revisionIdFromUrlAtom);
 
         // Process path first to handle permalinks and strip hash fragments
         const decodedPathname = decodeAndRemoveFragment(args?.path);
@@ -215,6 +214,7 @@ export const useFetchCurrentPage = (): {
 
         set(pageLoadingAtom, true);
         set(pageErrorAtom, null);
+        set(pageNotFoundAtom, false);
 
         // Build API parameters
         const { params, shouldSkip } = buildApiParams({
@@ -270,7 +270,7 @@ export const useFetchCurrentPage = (): {
 
         return null;
       },
-      [shareLinkId, revisionIdFromUrl, mutatePageInfo],
+      [shareLinkId, mutatePageInfo],
     ),
   );
 
