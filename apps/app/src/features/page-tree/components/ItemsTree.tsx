@@ -188,7 +188,7 @@ export const ItemsTree: FC<Props> = (props: Props) => {
   useScrollToSelectedItem({ targetPathOrId, items, virtualizer });
 
   return (
-    <div {...tree.getContainerProps()} className="list-group" style={{ position: 'relative', height: `${virtualizer.getTotalSize()}px` }}>
+    <div {...tree.getContainerProps()} className="list-group position-relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
       {virtualizer.getVirtualItems().map((virtualItem) => {
         const item = items[virtualItem.index];
         const itemData = item.getItemData();
