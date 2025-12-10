@@ -567,7 +567,7 @@ module.exports = (crowi: Crowi) => {
    *            content:
    *              application/json:
    *                schema:
-   *                  $ref: '#/components/schemas/PageInfoAll'
+   *                  $ref: '#/components/schemas/PageInfoExt'
    *          500:
    *            description: Internal server error.
    */

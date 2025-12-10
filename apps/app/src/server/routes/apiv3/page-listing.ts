@@ -214,7 +214,7 @@ const routerFactory = (crowi: Crowi): Router => {
    *             schema:
    *               type: object
    *               additionalProperties:
-   *                 $ref: '#/components/schemas/PageInfoAll'
+   *                 $ref: '#/components/schemas/PageInfoExt'
    */
   router.get(
     '/info',
