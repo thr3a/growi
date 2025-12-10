@@ -236,12 +236,10 @@ const routerFactory = (crowi: Crowi): Router => {
       const Page = mongoose.model<HydratedDocument<PageDocument>, PageModel>(
         'Page',
       );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: ignore
       const Bookmark = mongoose.model<any, any>('Bookmark');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const pageService = crowi.pageService;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const pageGrantService: IPageGrantService = crowi.pageGrantService!;
+      const pageGrantService: IPageGrantService = crowi.pageGrantService;
 
       try {
         const pages =
