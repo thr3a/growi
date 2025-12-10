@@ -168,20 +168,23 @@ export const ItemsTree: FC<Props> = (props: Props) => {
     onExpanded: triggerTreeRebuild,
   });
 
-  // Stable estimate size function - memoize it to prevent recreating virtualizer
+  const getScrollElement = useCallback(() => scrollerElem ?? null, [scrollerElem]);
+
   const stableEstimateSize = useCallback(() => {
     return estimateTreeItemSize();
   }, [estimateTreeItemSize]);
 
+  const measureElement = useCallback((element: Element | null) => {
+    // Return consistent height measurement
+    return element?.getBoundingClientRect().height ?? stableEstimateSize();
+  }, [stableEstimateSize]);
+
   const virtualizer = useVirtualizer({
     count: items.length,
-    getScrollElement: () => scrollerElem ?? null,
+    getScrollElement,
     estimateSize: stableEstimateSize,
     overscan: 10,
-    measureElement: (element) => {
-      // Return consistent height measurement
-      return element?.getBoundingClientRect().height ?? stableEstimateSize();
-    },
+    measureElement,
   });
 
   // Scroll to selected item on mount or when targetPathOrId changes
