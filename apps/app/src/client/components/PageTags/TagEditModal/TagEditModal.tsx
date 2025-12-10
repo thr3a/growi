@@ -47,9 +47,7 @@ const TagEditModalSubstance: React.FC<TagEditModalSubstanceProps> = (props: TagE
   const handleSubmit = useCallback(async() => {
     try {
       await apiPost('/tags.update', updateTagsData);
-      if (mutateTags != null) {
-        await mutateTags();
-      }
+      mutateTags();
       updateStateAfterSave?.();
 
       toastSuccess('updated tags successfully');
