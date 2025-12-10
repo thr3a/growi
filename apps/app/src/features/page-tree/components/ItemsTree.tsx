@@ -189,7 +189,7 @@ export const ItemsTree: FC<Props> = (props: Props) => {
     count: items.length,
     getScrollElement,
     estimateSize: stableEstimateSize,
-    overscan: 10,
+    overscan: 5,
     measureElement,
   });
 
