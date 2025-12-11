@@ -308,7 +308,7 @@ module.exports = (crowi) => {
       let page: HydratedDocument<PageDocument> | null;
       let bookmark: HydratedDocument<BookmarkDocument> | null;
       try {
-        page = await Page.findByIdAndViewer(pageId, req.user);
+        page = await Page.findByIdAndViewer(pageId, req.user, undefined, true);
         if (page == null) {
           return res.apiv3Err(`Page '${pageId}' is not found or forbidden`);
         }
