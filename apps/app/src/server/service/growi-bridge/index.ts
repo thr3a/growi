@@ -83,7 +83,7 @@ export class GrowiBridgeService {
     const parseStream = unzipStream.Parse();
     const unzipEntryStream = pipeline(readStream, parseStream, () => {});
 
-    let tapPromise: Promise<void> = Promise.resolve();
+    let tapPromise: Promise<void> | undefined;
 
     unzipEntryStream.on('entry', (entry: Entry) => {
       const fileName = entry.path;
@@ -104,7 +104,9 @@ export class GrowiBridgeService {
 
     try {
       await finished(unzipEntryStream);
-      await tapPromise;
+      if (tapPromise != null) {
+        await tapPromise;
+      }
     } catch (err) {
       // if zip is broken
       logger.error(err);
