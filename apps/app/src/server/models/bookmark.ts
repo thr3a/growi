@@ -1,48 +1,80 @@
-/* eslint-disable no-return-await */
-
-import mongoose from 'mongoose';
+import type { Document, Model, Types } from 'mongoose';
+import { Schema } from 'mongoose';
 import mongoosePaginate from 'mongoose-paginate-v2';
 import uniqueValidator from 'mongoose-unique-validator';
 
+import type { IBookmark } from '~/interfaces/bookmark-info';
 import loggerFactory from '~/utils/logger';
+
+import type Crowi from '../crowi';
+import { getOrCreateModel } from '../util/mongoose-utils';
 
 const logger = loggerFactory('growi:models:bookmark');
 
-const ObjectId = mongoose.Schema.Types.ObjectId;
+export interface BookmarkDocument extends IBookmark, Document {
+  _id: Types.ObjectId;
+  page: Types.ObjectId;
+  user: Types.ObjectId;
+  createdAt: Date;
+}
 
-/** @param {import('~/server/crowi').default} crowi Crowi instance */
-const factory = (crowi) => {
+export interface BookmarkModel extends Model<BookmarkDocument> {
+  countByPageId(pageId: Types.ObjectId | string): Promise<number>;
+  getPageIdToCountMap(
+    pageIds: Types.ObjectId[],
+  ): Promise<{ [key: string]: number }>;
+  findByPageIdAndUserId(
+    pageId: Types.ObjectId | string,
+    userId: Types.ObjectId | string,
+  ): Promise<BookmarkDocument | null>;
+  add(
+    page: Types.ObjectId | string,
+    user: Types.ObjectId | string,
+  ): Promise<BookmarkDocument>;
+  removeBookmarksByPageId(
+    pageId: Types.ObjectId | string,
+  ): Promise<{ deletedCount: number }>;
+  removeBookmark(
+    pageId: Types.ObjectId | string,
+    user: Types.ObjectId | string,
+  ): Promise<BookmarkDocument | null>;
+}
+
+const factory = (crowi: Crowi) => {
   const bookmarkEvent = crowi.event('bookmark');
 
-  let bookmarkSchema = null;
-
-  bookmarkSchema = new mongoose.Schema(
+  const bookmarkSchema = new Schema<BookmarkDocument, BookmarkModel>(
     {
-      page: { type: ObjectId, ref: 'Page', index: true },
-      user: { type: ObjectId, ref: 'User', index: true },
+      page: { type: Schema.Types.ObjectId, ref: 'Page', index: true },
+      user: { type: Schema.Types.ObjectId, ref: 'User', index: true },
     },
     {
       timestamps: { createdAt: true, updatedAt: false },
     },
   );
+
   bookmarkSchema.index({ page: 1, user: 1 }, { unique: true });
   bookmarkSchema.plugin(mongoosePaginate);
   bookmarkSchema.plugin(uniqueValidator);
 
-  bookmarkSchema.statics.countByPageId = async function (pageId) {
-    return await this.count({ page: pageId });
+  bookmarkSchema.statics.countByPageId = async function (
+    pageId: Types.ObjectId | string,
+  ): Promise<number> {
+    return await this.countDocuments({ page: pageId });
   };
 
   /**
    * @return {object} key: page._id, value: bookmark count
    */
-  bookmarkSchema.statics.getPageIdToCountMap = async function (pageIds) {
+  bookmarkSchema.statics.getPageIdToCountMap = async function (
+    pageIds: Types.ObjectId[],
+  ): Promise<{ [key: string]: number }> {
     const results = await this.aggregate()
       .match({ page: { $in: pageIds } })
       .group({ _id: '$page', count: { $sum: 1 } });
 
     // convert to map
-    const idToCountMap = {};
+    const idToCountMap: { [key: string]: number } = {};
     results.forEach((result) => {
       idToCountMap[result._id] = result.count;
     });
@@ -51,29 +83,24 @@ const factory = (crowi) => {
   };
 
   // bookmark チェック用
-  bookmarkSchema.statics.findByPageIdAndUserId = function (pageId, userId) {
-    return new Promise((resolve, reject) => {
-      return this.findOne({ page: pageId, user: userId }, (err, doc) => {
-        if (err) {
-          return reject(err);
-        }
-
-        return resolve(doc);
-      });
-    });
+  bookmarkSchema.statics.findByPageIdAndUserId = async function (
+    pageId: Types.ObjectId | string,
+    userId: Types.ObjectId | string,
+  ): Promise<BookmarkDocument | null> {
+    return await this.findOne({ page: pageId, user: userId });
   };
 
-  bookmarkSchema.statics.add = async function (page, user) {
-    // biome-ignore lint/complexity/noUselessThisAlias: ignore
-    const Bookmark = this;
-
-    const newBookmark = new Bookmark({ page, user });
+  bookmarkSchema.statics.add = async function (
+    page: Types.ObjectId | string,
+    user: Types.ObjectId | string,
+  ): Promise<BookmarkDocument> {
+    const newBookmark = new this({ page, user });
 
     try {
       const bookmark = await newBookmark.save();
-      bookmarkEvent.emit('create', page._id);
+      bookmarkEvent.emit('create', page);
       return bookmark;
-    } catch (err) {
+    } catch (err: any) {
       if (err.code === 11000) {
         // duplicate key (dummy response of new object)
         return newBookmark;
@@ -88,26 +115,25 @@ const factory = (crowi) => {
    * used only when removing the page
    * @param {string} pageId
    */
-  bookmarkSchema.statics.removeBookmarksByPageId = async function (pageId) {
-    // biome-ignore lint/complexity/noUselessThisAlias: ignore
-    const Bookmark = this;
-
+  bookmarkSchema.statics.removeBookmarksByPageId = async function (
+    pageId: Types.ObjectId | string,
+  ): Promise<{ deletedCount: number }> {
     try {
-      const data = await Bookmark.remove({ page: pageId });
+      const result = await this.deleteMany({ page: pageId });
       bookmarkEvent.emit('delete', pageId);
-      return data;
+      return { deletedCount: result.deletedCount ?? 0 };
     } catch (err) {
       logger.debug('Bookmark.remove failed (removeBookmarkByPage)', err);
       throw err;
     }
   };
 
-  bookmarkSchema.statics.removeBookmark = async function (pageId, user) {
-    // biome-ignore lint/complexity/noUselessThisAlias: ignore
-    const Bookmark = this;
-
+  bookmarkSchema.statics.removeBookmark = async function (
+    pageId: Types.ObjectId | string,
+    user: Types.ObjectId | string,
+  ): Promise<BookmarkDocument | null> {
     try {
-      const data = await Bookmark.findOneAndRemove({ page: pageId, user });
+      const data = await this.findOneAndDelete({ page: pageId, user });
       bookmarkEvent.emit('delete', pageId);
       return data;
     } catch (err) {
@@ -116,7 +142,10 @@ const factory = (crowi) => {
     }
   };
 
-  return mongoose.model('Bookmark', bookmarkSchema);
+  return getOrCreateModel<BookmarkDocument, BookmarkModel>(
+    'Bookmark',
+    bookmarkSchema,
+  );
 };
 
 export default factory;

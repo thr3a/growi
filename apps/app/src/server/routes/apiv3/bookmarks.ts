@@ -1,9 +1,14 @@
+import type { IUserHasId } from '@growi/core';
 import { SCOPE } from '@growi/core/dist/interfaces';
 import { serializeUserSecurely } from '@growi/core/dist/models/serializers';
+import mongoose, { type HydratedDocument } from 'mongoose';
 
 import { SupportedAction, SupportedTargetModel } from '~/interfaces/activity';
+import type { IBookmarkInfo } from '~/interfaces/bookmark-info';
 import { accessTokenParser } from '~/server/middlewares/access-token-parser';
 import { generateAddActivityMiddleware } from '~/server/middlewares/add-activity';
+import type { BookmarkDocument, BookmarkModel } from '~/server/models/bookmark';
+import type { PageDocument, PageModel } from '~/server/models/page';
 import { serializeBookmarkSecurely } from '~/server/models/serializers/bookmark-serializer';
 import { preNotifyService } from '~/server/service/pre-notify';
 import loggerFactory from '~/utils/logger';
@@ -91,15 +96,16 @@ module.exports = (crowi) => {
     crowi,
     true,
   );
-  const addActivity = generateAddActivityMiddleware(crowi);
+  const addActivity = generateAddActivityMiddleware();
 
   const activityEvent = crowi.event('activity');
-
-  const { Page, Bookmark } = crowi.models;
 
   const validator = {
     bookmarks: [body('pageId').isString(), body('bool').isBoolean()],
     bookmarkInfo: [query('pageId').isMongoId()],
+    userBookmarkList: [
+      param('userId').isMongoId().withMessage('userId is required'),
+    ],
   };
 
   /**
@@ -134,18 +140,25 @@ module.exports = (crowi) => {
       const { user } = req;
       const { pageId } = req.query;
 
-      const responsesParams = {};
+      const responsesParams: IBookmarkInfo = {
+        sumOfBookmarks: 0,
+        isBookmarked: false,
+        bookmarkedUsers: [],
+        pageId: '',
+      };
+
+      const Bookmark: BookmarkModel = mongoose.model<
+        HydratedDocument<BookmarkDocument>,
+        BookmarkModel
+      >('Bookmark');
 
       try {
-        const bookmarks = await Bookmark.find({ page: pageId }).populate(
-          'user',
+        const bookmarks = await Bookmark.find({ page: pageId }).populate<{
+          user: IUserHasId;
+        }>('user');
+        const users = bookmarks.map((bookmark) =>
+          serializeUserSecurely(bookmark.user),
         );
-        let users = [];
-        if (bookmarks.length > 0) {
-          users = bookmarks.map((bookmark) =>
-            serializeUserSecurely(bookmark.user),
-          );
-        }
         responsesParams.sumOfBookmarks = bookmarks.length;
         responsesParams.bookmarkedUsers = users;
         responsesParams.pageId = pageId;
@@ -194,10 +207,6 @@ module.exports = (crowi) => {
    *                schema:
    *                  $ref: '#/components/schemas/Bookmarks'
    */
-  validator.userBookmarkList = [
-    param('userId').isMongoId().withMessage('userId is required'),
-  ];
-
   router.get(
     '/:userId',
     accessTokenParser([SCOPE.READ.FEATURES.BOOKMARK], { acceptLegacy: true }),
@@ -210,6 +219,12 @@ module.exports = (crowi) => {
       if (userId == null) {
         return res.apiv3Err('User id is not found or forbidden', 400);
       }
+
+      const Bookmark: BookmarkModel = mongoose.model<
+        HydratedDocument<BookmarkDocument>,
+        BookmarkModel
+      >('Bookmark');
+
       try {
         const bookmarkIdsInFolders = await BookmarkFolder.distinct(
           'bookmarks',
@@ -281,8 +296,17 @@ module.exports = (crowi) => {
         return res.apiv3Err('A logged in user is required.');
       }
 
-      let page;
-      let bookmark;
+      const Page: PageModel = mongoose.model<
+        HydratedDocument<PageDocument>,
+        PageModel
+      >('Page');
+      const Bookmark: BookmarkModel = mongoose.model<
+        HydratedDocument<BookmarkDocument>,
+        BookmarkModel
+      >('Bookmark');
+
+      let page: HydratedDocument<PageDocument> | null;
+      let bookmark: HydratedDocument<BookmarkDocument> | null;
       try {
         page = await Page.findByIdAndViewer(pageId, req.user);
         if (page == null) {
@@ -293,7 +317,7 @@ module.exports = (crowi) => {
 
         if (bookmark == null) {
           if (bool) {
-            bookmark = await Bookmark.add(page, req.user);
+            bookmark = await Bookmark.add(page._id, req.user);
           } else {
             logger.warn(
               `Removing the bookmark for ${page._id} by ${req.user._id} failed because the bookmark does not exist.`,
@@ -306,7 +330,7 @@ module.exports = (crowi) => {
               `Adding the bookmark for ${page._id} by ${req.user._id} failed because the bookmark has already exist.`,
             );
           } else {
-            bookmark = await Bookmark.removeBookmark(page, req.user);
+            bookmark = await Bookmark.removeBookmark(page._id, req.user);
           }
         }
       } catch (err) {

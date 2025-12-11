@@ -76,9 +76,12 @@ const PageItemControlDropdownMenu = React.memo((props: DropdownMenuProps): JSX.E
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const bookmarkItemClickedHandler = useCallback(async() => {
-    if (!isIPageInfoForOperation(pageInfo) || onClickBookmarkMenuItem == null) {
+    if (onClickBookmarkMenuItem == null) return;
+
+    if (!isIPageInfoForEmpty(pageInfo) && !isIPageInfoForOperation(pageInfo)) {
       return;
     }
+
     await onClickBookmarkMenuItem(pageId, !pageInfo.isBookmarked);
   }, [onClickBookmarkMenuItem, pageId, pageInfo]);
 
@@ -172,7 +175,7 @@ const PageItemControlDropdownMenu = React.memo((props: DropdownMenuProps): JSX.E
         ) }
 
         {/* Bookmark */}
-        { !forceHideMenuItems?.includes(MenuItemType.BOOKMARK) && isEnableActions && isIPageInfoForOperation(pageInfo) && (
+        { !forceHideMenuItems?.includes(MenuItemType.BOOKMARK) && isEnableActions && (isIPageInfoForEmpty(pageInfo) || isIPageInfoForOperation(pageInfo)) && (
           <DropdownItem
             onClick={bookmarkItemClickedHandler}
             className="grw-page-control-dropdown-item"
