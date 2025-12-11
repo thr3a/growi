@@ -8,11 +8,11 @@ import {
   PageStatus, YDocStatus, getIdForRef,
   getIdStringForRef,
 } from '@growi/core';
-import { PageGrant, isIPageInfoForEntity } from '@growi/core/dist/interfaces';
+import { PageGrant, isIPageInfoForEmpty, isIPageInfoForEntity } from '@growi/core/dist/interfaces';
 import type {
   Ref, HasObjectId, IUserHasId, IUser,
   IPage, IGrantedGroup, IRevisionHasId,
-  IPageNotFoundInfo, IPageInfoExt, IPageInfo, IPageInfoForEntity, IPageInfoForOperation,
+  IPageNotFoundInfo, IPageInfoExt, IPageInfo, IPageInfoForEmpty, IPageInfoForEntity, IPageInfoForOperation,
   IDataWithRequiredMeta,
 } from '@growi/core/dist/interfaces';
 import {
@@ -460,7 +460,7 @@ class PageService implements IPageService {
     const pageInfo = {
       ...basicPageInfo,
       bookmarkCount,
-    } satisfies IPageInfo | IPageInfoForEntity;
+    } satisfies | IPageInfo | IPageInfoForEntity;
 
     if (isGuestUser) {
       return {
@@ -475,21 +475,25 @@ class PageService implements IPageService {
 
     const isDeletable = this.canDelete(page, creatorId, user, false);
     const isAbleToDeleteCompletely = this.canDeleteCompletely(page, creatorId, user, false, userRelatedGroups); // use normal delete config
+    const isBookmarked: boolean = isGuestUser
+      ? false
+      : (await Bookmark.findByPageIdAndUserId(pageId, user._id)) != null;
 
-    if (!isIPageInfoForEntity(pageInfo)) {
+    if (isIPageInfoForEmpty(pageInfo)) {
       return {
         data: page,
         meta: {
           ...pageInfo,
           isDeletable,
           isAbleToDeleteCompletely,
-        } satisfies IPageInfo,
+          isBookmarked,
+        } satisfies IPageInfoForEmpty,
       };
     }
 
-    const isBookmarked: boolean = isGuestUser
-      ? false
-      : (await Bookmark.findByPageIdAndUserId(pageId, user._id)) != null;
+    // IPageInfoForEmpty and IPageInfoForEntity are mutually exclusive
+    // so hereafter we can safely
+    assert(isIPageInfoForEntity(pageInfo));
 
     const isLiked: boolean = page.isLiked(user);
     const subscription = await Subscription.findByUserIdAndTargetId(user._id, page._id);
@@ -2578,7 +2582,7 @@ class PageService implements IPageService {
         isV5Compatible: true,
         isEmpty: true,
         isMovable,
-        isDeletable: false,
+        isDeletable,
         isAbleToDeleteCompletely: false,
         isRevertible: false,
       };

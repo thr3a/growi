@@ -83,10 +83,14 @@ export type PageStatus = (typeof PageStatus)[keyof typeof PageStatus];
 
 export type IPageHasId = IPage & HasObjectId;
 
-export type IPageNotFoundInfo = {
-  isNotFound: true;
+// Special type to represent page is an empty page or not found or forbidden status
+export type IPageNotFoundInfo = (
+  | IPageInfoForEmpty
+  | {
+      isNotFound: true;
+    }
+) & {
   isForbidden: boolean;
-  isEmpty?: true;
 };
 
 export type IPageInfo = {
@@ -98,6 +102,12 @@ export type IPageInfo = {
   isAbleToDeleteCompletely: boolean;
   isRevertible: boolean;
   bookmarkCount: number;
+};
+
+export type IPageInfoForEmpty = Omit<IPageInfo, 'isNotFound' | 'isEmpty'> & {
+  isNotFound: true;
+  isEmpty: true;
+  isBookmarked?: boolean;
 };
 
 export type IPageInfoForEntity = Omit<IPageInfo, 'isNotFound' | 'isEmpty'> & {
@@ -123,6 +133,7 @@ export type IPageInfoForListing = IPageInfoForEntity & HasRevisionShortbody;
 
 export type IPageInfoExt =
   | IPageInfo
+  | IPageInfoForEmpty
   | IPageInfoForEntity
   | IPageInfoForOperation
   | IPageInfoForListing;
@@ -134,7 +145,8 @@ export const isIPageNotFoundInfo = (
   return (
     pageInfo != null &&
     pageInfo instanceof Object &&
-    pageInfo.isNotFound === true
+    pageInfo.isNotFound === true &&
+    'isForbidden' in pageInfo
   );
 };
 
@@ -145,6 +157,13 @@ export const isIPageInfo = (
   return (
     pageInfo != null && pageInfo instanceof Object && 'isEmpty' in pageInfo
   );
+};
+
+export const isIPageInfoForEmpty = (
+  // biome-ignore lint/suspicious/noExplicitAny: ignore
+  pageInfo: any | undefined,
+): pageInfo is IPageInfoForEmpty => {
+  return isIPageInfo(pageInfo) && pageInfo.isEmpty === true;
 };
 
 export const isIPageInfoForEntity = (
