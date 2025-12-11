@@ -1,13 +1,16 @@
 import { useEffect } from 'react';
 
+import { useTranslation } from 'next-i18next';
 import PropTypes from 'prop-types';
 
 import { useStartEditing } from '~/client/services/use-start-editing';
+import { toastError } from '~/client/util/toastr';
 import { useCurrentPathname } from '~/states/global';
 import { useIsEditable, useCurrentPagePath } from '~/states/page';
 import { useEditorMode } from '~/states/ui/editor';
 
 const EditPage = (props) => {
+  const { t } = useTranslation('commons');
   const isEditable = useIsEditable();
   const { setEditorMode } = useEditorMode();
   const startEditing = useStartEditing();
@@ -31,13 +34,13 @@ const EditPage = (props) => {
         await startEditing(path);
       }
       catch (err) {
-      //
+        toastError(t('toaster.create_failed', { target: path }));
       }
 
       // remove this
       props.onDeleteRender(this);
     })();
-  }, [startEditing, isEditable, path, props, setEditorMode]);
+  }, [startEditing, isEditable, path, props, setEditorMode, t]);
 
   return null;
 };
