@@ -35,6 +35,7 @@ const AppSetting = (props) => {
       globalLang: adminAppContainer.state.globalLang || 'en-US',
       // Convert boolean to string for radio button value
       isEmailPublishedForNewUser: String(adminAppContainer.state.isEmailPublishedForNewUser ?? true),
+      isReadOnlyForNewUser: String(adminAppContainer.state.isReadOnlyForNewUser ?? false),
       fileUpload: adminAppContainer.state.fileUpload ?? false,
     });
   }, [
@@ -42,6 +43,7 @@ const AppSetting = (props) => {
     adminAppContainer.state.confidential,
     adminAppContainer.state.globalLang,
     adminAppContainer.state.isEmailPublishedForNewUser,
+    adminAppContainer.state.isReadOnlyForNewUser,
     adminAppContainer.state.fileUpload,
     reset,
   ]);
@@ -57,6 +59,8 @@ const AppSetting = (props) => {
       // Convert string 'true'/'false' to boolean
       const isEmailPublished = data.isEmailPublishedForNewUser === 'true' || data.isEmailPublishedForNewUser === true;
       await adminAppContainer.changeIsEmailPublishedForNewUserShow(isEmailPublished);
+      const isReadOnlyForNewUser = data.isReadOnlyForNewUser === 'true' || data.isReadOnlyForNewUser === true;
+      await adminAppContainer.changeIsReadOnlyForNewUserShow(isReadOnlyForNewUser);
       await adminAppContainer.changeFileUpload(data.fileUpload);
 
       await adminAppContainer.updateAppSettingHandler();
@@ -158,6 +162,39 @@ const AppSetting = (props) => {
               {...register('isEmailPublishedForNewUser')}
             />
             <label className="form-label form-check-label" htmlFor="radio-email-hide">{t('commons:Hide')}</label>
+          </div>
+
+        </div>
+      </div>
+
+      <div className="row mb-5">
+        <label
+          className="text-start text-md-end col-md-3 col-form-label"
+        >
+          {t('admin:app_setting.default_read_only_for_new_user')}
+        </label>
+        <div className="col-md-6 py-2">
+
+          <div className="form-check form-check-inline">
+            <input
+              type="radio"
+              id="radio-email-show"
+              className="form-check-input"
+              value="true"
+              {...register('isReadOnlyForNewUser')}
+            />
+            <label className="form-label form-check-label" htmlFor="radio-email-show">{t('admin:user_management.user_table.read_only')}</label>
+          </div>
+
+          <div className="form-check form-check-inline">
+            <input
+              type="radio"
+              id="radio-email-hide"
+              className="form-check-input"
+              value="false"
+              {...register('isReadOnlyForNewUser')}
+            />
+            <label className="form-label form-check-label" htmlFor="radio-email-hide">{t('admin:app_setting.editable')}</label>
           </div>
 
         </div>
