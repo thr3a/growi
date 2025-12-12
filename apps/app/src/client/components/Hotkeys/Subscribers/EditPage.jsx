@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import PropTypes from 'prop-types';
@@ -7,20 +7,23 @@ import { useStartEditing } from '~/client/services/use-start-editing';
 import { toastError } from '~/client/util/toastr';
 import { useCurrentPathname } from '~/states/global';
 import { useIsEditable, useCurrentPagePath } from '~/states/page';
-import { useEditorMode } from '~/states/ui/editor';
 
 const EditPage = (props) => {
   const { t } = useTranslation('commons');
   const isEditable = useIsEditable();
-  const { setEditorMode } = useEditorMode();
   const startEditing = useStartEditing();
   const currentPagePath = useCurrentPagePath();
   const currentPathname = useCurrentPathname();
   const path = currentPagePath ?? currentPathname;
+  const isExecutedRef = useRef(false);
 
   // setup effect
   useEffect(() => {
-    (async () => {
+    (async() => {
+      // Prevent multiple executions
+      if (isExecutedRef.current) return;
+      isExecutedRef.current = true;
+
       if (!isEditable) {
         return;
       }
@@ -40,7 +43,7 @@ const EditPage = (props) => {
       // remove this
       props.onDeleteRender(this);
     })();
-  }, [startEditing, isEditable, path, props, setEditorMode, t]);
+  }, [startEditing, isEditable, path, props, t]);
 
   return null;
 };
