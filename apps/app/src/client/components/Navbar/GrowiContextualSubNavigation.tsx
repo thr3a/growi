@@ -342,7 +342,7 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
   const switchContentWidthHandler = useCallback(async (pageId: string, value: boolean) => {
     if (!isSharedPage) {
       await updateContentWidth(pageId, value);
-      fetchCurrentPage();
+      fetchCurrentPage({ force: true });
     }
   }, [isSharedPage, fetchCurrentPage]);
 
