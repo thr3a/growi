@@ -4,8 +4,8 @@ import type {
   HasObjectId,
   IDataWithRequiredMeta,
   IGrantedGroup,
-  IPageInfo, IPageInfoForEntity, IPageNotFoundInfo, IUser, IPageInfoExt, IPage, PageGrant, IUserHasId,
-} from '@growi/core';
+  IPageInfoForEntity, IPageNotFoundInfo, IUser, IPageInfoExt, IPage, PageGrant, IUserHasId, IPageInfoForEmpty,
+} from '@growi/core/dist/interfaces';
 import type { HydratedDocument, Types } from 'mongoose';
 
 import type { ExternalUserGroupDocument } from '~/features/external-user-group/server/models/external-user-group';
@@ -45,7 +45,9 @@ export interface IPageService {
     user: IUser,
 ): Promise<void>
   shortBodiesMapByPageIds(pageIds?: Types.ObjectId[], user?): Promise<Record<string, string | null>>,
-  constructBasicPageInfo(page: PageDocument, isGuestUser?: boolean): Omit<IPageInfo | IPageInfoForEntity, 'bookmarkCount'>,
+  constructBasicPageInfo(page: HydratedDocument<PageDocument>, isGuestUser?: boolean): |
+    Omit<IPageInfoForEmpty, 'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'> |
+    Omit<IPageInfoForEntity, 'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'>,
   normalizeAllPublicPages(): Promise<void>,
   canDelete(page: PageDocument, creatorId: ObjectIdLike | null, operator: any | null, isRecursively: boolean): boolean,
   canDeleteCompletely(

@@ -105,6 +105,7 @@ export type IPageInfo = {
 };
 
 export type IPageInfoForEmpty = Omit<IPageInfo, 'isNotFound' | 'isEmpty'> & {
+  emptyPageId: string;
   isNotFound: true;
   isEmpty: true;
   isBookmarked?: boolean;

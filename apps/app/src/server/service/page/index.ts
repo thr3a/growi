@@ -450,7 +450,7 @@ class PageService implements IPageService {
           isAbleToDeleteCompletely: false,
           isRevertible: false,
           bookmarkCount: 0,
-        } satisfies IPageInfo | IPageInfoForEntity,
+        } satisfies IPageInfo,
       };
     }
 
@@ -460,12 +460,16 @@ class PageService implements IPageService {
     const pageInfo = {
       ...basicPageInfo,
       bookmarkCount,
-    } satisfies | IPageInfo | IPageInfoForEntity;
+    };
 
     if (isGuestUser) {
       return {
         data: page,
-        meta: pageInfo,
+        meta: {
+          ...pageInfo,
+          isDeletable: false,
+          isAbleToDeleteCompletely: false,
+        } satisfies IPageInfo,
       };
     }
 
@@ -479,7 +483,7 @@ class PageService implements IPageService {
       ? false
       : (await Bookmark.findByPageIdAndUserId(pageId, user._id)) != null;
 
-    if (isIPageInfoForEmpty(pageInfo)) {
+    if (pageInfo.isEmpty) {
       return {
         data: page,
         meta: {
@@ -2572,26 +2576,27 @@ class PageService implements IPageService {
     });
   }
 
-  constructBasicPageInfo(page: PageDocument, isGuestUser?: boolean): | Omit<IPageInfo | IPageInfoForEntity, 'bookmarkCount'> {
+  constructBasicPageInfo(page: HydratedDocument<PageDocument>, isGuestUser?: boolean): |
+      Omit<IPageInfoForEmpty, 'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'> |
+      Omit<IPageInfoForEntity, 'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'> {
     const isMovable = isGuestUser ? false : isMovablePage(page.path);
-    const isDeletable = !(isGuestUser || isTopPage(page.path) || isUsersTopPage(page.path));
+    const pageId = page._id.toString();
 
     if (page.isEmpty) {
       return {
+        emptyPageId: pageId,
         isNotFound: true,
         isV5Compatible: true,
         isEmpty: true,
         isMovable,
-        isDeletable,
-        isAbleToDeleteCompletely: false,
         isRevertible: false,
-      };
+      } satisfies Omit<IPageInfoForEmpty, 'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'>;
     }
 
     const likers = page.liker.slice(0, 15) as Ref<IUserHasId>[];
     const seenUsers = page.seenUsers.slice(0, 15) as Ref<IUserHasId>[];
 
-    const infoForEntity: Omit<IPageInfoForEntity, 'bookmarkCount'> = {
+    const infoForEntity = {
       isNotFound: false,
       isV5Compatible: isTopPage(page.path) || page.parent != null,
       isEmpty: false,
@@ -2600,8 +2605,6 @@ class PageService implements IPageService {
       seenUserIds: this.extractStringIds(seenUsers),
       sumOfSeenUsers: page.seenUsers.length,
       isMovable,
-      isDeletable,
-      isAbleToDeleteCompletely: false,
       isRevertible: isTrashPage(page.path),
       contentAge: page.getContentAge(),
       descendantCount: page.descendantCount,
@@ -2609,7 +2612,7 @@ class PageService implements IPageService {
       // the page must have a revision if it is not empty
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       latestRevisionId: getIdStringForRef(page.revision!),
-    };
+    } satisfies Omit<IPageInfoForEntity, 'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'>;
 
     return infoForEntity;
   }
