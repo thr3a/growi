@@ -77,6 +77,14 @@ module.exports = {
     'src/server/service/system-events/**',
     'src/server/service/user-notification/**',
     'src/server/service/yjs/**',
+    'src/server/service/file-uploader/**',
+    'src/server/service/global-notification/**',
+    'src/server/service/growi-bridge/**',
+    'src/server/service/growi-info/**',
+    'src/server/service/import/**',
+    'src/server/service/in-app-notification/**',
+    'src/server/service/interfaces/**',
+    'src/server/service/normalize-data/**',
   ],
   settings: {
     // resolve path aliases by eslint-import-resolver-typescript

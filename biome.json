@@ -31,14 +31,6 @@
       "!apps/app/src/client",
       "!apps/app/src/server/middlewares",
       "!apps/app/src/server/routes/apiv3/*.js",
-      "!apps/app/src/server/service/file-uploader",
-      "!apps/app/src/server/service/global-notification",
-      "!apps/app/src/server/service/growi-bridge",
-      "!apps/app/src/server/service/growi-info",
-      "!apps/app/src/server/service/import",
-      "!apps/app/src/server/service/in-app-notification",
-      "!apps/app/src/server/service/interfaces",
-      "!apps/app/src/server/service/normalize-data",
       "!apps/app/src/server/service/page"
     ]
   },
