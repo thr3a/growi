@@ -1,14 +1,17 @@
 import { useEffect, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import PropTypes from 'prop-types';
 
 import { useStartEditing } from '~/client/services/use-start-editing';
 import { toastError } from '~/client/util/toastr';
 import { useCurrentPathname } from '~/states/global';
 import { useIsEditable, useCurrentPagePath } from '~/states/page';
 
-const EditPage = (props) => {
+type Props = {
+  onDeleteRender: () => void,
+}
+
+const EditPage = (props: Props): JSX.Element => {
   const { t } = useTranslation('commons');
   const isEditable = useIsEditable();
   const startEditing = useStartEditing();
@@ -41,15 +44,11 @@ const EditPage = (props) => {
       }
 
       // remove this
-      props.onDeleteRender(this);
+      props.onDeleteRender();
     })();
   }, [startEditing, isEditable, path, props, t]);
 
-  return null;
-};
-
-EditPage.propTypes = {
-  onDeleteRender: PropTypes.func.isRequired,
+  return <></>;
 };
 
 EditPage.getHotkeyStrokes = () => {
