@@ -11,7 +11,7 @@ type Props = {
   onDeleteRender: () => void,
 }
 
-const EditPage = (props: Props): JSX.Element => {
+const EditPage = (props: Props): null => {
   const { t } = useTranslation('commons');
   const isEditable = useIsEditable();
   const startEditing = useStartEditing();
@@ -48,7 +48,7 @@ const EditPage = (props: Props): JSX.Element => {
     })();
   }, [startEditing, isEditable, path, props, t]);
 
-  return <></>;
+  return null;
 };
 
 EditPage.getHotkeyStrokes = () => {
