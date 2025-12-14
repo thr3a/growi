@@ -31,8 +31,6 @@
       "!apps/app/src/client/components",
       "!apps/app/src/client/services",
       "!apps/app/src/client/util",
-      "!apps/app/src/server/middlewares",
-      "!apps/app/src/server/routes/apiv3/*.js",
       "!apps/app/src/server/service/page"
     ]
   },
