@@ -87,6 +87,7 @@ module.exports = {
     'src/server/service/normalize-data/**',
     'src/client/interfaces/**',
     'src/client/models/**',
+    'src/client/services/**',
   ],
   settings: {
     // resolve path aliases by eslint-import-resolver-typescript
