@@ -27,7 +27,9 @@ function parseSubScope(
   for (const action of actions) {
     const obj = subObjForActions[action];
     if (obj && typeof obj === 'object') {
-      Object.keys(obj).forEach((k) => childKeys.add(k));
+      Object.keys(obj).forEach((k) => {
+        childKeys.add(k);
+      });
     }
   }
 
@@ -67,7 +69,9 @@ export function parseScopes({
 
   // Collect all top-level keys (e.g., ALL, ADMIN, USER) across all actions
   for (const action of actions) {
-    Object.keys(scopes[action] || {}).forEach((k) => topKeys.add(k));
+    Object.keys(scopes[action] || {}).forEach((k) => {
+      topKeys.add(k);
+    });
   }
 
   const result: ScopeMap = {};
