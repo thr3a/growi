@@ -366,7 +366,6 @@
     "default_language": "新規ユーザーのデフォルト設定言語",
     "default_mail_visibility": "新規ユーザーの初期メール公開設定",
     "file_uploading": "ファイルアップロード",
-    "enable_files_except_image": "画像以外のファイルアップロードを許可",
     "attach_enable": "許可をしている場合、画像以外のファイルをページに添付可能になります。",
     "page_bulk_export_settings": "ページ一括エクスポート設定",
     "enable_page_bulk_export": "一括エクスポートを有効にする",
