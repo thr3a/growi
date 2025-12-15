@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import {
   type IPagePopulatedToShowRevision,
+  isIPageInfoForEmpty,
   isIPageNotFoundInfo,
-} from '@growi/core';
+} from '@growi/core/dist/interfaces';
 import { isErrorV3 } from '@growi/core/dist/models';
 import { isClient } from '@growi/core/dist/utils';
 import { isPermalink } from '@growi/core/dist/utils/page-path-utils';
@@ -16,7 +17,8 @@ import loggerFactory from '~/utils/logger';
 
 import {
   currentPageDataAtom,
-  currentPageIdAtom,
+  currentPageEmptyIdAtom,
+  currentPageEntityIdAtom,
   isForbiddenAtom,
   pageErrorAtom,
   pageLoadingAtom,
@@ -176,7 +178,7 @@ export const useFetchCurrentPage = (): {
   error: Error | null;
 } => {
   const shareLinkId = useAtomValue(shareLinkIdAtom);
-  const currentPageId = useAtomValue(currentPageIdAtom);
+  const currentPageId = useAtomValue(currentPageEntityIdAtom);
 
   const isLoading = useAtomValue(pageLoadingAtom);
   const error = useAtomValue(pageErrorAtom);
@@ -193,7 +195,7 @@ export const useFetchCurrentPage = (): {
         set,
         args?: FetchPageArgs,
       ): Promise<IPagePopulatedToShowRevision | null> => {
-        const currentPageId = get(currentPageIdAtom);
+        const currentPageId = get(currentPageEntityIdAtom);
         const currentPageData = get(currentPageDataAtom);
         const revisionIdFromUrl = get(revisionIdFromUrlAtom);
 
@@ -237,7 +239,8 @@ export const useFetchCurrentPage = (): {
           const { page: newData } = data;
 
           set(currentPageDataAtom, newData);
-          set(currentPageIdAtom, newData._id);
+          set(currentPageEntityIdAtom, newData._id);
+          set(currentPageEmptyIdAtom, undefined);
           set(pageNotFoundAtom, false);
           set(isForbiddenAtom, false);
 
@@ -260,7 +263,13 @@ export const useFetchCurrentPage = (): {
               set(pageNotFoundAtom, true);
               set(isForbiddenAtom, error.args.isForbidden ?? false);
               set(currentPageDataAtom, undefined);
-              set(currentPageIdAtom, undefined);
+              set(currentPageEntityIdAtom, undefined);
+              set(
+                currentPageEmptyIdAtom,
+                isIPageInfoForEmpty(error.args)
+                  ? error.args.emptyPageId
+                  : undefined,
+              );
               set(remoteRevisionBodyAtom, undefined);
             }
           }
