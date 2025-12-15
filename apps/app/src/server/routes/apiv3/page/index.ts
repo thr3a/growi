@@ -1,3 +1,5 @@
+import type { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import type {
   IDataWithMeta,
   IPage,
@@ -19,10 +21,8 @@ import { convertToNewAffiliationPath } from '@growi/core/dist/utils/page-path-ut
 import { normalizePath } from '@growi/core/dist/utils/path-utils';
 import type { HydratedDocument } from 'mongoose';
 import mongoose from 'mongoose';
-import path from 'path';
+import path from 'pathe';
 import sanitize from 'sanitize-filename';
-import type { Readable } from 'stream';
-import { pipeline } from 'stream/promises';
 
 import { SupportedAction, SupportedTargetModel } from '~/interfaces/activity';
 import type { IPageGrantData } from '~/interfaces/page';
@@ -567,7 +567,7 @@ module.exports = (crowi: Crowi) => {
    *            content:
    *              application/json:
    *                schema:
-   *                  $ref: '#/components/schemas/PageInfoAll'
+   *                  $ref: '#/components/schemas/PageInfoExt'
    *          500:
    *            description: Internal server error.
    */
@@ -591,9 +591,21 @@ module.exports = (crowi: Crowi) => {
         );
 
         if (isIPageNotFoundInfo(meta)) {
-          return res.apiv3Err(`Page '${pageId}' is not found or forbidden`);
+          // Return error only when the page is forbidden
+          if (meta.isForbidden) {
+            return res.apiv3Err(
+              new ErrorV3(
+                'Page is forbidden',
+                'page-is-forbidden',
+                undefined,
+                meta,
+              ),
+              403,
+            );
+          }
         }
 
+        // Empty pages (isEmpty: true) should return page info for UI operations
         return res.apiv3(meta);
       } catch (err) {
         logger.error('get-page-info', err);
@@ -627,7 +639,7 @@ module.exports = (crowi: Crowi) => {
    *                    isGrantNormalized:
    *                      type: boolean
    *          400:
-   *            description: Bad request. Page is unreachable or empty.
+   *            description: Bad request. Page is unreachable.
    *          500:
    *            description: Internal server error.
    */
@@ -643,15 +655,12 @@ module.exports = (crowi: Crowi) => {
       const Page = mongoose.model<IPage, PageModel>('Page');
       const pageGrantService = crowi.pageGrantService as IPageGrantService;
 
-      const page = await Page.findByIdAndViewer(pageId, req.user, null, false);
+      const page = await Page.findByIdAndViewer(pageId, req.user, null, true);
 
       if (page == null) {
         // Empty page should not be related to grant API
         return res.apiv3Err(
-          new ErrorV3(
-            'Page is unreachable or empty.',
-            'page_unreachable_or_empty',
-          ),
+          new ErrorV3('Page is unreachable', 'page_unreachable'),
           400,
         );
       }
@@ -695,7 +704,7 @@ module.exports = (crowi: Crowi) => {
         getIdForRef(page.parent),
         req.user,
         null,
-        false,
+        true,
       );
 
       // user isn't allowed to see parent's grant
@@ -853,7 +862,7 @@ module.exports = (crowi: Crowi) => {
    *                     items:
    *                       type: string
    *         400:
-   *           description: Bad request. Page is unreachable or empty.
+   *           description: Bad request. Page is unreachable.
    *         500:
    *           description: Internal server error.
    */
@@ -867,15 +876,12 @@ module.exports = (crowi: Crowi) => {
       const { pageId } = req.query;
 
       const Page = mongoose.model<IPage, PageModel>('Page');
-      const page = await Page.findByIdAndViewer(pageId, req.user, null);
+      const page = await Page.findByIdAndViewer(pageId, req.user, null, true);
 
       if (page == null) {
         // Empty page should not be related to grant API
         return res.apiv3Err(
-          new ErrorV3(
-            'Page is unreachable or empty.',
-            'page_unreachable_or_empty',
-          ),
+          new ErrorV3('Page is unreachable', 'page_unreachable'),
           400,
         );
       }

@@ -1,17 +1,17 @@
+import type { EventEmitter } from 'node:events';
 import type {
   HasObjectId,
   IDataWithRequiredMeta,
   IGrantedGroup,
   IPage,
-  IPageInfo,
   IPageInfoExt,
+  IPageInfoForEmpty,
   IPageInfoForEntity,
   IPageNotFoundInfo,
   IUser,
   IUserHasId,
   PageGrant,
-} from '@growi/core';
-import type EventEmitter from 'events';
+} from '@growi/core/dist/interfaces';
 import type { HydratedDocument, Types } from 'mongoose';
 
 import type { ExternalUserGroupDocument } from '~/features/external-user-group/server/models/external-user-group';
@@ -96,9 +96,17 @@ export interface IPageService {
     user?,
   ): Promise<Record<string, string | null>>;
   constructBasicPageInfo(
-    page: PageDocument,
+    page: HydratedDocument<PageDocument>,
     isGuestUser?: boolean,
-  ): Omit<IPageInfo | IPageInfoForEntity, 'bookmarkCount'>;
+  ):
+    | Omit<
+        IPageInfoForEmpty,
+        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
+      >
+    | Omit<
+        IPageInfoForEntity,
+        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
+      >;
   normalizeAllPublicPages(): Promise<void>;
   canDelete(
     page: PageDocument,

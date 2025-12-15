@@ -270,7 +270,7 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
   const revisionId = (revision != null && isPopulated(revision)) ? revision._id : undefined;
 
   const { editorMode } = useEditorMode();
-  const pageId = useCurrentPageId();
+  const pageId = useCurrentPageId(true);
   const currentUser = useCurrentUser();
   const isGuestUser = useIsGuestUser();
   const isReadOnlyUser = useIsReadOnlyUser();
@@ -290,7 +290,6 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
   const { mutate: mutatePageInfo } = useSWRxPageInfo(pageId);
 
   const [isStickyActive, setStickyActive] = useState(false);
-
 
   const path = currentPage?.path ?? currentPathname;
   // const grant = currentPage?.grant ?? grantData?.grant;
@@ -342,7 +341,7 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
   const switchContentWidthHandler = useCallback(async (pageId: string, value: boolean) => {
     if (!isSharedPage) {
       await updateContentWidth(pageId, value);
-      fetchCurrentPage();
+      fetchCurrentPage({ force: true });
     }
   }, [isSharedPage, fetchCurrentPage]);
 

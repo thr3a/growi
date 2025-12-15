@@ -288,12 +288,6 @@ export const CONFIG_KEYS = [
   'notification:owner-page:isEnabled',
   'notification:group-page:isEnabled',
 
-  // Importer Settings
-  'importer:esa:team_name',
-  'importer:esa:access_token',
-  'importer:qiita:team_name',
-  'importer:qiita:access_token',
-
   // External User Group Settings
   'external-user-group:ldap:groupMembershipAttributeType',
   'external-user-group:ldap:groupSearchBase',
@@ -1210,20 +1204,6 @@ export const CONFIG_DEFINITIONS = {
   }),
   'notification:group-page:isEnabled': defineConfig<boolean>({
     defaultValue: false,
-  }),
-
-  // Importer Settings
-  'importer:esa:team_name': defineConfig<string | undefined>({
-    defaultValue: undefined,
-  }),
-  'importer:esa:access_token': defineConfig<string | undefined>({
-    defaultValue: undefined,
-  }),
-  'importer:qiita:team_name': defineConfig<string | undefined>({
-    defaultValue: undefined,
-  }),
-  'importer:qiita:access_token': defineConfig<string | undefined>({
-    defaultValue: undefined,
   }),
 
   // External User Group Settings
