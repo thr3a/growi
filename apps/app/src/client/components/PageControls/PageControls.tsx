@@ -321,13 +321,13 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
 
       {!hideSubControls && (
         <div className={`hstack gap-1 ${!isViewMode && 'd-none d-lg-flex'}`}>
-          {isIPageInfoForOperation(pageInfo) && revisionId != null && (
+          {isIPageInfoForOperation(pageInfo) && (
             <SubscribeButton
               status={pageInfo.subscriptionStatus}
               onClick={subscribeClickhandler}
             />
           )}
-          {isIPageInfoForOperation(pageInfo) && revisionId != null && (
+          {isIPageInfoForOperation(pageInfo) && (
             <LikeButtons
               onLikeClicked={likeClickhandler}
               sumOfLikers={pageInfo.sumOfLikers}
@@ -335,14 +335,14 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
               likers={likers}
             />
           )}
-          {(isIPageInfoForOperation(pageInfo) || isIPageInfoForEmpty(pageInfo)) && pageId != null && revisionId != null && (
+          {(isIPageInfoForOperation(pageInfo) || isIPageInfoForEmpty(pageInfo)) && pageId != null && (
             <BookmarkButtons
               pageId={pageId}
               isBookmarked={pageInfo.isBookmarked}
               bookmarkCount={pageInfo.bookmarkCount}
             />
           )}
-          {isIPageInfoForEntity(pageInfo) && revisionId != null && !isSearchPage && (
+          {isIPageInfoForEntity(pageInfo) && !isSearchPage && (
             <SeenUserInfo
               seenUsers={seenUsers}
               sumOfSeenUsers={pageInfo.sumOfSeenUsers}
