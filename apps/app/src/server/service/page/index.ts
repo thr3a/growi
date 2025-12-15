@@ -213,9 +213,11 @@ class PageService implements IPageService {
         }
 
         try {
-          const Page = mongoose.model<HydratedDocument<PageDocument>, PageModel>(
-            'Page',
-          );
+          const Page = mongoose.model<
+            HydratedDocument<PageDocument>,
+            PageModel
+          >('Page');
+
           const page = await Page.findById(pageId);
 
           if (page == null) {
