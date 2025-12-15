@@ -592,7 +592,6 @@ module.exports = (crowi: Crowi) => {
 
         if (isIPageNotFoundInfo(meta)) {
           // Return error only when the page is forbidden
-          // Empty pages (isEmpty: true) should return page info for UI operations
           if (meta.isForbidden) {
             return res.apiv3Err(
               new ErrorV3(
@@ -604,9 +603,9 @@ module.exports = (crowi: Crowi) => {
               403,
             );
           }
-          // For not found but not forbidden pages (isEmpty: true), return the meta info
         }
 
+        // Empty pages (isEmpty: true) should return page info for UI operations
         return res.apiv3(meta);
       } catch (err) {
         logger.error('get-page-info', err);
