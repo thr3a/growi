@@ -3,8 +3,7 @@ import React, {
 } from 'react';
 
 import type {
-  IPageInfoForEmpty,
-  IPageInfoForOperation, IPageToDeleteWithMeta, IPageToRenameWithMeta,
+  IPageInfo, IPageToDeleteWithMeta, IPageToRenameWithMeta,
 } from '@growi/core';
 import {
   isIPageInfoForEmpty,
@@ -107,7 +106,7 @@ const WideViewMenuItem = (props: WideViewMenuItemProps): JSX.Element => {
 
 
 type CommonProps = {
-  pageId: string,
+  pageId?: string,
   shareLinkId?: string | null,
   revisionId?: string | null,
   path?: string | null,
@@ -124,7 +123,7 @@ type CommonProps = {
 }
 
 type PageControlsSubstanceProps = CommonProps & {
-  pageInfo: IPageInfoForOperation | IPageInfoForEmpty,
+  pageInfo: IPageInfo | undefined,
   onClickEditTagsButton: () => void,
 }
 
@@ -170,10 +169,12 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
   const seenUsers = usersList != null ? usersList.filter(({ _id }) => seenUserIds.includes(_id)).slice(0, 15) : [];
 
   const subscribeClickhandler = useCallback(async () => {
-    if (isGuestUser ?? true) {
+    if (isGuestUser) {
+      logger.warn('Guest users cannot subscribe to pages');
       return;
     }
-    if (!isIPageInfoForOperation(pageInfo)) {
+    if (!isIPageInfoForOperation(pageInfo) || pageId == null) {
+      logger.warn('PageInfo is not for operation or pageId is null');
       return;
     }
 
@@ -182,10 +183,12 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
   }, [isGuestUser, mutatePageInfo, pageId, pageInfo]);
 
   const likeClickhandler = useCallback(async () => {
-    if (isGuestUser ?? true) {
+    if (isGuestUser) {
+      logger.warn('Guest users cannot like pages');
       return;
     }
-    if (!isIPageInfoForOperation(pageInfo)) {
+    if (!isIPageInfoForOperation(pageInfo) || pageId == null) {
+      logger.warn('PageInfo is not for operation or pageId is null');
       return;
     }
 
@@ -194,7 +197,8 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
   }, [isGuestUser, mutatePageInfo, pageId, pageInfo]);
 
   const duplicateMenuItemClickHandler = useCallback(async (): Promise<void> => {
-    if (onClickDuplicateMenuItem == null || path == null) {
+    if (onClickDuplicateMenuItem == null || pageId == null || path == null) {
+      logger.warn('Cannot duplicate the page because onClickDuplicateMenuItem, pageId or path is null');
       return;
     }
     const page: IPageForPageDuplicateModal = { pageId, path };
@@ -203,7 +207,8 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
   }, [onClickDuplicateMenuItem, pageId, path]);
 
   const renameMenuItemClickHandler = useCallback(async (): Promise<void> => {
-    if (onClickRenameMenuItem == null || path == null) {
+    if (onClickRenameMenuItem == null || pageId == null || path == null) {
+      logger.warn('Cannot rename the page because onClickRenameMenuItem, pageId or path is null');
       return;
     }
 
@@ -220,7 +225,8 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
   }, [onClickRenameMenuItem, pageId, pageInfo, path, revisionId]);
 
   const deleteMenuItemClickHandler = useCallback(async (): Promise<void> => {
-    if (onClickDeleteMenuItem == null || path == null) {
+    if (onClickDeleteMenuItem == null || pageId == null || path == null) {
+      logger.warn('Cannot delete the page because onClickDeleteMenuItem, pageId or path is null');
       return;
     }
 
@@ -237,22 +243,22 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
   }, [onClickDeleteMenuItem, pageId, pageInfo, path, revisionId]);
 
   const switchContentWidthClickHandler = useCallback(() => {
-    if (onClickSwitchContentWidth == null) {
+    if (isGuestUser || isReadOnlyUser) {
+      logger.warn('Guest or read-only users cannot switch content width');
       return;
     }
 
-    const newValue = !expandContentWidth;
-    if ((isGuestUser ?? true) || (isReadOnlyUser ?? true)) {
-      logger.warn('Could not switch content width', {
-        isGuestUser,
-        isReadOnlyUser,
-      });
+    if (onClickSwitchContentWidth == null || pageId == null) {
+      logger.warn('Cannot switch content width because onClickSwitchContentWidth or pageId is null');
       return;
     }
     if (!isIPageInfoForEntity(pageInfo)) {
+      logger.warn('PageInfo is not for entity');
       return;
     }
+
     try {
+      const newValue = !expandContentWidth;
       onClickSwitchContentWidth(pageId, newValue);
     }
     catch (err) {
@@ -315,13 +321,13 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
 
       {!hideSubControls && (
         <div className={`hstack gap-1 ${!isViewMode && 'd-none d-lg-flex'}`}>
-          {isIPageInfoForEntity(pageInfo) && revisionId != null && (
+          {isIPageInfoForOperation(pageInfo) && revisionId != null && (
             <SubscribeButton
               status={pageInfo.subscriptionStatus}
               onClick={subscribeClickhandler}
             />
           )}
-          {isIPageInfoForEntity(pageInfo) && revisionId != null && (
+          {isIPageInfoForOperation(pageInfo) && revisionId != null && (
             <LikeButtons
               onLikeClicked={likeClickhandler}
               sumOfLikers={pageInfo.sumOfLikers}
@@ -329,7 +335,7 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
               likers={likers}
             />
           )}
-          {revisionId != null && (
+          {(isIPageInfoForOperation(pageInfo) || isIPageInfoForEmpty(pageInfo)) && pageId != null && revisionId != null && (
             <BookmarkButtons
               pageId={pageId}
               isBookmarked={pageInfo.isBookmarked}
@@ -377,17 +383,13 @@ export const PageControls = memo((props: PageControlsProps): JSX.Element => {
   const { open: openTagEditModal } = useTagEditModalActions();
 
   const onClickEditTagsButton = useCallback(() => {
-    if (tagsInfoData == null || revisionId == null) {
+    if (tagsInfoData == null || pageId == null || revisionId == null) {
       return;
     }
     openTagEditModal(tagsInfoData.tags, pageId, revisionId);
   }, [pageId, revisionId, tagsInfoData, openTagEditModal]);
 
   if (error != null) {
-    return <></>;
-  }
-
-  if (!isIPageInfoForOperation(pageInfo) && !isIPageInfoForEmpty(pageInfo)) {
     return <></>;
   }
 
