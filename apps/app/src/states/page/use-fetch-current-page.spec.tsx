@@ -121,9 +121,9 @@ describe('useFetchCurrentPage - Integration Test', () => {
 
   const mockApiResponse = (
     page: IPagePopulatedToShowRevision,
-  ): AxiosResponse<{ page: IPagePopulatedToShowRevision }> => {
+  ): AxiosResponse<{ page: IPagePopulatedToShowRevision; meta: unknown }> => {
     return {
-      data: { page },
+      data: { page, meta: {} },
       status: 200,
       statusText: 'OK',
       headers: {},
@@ -782,6 +782,7 @@ describe('useFetchCurrentPage - Integration Test', () => {
       });
       expect(store.get(currentPageDataAtom)).toBeUndefined();
       expect(store.get(currentPageEntityIdAtom)).toBeUndefined();
+      expect(store.get(currentPageEmptyIdAtom)).toBeUndefined();
       expect(store.get(remoteRevisionBodyAtom)).toBeUndefined();
     });
   });
@@ -849,25 +850,30 @@ describe('useFetchCurrentPage - Integration Test', () => {
     });
   });
 
-  it('should set emptyPageId when page not found with IPageInfoForEmpty', async () => {
-    // Arrange: Mock API rejection with ErrorV3 and IPageInfoForEmpty args
+  it('should set emptyPageId when page not found with IPageInfoForEmpty in meta', async () => {
+    // Arrange: Mock API response with null page and IPageInfoForEmpty meta
     const emptyPageId = 'empty123';
-    const notFoundErrorWithEmptyPage = {
-      code: 'not_found',
-      message: 'Page not found',
-      args: {
-        isNotFound: true,
-        isForbidden: false,
-        isEmpty: true, // Required for isIPageInfoForEmpty check
-        emptyPageId,
+    const notFoundResponseWithEmptyPage = {
+      data: {
+        page: null,
+        meta: {
+          isNotFound: true,
+          isForbidden: false,
+          isEmpty: true, // Required for isIPageInfoForEmpty check
+          emptyPageId,
+        },
       },
-    } as const;
-    mockedApiv3Get.mockRejectedValueOnce([notFoundErrorWithEmptyPage]);
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {} as AxiosResponse['config'],
+    };
+    mockedApiv3Get.mockResolvedValueOnce(notFoundResponseWithEmptyPage);
 
     const { result } = renderHookWithProvider();
     await result.current.fetchCurrentPage({ path: '/empty/page' });
 
-    // Assert: emptyPageId should be set
+    // Assert: emptyPageId should be set from meta
     await waitFor(() => {
       expect(store.get(pageLoadingAtom)).toBe(false);
       expect(store.get(pageNotFoundAtom)).toBe(true);
@@ -879,17 +885,22 @@ describe('useFetchCurrentPage - Integration Test', () => {
   });
 
   it('should not set emptyPageId when page not found without IPageInfoForEmpty', async () => {
-    // Arrange: Mock API rejection with ErrorV3 but without emptyPageId
-    const notFoundErrorWithoutEmptyPage = {
-      code: 'not_found',
-      message: 'Page not found',
-      args: {
-        isNotFound: true,
-        isForbidden: false,
-        // No emptyPageId property
+    // Arrange: Mock API response with null page and IPageNotFoundInfo meta without emptyPageId
+    const notFoundResponseWithoutEmptyPage = {
+      data: {
+        page: null,
+        meta: {
+          isNotFound: true,
+          isForbidden: false,
+          // No emptyPageId property - not IPageInfoForEmpty
+        },
       },
-    } as const;
-    mockedApiv3Get.mockRejectedValueOnce([notFoundErrorWithoutEmptyPage]);
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {} as AxiosResponse['config'],
+    };
+    mockedApiv3Get.mockResolvedValueOnce(notFoundResponseWithoutEmptyPage);
 
     const { result } = renderHookWithProvider();
     await result.current.fetchCurrentPage({ path: '/regular/not/found' });

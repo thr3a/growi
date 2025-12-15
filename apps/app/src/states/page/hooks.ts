@@ -43,7 +43,12 @@ export const useCurrentPageId = (includeEmpty: boolean = false) => {
 
 export const useCurrentPageData = () => useAtomValue(currentPageDataAtom);
 
-export const usePageNotFound = () => useAtomValue(pageNotFoundAtom);
+export const usePageNotFound = (includeEmpty: boolean = true) => {
+  const isPageNotFound = useAtomValue(pageNotFoundAtom);
+  const emptyPageId = useAtomValue(currentPageEmptyIdAtom);
+
+  return includeEmpty ? isPageNotFound || emptyPageId != null : isPageNotFound;
+};
 
 export const useIsIdenticalPath = () => useAtomValue(isIdenticalPathAtom);
 
