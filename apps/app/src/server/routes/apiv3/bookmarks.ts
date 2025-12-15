@@ -140,6 +140,11 @@ module.exports = (crowi) => {
       const { user } = req;
       const { pageId } = req.query;
 
+      // Prevent NoSQL injection - ensure pageId is a string
+      if (typeof pageId !== 'string') {
+        return res.status(400).apiv3Err('Invalid pageId parameter', 400);
+      }
+
       const responsesParams: IBookmarkInfo = {
         sumOfBookmarks: 0,
         isBookmarked: false,
@@ -153,7 +158,7 @@ module.exports = (crowi) => {
       >('Bookmark');
 
       try {
-        const bookmarks = await Bookmark.find({ page: pageId }).populate<{
+        const bookmarks = await Bookmark.find({ page: { $eq: pageId } }).populate<{
           user: IUserHasId;
         }>('user');
         const users = bookmarks.map((bookmark) =>
