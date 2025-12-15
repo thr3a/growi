@@ -1,4 +1,9 @@
 import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
+import type { IUser } from '@growi/core';
+import type { HydratedDocument } from 'mongoose';
+
+import type { CrowiRequest } from '~/interfaces/crowi-request';
+import type { PageDocument } from '~/server/models/page';
 
 import { getServerSideBasicLayoutProps } from '../basic-layout-page';
 import {
@@ -25,6 +30,19 @@ const nextjsRoutingProps = {
     nextjsRoutingPage: NEXT_JS_ROUTING_PAGE,
   },
 };
+
+/**
+ * Add user to page's seen users list
+ */
+function addSeenUser(
+  page: PageDocument | null | undefined,
+  user: HydratedDocument<IUser> | undefined,
+): void {
+  if (page != null && user != null) {
+    // addSeenUser is executed asynchronously and increments the view count in real-time via Socket.io
+    page.seen(user);
+  }
+}
 
 export async function getServerSidePropsForInitial(
   context: GetServerSidePropsContext,
@@ -75,6 +93,12 @@ export async function getServerSidePropsForInitial(
     throw new Error('Invalid merged props structure');
   }
 
+  // Add user to seen users
+  const req = context.req as CrowiRequest;
+  const { user } = req;
+  const pageData = mergedProps.pageWithMeta?.data;
+  addSeenUser(pageData, user);
+
   // -- TODO: persist activity
   // await addActivity(context, getActivityAction(mergedProps));
   return mergedResult;
@@ -85,16 +109,24 @@ export async function getServerSidePropsForSameRoute(
 ): Promise<GetServerSidePropsResult<Stage2EachProps>> {
   // -- TODO: ：https://redmine.weseek.co.jp/issues/174725
   // Remove getServerSideI18nProps from getServerSidePropsForSameRoute for performance improvement
-  const [i18nPropsResult, pageDataResult] = await Promise.all([
+  const [i18nPropsResult, pageDataForSameRouteResult] = await Promise.all([
     getServerSideI18nProps(context, ['translation']),
     getPageDataForSameRoute(context),
   ]);
+
+  const { props: pageDataProps, internalProps } = pageDataForSameRouteResult;
+  const pageData = internalProps?.basicPageInfo;
+
+  // Add user to seen users
+  const req = context.req as CrowiRequest;
+  const { user } = req;
+  addSeenUser(pageData, user);
 
   // -- TODO: persist activity
   // const mergedProps = await mergedResult.props;
   // await addActivity(context, getActivityAction(mergedProps));
   const mergedResult = mergeGetServerSidePropsResults(
-    pageDataResult,
+    { props: pageDataProps },
     i18nPropsResult,
   );
 
