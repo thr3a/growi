@@ -158,7 +158,9 @@ module.exports = (crowi) => {
       >('Bookmark');
 
       try {
-        const bookmarks = await Bookmark.find({ page: { $eq: pageId } }).populate<{
+        const bookmarks = await Bookmark.find({
+          page: { $eq: pageId },
+        }).populate<{
           user: IUserHasId;
         }>('user');
         const users = bookmarks.map((bookmark) =>
