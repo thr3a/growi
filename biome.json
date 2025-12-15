@@ -30,8 +30,7 @@
       "!packages/pdf-converter-client/specs",
       "!apps/app/src/client/components",
       "!apps/app/src/client/services",
-      "!apps/app/src/client/util",
-      "!apps/app/src/server/service/page"
+      "!apps/app/src/client/util"
     ]
   },
   "formatter": {
