@@ -60,7 +60,7 @@ describe('PageItemControl.tsx', () => {
       // setup - Create an empty page mock with required properties
       const pageInfo: IPageInfoForEmpty = {
         emptyPageId: 'empty-page-id',
-        isNotFound: true,
+        isNotFound: false,
         isEmpty: true,
         isV5Compatible: true,
         isMovable: true, // Allow rename operation
