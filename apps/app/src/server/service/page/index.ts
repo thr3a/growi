@@ -2585,7 +2585,7 @@ class PageService implements IPageService {
     if (page.isEmpty) {
       return {
         emptyPageId: pageId,
-        isNotFound: true,
+        isNotFound: false,
         isV5Compatible: true,
         isEmpty: true,
         isMovable,

@@ -84,12 +84,8 @@ export type PageStatus = (typeof PageStatus)[keyof typeof PageStatus];
 export type IPageHasId = IPage & HasObjectId;
 
 // Special type to represent page is an empty page or not found or forbidden status
-export type IPageNotFoundInfo = (
-  | IPageInfoForEmpty
-  | {
-      isNotFound: true;
-    }
-) & {
+export type IPageNotFoundInfo = {
+  isNotFound: true;
   isForbidden: boolean;
 };
 
@@ -106,7 +102,7 @@ export type IPageInfo = {
 
 export type IPageInfoForEmpty = Omit<IPageInfo, 'isNotFound' | 'isEmpty'> & {
   emptyPageId: string;
-  isNotFound: true;
+  isNotFound: false;
   isEmpty: true;
   isBookmarked?: boolean;
 };

@@ -2,7 +2,6 @@ import {
   type IPageInfo,
   type IPageNotFoundInfo,
   type IPagePopulatedToShowRevision,
-  isIPageInfo,
   isIPageInfoForEmpty,
   isIPageNotFoundInfo,
 } from '@growi/core';
@@ -60,12 +59,7 @@ export const useHydratePageAtoms = (
     // Core page state - automatically extract from page object
     [currentPageEntityIdAtom, page?._id],
     [currentPageDataAtom, page ?? undefined],
-    [
-      pageNotFoundAtom,
-      isIPageInfo(pageMeta)
-        ? pageMeta.isNotFound
-        : page == null || page.isEmpty,
-    ],
+    [pageNotFoundAtom, isIPageNotFoundInfo(pageMeta)],
     [
       isForbiddenAtom,
       isIPageNotFoundInfo(pageMeta) ? pageMeta.isForbidden : false,
