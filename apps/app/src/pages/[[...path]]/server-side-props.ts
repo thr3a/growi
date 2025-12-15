@@ -1,9 +1,6 @@
 import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
-import type { IUser } from '@growi/core';
-import type { HydratedDocument } from 'mongoose';
 
 import type { CrowiRequest } from '~/interfaces/crowi-request';
-import type { PageDocument } from '~/server/models/page';
 
 import { getServerSideBasicLayoutProps } from '../basic-layout-page';
 import {
@@ -30,6 +27,30 @@ const nextjsRoutingProps = {
     nextjsRoutingPage: NEXT_JS_ROUTING_PAGE,
   },
 };
+
+/**
+ * Emit page seen event
+ * @param context - Next.js server-side context
+ * @param pageId - Page ID to mark as seen
+ */
+function emitPageSeenEvent(
+  context: GetServerSidePropsContext,
+  pageId?: string,
+): void {
+  if (pageId == null) {
+    return;
+  }
+
+  const req = context.req as CrowiRequest;
+  const { user, crowi } = req;
+
+  if (user == null) {
+    return;
+  }
+
+  const pageEvent = crowi.event('page');
+  pageEvent.emit('seen', pageId, user);
+}
 
 export async function getServerSidePropsForInitial(
   context: GetServerSidePropsContext,
@@ -81,13 +102,7 @@ export async function getServerSidePropsForInitial(
   }
 
   // Add user to seen users
-  const req = context.req as CrowiRequest;
-  const { user, crowi } = req;
-  const pageEvent = crowi.event('page');
-  const pageId = mergedProps.pageWithMeta?.data?._id;
-  if (pageId != null && user != null) {
-    pageEvent.emit('seen', pageId, user);
-  }
+  emitPageSeenEvent(context, mergedProps.pageWithMeta?.data?._id);
 
   // -- TODO: persist activity
   // await addActivity(context, getActivityAction(mergedProps));
@@ -107,13 +122,7 @@ export async function getServerSidePropsForSameRoute(
   const { props: pageDataProps, internalProps } = pageDataForSameRouteResult;
 
   // Add user to seen users
-  const req = context.req as CrowiRequest;
-  const { user, crowi } = req;
-  const pageEvent = crowi.event('page');
-  const pageId = internalProps?.pageId;
-  if (pageId != null && user != null) {
-    pageEvent.emit('seen', pageId, user);
-  }
+  emitPageSeenEvent(context, internalProps?.pageId);
 
   // -- TODO: persist activity
   // const mergedProps = await mergedResult.props;
