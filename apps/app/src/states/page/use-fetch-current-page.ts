@@ -3,7 +3,7 @@ import {
   type IPagePopulatedToShowRevision,
   isIPageInfoForEmpty,
   isIPageNotFoundInfo,
-} from '@growi/core';
+} from '@growi/core/dist/interfaces';
 import { isErrorV3 } from '@growi/core/dist/models';
 import { isClient } from '@growi/core/dist/utils';
 import { isPermalink } from '@growi/core/dist/utils/page-path-utils';
