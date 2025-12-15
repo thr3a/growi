@@ -249,7 +249,7 @@ export async function getPageDataForSameRoute(
   props: Pick<CommonEachProps, 'currentPathname'> &
     Pick<EachProps, 'currentPathname' | 'isIdenticalPathPage' | 'redirectFrom'>;
   internalProps?: {
-    basicPageInfo: PageDocument | null;
+    pageId?: string;
   };
 }> {
   const req: CrowiRequest = context.req as CrowiRequest;
@@ -292,7 +292,7 @@ export async function getPageDataForSameRoute(
       redirectFrom,
     },
     internalProps: {
-      basicPageInfo,
+      pageId: basicPageInfo?._id?.toString(),
     },
   };
 }

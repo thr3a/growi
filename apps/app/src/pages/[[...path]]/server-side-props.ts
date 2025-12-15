@@ -31,19 +31,6 @@ const nextjsRoutingProps = {
   },
 };
 
-/**
- * Add user to page's seen users list
- */
-function addSeenUser(
-  page: PageDocument | null | undefined,
-  user: HydratedDocument<IUser> | undefined,
-): void {
-  if (page != null && user != null) {
-    // addSeenUser is executed asynchronously and increments the view count in real-time via Socket.io
-    page.seen(user);
-  }
-}
-
 export async function getServerSidePropsForInitial(
   context: GetServerSidePropsContext,
 ): Promise<GetServerSidePropsResult<Stage2InitialProps>> {
@@ -95,9 +82,12 @@ export async function getServerSidePropsForInitial(
 
   // Add user to seen users
   const req = context.req as CrowiRequest;
-  const { user } = req;
-  const pageData = mergedProps.pageWithMeta?.data;
-  addSeenUser(pageData, user);
+  const { user, crowi } = req;
+  const pageEvent = crowi.event('page');
+  const pageId = mergedProps.pageWithMeta?.data?._id;
+  if (pageId != null && user != null) {
+    pageEvent.emit('seen', pageId, user);
+  }
 
   // -- TODO: persist activity
   // await addActivity(context, getActivityAction(mergedProps));
@@ -115,12 +105,15 @@ export async function getServerSidePropsForSameRoute(
   ]);
 
   const { props: pageDataProps, internalProps } = pageDataForSameRouteResult;
-  const pageData = internalProps?.basicPageInfo;
 
   // Add user to seen users
   const req = context.req as CrowiRequest;
-  const { user } = req;
-  addSeenUser(pageData, user);
+  const { user, crowi } = req;
+  const pageEvent = crowi.event('page');
+  const pageId = internalProps?.pageId;
+  if (pageId != null && user != null) {
+    pageEvent.emit('seen', pageId, user);
+  }
 
   // -- TODO: persist activity
   // const mergedProps = await mergedResult.props;
