@@ -9,11 +9,11 @@ import { DropdownToggle } from 'reactstrap';
 import { NotAvailableForGuest } from '~/client/components/NotAvailableForGuest';
 import { bookmark, unbookmark, resumeRenameOperation } from '~/client/services/page-operation';
 import { toastError, toastSuccess } from '~/client/util/toastr';
+import type { TreeItemToolProps } from '~/features/page-tree/interfaces';
 import { useSWRMUTxCurrentUserBookmarks } from '~/stores/bookmark';
 import { useSWRMUTxPageInfo } from '~/stores/page';
 
 import { PageItemControl } from '../../Common/Dropdown/PageItemControl';
-import type { TreeItemToolProps } from '~/features/page-tree/interfaces';
 
 
 type UsePageItemControl = {
