@@ -35,14 +35,12 @@ const AppSetting = (props) => {
       globalLang: adminAppContainer.state.globalLang || 'en-US',
       // Convert boolean to string for radio button value
       isEmailPublishedForNewUser: String(adminAppContainer.state.isEmailPublishedForNewUser ?? true),
-      fileUpload: adminAppContainer.state.fileUpload ?? false,
     });
   }, [
     adminAppContainer.state.title,
     adminAppContainer.state.confidential,
     adminAppContainer.state.globalLang,
     adminAppContainer.state.isEmailPublishedForNewUser,
-    adminAppContainer.state.fileUpload,
     reset,
   ]);
 

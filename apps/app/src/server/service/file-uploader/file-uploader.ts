@@ -117,11 +117,7 @@ export abstract class AbstractFileUploader implements FileUploader {
   abstract isValidUploadSettings(): boolean;
 
   getFileUploadEnabled() {
-    if (!this.getIsUploadable()) {
-      return false;
-    }
-
-    return !!configManager.getConfig('app:fileUpload');
+    return this.getIsUploadable();
   }
 
   abstract listFiles();
