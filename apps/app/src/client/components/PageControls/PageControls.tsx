@@ -3,9 +3,12 @@ import React, {
 } from 'react';
 
 import type {
+  IPageInfoForEmpty,
   IPageInfoForOperation, IPageToDeleteWithMeta, IPageToRenameWithMeta,
 } from '@growi/core';
 import {
+  isIPageInfoForEmpty,
+
   isIPageInfoForEntity, isIPageInfoForOperation,
 } from '@growi/core';
 import { pagePathUtils } from '@growi/core/dist/utils';
@@ -121,7 +124,7 @@ type CommonProps = {
 }
 
 type PageControlsSubstanceProps = CommonProps & {
-  pageInfo: IPageInfoForOperation,
+  pageInfo: IPageInfoForOperation | IPageInfoForEmpty,
   onClickEditTagsButton: () => void,
 }
 
@@ -287,21 +290,12 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
     return wideviewMenuItemRenderer;
   }, [pageInfo, expandContentWidth, onClickSwitchContentWidth, switchContentWidthClickHandler]);
 
-  if (!isIPageInfoForEntity(pageInfo)) {
-    return <></>;
-  }
-
-  const {
-    sumOfLikers, sumOfSeenUsers, isLiked,
-  } = pageInfo;
-
   const forceHideMenuItemsWithAdditions = [
     ...(forceHideMenuItems ?? []),
     MenuItemType.BOOKMARK,
     MenuItemType.REVERT,
   ];
 
-  const _isIPageInfoForOperation = isIPageInfoForOperation(pageInfo);
   const isViewMode = editorMode === EditorMode.View;
 
   return (
@@ -313,7 +307,7 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
         </>
       )}
 
-      {revisionId != null && !isViewMode && _isIPageInfoForOperation && (
+      {revisionId != null && !isViewMode && (
         <Tags
           onClickEditTagsButton={onClickEditTagsButton}
         />
@@ -321,38 +315,38 @@ const PageControlsSubstance = (props: PageControlsSubstanceProps): JSX.Element =
 
       {!hideSubControls && (
         <div className={`hstack gap-1 ${!isViewMode && 'd-none d-lg-flex'}`}>
-          {revisionId != null && _isIPageInfoForOperation && (
+          {isIPageInfoForEntity(pageInfo) && revisionId != null && (
             <SubscribeButton
               status={pageInfo.subscriptionStatus}
               onClick={subscribeClickhandler}
             />
           )}
-          {revisionId != null && _isIPageInfoForOperation && (
+          {isIPageInfoForEntity(pageInfo) && revisionId != null && (
             <LikeButtons
               onLikeClicked={likeClickhandler}
-              sumOfLikers={sumOfLikers}
-              isLiked={isLiked}
+              sumOfLikers={pageInfo.sumOfLikers}
+              isLiked={pageInfo.isLiked}
               likers={likers}
             />
           )}
-          {revisionId != null && _isIPageInfoForOperation && (
+          {revisionId != null && (
             <BookmarkButtons
               pageId={pageId}
               isBookmarked={pageInfo.isBookmarked}
               bookmarkCount={pageInfo.bookmarkCount}
             />
           )}
-          {revisionId != null && !isSearchPage && (
+          {isIPageInfoForEntity(pageInfo) && revisionId != null && !isSearchPage && (
             <SeenUserInfo
               seenUsers={seenUsers}
-              sumOfSeenUsers={sumOfSeenUsers}
+              sumOfSeenUsers={pageInfo.sumOfSeenUsers}
               disabled={disableSeenUserInfoPopover}
             />
           )}
         </div>
       )}
 
-      {showPageControlDropdown && _isIPageInfoForOperation && (
+      {showPageControlDropdown && (
         <PageItemControl
           pageId={pageId}
           pageInfo={pageInfo}
@@ -393,7 +387,7 @@ export const PageControls = memo((props: PageControlsProps): JSX.Element => {
     return <></>;
   }
 
-  if (!isIPageInfoForEntity(pageInfo)) {
+  if (!isIPageInfoForOperation(pageInfo) && !isIPageInfoForEmpty(pageInfo)) {
     return <></>;
   }
 
