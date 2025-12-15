@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -11,8 +11,13 @@ type Props = {
   onDeleteRender: () => void,
 }
 
-const EditPage = (props: Props): null => {
-  const { t } = useTranslation('commons');
+/**
+ * Custom hook for edit page logic
+ */
+const useEditPage = (
+    onCompleted: () => void,
+    onError?: (path: string) => void,
+): void => {
   const isEditable = useIsEditable();
   const startEditing = useStartEditing();
   const currentPagePath = useCurrentPagePath();
@@ -20,7 +25,6 @@ const EditPage = (props: Props): null => {
   const path = currentPagePath ?? currentPathname;
   const isExecutedRef = useRef(false);
 
-  // setup effect
   useEffect(() => {
     (async() => {
       // Prevent multiple executions
@@ -40,13 +44,25 @@ const EditPage = (props: Props): null => {
         await startEditing(path);
       }
       catch (err) {
-        toastError(t('toaster.create_failed', { target: path }));
+        onError?.(path);
       }
 
-      // remove this
-      props.onDeleteRender();
+      onCompleted();
     })();
-  }, [startEditing, isEditable, path, props, t]);
+  }, [startEditing, isEditable, path, onCompleted, onError]);
+};
+
+/**
+ * EditPage component - handles hotkey 'e' for editing
+ */
+const EditPage = (props: Props): null => {
+  const { t } = useTranslation('commons');
+
+  const handleError = useCallback((path: string) => {
+    toastError(t('toaster.create_failed', { target: path }));
+  }, [t]);
+
+  useEditPage(props.onDeleteRender, handleError);
 
   return null;
 };
