@@ -123,15 +123,12 @@ export const useIsAbleToChangeEditorMode = (): boolean => {
  */
 export const useIsAbleToShowPageAuthors = (): boolean => {
   const pageId = useCurrentPageId();
-  const isNotFound = usePageNotFound();
   const pagePath = useCurrentPagePath();
 
-  const includesUndefined = [pageId, pagePath, isNotFound].some(
-    (v) => v === undefined,
-  );
+  const includesUndefined = [pageId, pagePath].some((v) => v === undefined);
   if (includesUndefined) return false;
 
-  const isPageExist = pageId != null && !isNotFound;
+  const isPageExist = pageId != null;
   const isUsersTopPagePath = pagePath != null && isUsersTopPage(pagePath);
 
   return isPageExist && !isUsersTopPagePath;

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import {
+  type IPageNotFoundInfo,
   type IPagePopulatedToShowRevision,
   isIPageInfoForEmpty,
   isIPageNotFoundInfo,
@@ -36,6 +37,10 @@ type FetchPageArgs = {
   revisionId?: string;
   force?: true;
 };
+
+type FetchedPageResult =
+  | { page: IPagePopulatedToShowRevision; meta: unknown }
+  | { page: null; meta: IPageNotFoundInfo };
 
 /**
  * Process path to handle URL decoding and hash fragment removal
@@ -233,16 +238,22 @@ export const useFetchCurrentPage = (): {
         }
 
         try {
-          const { data } = await apiv3Get<{
-            page: IPagePopulatedToShowRevision;
-          }>('/page', params);
-          const { page: newData } = data;
+          const { data } = await apiv3Get<FetchedPageResult>('/page', params);
+          const { page: newData, meta } = data;
 
-          set(currentPageDataAtom, newData);
-          set(currentPageEntityIdAtom, newData._id);
-          set(currentPageEmptyIdAtom, undefined);
-          set(pageNotFoundAtom, false);
-          set(isForbiddenAtom, false);
+          console.log('Fetched page data:', { newData, meta });
+
+          set(currentPageDataAtom, newData ?? undefined);
+          set(currentPageEntityIdAtom, newData?._id);
+          set(
+            currentPageEmptyIdAtom,
+            isIPageInfoForEmpty(meta) ? meta.emptyPageId : undefined,
+          );
+          set(pageNotFoundAtom, isIPageNotFoundInfo(meta));
+          set(
+            isForbiddenAtom,
+            isIPageNotFoundInfo(meta) ? (meta.isForbidden ?? false) : false,
+          );
 
           // Mutate PageInfo to refetch latest metadata including latestRevisionId
           mutatePageInfo();
@@ -264,12 +275,7 @@ export const useFetchCurrentPage = (): {
               set(isForbiddenAtom, error.args.isForbidden ?? false);
               set(currentPageDataAtom, undefined);
               set(currentPageEntityIdAtom, undefined);
-              set(
-                currentPageEmptyIdAtom,
-                isIPageInfoForEmpty(error.args)
-                  ? error.args.emptyPageId
-                  : undefined,
-              );
+              set(currentPageEmptyIdAtom, undefined);
               set(remoteRevisionBodyAtom, undefined);
             }
           }
