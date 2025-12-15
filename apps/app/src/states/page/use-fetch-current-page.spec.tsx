@@ -549,7 +549,9 @@ describe('useFetchCurrentPage - Integration Test', () => {
         '/page',
         expect.objectContaining({ pageId: '65d4e0a0f7b7b2e5a8652e86' }),
       );
-      expect(store.get(currentPageEntityIdAtom)).toBe('65d4e0a0f7b7b2e5a8652e86');
+      expect(store.get(currentPageEntityIdAtom)).toBe(
+        '65d4e0a0f7b7b2e5a8652e86',
+      );
     });
   });
 
@@ -740,7 +742,9 @@ describe('useFetchCurrentPage - Integration Test', () => {
           '/page',
           expect.objectContaining({ pageId: testCase.expectedPageId }),
         );
-        expect(store.get(currentPageEntityIdAtom)).toBe(testCase.expectedPageId);
+        expect(store.get(currentPageEntityIdAtom)).toBe(
+          testCase.expectedPageId,
+        );
       });
     }
   });
