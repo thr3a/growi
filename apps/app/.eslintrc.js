@@ -89,6 +89,7 @@ module.exports = {
     'src/client/interfaces/**',
     'src/client/models/**',
     'src/client/services/**',
+    'src/client/util/**'
   ],
   settings: {
     // resolve path aliases by eslint-import-resolver-typescript

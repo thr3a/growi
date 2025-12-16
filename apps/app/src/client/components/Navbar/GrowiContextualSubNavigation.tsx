@@ -292,8 +292,6 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
   const [isStickyActive, setStickyActive] = useState(false);
 
   const path = currentPage?.path ?? currentPathname;
-  // const grant = currentPage?.grant ?? grantData?.grant;
-  // const grantUserGroupId = currentPage?.grantedGroup?._id ?? grantData?.grantedGroup?.id;
 
   const [isPageTemplateModalShown, setIsPageTempleteModalShown] = useState(false);
 
@@ -404,31 +402,27 @@ const GrowiContextualSubNavigation = (props: GrowiContextualSubNavigationProps):
             id="grw-contextual-sub-nav"
           >
 
-            {pageId != null && (
-              <PageControls
-                pageId={pageId}
-                revisionId={revisionId}
-                shareLinkId={shareLinkId}
-                path={path ?? currentPathname} // If the page is empty, "path" is undefined
-                expandContentWidth={shouldExpandContent}
-                disableSeenUserInfoPopover={isSharedUser}
-                hideSubControls={hideSubControls}
-                showPageControlDropdown={isAbleToShowPageManagement}
-                additionalMenuItemRenderer={additionalMenuItemsRenderer}
-                onClickDuplicateMenuItem={duplicateItemClickedHandler}
-                onClickRenameMenuItem={renameItemClickedHandler}
-                onClickDeleteMenuItem={deleteItemClickedHandler}
-                onClickSwitchContentWidth={switchContentWidthHandler}
-              />
-            )}
+            <PageControls
+              pageId={pageId}
+              revisionId={revisionId}
+              shareLinkId={shareLinkId}
+              path={path ?? currentPathname} // If the page is empty, "path" is undefined
+              expandContentWidth={shouldExpandContent}
+              disableSeenUserInfoPopover={isSharedUser}
+              hideSubControls={hideSubControls}
+              showPageControlDropdown={isAbleToShowPageManagement}
+              additionalMenuItemRenderer={additionalMenuItemsRenderer}
+              onClickDuplicateMenuItem={duplicateItemClickedHandler}
+              onClickRenameMenuItem={renameItemClickedHandler}
+              onClickDeleteMenuItem={deleteItemClickedHandler}
+              onClickSwitchContentWidth={switchContentWidthHandler}
+            />
 
             {isAbleToChangeEditorMode && (
               <PageEditorModeManager
                 editorMode={editorMode}
                 isBtnDisabled={!!isGuestUser || !!isReadOnlyUser}
                 path={path}
-              // grant={grant}
-              // grantUserGroupId={grantUserGroupId}
               />
             )}
 
