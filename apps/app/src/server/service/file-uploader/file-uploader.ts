@@ -79,10 +79,10 @@ export abstract class AbstractFileUploader implements FileUploader {
   }
 
   getIsUploadable() {
-    return (
-      !configManager.getConfig('app:fileUploadDisabled') &&
-      this.isValidUploadSettings()
-    );
+    const isFileUploadDisabled =
+      configManager.getConfig('app:fileUploadType') === 'none';
+
+    return !isFileUploadDisabled && this.isValidUploadSettings();
   }
 
   /**
