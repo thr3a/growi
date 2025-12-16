@@ -88,6 +88,7 @@ module.exports = {
     'src/server/service/page/**',
     'src/client/interfaces/**',
     'src/client/models/**',
+    'src/client/services/**',
     'src/client/util/**',
   ],
   settings: {
