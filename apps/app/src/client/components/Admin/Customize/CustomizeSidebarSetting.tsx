@@ -16,7 +16,7 @@ const CustomizeSidebarsetting = (): JSX.Element => {
   } = useSWRxSidebarConfig();
 
   const { resolvedTheme } = useNextThemes();
-  const drawerIconFileName = `/images/customize-settings/drawer-${resolvedTheme}.svg`;
+  const collapsedIconFileName = `/images/customize-settings/collapsed-${resolvedTheme}.svg`;
   const dockIconFileName = `/images/customize-settings/dock-${resolvedTheme}.svg`;
 
   const onClickSubmit = useCallback(async() => {
@@ -57,7 +57,7 @@ const CustomizeSidebarsetting = (): JSX.Element => {
                   role="button"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={drawerIconFileName} alt="Collapsed Mode" />
+                  <img src={collapsedIconFileName} alt="Collapsed Mode" />
                   <div className="card-body text-center">
                     Collapsed Mode
                   </div>
