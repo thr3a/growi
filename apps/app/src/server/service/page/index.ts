@@ -89,6 +89,7 @@ import type { IPageGrantService } from '../page-grant';
 import { preNotifyService } from '../pre-notify';
 import { getYjsService } from '../yjs';
 import { BULK_REINDEX_SIZE, LIMIT_FOR_MULTIPLE_PAGE_OP } from './consts';
+import { onSeen } from './events/seen';
 import type { IPageService } from './page-service';
 import { shouldUseV4Process } from './should-use-v4-process';
 
@@ -232,34 +233,7 @@ class PageService implements IPageService {
     this.pageEvent.on('addSeenUsers', this.pageEvent.onAddSeenUsers);
 
     // seen - mark page as seen by user
-    this.pageEvent.on(
-      'seen',
-      async (pageId: string, user: IUserHasId): Promise<void> => {
-        if (pageId == null || user == null) {
-          logger.warn('onSeen: pageId or user is null');
-          return;
-        }
-
-        try {
-          const Page = mongoose.model<
-            HydratedDocument<PageDocument>,
-            PageModel
-          >('Page');
-
-          const page = await Page.findById(pageId);
-
-          if (page == null) {
-            logger.warn('onSeen: page not found', { pageId });
-            return;
-          }
-
-          await page.seen(user);
-          logger.debug('onSeen: successfully marked page as seen', { pageId });
-        } catch (err) {
-          logger.error('onSeen: failed to mark page as seen', err);
-        }
-      },
-    );
+    this.pageEvent.on('seen', onSeen);
   }
 
   getEventEmitter(): EventEmitter {
