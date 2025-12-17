@@ -57,9 +57,9 @@ const CustomizeSidebarsetting = (): JSX.Element => {
                   role="button"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={drawerIconFileName} alt="Drawer Mode" />
+                  <img src={drawerIconFileName} alt="Collapsed Mode" />
                   <div className="card-body text-center">
-                    Drawer Mode
+                    Collapsed Mode
                   </div>
                 </div>
               </div>
