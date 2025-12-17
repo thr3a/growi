@@ -357,7 +357,6 @@
     "default_language": "Default language for new users",
     "default_mail_visibility": "Disclose e-mail for new users",
     "file_uploading": "File uploading",
-    "attach_enable": "You can attach files other than image files if you enable this option.",
     "page_bulk_export_settings": "Page Bulk Export Settings",
     "enable_page_bulk_export": "Enable bulk export",
     "page_bulk_export_explanation": "Enables a feature that allows all users to export a page and all it's child pages at once from the menu. Exported data will be automatically deleted after the storage period has passed.",

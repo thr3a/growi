@@ -366,7 +366,6 @@
     "default_language": "新規ユーザーのデフォルト設定言語",
     "default_mail_visibility": "新規ユーザーの初期メール公開設定",
     "file_uploading": "ファイルアップロード",
-    "attach_enable": "許可をしている場合、画像以外のファイルをページに添付可能になります。",
     "page_bulk_export_settings": "ページ一括エクスポート設定",
     "enable_page_bulk_export": "一括エクスポートを有効にする",
     "page_bulk_export_explanation": "すべてのユーザーが、ページメニューから選択したページとその配下ページをまとめてエクスポートできる機能を有効化します。エクスポートされたデータは保存期間経過後に自動的に削除されます。",

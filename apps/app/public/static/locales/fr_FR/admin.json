@@ -357,7 +357,6 @@
     "default_language": "Langue par défaut",
     "default_mail_visibility": "Mode d'affichage de l'adresse courriel",
     "file_uploading": "Téléversement de fichiers",
-    "attach_enable": "Autorise le téléversement de tout les types de fichiers.",
     "page_bulk_export_settings": "Paramètres d'exportation de pages par lots",
     "enable_page_bulk_export": "Activer l'exportation groupée",
     "page_bulk_export_explanation": "Active une fonctionnalité qui permet à tous les utilisateurs d'exporter simultanément toutes les pages sélectionnées dans le menu des pages et leurs pages subordonnées. Les données exportées seront automatiquement supprimées une fois la période de conservation écoulée.",

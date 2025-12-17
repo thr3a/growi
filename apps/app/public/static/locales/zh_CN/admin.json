@@ -366,7 +366,6 @@
     "default_language": "新用户的默认语言",
     "default_mail_visibility": "新用户的默认电子邮件可见性",
     "file_uploading": "文件上传",
-    "attach_enable": "如果启用此选项，则可以附加图像文件以外的文件。",
     "page_bulk_export_settings": "页面批量导出设置",
     "enable_page_bulk_export": "启用批量导出",
     "page_bulk_export_explanation": "启用一项功能，允许所有用户一次性导出从页面菜单中选择的所有页面及其下级页面。保留期限过后，导出的数据将自动删除。",
