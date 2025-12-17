@@ -35,14 +35,12 @@ const AppSetting = (props) => {
       globalLang: adminAppContainer.state.globalLang || 'en-US',
       // Convert boolean to string for radio button value
       isEmailPublishedForNewUser: String(adminAppContainer.state.isEmailPublishedForNewUser ?? true),
-      fileUpload: adminAppContainer.state.fileUpload ?? false,
     });
   }, [
     adminAppContainer.state.title,
     adminAppContainer.state.confidential,
     adminAppContainer.state.globalLang,
     adminAppContainer.state.isEmailPublishedForNewUser,
-    adminAppContainer.state.fileUpload,
     reset,
   ]);
 
@@ -57,7 +55,6 @@ const AppSetting = (props) => {
       // Convert string 'true'/'false' to boolean
       const isEmailPublished = data.isEmailPublishedForNewUser === 'true' || data.isEmailPublishedForNewUser === true;
       await adminAppContainer.changeIsEmailPublishedForNewUserShow(isEmailPublished);
-      await adminAppContainer.changeFileUpload(data.fileUpload);
 
       await adminAppContainer.updateAppSettingHandler();
       toastSuccess(t('commons:toaster.update_successed', { target: t('commons:headers.app_settings') }));
@@ -160,34 +157,6 @@ const AppSetting = (props) => {
             <label className="form-label form-check-label" htmlFor="radio-email-hide">{t('commons:Hide')}</label>
           </div>
 
-        </div>
-      </div>
-
-      <div className="row mb-2">
-        <label
-          className="text-start text-md-end col-md-3 col-form-label"
-        >
-          {/* {t('admin:app_setting.file_uploading')} */}
-        </label>
-        <div className="col-md-6">
-          <div className="form-check form-check-info">
-            <input
-              type="checkbox"
-              id="cbFileUpload"
-              className="form-check-input"
-              {...register('fileUpload')}
-            />
-            <label
-              className="form-label form-check-label"
-              htmlFor="cbFileUpload"
-            >
-              {t('admin:app_setting.enable_files_except_image')}
-            </label>
-          </div>
-
-          <p className="form-text text-muted">
-            {t('admin:app_setting.attach_enable')}
-          </p>
         </div>
       </div>
 

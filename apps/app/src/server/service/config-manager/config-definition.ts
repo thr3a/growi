@@ -45,7 +45,6 @@ export const CONFIG_KEYS = [
   'app:title',
   'app:timezone',
   'app:globalLang',
-  'app:fileUpload',
   'app:fileUploadType',
   'app:plantumlUri',
   'app:drawioUri',
@@ -56,7 +55,6 @@ export const CONFIG_KEYS = [
   'app:maxFileSize',
   'app:fileUploadTimeout',
   'app:fileUploadTotalLimit',
-  'app:fileUploadDisabled',
   'app:elasticsearchVersion',
   'app:elasticsearchUri',
   'app:elasticsearchRequestTimeout',
@@ -387,12 +385,6 @@ export const CONFIG_DEFINITIONS = {
   }),
   'app:globalLang': defineConfig<string>({
     defaultValue: 'en_US',
-  }),
-  'app:fileUpload': defineConfig<boolean>({
-    defaultValue: false,
-  }),
-  'app:fileUploadDisabled': defineConfig<boolean>({
-    defaultValue: false,
   }),
   'app:fileUploadType': defineConfig<AttachmentMethodType>({
     envVarName: 'FILE_UPLOAD',
