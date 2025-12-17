@@ -85,6 +85,11 @@ module.exports = {
     'src/server/service/in-app-notification/**',
     'src/server/service/interfaces/**',
     'src/server/service/normalize-data/**',
+    'src/server/service/page/**',
+    'src/client/interfaces/**',
+    'src/client/models/**',
+    'src/client/services/**',
+    'src/client/util/**',
   ],
   settings: {
     // resolve path aliases by eslint-import-resolver-typescript
