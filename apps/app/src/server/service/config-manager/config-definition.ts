@@ -225,7 +225,6 @@ export const CONFIG_KEYS = [
   'customize:showPageSideAuthors',
   'customize:isEnabledMarp',
   'customize:isSidebarCollapsedMode',
-  'customize:isSidebarClosedAtDockMode',
 
   // Markdown Settings
   'markdown:xss:tagWhitelist',
@@ -1014,10 +1013,6 @@ export const CONFIG_DEFINITIONS = {
   'customize:isSidebarCollapsedMode': defineConfig<boolean>({
     defaultValue: false,
   }),
-  'customize:isSidebarClosedAtDockMode': defineConfig<boolean>({
-    defaultValue: false,
-  }),
-
   // Markdown Settings
   'markdown:xss:tagWhitelist': defineConfig<string[]>({
     defaultValue: [],
