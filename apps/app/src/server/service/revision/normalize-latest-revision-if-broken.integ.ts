@@ -236,7 +236,9 @@ describe('getAppliedAtForRevisionFilter', () => {
     // Act - call twice
     const result1 = await getAppliedAtForRevisionFilter();
     // Remove the migration record
-    await migrationCollection().deleteOne({ fileName: OLD_MIGRATION_FILE_NAME });
+    await migrationCollection().deleteOne({
+      fileName: OLD_MIGRATION_FILE_NAME,
+    });
     const result2 = await getAppliedAtForRevisionFilter();
 
     // Assert - both should return the same cached value
