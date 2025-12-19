@@ -22,7 +22,7 @@ import { TransferKey } from '~/utils/vo/transfer-key';
 import type Crowi from '../../crowi';
 import { apiV3FormValidator } from '../../middlewares/apiv3-form-validator';
 import { Attachment } from '../../models/attachment';
-import { isPathWithinBase } from '../../util/path-utils';
+import { isPathWithinBase } from '../../util/safe-path-utils';
 import type { ApiV3Response } from './interfaces/apiv3-response';
 
 interface AuthorizedRequest extends Request {
