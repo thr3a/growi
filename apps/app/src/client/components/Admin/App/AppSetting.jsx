@@ -186,34 +186,6 @@ const AppSetting = (props) => {
         </div>
       </div>
 
-      <div className="row mb-2">
-        <label
-          className="text-start text-md-end col-md-3 col-form-label"
-        >
-          {/* {t('admin:app_setting.file_uploading')} */}
-        </label>
-        <div className="col-md-6">
-          <div className="form-check form-check-info">
-            <input
-              type="checkbox"
-              id="cbFileUpload"
-              className="form-check-input"
-              {...register('fileUpload')}
-            />
-            <label
-              className="form-label form-check-label"
-              htmlFor="cbFileUpload"
-            >
-              {t('admin:app_setting.enable_files_except_image')}
-            </label>
-          </div>
-
-          <p className="form-text text-muted">
-            {t('admin:app_setting.attach_enable')}
-          </p>
-        </div>
-      </div>
-
       <AdminUpdateButtonRow type="submit" disabled={adminAppContainer.state.retrieveError != null} />
     </form>
   );
