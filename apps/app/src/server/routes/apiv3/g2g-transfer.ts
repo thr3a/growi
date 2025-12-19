@@ -1,11 +1,11 @@
+import { createReadStream } from 'node:fs';
 import { SCOPE } from '@growi/core/dist/interfaces';
 import { ErrorV3 } from '@growi/core/dist/models';
 import type { NextFunction, Request, Router } from 'express';
 import express from 'express';
 import { body } from 'express-validator';
-import { createReadStream } from 'fs';
 import multer from 'multer';
-import path from 'path';
+import path from 'pathe';
 
 import type { GrowiArchiveImportOption } from '~/models/admin/growi-archive-import-option';
 import { accessTokenParser } from '~/server/middlewares/access-token-parser';
@@ -22,6 +22,7 @@ import { TransferKey } from '~/utils/vo/transfer-key';
 import type Crowi from '../../crowi';
 import { apiV3FormValidator } from '../../middlewares/apiv3-form-validator';
 import { Attachment } from '../../models/attachment';
+import { isPathWithinBase } from '../../util/path-utils';
 import type { ApiV3Response } from './interfaces/apiv3-response';
 
 interface AuthorizedRequest extends Request {
@@ -508,6 +509,28 @@ module.exports = (crowi: Crowi): Router => {
             'attachment_check_failed',
           ),
           500,
+        );
+      }
+
+      // Validate file path to prevent path traversal attack
+      const importService = getImportService();
+      if (importService == null) {
+        return res.apiv3Err(
+          new ErrorV3(
+            'Import service is not available.',
+            'service_unavailable',
+          ),
+          500,
+        );
+      }
+      if (!isPathWithinBase(file.path, importService.baseDir)) {
+        logger.error('Path traversal attack detected', {
+          filePath: file.path,
+          baseDir: importService.baseDir,
+        });
+        return res.apiv3Err(
+          new ErrorV3('Invalid file path.', 'invalid_path'),
+          400,
         );
       }
 
