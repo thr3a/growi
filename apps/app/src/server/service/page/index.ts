@@ -618,6 +618,7 @@ class PageService implements IPageService {
       await this.pageGrantService.getUserRelatedGroups(user);
 
     const canDeleteUserHomepage = await (async () => {
+      // Not a user homepage
       if (!pagePathUtils.isUsersHomepage(page.path)) {
         return true;
       }
@@ -626,15 +627,11 @@ class PageService implements IPageService {
         return false;
       }
 
-      try {
-        return await this.isUsersHomepageOwnerAbsent(page.path);
-      } catch {
-        return false;
-      }
+      return await this.isUsersHomepageOwnerAbsent(page.path);
     })();
 
-    const isDeletable =
-      this.canDelete(page, creatorId, user, false) && canDeleteUserHomepage;
+    const isDeletable = canDeleteUserHomepage;
+    this.canDelete(page, creatorId, user, false) && canDeleteUserHomepage;
     const isAbleToDeleteCompletely =
       this.canDeleteCompletely(
         page,
