@@ -36,7 +36,6 @@ const AppSetting = (props) => {
       // Convert boolean to string for radio button value
       isEmailPublishedForNewUser: String(adminAppContainer.state.isEmailPublishedForNewUser ?? true),
       isReadOnlyForNewUser: adminAppContainer.state.isReadOnlyForNewUser ?? false,
-      fileUpload: adminAppContainer.state.fileUpload ?? false,
     });
   }, [
     adminAppContainer.state.title,
@@ -44,7 +43,6 @@ const AppSetting = (props) => {
     adminAppContainer.state.globalLang,
     adminAppContainer.state.isEmailPublishedForNewUser,
     adminAppContainer.state.isReadOnlyForNewUser,
-    adminAppContainer.state.fileUpload,
     reset,
   ]);
 
@@ -60,7 +58,6 @@ const AppSetting = (props) => {
       const isEmailPublished = data.isEmailPublishedForNewUser === 'true' || data.isEmailPublishedForNewUser === true;
       await adminAppContainer.changeIsEmailPublishedForNewUserShow(isEmailPublished);
       await adminAppContainer.changeIsReadOnlyForNewUserShow(data.isReadOnlyForNewUser);
-      await adminAppContainer.changeFileUpload(data.fileUpload);
 
       await adminAppContainer.updateAppSettingHandler();
       toastSuccess(t('commons:toaster.update_successed', { target: t('commons:headers.app_settings') }));

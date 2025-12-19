@@ -403,7 +403,6 @@ module.exports = (crowi) => {
         isReadOnlyForNewUser: configManager.getConfig(
           'app:isReadOnlyForNewUser',
         ),
-        fileUpload: configManager.getConfig('app:fileUpload'),
         useOnlyEnvVarsForIsBulkExportPagesEnabled: configManager.getConfig(
           'env:useOnlyEnvVars:app:isBulkExportPagesEnabled',
         ),
@@ -567,7 +566,6 @@ module.exports = (crowi) => {
         'customize:isEmailPublishedForNewUser':
           req.body.isEmailPublishedForNewUser,
         'app:isReadOnlyForNewUser': req.body.isReadOnlyForNewUser,
-        'app:fileUpload': req.body.fileUpload,
       };
 
       try {
@@ -582,7 +580,6 @@ module.exports = (crowi) => {
           isReadOnlyForNewUser: configManager.getConfig(
             'app:isReadOnlyForNewUser',
           ),
-          fileUpload: configManager.getConfig('app:fileUpload'),
         };
 
         const parameters = {
