@@ -400,7 +400,9 @@ module.exports = (crowi) => {
         isEmailPublishedForNewUser: configManager.getConfig(
           'customize:isEmailPublishedForNewUser',
         ),
-        isReadOnlyForNewUser: configManager.getConfig('app:isReadOnlyForNewUser'),
+        isReadOnlyForNewUser: configManager.getConfig(
+          'app:isReadOnlyForNewUser',
+        ),
         fileUpload: configManager.getConfig('app:fileUpload'),
         useOnlyEnvVarsForIsBulkExportPagesEnabled: configManager.getConfig(
           'env:useOnlyEnvVars:app:isBulkExportPagesEnabled',
@@ -577,7 +579,9 @@ module.exports = (crowi) => {
           isEmailPublishedForNewUser: configManager.getConfig(
             'customize:isEmailPublishedForNewUser',
           ),
-          isReadOnlyForNewUser: configManager.getConfig('app:isReadOnlyForNewUser'),
+          isReadOnlyForNewUser: configManager.getConfig(
+            'app:isReadOnlyForNewUser',
+          ),
           fileUpload: configManager.getConfig('app:fileUpload'),
         };
 
