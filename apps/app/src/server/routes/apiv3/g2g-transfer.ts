@@ -523,9 +523,11 @@ module.exports = (crowi: Crowi): Router => {
           500,
         );
       }
-      if (!isPathWithinBase(file.path, importService.baseDir)) {
+      // Normalize the path to prevent path traversal attacks
+      const resolvedFilePath = path.resolve(file.path);
+      if (!isPathWithinBase(resolvedFilePath, importService.baseDir)) {
         logger.error('Path traversal attack detected', {
-          filePath: file.path,
+          filePath: resolvedFilePath,
           baseDir: importService.baseDir,
         });
         return res.apiv3Err(
@@ -534,7 +536,7 @@ module.exports = (crowi: Crowi): Router => {
         );
       }
 
-      const fileStream = createReadStream(file.path, {
+      const fileStream = createReadStream(resolvedFilePath, {
         flags: 'r',
         mode: 0o666,
         autoClose: true,
