@@ -77,6 +77,7 @@ export const CONFIG_KEYS = [
   'app:wipPageExpirationSeconds',
   'app:openaiThreadDeletionCronMaxMinutesUntilRequest',
   'app:openaiVectorStoreFileDeletionCronMaxMinutesUntilRequest',
+  'app:isReadOnlyForNewUser',
 
   // Security Settings
   'security:wikiMode',
@@ -515,6 +516,10 @@ export const CONFIG_DEFINITIONS = {
         'OPENAI_VECTOR_STORE_FILE_DELETION_CRON_MAX_MINUTES_UNTIL_REQUEST',
       defaultValue: 30,
     }),
+  'app:isReadOnlyForNewUser': defineConfig<boolean>({
+    envVarName: 'DEFAULT_USER_READONLY',
+    defaultValue: false,
+  }),
 
   // Security Settings
   'security:wikiMode': defineConfig<string | undefined>({

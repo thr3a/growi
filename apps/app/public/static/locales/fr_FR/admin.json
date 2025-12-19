@@ -356,6 +356,8 @@
     "confidential_example": "ex): usage interne seulement",
     "default_language": "Langue par défaut",
     "default_mail_visibility": "Mode d'affichage de l'adresse courriel",
+    "default_read_only_for_new_user": "Restriction d'édition pour les nouveaux utilisateurs",
+    "set_read_only_for_new_user": "Rendre les nouveaux utilisateurs en lecture seule",
     "file_uploading": "Téléversement de fichiers",
     "page_bulk_export_settings": "Paramètres d'exportation de pages par lots",
     "enable_page_bulk_export": "Activer l'exportation groupée",

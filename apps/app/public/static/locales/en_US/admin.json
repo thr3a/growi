@@ -356,6 +356,8 @@
     "confidential_example": "ex): internal use only",
     "default_language": "Default language for new users",
     "default_mail_visibility": "Disclose e-mail for new users",
+    "default_read_only_for_new_user": "Editing Restrictions for New Users",
+    "set_read_only_for_new_user": "Set new users to read-only mode",
     "file_uploading": "File uploading",
     "page_bulk_export_settings": "Page Bulk Export Settings",
     "enable_page_bulk_export": "Enable bulk export",
