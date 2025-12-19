@@ -8,7 +8,6 @@ import { apiv3Get, apiv3Post, apiv3Put } from '../util/apiv3-client';
  * @extends {Container} unstated Container
  */
 export default class AdminAppContainer extends Container {
-
   constructor() {
     super();
 
@@ -43,7 +42,6 @@ export default class AdminAppContainer extends Container {
 
       isMaintenanceMode: false,
     };
-
   }
 
   /**
@@ -142,7 +140,6 @@ export default class AdminAppContainer extends Container {
     this.setState({ siteUrl });
   }
 
-
   /**
    * Change from address
    */
@@ -216,7 +213,6 @@ export default class AdminAppContainer extends Container {
     const { appSettingParams } = response.data;
     return appSettingParams;
   }
-
 
   /**
    * Update site url setting
@@ -304,5 +300,4 @@ export default class AdminAppContainer extends Container {
   async endMaintenanceMode() {
     await apiv3Post('/app-settings/maintenance-mode', { flag: false });
   }
-
 }
