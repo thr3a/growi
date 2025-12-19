@@ -1458,8 +1458,8 @@ importers:
   packages/pluginkit:
     dependencies:
       '@growi/core':
-        specifier: ^1.5.0
-        version: 1.5.0
+        specifier: workspace:^
+        version: link:../core
       extensible-custom-error:
         specifier: ^0.0.7
         version: 0.0.7
@@ -3210,9 +3210,6 @@ packages:
   '@google-cloud/storage@5.20.5':
     resolution: {integrity: sha512-lOs/dCyveVF8TkVFnFSF7IGd0CJrTm91qiK6JLu+Z8qiT+7Ag0RyVhxZIWkhiACqwABo7kSHDm8FdH8p2wxSSw==}
     engines: {node: '>=10'}
-
-  '@growi/core@1.5.0':
-    resolution: {integrity: sha512-c1Rrui9efxX/7f1r0brb8IVjsY45tGUnuJNbXHWCR5hVkDkXuz63MJ3CgLco8x0A744Vn7W67a/FKgAEvPts1A==}
 
   '@grpc/grpc-js@1.12.2':
     resolution: {integrity: sha512-bgxdZmgTrJZX50OjyVwz3+mNEnCTNkh3cIqGPWVNeW9jX6bn1ZkU80uPd+67/ZpIJIjRQ9qaHCjhavyoWYxumg==}
@@ -17727,11 +17724,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
-
-  '@growi/core@1.5.0':
-    dependencies:
-      bson-objectid: 2.0.4
-      escape-string-regexp: 4.0.0
 
   '@grpc/grpc-js@1.12.2':
     dependencies:
