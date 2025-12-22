@@ -212,4 +212,10 @@ export interface IPageService {
     options: IOptionsForCreate,
     pageOpId: ObjectIdLike,
   ): Promise<void>;
+
+  getCreatorIdForCanDelete(page: PageDocument): Promise<ObjectIdLike | null>;
+
+  canDeleteUserHomepageByConfig(): boolean;
+
+  isUsersHomepageOwnerAbsent(path: string): Promise<boolean>;
 }

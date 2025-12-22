@@ -15,10 +15,15 @@ import mongoose from 'mongoose';
 
 import type { BookmarkedPage } from '~/interfaces/bookmark-info';
 import type { PageDocument, PageModel } from '~/server/models/page';
+import type { IPageGrantService } from '~/server/service/page-grant';
 
 import Subscription from '../../models/subscription';
+import type { IPageService } from './page-service';
 
 export async function findPageAndMetaDataByViewer(
+  pageService: IPageService,
+  pageGrantService: IPageGrantService,
+
   pageId: string | null, // either pageId or path must be specified
   path: string | null, // either pageId or path must be specified
   user?: HydratedDocument<IUser>,
@@ -58,7 +63,7 @@ export async function findPageAndMetaDataByViewer(
   }
 
   const isGuestUser = user == null;
-  const basicPageInfo = this.constructBasicPageInfo(page, isGuestUser);
+  const basicPageInfo = pageService.constructBasicPageInfo(page, isGuestUser);
 
   if (isSharedPage) {
     return {
@@ -98,10 +103,9 @@ export async function findPageAndMetaDataByViewer(
     };
   }
 
-  const creatorId = await this.getCreatorIdForCanDelete(page);
+  const creatorId = await pageService.getCreatorIdForCanDelete(page);
 
-  const userRelatedGroups =
-    await this.pageGrantService.getUserRelatedGroups(user);
+  const userRelatedGroups = await pageGrantService.getUserRelatedGroups(user);
 
   const canDeleteUserHomepage = await (async () => {
     // Not a user homepage
@@ -109,19 +113,26 @@ export async function findPageAndMetaDataByViewer(
       return true;
     }
 
-    if (!this.canDeleteUserHomepageByConfig()) {
+    if (!pageService.canDeleteUserHomepageByConfig()) {
       return false;
     }
 
-    return await this.isUsersHomepageOwnerAbsent(page.path);
+    return await pageService.isUsersHomepageOwnerAbsent(page.path);
   })();
 
   const isDeletable =
-    canDeleteUserHomepage && this.canDelete(page, creatorId, user, false);
+    canDeleteUserHomepage &&
+    pageService.canDelete(page, creatorId, user, false);
 
   const isAbleToDeleteCompletely =
     canDeleteUserHomepage &&
-    this.canDeleteCompletely(page, creatorId, user, false, userRelatedGroups); // use normal delete config
+    pageService.canDeleteCompletely(
+      page,
+      creatorId,
+      user,
+      false,
+      userRelatedGroups,
+    ); // use normal delete config
 
   const isBookmarked: boolean = isGuestUser
     ? false
