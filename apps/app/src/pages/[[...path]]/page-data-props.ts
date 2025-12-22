@@ -15,11 +15,12 @@ import assert from 'assert';
 import type { HydratedDocument, model } from 'mongoose';
 
 import type { CrowiRequest } from '~/interfaces/crowi-request';
-import type { PageDocument, PageModel } from '~/server/models/page';
+import type { PageModel } from '~/server/models/page';
 import type {
   IPageRedirect,
   PageRedirectModel,
 } from '~/server/models/page-redirect';
+import { findPageAndMetaDataByViewer } from '~/server/service/page/find-page-and-meta-data-by-viewer';
 
 import type { CommonEachProps } from '../common-props';
 import type {
@@ -131,7 +132,7 @@ export async function getPageDataForInitial(
   let pathFromUrl = `/${pathFromQuery.join('/')}`;
   pathFromUrl = pathFromUrl === '//' ? '/' : pathFromUrl;
 
-  const { pageService, configManager } = crowi;
+  const { pageService, pageGrantService, configManager } = crowi;
 
   const pageId = _isPermalink(pathFromUrl)
     ? removeHeadingSlash(pathFromUrl)
@@ -154,7 +155,9 @@ export async function getPageDataForInitial(
   }
 
   // Get full page data
-  const pageWithMeta = await pageService.findPageAndMetaDataByViewer(
+  const pageWithMeta = await findPageAndMetaDataByViewer(
+    pageService,
+    pageGrantService,
     pageId,
     resolvedPagePath,
     user,

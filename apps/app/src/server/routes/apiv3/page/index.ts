@@ -39,6 +39,7 @@ import ShareLink from '~/server/models/share-link';
 import Subscription from '~/server/models/subscription';
 import { configManager } from '~/server/service/config-manager';
 import { exportService } from '~/server/service/export';
+import { findPageAndMetaDataByViewer } from '~/server/service/page/find-page-and-meta-data-by-viewer';
 import type { IPageGrantService } from '~/server/service/page-grant';
 import { preNotifyService } from '~/server/service/pre-notify';
 import { normalizeLatestRevisionIfBroken } from '~/server/service/revision/normalize-latest-revision-if-broken';
@@ -94,7 +95,7 @@ module.exports = (crowi: Crowi) => {
 
   const globalNotificationService = crowi.getGlobalNotificationService();
   const Page = mongoose.model<IPage, PageModel>('Page');
-  const { pageService } = crowi;
+  const { pageService, pageGrantService } = crowi;
 
   const activityEvent = crowi.event('activity');
 
@@ -262,7 +263,9 @@ module.exports = (crowi: Crowi) => {
             return res.apiv3Err('ShareLink is not found', 404);
           }
           return respondWithSinglePage(
-            await pageService.findPageAndMetaDataByViewer(
+            await findPageAndMetaDataByViewer(
+              pageService,
+              pageGrantService,
               getIdStringForRef(shareLink.relatedPage),
               path,
               user,
@@ -290,7 +293,13 @@ module.exports = (crowi: Crowi) => {
         }
 
         return respondWithSinglePage(
-          await pageService.findPageAndMetaDataByViewer(pageId, path, user),
+          await findPageAndMetaDataByViewer(
+            pageService,
+            pageGrantService,
+            pageId,
+            path,
+            user,
+          ),
         );
       } catch (err) {
         logger.error('get-page-failed', err);
@@ -583,7 +592,9 @@ module.exports = (crowi: Crowi) => {
       const { pageId } = req.query;
 
       try {
-        const { meta } = await pageService.findPageAndMetaDataByViewer(
+        const { meta } = await findPageAndMetaDataByViewer(
+          pageService,
+          pageGrantService,
           pageId,
           null,
           user,
