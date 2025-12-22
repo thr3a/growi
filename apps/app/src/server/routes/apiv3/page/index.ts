@@ -101,7 +101,7 @@ module.exports = (crowi: Crowi) => {
 
   const validator = {
     getPage: [
-      query('pageId').optional().isString(),
+      query('pageId').isMongoId().optional().isString(),
       query('path').optional().isString(),
       query('findAll').optional().isBoolean(),
       query('shareLinkId').optional().isMongoId(),

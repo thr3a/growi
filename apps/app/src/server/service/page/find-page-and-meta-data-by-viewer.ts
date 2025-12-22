@@ -50,8 +50,8 @@ export async function findPageAndMetaDataByViewer(
   if (page == null) {
     const count =
       pageId != null
-        ? await Page.count({ _id: pageId })
-        : await Page.count({ path });
+        ? await Page.count({ _id: { $eq: pageId } })
+        : await Page.count({ path: { $eq: path } });
     const isForbidden = count > 0;
     return {
       data: null,
@@ -84,7 +84,7 @@ export async function findPageAndMetaDataByViewer(
     { countDocuments; findByPageIdAndUserId }
   >('Bookmark');
   const bookmarkCount: number = await Bookmark.countDocuments({
-    page: pageId,
+    page: { $eq: pageId },
   });
 
   const pageInfo = {
