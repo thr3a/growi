@@ -62,24 +62,6 @@ export interface IPageService {
     pages: ObjectIdLike[],
     user: IUser | undefined,
   ) => Promise<void>;
-  findPageAndMetaDataByViewer(
-    pageId: string,
-    path: string | null,
-    user?: HydratedDocument<IUser>,
-    isSharedPage?: boolean,
-  ): Promise<
-    | IDataWithRequiredMeta<HydratedDocument<PageDocument>, IPageInfoExt>
-    | IDataWithRequiredMeta<null, IPageNotFoundInfo>
-  >;
-  findPageAndMetaDataByViewer(
-    pageId: string | null,
-    path: string,
-    user?: HydratedDocument<IUser>,
-    isSharedPage?: boolean,
-  ): Promise<
-    | IDataWithRequiredMeta<HydratedDocument<PageDocument>, IPageInfoExt>
-    | IDataWithRequiredMeta<null, IPageNotFoundInfo>
-  >;
   resumeRenameSubOperation(
     renamedPage: PageDocument,
     pageOp: PageOperationDocument,
@@ -212,4 +194,10 @@ export interface IPageService {
     options: IOptionsForCreate,
     pageOpId: ObjectIdLike,
   ): Promise<void>;
+
+  getCreatorIdForCanDelete(page: PageDocument): Promise<ObjectIdLike | null>;
+
+  canDeleteUserHomepageByConfig(): boolean;
+
+  isUsersHomepageOwnerAbsent(path: string): Promise<boolean>;
 }
