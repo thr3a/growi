@@ -289,7 +289,7 @@ export async function getPageDataForSameRoute(
     resolvedPagePath,
     user,
     false, // isSharedPage
-    true, // basicOnly = true
+    true, // basicOnly
   );
 
   const currentPathname = resolveFinalizedPathname(
