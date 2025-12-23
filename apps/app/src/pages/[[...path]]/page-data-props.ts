@@ -2,10 +2,11 @@ import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import type {
   IDataWithRequiredMeta,
   IPage,
+  IPageInfoExt,
   IPageNotFoundInfo,
   IUser,
-} from '@growi/core/dist/interfaces';
-import { isIPageInfo, isIPageNotFoundInfo } from '@growi/core/dist/interfaces';
+} from '@growi/core';
+import { isIPageInfo, isIPageNotFoundInfo } from '@growi/core';
 import {
   isPermalink as _isPermalink,
   isTopPage,
@@ -15,7 +16,7 @@ import assert from 'assert';
 import type { HydratedDocument, model } from 'mongoose';
 
 import type { CrowiRequest } from '~/interfaces/crowi-request';
-import type { PageModel } from '~/server/models/page';
+import type { PageDocument, PageModel } from '~/server/models/page';
 import type {
   IPageRedirect,
   PageRedirectModel,
@@ -252,11 +253,14 @@ export async function getPageDataForSameRoute(
   props: Pick<CommonEachProps, 'currentPathname'> &
     Pick<EachProps, 'currentPathname' | 'isIdenticalPathPage' | 'redirectFrom'>;
   internalProps?: {
-    pageId?: string;
+    pageWithMeta?:
+      | IDataWithRequiredMeta<PageDocument, IPageInfoExt>
+      | IDataWithRequiredMeta<null, IPageNotFoundInfo>;
   };
 }> {
   const req: CrowiRequest = context.req as CrowiRequest;
-  const { user } = req;
+  const { crowi, user } = req;
+  const { pageService, pageGrantService } = crowi;
 
   const pathname = decodeURIComponent(
     context.resolvedUrl?.split('?')[0] ?? '/',
@@ -278,13 +282,17 @@ export async function getPageDataForSameRoute(
   }
 
   // For same route access, do minimal page lookup
-  const basicPageInfo = await Page.findOne(
-    isPermalink ? { _id: pageId } : { path: resolvedPagePath },
-  ).exec();
+  const pageWithMeta = await findPageAndMetaDataByViewer(
+    pageService,
+    pageGrantService,
+    pageId,
+    resolvedPagePath,
+    user,
+  );
 
   const currentPathname = resolveFinalizedPathname(
     resolvedPagePath,
-    basicPageInfo,
+    pageWithMeta.data,
     isPermalink,
   );
 
@@ -295,7 +303,7 @@ export async function getPageDataForSameRoute(
       redirectFrom,
     },
     internalProps: {
-      pageId: basicPageInfo?._id?.toString(),
+      pageWithMeta,
     },
   };
 }
