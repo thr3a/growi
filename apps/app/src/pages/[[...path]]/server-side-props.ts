@@ -169,7 +169,13 @@ export async function getServerSidePropsForInitial(
 export async function getServerSidePropsForSameRoute(
   context: GetServerSidePropsContext,
 ): Promise<GetServerSidePropsResult<Stage2EachProps>> {
-  const pageDataForSameRouteResult = await getPageDataForSameRoute(context);
+  // -- TODO: ：https://redmine.weseek.co.jp/issues/174725
+  // Remove getServerSideI18nProps from getServerSidePropsForSameRoute for performance improvement
+  const [i18nPropsResult, pageDataForSameRouteResult] = await Promise.all([
+    getServerSideI18nProps(context, ['translation']),
+    getPageDataForSameRoute(context),
+  ]);
+
   const { props: pageDataProps, internalProps } = pageDataForSameRouteResult;
 
   // Add user to seen users
@@ -187,9 +193,10 @@ export async function getServerSidePropsForSameRoute(
     ),
   );
 
-  return {
-    props: {
-      ...pageDataProps,
-    },
-  };
+  const mergedResult = mergeGetServerSidePropsResults(
+    { props: pageDataProps },
+    i18nPropsResult,
+  );
+
+  return mergedResult;
 }
