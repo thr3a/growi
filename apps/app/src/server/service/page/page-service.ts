@@ -4,6 +4,7 @@ import type {
   IDataWithRequiredMeta,
   IGrantedGroup,
   IPage,
+  IPageInfoBasic,
   IPageInfoExt,
   IPageInfoForEmpty,
   IPageInfoForEntity,
@@ -80,15 +81,7 @@ export interface IPageService {
   constructBasicPageInfo(
     page: HydratedDocument<PageDocument>,
     isGuestUser?: boolean,
-  ):
-    | Omit<
-        IPageInfoForEmpty,
-        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-      >
-    | Omit<
-        IPageInfoForEntity,
-        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-      >;
+  ): IPageInfoBasic;
   normalizeAllPublicPages(): Promise<void>;
   canDelete(
     page: PageDocument,

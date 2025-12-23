@@ -170,6 +170,19 @@ export const isIPageInfoForEntity = (
   return isIPageInfo(pageInfo) && pageInfo.isEmpty === false;
 };
 
+export type IPageInfoBasic =
+  | Omit<
+      IPageInfoForEmpty,
+      | 'bookmarkCount'
+      | 'isDeletable'
+      | 'isAbleToDeleteCompletely'
+      | 'isBookmarked'
+    >
+  | Omit<
+      IPageInfoForEntity,
+      'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
+    >;
+
 export const isIPageInfoForOperation = (
   // biome-ignore lint/suspicious/noExplicitAny: ignore
   pageInfo: any | undefined,

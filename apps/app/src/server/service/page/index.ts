@@ -10,6 +10,7 @@ import type {
   IGrantedGroup,
   IPage,
   IPageInfo,
+  IPageInfoBasic,
   IPageInfoExt,
   IPageInfoForEmpty,
   IPageInfoForEntity,
@@ -3269,15 +3270,7 @@ class PageService implements IPageService {
   constructBasicPageInfo(
     page: HydratedDocument<PageDocument>,
     isGuestUser?: boolean,
-  ):
-    | Omit<
-        IPageInfoForEmpty,
-        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-      >
-    | Omit<
-        IPageInfoForEntity,
-        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-      > {
+  ): IPageInfoBasic {
     const isMovable = isGuestUser ? false : isMovablePage(page.path);
     const pageId = page._id.toString();
 
