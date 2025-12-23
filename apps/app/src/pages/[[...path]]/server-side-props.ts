@@ -72,8 +72,6 @@ function getActivityAction(
     | IDataWithMeta<null, IPageNotFoundInfo>
     | null,
 ): SupportedActionType {
-  const pagePath = pageWithMeta?.data?.path;
-
   const meta = pageWithMeta?.meta;
   if (isIPageNotFoundInfo(meta)) {
     if (meta.isForbidden) {
@@ -85,12 +83,15 @@ function getActivityAction(
     }
   }
 
-  if (pagePath != null && pagePathUtils.isUsersHomepage(pagePath)) {
-    return SupportedAction.ACTION_PAGE_USER_HOME_VIEW;
-  }
+  const pagePath = pageWithMeta?.data?.path;
+  if (pagePath != null) {
+    if (pagePathUtils.isUsersHomepage(pagePath)) {
+      return SupportedAction.ACTION_PAGE_USER_HOME_VIEW;
+    }
 
-  if (pagePath != null && !pagePathUtils.isCreatablePage(pagePath)) {
-    return SupportedAction.ACTION_PAGE_NOT_CREATABLE;
+    if (!pagePathUtils.isCreatablePage(pagePath)) {
+      return SupportedAction.ACTION_PAGE_NOT_CREATABLE;
+    }
   }
 
   return SupportedAction.ACTION_PAGE_VIEW;
