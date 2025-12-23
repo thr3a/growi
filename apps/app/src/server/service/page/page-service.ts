@@ -1,13 +1,9 @@
 import type { EventEmitter } from 'node:events';
 import type {
   HasObjectId,
-  IDataWithRequiredMeta,
   IGrantedGroup,
   IPage,
-  IPageInfoExt,
-  IPageInfoForEmpty,
-  IPageInfoForEntity,
-  IPageNotFoundInfo,
+  IPageInfoBasic,
   IUser,
   IUserHasId,
   PageGrant,
@@ -80,15 +76,7 @@ export interface IPageService {
   constructBasicPageInfo(
     page: HydratedDocument<PageDocument>,
     isGuestUser?: boolean,
-  ):
-    | Omit<
-        IPageInfoForEmpty,
-        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-      >
-    | Omit<
-        IPageInfoForEntity,
-        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-      >;
+  ): IPageInfoBasic;
   normalizeAllPublicPages(): Promise<void>;
   canDelete(
     page: PageDocument,

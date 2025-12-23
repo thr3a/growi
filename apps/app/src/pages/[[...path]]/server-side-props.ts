@@ -1,6 +1,19 @@
 import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
+import type {
+  IDataWithMeta,
+  IDataWithRequiredMeta,
+  IPageInfoBasic,
+  IPageNotFoundInfo,
+} from '@growi/core';
+import { isIPageNotFoundInfo } from '@growi/core';
+import { pagePathUtils } from '@growi/core/dist/utils';
 
+import {
+  SupportedAction,
+  type SupportedActionType,
+} from '~/interfaces/activity';
 import type { CrowiRequest } from '~/interfaces/crowi-request';
+import type { PageDocument } from '~/server/models/page';
 
 import { getServerSideBasicLayoutProps } from '../basic-layout-page';
 import {
@@ -8,11 +21,11 @@ import {
   getServerSideI18nProps,
 } from '../common-props';
 import {
-  getActivityAction,
   getServerSideGeneralPageProps,
   getServerSideRendererConfigProps,
 } from '../general-page';
 import { isValidGeneralPageInitialProps } from '../general-page/type-guards';
+import type { IPageToShowRevisionWithMeta } from '../general-page/types';
 import { addActivity } from '../utils/activity';
 import { mergeGetServerSidePropsResults } from '../utils/server-side-props';
 import { NEXT_JS_ROUTING_PAGE } from './consts';
@@ -50,6 +63,43 @@ function emitPageSeenEvent(
 
   const pageEvent = crowi.event('page');
   pageEvent.emit('seen', pageId, user);
+}
+
+function getActivityAction(
+  isIdenticalPathPage: boolean,
+  pageWithMeta?:
+    | IPageToShowRevisionWithMeta
+    | IDataWithRequiredMeta<PageDocument, IPageInfoBasic>
+    | IDataWithMeta<null, IPageNotFoundInfo>
+    | null,
+): SupportedActionType {
+  if (isIdenticalPathPage) {
+    return SupportedAction.ACTION_PAGE_NOT_CREATABLE;
+  }
+
+  const meta = pageWithMeta?.meta;
+  if (isIPageNotFoundInfo(meta)) {
+    if (meta.isForbidden) {
+      return SupportedAction.ACTION_PAGE_FORBIDDEN;
+    }
+
+    if (meta.isNotFound) {
+      return SupportedAction.ACTION_PAGE_NOT_FOUND;
+    }
+  }
+
+  const pagePath = pageWithMeta?.data?.path;
+  if (pagePath != null) {
+    if (pagePathUtils.isUsersHomepage(pagePath)) {
+      return SupportedAction.ACTION_PAGE_USER_HOME_VIEW;
+    }
+
+    if (!pagePathUtils.isCreatablePage(pagePath)) {
+      return SupportedAction.ACTION_PAGE_NOT_CREATABLE;
+    }
+  }
+
+  return SupportedAction.ACTION_PAGE_VIEW;
 }
 
 export async function getServerSidePropsForInitial(
@@ -104,8 +154,15 @@ export async function getServerSidePropsForInitial(
   // Add user to seen users
   emitPageSeenEvent(context, mergedProps.pageWithMeta?.data?._id);
 
-  // -- TODO: persist activity
-  // await addActivity(context, getActivityAction(mergedProps));
+  // Persist activity
+  addActivity(
+    context,
+    getActivityAction(
+      mergedProps.isIdenticalPathPage,
+      mergedProps.pageWithMeta,
+    ),
+  );
+
   return mergedResult;
 }
 
@@ -122,11 +179,20 @@ export async function getServerSidePropsForSameRoute(
   const { props: pageDataProps, internalProps } = pageDataForSameRouteResult;
 
   // Add user to seen users
-  emitPageSeenEvent(context, internalProps?.pageId);
+  emitPageSeenEvent(
+    context,
+    internalProps?.pageWithMeta?.data?._id?.toString(),
+  );
 
-  // -- TODO: persist activity
-  // const mergedProps = await mergedResult.props;
-  // await addActivity(context, getActivityAction(mergedProps));
+  // Persist activity
+  addActivity(
+    context,
+    getActivityAction(
+      pageDataProps.isIdenticalPathPage,
+      internalProps?.pageWithMeta,
+    ),
+  );
+
   const mergedResult = mergeGetServerSidePropsResults(
     { props: pageDataProps },
     i18nPropsResult,

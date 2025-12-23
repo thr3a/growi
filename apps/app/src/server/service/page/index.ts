@@ -6,23 +6,18 @@ import {
 } from '@growi/core';
 import type {
   HasObjectId,
-  IDataWithRequiredMeta,
   IGrantedGroup,
   IPage,
-  IPageInfo,
-  IPageInfoExt,
-  IPageInfoForEmpty,
-  IPageInfoForEntity,
-  IPageInfoForOperation,
-  IPageNotFoundInfo,
+  IPageInfoBasic,
+  IPageInfoBasicForEmpty,
+  IPageInfoBasicForEntity,
   IRevisionHasId,
   IUser,
   IUserHasId,
   Ref,
 } from '@growi/core/dist/interfaces';
-import { isIPageInfoForEntity, PageGrant } from '@growi/core/dist/interfaces';
+import { PageGrant } from '@growi/core/dist/interfaces';
 import { pagePathUtils, pathUtils } from '@growi/core/dist/utils';
-import assert from 'assert';
 import escapeStringRegexp from 'escape-string-regexp';
 import type EventEmitter from 'events';
 import type { Cursor, HydratedDocument } from 'mongoose';
@@ -36,7 +31,6 @@ import type { ExternalUserGroupDocument } from '~/features/external-user-group/s
 import ExternalUserGroupRelation from '~/features/external-user-group/server/models/external-user-group-relation';
 import { isAiEnabled } from '~/features/openai/server/services';
 import { SupportedAction } from '~/interfaces/activity';
-import type { BookmarkedPage } from '~/interfaces/bookmark-info';
 import { V5ConversionErrCode } from '~/interfaces/errors/v5-conversion-error';
 import type { IOptionsForCreate, IOptionsForUpdate } from '~/interfaces/page';
 import type { IPageDeleteConfigValueToProcessValidation } from '~/interfaces/page-delete-config';
@@ -104,8 +98,6 @@ const {
   isUsersTopPage,
   isMovablePage,
   isUsersHomepage,
-  hasSlash,
-  generateChildrenRegExp,
 } = pagePathUtils;
 
 const { addTrailingSlash } = pathUtils;
@@ -3269,15 +3261,7 @@ class PageService implements IPageService {
   constructBasicPageInfo(
     page: HydratedDocument<PageDocument>,
     isGuestUser?: boolean,
-  ):
-    | Omit<
-        IPageInfoForEmpty,
-        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-      >
-    | Omit<
-        IPageInfoForEntity,
-        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-      > {
+  ): IPageInfoBasic {
     const isMovable = isGuestUser ? false : isMovablePage(page.path);
     const pageId = page._id.toString();
 
@@ -3289,10 +3273,7 @@ class PageService implements IPageService {
         isEmpty: true,
         isMovable,
         isRevertible: false,
-      } satisfies Omit<
-        IPageInfoForEmpty,
-        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-      >;
+      } satisfies IPageInfoBasicForEmpty;
     }
 
     const likers = page.liker.slice(0, 15) as Ref<IUserHasId>[];
@@ -3314,10 +3295,7 @@ class PageService implements IPageService {
       // the page must have a revision if it is not empty
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       latestRevisionId: getIdStringForRef(page.revision!),
-    } satisfies Omit<
-      IPageInfoForEntity,
-      'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-    >;
+    } satisfies IPageInfoBasicForEntity;
 
     return infoForEntity;
   }

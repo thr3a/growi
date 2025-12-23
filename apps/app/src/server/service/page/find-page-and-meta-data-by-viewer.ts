@@ -1,6 +1,7 @@
 import type {
   IDataWithRequiredMeta,
   IPageInfo,
+  IPageInfoBasic,
   IPageInfoExt,
   IPageInfoForEmpty,
   IPageInfoForOperation,
@@ -20,6 +21,35 @@ import type { IPageGrantService } from '~/server/service/page-grant';
 import Subscription from '../../models/subscription';
 import type { IPageService } from './page-service';
 
+// Overload: basicOnly = true returns basic info only
+export async function findPageAndMetaDataByViewer(
+  pageService: IPageService,
+  pageGrantService: IPageGrantService,
+  pageId: string | null,
+  path: string | null,
+  user: HydratedDocument<IUser> | undefined,
+  isSharedPage: boolean,
+  basicOnly: true,
+): Promise<
+  | IDataWithRequiredMeta<HydratedDocument<PageDocument>, IPageInfoBasic>
+  | IDataWithRequiredMeta<null, IPageNotFoundInfo>
+>;
+
+// Overload: basicOnly = false or undefined returns extended info
+export async function findPageAndMetaDataByViewer(
+  pageService: IPageService,
+  pageGrantService: IPageGrantService,
+  pageId: string | null,
+  path: string | null,
+  user?: HydratedDocument<IUser>,
+  isSharedPage?: boolean,
+  basicOnly?: false,
+): Promise<
+  | IDataWithRequiredMeta<HydratedDocument<PageDocument>, IPageInfoExt>
+  | IDataWithRequiredMeta<null, IPageNotFoundInfo>
+>;
+
+// Implementation
 export async function findPageAndMetaDataByViewer(
   pageService: IPageService,
   pageGrantService: IPageGrantService,
@@ -28,8 +58,12 @@ export async function findPageAndMetaDataByViewer(
   path: string | null, // either pageId or path must be specified
   user?: HydratedDocument<IUser>,
   isSharedPage = false,
+  basicOnly = false,
 ): Promise<
-  | IDataWithRequiredMeta<HydratedDocument<PageDocument>, IPageInfoExt>
+  | IDataWithRequiredMeta<
+      HydratedDocument<PageDocument>,
+      IPageInfoExt | IPageInfoBasic
+    >
   | IDataWithRequiredMeta<null, IPageNotFoundInfo>
 > {
   assert(pageId != null || path != null);
@@ -64,6 +98,14 @@ export async function findPageAndMetaDataByViewer(
 
   const isGuestUser = user == null;
   const basicPageInfo = pageService.constructBasicPageInfo(page, isGuestUser);
+
+  // Return basic info only without additional DB queries and calculations
+  if (basicOnly) {
+    return {
+      data: page,
+      meta: basicPageInfo,
+    };
+  }
 
   if (isSharedPage) {
     return {
