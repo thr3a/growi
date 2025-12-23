@@ -170,18 +170,17 @@ export const isIPageInfoForEntity = (
   return isIPageInfo(pageInfo) && pageInfo.isEmpty === false;
 };
 
-export type IPageInfoBasic =
-  | Omit<
-      IPageInfoForEmpty,
-      | 'bookmarkCount'
-      | 'isDeletable'
-      | 'isAbleToDeleteCompletely'
-      | 'isBookmarked'
-    >
-  | Omit<
-      IPageInfoForEntity,
-      'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-    >;
+export type IPageInfoBasicForEmpty = Omit<
+  IPageInfoForEmpty,
+  'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely' | 'isBookmarked'
+>;
+
+export type IPageInfoBasicForEntity = Omit<
+  IPageInfoForEntity,
+  'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
+>;
+
+export type IPageInfoBasic = IPageInfoBasicForEmpty | IPageInfoBasicForEntity;
 
 export const isIPageInfoForOperation = (
   // biome-ignore lint/suspicious/noExplicitAny: ignore

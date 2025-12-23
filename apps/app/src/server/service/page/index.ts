@@ -9,8 +9,8 @@ import type {
   IGrantedGroup,
   IPage,
   IPageInfoBasic,
-  IPageInfoForEmpty,
-  IPageInfoForEntity,
+  IPageInfoBasicForEmpty,
+  IPageInfoBasicForEntity,
   IRevisionHasId,
   IUser,
   IUserHasId,
@@ -3273,10 +3273,7 @@ class PageService implements IPageService {
         isEmpty: true,
         isMovable,
         isRevertible: false,
-      } satisfies Omit<
-        IPageInfoForEmpty,
-        'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-      >;
+      } satisfies IPageInfoBasicForEmpty;
     }
 
     const likers = page.liker.slice(0, 15) as Ref<IUserHasId>[];
@@ -3298,10 +3295,7 @@ class PageService implements IPageService {
       // the page must have a revision if it is not empty
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       latestRevisionId: getIdStringForRef(page.revision!),
-    } satisfies Omit<
-      IPageInfoForEntity,
-      'bookmarkCount' | 'isDeletable' | 'isAbleToDeleteCompletely'
-    >;
+    } satisfies IPageInfoBasicForEntity;
 
     return infoForEntity;
   }
