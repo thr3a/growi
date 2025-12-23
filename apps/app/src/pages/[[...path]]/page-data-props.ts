@@ -305,7 +305,12 @@ export async function getPageDataForSameRoute(
       redirectFrom,
     },
     internalProps: {
-      pageWithMeta: pageWithMetaBasicOnly,
+      pageWithMeta: pageWithMetaBasicOnly.data?.isEmpty
+        ? {
+            data: null,
+            meta: { isNotFound: true, isForbidden: false },
+          }
+        : pageWithMetaBasicOnly,
     },
   };
 }
