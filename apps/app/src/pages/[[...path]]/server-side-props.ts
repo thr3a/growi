@@ -2,7 +2,7 @@ import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import type {
   IDataWithMeta,
   IDataWithRequiredMeta,
-  IPageInfoExt,
+  IPageInfoBasic,
   IPageNotFoundInfo,
 } from '@growi/core';
 import { isIPageNotFoundInfo } from '@growi/core';
@@ -68,7 +68,7 @@ function emitPageSeenEvent(
 function getActivityAction(
   pageWithMeta?:
     | IPageToShowRevisionWithMeta
-    | IDataWithRequiredMeta<PageDocument, IPageInfoExt>
+    | IDataWithRequiredMeta<PageDocument, IPageInfoBasic>
     | IDataWithMeta<null, IPageNotFoundInfo>
     | null,
 ): SupportedActionType {

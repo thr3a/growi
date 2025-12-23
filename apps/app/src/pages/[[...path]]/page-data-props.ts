@@ -2,7 +2,7 @@ import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import type {
   IDataWithRequiredMeta,
   IPage,
-  IPageInfoExt,
+  IPageInfoBasic,
   IPageNotFoundInfo,
   IUser,
 } from '@growi/core';
@@ -254,7 +254,7 @@ export async function getPageDataForSameRoute(
     Pick<EachProps, 'currentPathname' | 'isIdenticalPathPage' | 'redirectFrom'>;
   internalProps?: {
     pageWithMeta?:
-      | IDataWithRequiredMeta<PageDocument, IPageInfoExt>
+      | IDataWithRequiredMeta<PageDocument, IPageInfoBasic>
       | IDataWithRequiredMeta<null, IPageNotFoundInfo>;
   };
 }> {
@@ -282,17 +282,19 @@ export async function getPageDataForSameRoute(
   }
 
   // For same route access, do minimal page lookup
-  const pageWithMeta = await findPageAndMetaDataByViewer(
+  const pageWithMetaBasicOnly = await findPageAndMetaDataByViewer(
     pageService,
     pageGrantService,
     pageId,
     resolvedPagePath,
     user,
+    false, // isSharedPage
+    true, // basicOnly = true
   );
 
   const currentPathname = resolveFinalizedPathname(
     resolvedPagePath,
-    pageWithMeta.data,
+    pageWithMetaBasicOnly.data,
     isPermalink,
   );
 
@@ -303,7 +305,7 @@ export async function getPageDataForSameRoute(
       redirectFrom,
     },
     internalProps: {
-      pageWithMeta,
+      pageWithMeta: pageWithMetaBasicOnly,
     },
   };
 }
