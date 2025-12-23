@@ -6,24 +6,18 @@ import {
 } from '@growi/core';
 import type {
   HasObjectId,
-  IDataWithRequiredMeta,
   IGrantedGroup,
   IPage,
-  IPageInfo,
   IPageInfoBasic,
-  IPageInfoExt,
   IPageInfoForEmpty,
   IPageInfoForEntity,
-  IPageInfoForOperation,
-  IPageNotFoundInfo,
   IRevisionHasId,
   IUser,
   IUserHasId,
   Ref,
 } from '@growi/core/dist/interfaces';
-import { isIPageInfoForEntity, PageGrant } from '@growi/core/dist/interfaces';
+import { PageGrant } from '@growi/core/dist/interfaces';
 import { pagePathUtils, pathUtils } from '@growi/core/dist/utils';
-import assert from 'assert';
 import escapeStringRegexp from 'escape-string-regexp';
 import type EventEmitter from 'events';
 import type { Cursor, HydratedDocument } from 'mongoose';
@@ -37,7 +31,6 @@ import type { ExternalUserGroupDocument } from '~/features/external-user-group/s
 import ExternalUserGroupRelation from '~/features/external-user-group/server/models/external-user-group-relation';
 import { isAiEnabled } from '~/features/openai/server/services';
 import { SupportedAction } from '~/interfaces/activity';
-import type { BookmarkedPage } from '~/interfaces/bookmark-info';
 import { V5ConversionErrCode } from '~/interfaces/errors/v5-conversion-error';
 import type { IOptionsForCreate, IOptionsForUpdate } from '~/interfaces/page';
 import type { IPageDeleteConfigValueToProcessValidation } from '~/interfaces/page-delete-config';
@@ -105,8 +98,6 @@ const {
   isUsersTopPage,
   isMovablePage,
   isUsersHomepage,
-  hasSlash,
-  generateChildrenRegExp,
 } = pagePathUtils;
 
 const { addTrailingSlash } = pathUtils;

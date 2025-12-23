@@ -1,14 +1,9 @@
 import type { EventEmitter } from 'node:events';
 import type {
   HasObjectId,
-  IDataWithRequiredMeta,
   IGrantedGroup,
   IPage,
   IPageInfoBasic,
-  IPageInfoExt,
-  IPageInfoForEmpty,
-  IPageInfoForEntity,
-  IPageNotFoundInfo,
   IUser,
   IUserHasId,
   PageGrant,
