@@ -66,12 +66,17 @@ function emitPageSeenEvent(
 }
 
 function getActivityAction(
+  isIdenticalPathPage: boolean,
   pageWithMeta?:
     | IPageToShowRevisionWithMeta
     | IDataWithRequiredMeta<PageDocument, IPageInfoBasic>
     | IDataWithMeta<null, IPageNotFoundInfo>
     | null,
 ): SupportedActionType {
+  if (isIdenticalPathPage) {
+    return SupportedAction.ACTION_PAGE_NOT_CREATABLE;
+  }
+
   const meta = pageWithMeta?.meta;
   if (isIPageNotFoundInfo(meta)) {
     if (meta.isForbidden) {
@@ -150,7 +155,13 @@ export async function getServerSidePropsForInitial(
   emitPageSeenEvent(context, mergedProps.pageWithMeta?.data?._id);
 
   // Persist activity
-  addActivity(context, getActivityAction(mergedProps.pageWithMeta));
+  addActivity(
+    context,
+    getActivityAction(
+      mergedProps.isIdenticalPathPage,
+      mergedProps.pageWithMeta,
+    ),
+  );
 
   return mergedResult;
 }
@@ -174,7 +185,13 @@ export async function getServerSidePropsForSameRoute(
   );
 
   // Persist activity
-  addActivity(context, getActivityAction(internalProps?.pageWithMeta));
+  addActivity(
+    context,
+    getActivityAction(
+      pageDataProps.isIdenticalPathPage,
+      internalProps?.pageWithMeta,
+    ),
+  );
 
   const mergedResult = mergeGetServerSidePropsResults(
     { props: pageDataProps },
