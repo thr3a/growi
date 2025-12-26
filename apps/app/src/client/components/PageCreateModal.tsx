@@ -47,7 +47,7 @@ const PageCreateModal: React.FC = () => {
   // Memoize computed values
   const userHomepagePath = useMemo(() => pagePathUtils.userHomepagePath(currentUser), [currentUser]);
   const isCreatable = useMemo(() => isCreatablePage(pathname) || isUsersHomepage(pathname), [pathname]);
-  const pageNameInputInitialValue = useMemo(() => (isCreatable ? pathUtils.addTrailingSlash(pathname) : '/'), [isCreatable, pathname]);
+  const pageNameInputInitialValue = useMemo(() => (isCreatable ? pathUtils.addTrailingSlash(pathname) : '/Tips/'), [isCreatable, pathname]);
   const now = useMemo(() => format(new Date(), 'yyyy/MM/dd'), []);
   const todaysParentPath = useMemo(
     () => [userHomepagePath, t('create_page_dropdown.todays.memo', { ns: 'commons' }), now].join('/'),
