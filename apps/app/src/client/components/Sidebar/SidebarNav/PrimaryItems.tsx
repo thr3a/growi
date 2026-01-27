@@ -37,13 +37,13 @@ export const PrimaryItems = memo((props: Props) => {
 
   return (
     <div className={`${styles['grw-primary-items']} mt-1`}>
-      <PrimaryItem
+      {/* <PrimaryItem
         sidebarMode={sidebarMode}
         contents={SidebarContentsType.TREE}
         label="Page Tree"
         iconName="list"
         onHover={onItemHover}
-      />
+      /> */}
       <PrimaryItem
         sidebarMode={sidebarMode}
         contents={SidebarContentsType.CUSTOM}
