@@ -57,7 +57,7 @@ const PageCreateModal: React.FC = () => {
     [pathname],
   );
   const pageNameInputInitialValue = useMemo(
-    () => (isCreatable ? pathUtils.addTrailingSlash(pathname) : '/'),
+    () => (isCreatable ? pathUtils.addTrailingSlash(pathname) : '/Tips/'),
     [isCreatable, pathname],
   );
   const now = useMemo(() => format(new Date(), 'yyyy/MM/dd'), []);
