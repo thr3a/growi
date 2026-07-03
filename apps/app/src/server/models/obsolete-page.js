@@ -1,12 +1,13 @@
 import { GroupType, Origin } from '@growi/core';
 import {
+  escapeStringForMongoRegex,
   pagePathUtils,
   pathUtils,
   templateChecker,
 } from '@growi/core/dist/utils';
+import { isUserPage } from '@growi/core/dist/utils/page-path-utils';
 import { removeHeadingSlash } from '@growi/core/dist/utils/path-utils';
 import { differenceInYears } from 'date-fns/differenceInYears';
-import escapeStringRegexp from 'escape-string-regexp';
 
 import { Comment } from '~/features/comment/server/models/comment';
 import ExternalUserGroup from '~/features/external-user-group/server/models/external-user-group';
@@ -340,7 +341,7 @@ export const getPageSchema = (crowi) => {
    * @param {User} user
    */
   pageSchema.statics.isAccessiblePageByViewer = async function (id, user) {
-    const baseQuery = this.count({ _id: id });
+    const baseQuery = this.findOne({ _id: id }).select('path');
 
     const userGroups =
       user != null
@@ -355,8 +356,21 @@ export const getPageSchema = (crowi) => {
     const queryBuilder = new this.PageQueryBuilder(baseQuery);
     queryBuilder.addConditionToFilteringByViewer(user, userGroups, true);
 
-    const count = await queryBuilder.query.exec();
-    return count > 0;
+    const page = await queryBuilder.query.exec();
+
+    if (!page) {
+      return false;
+    }
+
+    const disabledUserPages = configManager.getConfig(
+      'security:disableUserPages',
+    );
+
+    if (disabledUserPages && isUserPage(page.path)) {
+      return false;
+    }
+
+    return true;
   };
 
   // find page by path
@@ -674,7 +688,7 @@ export const getPageSchema = (crowi) => {
     const regexpList = pathList.map((path) => {
       const pathWithTrailingSlash = pathUtils.addTrailingSlash(path);
       return new RegExp(
-        `^${escapeStringRegexp(pathWithTrailingSlash)}_{1,2}template$`,
+        `^${escapeStringForMongoRegex(pathWithTrailingSlash)}_{1,2}template$`,
       );
     });
 

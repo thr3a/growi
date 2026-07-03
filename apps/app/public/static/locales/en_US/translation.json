@@ -528,7 +528,8 @@
       "Code Block": "Code Block",
       "Comment Out": "Comment Out",
       "Comment Out Desc": "(Hide)"
-    }
+    },
+    "Other Shortcuts": "Other Shortcuts"
   },
   "modal_resolve_conflict": {
     "conflicts_with_new_body_on_server_side": "Conflict with new body on server side. Please select or edit the page body to resolve the conflict.",
@@ -660,7 +661,9 @@
     }
   },
   "default_ai_assistant": {
-    "not_set": "Default assistant is not set"
+    "not_set": "Default assistant is not set",
+    "open_cloud_settings_to_enable": "Please check the GROWI.cloud management screen to enable AI integration",
+    "to_cloud_settings": "Open GROWI.cloud Settings"
   },
   "ai_assistant_substance": {
     "add_assistant": "Add Assistant",
@@ -861,6 +864,11 @@
     "started_on": "Started on",
     "file_upload_not_configured": "File upload settings are not configured"
   },
+  "audit_log_bulk_export": {
+    "download_expired": "Download period has expired",
+    "job_expired": "Export process was canceled because it took too long",
+    "no_results": "No audit logs matched the specified filters"
+  },
   "message": {
     "successfully_connected": "Successfully Connected!",
     "fail_to_save_access_token": "Failed to save access_token. Please try again.",
@@ -955,7 +963,8 @@
   "user_group": {
     "select_group": "Select group",
     "belonging_to_no_group": "Could not find the groups you belong to.",
-    "manage_user_groups": "Manage user groups"
+    "manage_user_groups": "Manage user groups",
+    "only_yourself": "Only you"
   },
   "fix_page_grant": {
     "modal": {
@@ -1004,6 +1013,8 @@
   },
   "user_home_page": {
     "bookmarks": "Bookmarks",
+    "contribution_graph": "Contribution Graph",
+    "contribution_migration_in_progress": "Preparing your contribution data. Refresh in a moment to see it.",
     "recently_created": "Recently Created",
     "recent_activity": "Recent Activity",
     "unknown_action": "made an unspecified change",
@@ -1077,5 +1088,97 @@
     "success-toaster": "Latest text synchronized",
     "skipped-toaster": "Skipped synchronizing since the editor is not activated. Please open the editor and try again.",
     "error-toaster": "Synchronization of the latest text failed"
+  },
+  "toolbar": {
+    "attachments": "Attachments",
+    "bold": "Bold",
+    "bullet_list": "Bullet List",
+    "checklist": "Checklist",
+    "code": "Code",
+    "diagram": "Diagram",
+    "editor_guide": "Editor Guide",
+    "emoji": "Emoji",
+    "heading": "Heading",
+    "italic": "Italic",
+    "numbered_list": "Numbered List",
+    "quote": "Quote",
+    "strikethrough": "Strikethrough",
+    "table": "Table",
+    "template": "Template",
+    "text_formatting": "Text Formatting"
+  },
+  "editor_guide": {
+    "title": "Editor Guide",
+    "tabs": {
+      "textstyle": "Text Style",
+      "layout": "Layout",
+      "decoration": "Decoration"
+    },
+    "textstyle": {
+      "copy_done": "Copied!",
+      "this": "This is",
+      "is": "",
+      "bold": "bold",
+      "italic": "italic",
+      "strikethrough": "strikethrough",
+      "inline_code": "inline code",
+      "bold_italic": "Bold or italic all",
+      "emoji": "Emoji",
+      "sub_sup": "Subscript / Superscript",
+      "link_label": "Link with label",
+      "link_docs": "GROWI Documentation",
+      "link_growi": "GROWI Link",
+      "link_sandbox": "Sandbox page is here",
+      "all_important": "This text is all\nimportant",
+      "sub_text": "subscript",
+      "sup_text": "superscript",
+      "is_text": "This is {{val}}"
+    },
+    "layout": {
+      "copy_done": "Copied!",
+      "header": "Headers",
+      "header_text": "Heading",
+      "list": "Unordered List",
+      "list_text": "This is a list item",
+      "ordered_list": "Ordered List",
+      "ordered_list_text": "This is a numbered item",
+      "checkbox": "Checkboxes",
+      "task": "Task ",
+      "quote": "Blockquotes",
+      "quote_text": "Quote",
+      "multi_quote": "Nested Quote",
+      "hr": "Horizontal Rule",
+      "br": "Line Break",
+      "br_code": "Add two spaces  to break\nthe line",
+      "br_preview_1": "Add two spaces to",
+      "br_preview_2": "break the line",
+      "code_block": "Code Blocks",
+      "code_block_text": "Insert code here",
+      "table": "Tables",
+      "left": "Align Left",
+      "right": "Align Right",
+      "center": "Align Center",
+      "row_text": "This column is",
+      "row_display": "aligned",
+      "footnote": "Footnotes",
+      "footnote_label": "Footnote text",
+      "footnote_desc": "Write the note content like this"
+    },
+    "decoration": {
+      "copy_done": "Copied to clipboard!",
+      "style": "Style",
+      "alert": "Alert",
+      "alert_with_custom_title": "Alert with label",
+      "alert_with_custom_title_text": "Custom Title",
+      "alert_unavailable": "Unavailable in this style",
+      "badge": "Badge",
+      "text_color": "Text Color",
+      "back_color": "Background Color",
+      "placeholder": "Sample text goes here",
+      "docs_title": "Bootstrap 5 Official Documentation",
+      "docs_badge": "Learn more about Badges",
+      "docs_color": "Learn more about Colors",
+      "docs_alert": "Learn more about Alert Blocks"
+    }
   }
 }

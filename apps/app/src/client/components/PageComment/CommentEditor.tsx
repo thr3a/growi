@@ -1,5 +1,5 @@
 import type { JSX, ReactNode } from 'react';
-import React, {
+import {
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -9,6 +9,11 @@ import React, {
 import dynamic from 'next/dynamic';
 import { GlobalCodeMirrorEditorKey, useSetResolvedTheme } from '@growi/editor';
 import { CodeMirrorEditorComment } from '@growi/editor/dist/client/components/CodeMirrorEditorComment';
+import {
+  createMentionCompletionExtension,
+  type FetchUsersFn,
+  mentionDecorationSettings,
+} from '@growi/editor/dist/client/services';
 import { useCodeMirrorEditorIsolated } from '@growi/editor/dist/client/stores/codemirror-editor';
 import { UserPicture } from '@growi/ui/dist/components';
 import { useAtomValue } from 'jotai';
@@ -16,6 +21,7 @@ import { useTranslation } from 'next-i18next';
 import { TabContent, TabPane } from 'reactstrap';
 
 import { uploadAttachments } from '~/client/services/upload-attachments';
+import { apiv3Get } from '~/client/util/apiv3-client';
 import { toastError } from '~/client/util/toastr';
 import { useCurrentUser } from '~/states/global';
 import { useCurrentPagePath } from '~/states/page';
@@ -35,11 +41,11 @@ import { NotAvailableIfReadOnlyUserNotAllowedToComment } from '../NotAvailableFo
 import { CommentPreview } from './CommentPreview';
 import { SwitchingButtonGroup } from './SwitchingButtonGroup';
 
-import '@growi/editor/dist/style.css';
-
 import styles from './CommentEditor.module.scss';
 
-const logger = loggerFactory('growi:components:CommentEditor');
+import '../GrowiEditor.vendor-styles.prebuilt';
+
+const _logger = loggerFactory('growi:components:CommentEditor');
 
 const SlackNotification = dynamic(
   () => import('../SlackNotification').then((mod) => mod.SlackNotification),
@@ -230,6 +236,38 @@ export const CommentEditor = (props: CommentEditorProps): JSX.Element => {
     }),
     [editorKey, markDirty],
   );
+
+  const fetchUsers = useCallback<FetchUsersFn>(async (query: string) => {
+    try {
+      const res = await apiv3Get<{
+        paginateResult: { docs: { username: string; name: string }[] };
+      }>('/users/', {
+        searchText: query,
+        sort: 'username',
+        sortOrder: 'asc',
+        page: 1,
+      });
+      return (res.data.paginateResult?.docs ?? []).map((user) => ({
+        username: user.username,
+        name: user.name,
+      }));
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const mentionExtension = useMemo(
+    () => createMentionCompletionExtension(fetchUsers),
+    [fetchUsers],
+  );
+
+  useEffect(() => {
+    return codeMirrorEditor?.appendExtensions?.([mentionDecorationSettings]);
+  }, [codeMirrorEditor]);
+
+  useEffect(() => {
+    return codeMirrorEditor?.appendExtensions?.(mentionExtension);
+  }, [codeMirrorEditor, mentionExtension]);
 
   // initialize CodeMirrorEditor
   useEffect(() => {

@@ -10,7 +10,6 @@ import type {
 import {
   AllSubscriptionStatusType,
   getIdForRef,
-  getIdStringForRef,
   isIPageNotFoundInfo,
   PageGrant,
   SCOPE,
@@ -40,7 +39,6 @@ import loginRequiredFactory from '~/server/middlewares/login-required';
 import { GlobalNotificationSettingEvent } from '~/server/models/GlobalNotificationSetting';
 import type { PageDocument, PageModel } from '~/server/models/page';
 import { Revision } from '~/server/models/revision';
-import ShareLink from '~/server/models/share-link';
 import Subscription from '~/server/models/subscription';
 import { configManager } from '~/server/service/config-manager';
 import { exportService } from '~/server/service/export';
@@ -53,9 +51,12 @@ import loggerFactory from '~/utils/logger';
 import type { ApiV3Response } from '../interfaces/apiv3-response';
 import { checkPageExistenceHandlersFactory } from './check-page-existence';
 import { createPageHandlersFactory } from './create-page';
+import { getPageByShareLinkHandlerFactory } from './get-page-by-share-link';
+import { getPageInfoHandlerFactory } from './get-page-info';
 import { getPagePathsWithDescendantCountFactory } from './get-page-paths-with-descendant-count';
 import { getYjsDataHandlerFactory } from './get-yjs-data';
 import { publishPageHandlersFactory } from './publish-page';
+import { respondWithSinglePage } from './respond-with-single-page';
 import { syncLatestRevisionBodyToYjsDraftHandlerFactory } from './sync-latest-revision-body-to-yjs-draft';
 import { unpublishPageHandlersFactory } from './unpublish-page';
 import { updatePageHandlersFactory } from './update-page';
@@ -88,9 +89,6 @@ const router = express.Router();
 module.exports = (crowi: Crowi) => {
   const loginRequired = loginRequiredFactory(crowi, true);
   const loginRequiredStrictly = loginRequiredFactory(crowi);
-  const certifySharedPage = require('../../../middlewares/certify-shared-page')(
-    crowi,
-  );
   const addActivity = generateAddActivityMiddleware();
 
   const globalNotificationService = crowi.globalNotificationService;
@@ -104,11 +102,9 @@ module.exports = (crowi: Crowi) => {
       query('pageId').isMongoId().optional().isString(),
       query('path').optional().isString(),
       query('findAll').optional().isBoolean(),
-      query('shareLinkId').optional().isMongoId(),
       query('includeEmpty').optional().isBoolean(),
     ],
     likes: [body('pageId').isString(), body('bool').isBoolean()],
-    info: [query('pageId').isMongoId().withMessage('pageId is required')],
     getGrantData: [
       query('pageId').isMongoId().withMessage('pageId is required'),
     ],
@@ -161,7 +157,7 @@ module.exports = (crowi: Crowi) => {
    *      get:
    *        tags: [Page]
    *        summary: Get page
-   *        description: get page by pagePath or pageId
+   *        description: Get page by pagePath or pageId. Returns a single page or multiple pages based on parameters.
    *        parameters:
    *          - name: pageId
    *            in: query
@@ -173,121 +169,52 @@ module.exports = (crowi: Crowi) => {
    *            description: page path
    *            schema:
    *              $ref: '#/components/schemas/PagePath'
+   *          - name: findAll
+   *            in: query
+   *            description: If set, returns all pages matching the path (returns pages array instead of single page)
+   *            schema:
+   *              type: boolean
+   *          - name: revisionId
+   *            in: query
+   *            description: Specific revision ID to retrieve
+   *            schema:
+   *              $ref: '#/components/schemas/ObjectId'
+   *          - name: includeEmpty
+   *            in: query
+   *            description: Include empty pages in results when using findAll
+   *            schema:
+   *              type: boolean
    *        responses:
    *          200:
    *            description: Page data
    *            content:
    *              application/json:
    *                schema:
-   *                  $ref: '#/components/schemas/Page'
+   *                  $ref: '#/components/schemas/GetPageResponse'
    */
   router.get(
     '/',
     accessTokenParser([SCOPE.READ.FEATURES.PAGE], { acceptLegacy: true }),
-    certifySharedPage,
     loginRequired,
     validator.getPage,
     apiV3FormValidator,
     async (req, res) => {
-      const { user, isSharedPage } = req;
-      const { pageId, path, findAll, revisionId, shareLinkId, includeEmpty } =
-        req.query;
+      const { user } = req;
+      const { pageId, path, findAll, revisionId, includeEmpty } = req.query;
 
       const disableUserPages = crowi.configManager.getConfig(
         'security:disableUserPages',
       );
 
-      const respondWithSinglePage = async (
-        pageWithMeta:
-          | IDataWithMeta<HydratedDocument<PageDocument>, IPageInfoExt>
-          | IDataWithMeta<null, IPageNotFoundInfo>,
-      ) => {
-        let { data: page } = pageWithMeta;
-        const { meta } = pageWithMeta;
-
-        if (isIPageNotFoundInfo(meta)) {
-          if (meta.isForbidden) {
-            return res.apiv3Err(
-              new ErrorV3(
-                'Page is forbidden',
-                'page-is-forbidden',
-                undefined,
-                meta,
-              ),
-              403,
-            );
-          }
-          return res.apiv3Err(
-            new ErrorV3('Page is not found', 'page-not-found', undefined, meta),
-            404,
-          );
-        }
-
-        if (disableUserPages && page != null) {
-          const isTargetUserPage =
-            isUserPage(page.path) || isUsersTopPage(page.path);
-
-          if (isTargetUserPage) {
-            return res.apiv3Err(
-              new ErrorV3('Page is forbidden', 'page-is-forbidden'),
-              403,
-            );
-          }
-        }
-
-        if (page != null) {
-          try {
-            page.initLatestRevisionField(revisionId);
-
-            // populate
-            page = await page.populateDataToShowRevision();
-          } catch (err) {
-            logger.error('populate-page-failed', err);
-            return res.apiv3Err(
-              new ErrorV3(
-                'Failed to populate page',
-                'populate-page-failed',
-                undefined,
-                { err, meta },
-              ),
-              500,
-            );
-          }
-        }
-
-        return res.apiv3({ page, pages: undefined, meta });
-      };
-
-      const isValid =
-        (shareLinkId != null && pageId != null && path == null) ||
-        (shareLinkId == null && (pageId != null || path != null));
+      const isValid = pageId != null || path != null;
       if (!isValid) {
         return res.apiv3Err(
-          new Error(
-            'Either parameter of (pageId or path) or (pageId and shareLinkId) is required.',
-          ),
+          new Error('Either pageId or path is required.'),
           400,
         );
       }
 
       try {
-        if (isSharedPage) {
-          const shareLink = await ShareLink.findOne({
-            _id: { $eq: shareLinkId },
-          });
-          if (shareLink == null) {
-            return res.apiv3Err('ShareLink is not found', 404);
-          }
-          return respondWithSinglePage(
-            await findPageAndMetaDataByViewer(pageService, pageGrantService, {
-              pageId: getIdStringForRef(shareLink.relatedPage),
-              path,
-              user,
-              isSharedPage: true,
-            }),
-          );
-        }
-
         if (findAll != null) {
           const pages = await Page.findByPathAndViewer(
             path,
@@ -307,11 +234,13 @@ module.exports = (crowi: Crowi) => {
         }
 
         return respondWithSinglePage(
+          res,
           await findPageAndMetaDataByViewer(pageService, pageGrantService, {
             pageId,
             path,
             user,
           }),
+          { revisionId, disableUserPages },
         );
       } catch (err) {
         logger.error('get-page-failed', err);
@@ -567,72 +496,9 @@ module.exports = (crowi: Crowi) => {
     },
   );
 
-  /**
-   * @swagger
-   *
-   *    /page/info:
-   *      get:
-   *        tags: [Page]
-   *        summary: /page/info
-   *        description: Get summary informations for a page
-   *        parameters:
-   *          - name: pageId
-   *            in: query
-   *            required: true
-   *            description: page id
-   *            schema:
-   *              $ref: '#/components/schemas/ObjectId'
-   *        responses:
-   *          200:
-   *            description: Successfully retrieved current page info.
-   *            content:
-   *              application/json:
-   *                schema:
-   *                  $ref: '#/components/schemas/PageInfoExt'
-   *          500:
-   *            description: Internal server error.
-   */
-  router.get(
-    '/info',
-    accessTokenParser([SCOPE.READ.FEATURES.PAGE]),
-    certifySharedPage,
-    loginRequired,
-    validator.info,
-    apiV3FormValidator,
-    async (req, res) => {
-      const { user, isSharedPage } = req;
-      const { pageId } = req.query;
+  router.get('/shared', getPageByShareLinkHandlerFactory(crowi));
 
-      try {
-        const { meta } = await findPageAndMetaDataByViewer(
-          pageService,
-          pageGrantService,
-          { pageId, path: null, user, isSharedPage },
-        );
-
-        if (isIPageNotFoundInfo(meta)) {
-          // Return error only when the page is forbidden
-          if (meta.isForbidden) {
-            return res.apiv3Err(
-              new ErrorV3(
-                'Page is forbidden',
-                'page-is-forbidden',
-                undefined,
-                meta,
-              ),
-              403,
-            );
-          }
-        }
-
-        // Empty pages (isEmpty: true) should return page info for UI operations
-        return res.apiv3(meta);
-      } catch (err) {
-        logger.error('get-page-info', err);
-        return res.apiv3Err(err, 500);
-      }
-    },
-  );
+  router.get('/info', getPageInfoHandlerFactory(crowi));
 
   /**
    * @swagger
@@ -740,7 +606,7 @@ module.exports = (crowi: Crowi) => {
       const parentPageGroupGrantData =
         await pageGrantService.getPageGroupGrantData(parentPage, req.user);
       const parentPageGrant: IPageGrantData = {
-        grant,
+        grant: parentPage.grant,
         groupGrantData: parentPageGroupGrantData,
       };
 
@@ -1335,13 +1201,24 @@ module.exports = (crowi: Crowi) => {
       );
 
       try {
+        const count = await Page.countByIdAndViewer(pageId, req.user);
+        if (count === 0) {
+          return res.apiv3Err(
+            new ErrorV3(
+              'Page is unreachable or empty.',
+              'page_unreachable_or_empty',
+            ),
+            400,
+          );
+        }
+
         const updateQuery =
           expandContentWidth === isContainerFluidBySystem
             ? { $unset: { expandContentWidth } } // remove if the specified value is the same to the system's one
             : { $set: { expandContentWidth } };
 
-        const page = await Page.updateOne({ _id: pageId }, updateQuery);
-        return res.apiv3({ page });
+        await Page.updateOne({ _id: pageId }, updateQuery);
+        return res.apiv3({});
       } catch (err) {
         logger.error('update-content-width-failed', err);
         return res.apiv3Err(err, 500);

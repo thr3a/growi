@@ -1,23 +1,11 @@
 {
   "mcpServers": {
-    "context7": {
-      "type": "http",
-      "url": "https://mcp.context7.com/mcp"
-    },
-    "serena": {
-      "type": "stdio",
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/oraios/serena",
-        "serena-mcp-server",
-        "--context",
-        "claude-code",
-        "--project",
-        ".",
-        "--enable-web-dashboard=false"
-      ],
-      "env": {}
+    "code-mode": {
+      "command": "npx",
+      "args": ["-y", "@utcp/code-mode-mcp"],
+      "env": {
+        "UTCP_CONFIG_FILE": "/workspace/growi/.utcp_config.json"
+      }
     }
   }
 }

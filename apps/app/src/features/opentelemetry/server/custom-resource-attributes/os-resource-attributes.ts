@@ -18,17 +18,15 @@ export function getOsResourceAttributes(): Attributes {
     type: os.type(),
     platform: os.platform(),
     arch: os.arch(),
-    totalmem: os.totalmem(),
   };
 
   const attributes: Attributes = {
     'os.type': osInfo.type,
     'os.platform': osInfo.platform,
     'os.arch': osInfo.arch,
-    'os.totalmem': osInfo.totalmem,
   };
 
-  logger.info('OS resource attributes collected', { attributes });
+  logger.info({ attributes }, 'OS resource attributes collected');
 
   return attributes;
 }

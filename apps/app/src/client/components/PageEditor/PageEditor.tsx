@@ -47,6 +47,7 @@ import {
 } from '~/states/server-configurations';
 import {
   EditorMode,
+  toPageUpdateGrantParams,
   useCurrentIndentSize,
   useCurrentIndentSizeActions,
   useEditingMarkdown,
@@ -57,6 +58,7 @@ import {
   useWaitingSaveProcessingActions,
 } from '~/states/ui/editor';
 import { useSetEditingClients } from '~/states/ui/editor/editing-clients';
+import { useSetScrollToRemoteCursor } from '~/states/ui/editor/scroll-to-remote-cursor';
 import { useEditorSettings } from '~/stores/editor';
 import { useSWRxCurrentGrantData } from '~/stores/page';
 import { mutatePageTree, mutateRecentlyUpdated } from '~/stores/page-listing';
@@ -69,12 +71,13 @@ import {
   useConflictEffect,
   useConflictResolver,
 } from './conflict';
+import { EditorGuideModalLazyLoaded } from './EditorGuideModal/dynamic';
 import { EditorNavbar } from './EditorNavbar';
 import { EditorNavbarBottom } from './EditorNavbarBottom';
 import Preview from './Preview';
 import { useScrollSync } from './ScrollSyncHelper';
 
-import '@growi/editor/dist/style.css';
+import '../GrowiEditor.vendor-styles.prebuilt';
 
 const logger = loggerFactory('growi:PageEditor');
 
@@ -128,6 +131,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   );
   const user = useCurrentUser();
   const setEditingClients = useSetEditingClients();
+  const setScrollToRemoteCursor = useSetScrollToRemoteCursor();
   const onConflict = useConflictResolver();
   const reservedNextCaretLine = useReservedNextCaretLineValue();
   const setReservedNextCaretLine = useSetReservedNextCaretLine();
@@ -220,11 +224,8 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
 
   const save: Save = useCallback(
     async (revisionId, markdown, opts, onConflict) => {
-      if (pageId == null || selectedGrant == null) {
-        logger.error('Some materials to save are invalid', {
-          pageId,
-          selectedGrant,
-        });
+      if (pageId == null) {
+        logger.error({ pageId }, 'Some materials to save are invalid');
         throw new Error('Some materials to save are invalid');
       }
 
@@ -236,9 +237,10 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
           revisionId,
           wip: opts?.wip,
           body: markdown ?? '',
-          grant: selectedGrant?.grant,
           origin: Origin.Editor,
-          userRelatedGrantUserGroupIds: selectedGrant?.userRelatedGrantedGroups,
+          // Omits grant when none is selected (null) so the server preserves the
+          // page's existing grant instead of overwriting it — see issue https://github.com/growilabs/growi/issues/11272.
+          ...toPageUpdateGrantParams(selectedGrant),
           ...(opts ?? {}),
         });
 
@@ -251,7 +253,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
 
         return page;
       } catch (error) {
-        logger.error('failed to save', error);
+        logger.error({ err: error }, 'failed to save');
 
         const remoteRevisionData = extractRemoteRevisionDataFromErrorObj(error);
         if (remoteRevisionData != null) {
@@ -329,9 +331,7 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   const uploadHandler = useCallback(
     (files: File[]) => {
       if (pageId == null) {
-        logger.error('pageId is invalid', {
-          pageId,
-        });
+        logger.error({ pageId }, 'pageId is invalid');
         throw new Error('pageId is invalid');
       }
 
@@ -462,37 +462,41 @@ export const PageEditorSubstance = (props: Props): JSX.Element => {
   }
 
   return (
-    <div className={`flex-expand-horiz ${props.visibility ? '' : 'd-none'}`}>
-      <div className="page-editor-editor-container flex-expand-vert border-end">
-        <CodeMirrorEditorMain
-          enableUnifiedMergeView={isEnableUnifiedMergeView}
-          enableCollaboration={editorMode === EditorMode.Editor}
-          onSave={saveWithShortcut}
-          onUpload={uploadHandler}
-          acceptedUploadFileType={acceptedUploadFileType}
-          onScroll={scrollEditorHandlerThrottle}
-          indentSize={currentIndentSize ?? defaultIndentSize}
-          user={user ?? undefined}
-          pageId={pageId ?? undefined}
-          editorSettings={editorSettings}
-          onEditorsUpdated={setEditingClients}
-          cmProps={cmProps}
-        />
+    <>
+      <div className={`flex-expand-horiz ${props.visibility ? '' : 'd-none'}`}>
+        <div className="page-editor-editor-container flex-expand-vert border-end">
+          <CodeMirrorEditorMain
+            enableUnifiedMergeView={isEnableUnifiedMergeView}
+            enableCollaboration={editorMode === EditorMode.Editor}
+            onSave={saveWithShortcut}
+            onUpload={uploadHandler}
+            acceptedUploadFileType={acceptedUploadFileType}
+            onScroll={scrollEditorHandlerThrottle}
+            indentSize={currentIndentSize ?? defaultIndentSize}
+            user={user ?? undefined}
+            pageId={pageId ?? undefined}
+            editorSettings={editorSettings}
+            onEditorsUpdated={setEditingClients}
+            onScrollToRemoteCursorReady={setScrollToRemoteCursor}
+            cmProps={cmProps}
+          />
+        </div>
+        <div
+          ref={previewRef}
+          onScroll={scrollPreviewHandlerThrottle}
+          className="page-editor-preview-container flex-expand-vert overflow-y-auto d-none d-lg-flex position-relative"
+        >
+          <Preview
+            rendererOptions={rendererOptions}
+            markdown={markdownToPreview}
+            pagePath={currentPagePath}
+            expandContentWidth={shouldExpandContent}
+            style={pastEndStyle}
+          />
+        </div>
       </div>
-      <div
-        ref={previewRef}
-        onScroll={scrollPreviewHandlerThrottle}
-        className="page-editor-preview-container flex-expand-vert overflow-y-auto d-none d-lg-flex"
-      >
-        <Preview
-          rendererOptions={rendererOptions}
-          markdown={markdownToPreview}
-          pagePath={currentPagePath}
-          expandContentWidth={shouldExpandContent}
-          style={pastEndStyle}
-        />
-      </div>
-    </div>
+      <EditorGuideModalLazyLoaded containerRef={previewRef} />
+    </>
   );
 };
 

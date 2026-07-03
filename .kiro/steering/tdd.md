@@ -1,22 +1,15 @@
 # Test-Driven Development
 
-@.claude/commands/tdd.md
-@.claude/skills/testing-patterns-with-vitest/SKILL.md
+The RED → GREEN → REFACTOR enforcement workflow lives in the `kiro-impl` skill
+(`.claude/skills/kiro-impl/SKILL.md`), which gates every task on a captured
+failing-test (`RED_PHASE_OUTPUT`) before implementation.
 
-## cc-sdd Integration
+For how to *write* the tests well, see `.claude/skills/essential-test-design/SKILL.md`
+(test the contract, not the mechanism) and `.claude/skills/essential-test-patterns/SKILL.md`
+(Vitest / RTL / type-safe mocking). The `testing` rule (`.claude/rules/testing.md`)
+is always loaded and points to both.
 
-### TDD in spec-impl Workflow
-When executing `/kiro:spec-impl`, the TDD cycle is mandatory:
+## cc-sdd Specific Notes
 
-1. **Each task → TDD cycle**: RED → GREEN → REFACTOR
-2. **Tests trace to requirements**: Test names should reference EARS requirement IDs
-3. **Coverage gates completion**: Task is not complete until coverage targets met
-
-### Validation Before Task Completion
-```bash
-# Verify tests pass
-turbo run test --filter {package}
-
-# Check coverage (80% minimum)
-cd {package_dir} && pnpm vitest run --coverage src/utils/page-path-validator.spec.ts
-```
+Currently, there are no additional instructions specific to Kiro.
+If instructions specific to the cc-sdd workflow are needed in the future, add them to this section.

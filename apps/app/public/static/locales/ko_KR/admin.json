@@ -332,6 +332,13 @@
     "migration_succeeded": "업그레이드가 성공적으로 완료되었습니다! 유지 보수 모드를 종료하면 GROWI를 사용할 수 있습니다.",
     "migration_failed": "업그레이드 실패. 실패 시 수행할 작업에 대한 정보는 GROWI 문서를 참조하십시오."
   },
+  "news_delivery": {
+    "section_title": "뉴스 배포",
+    "label": "뉴스 배포",
+    "enable": "뉴스 배포 활성화",
+    "description": "외부 피드에서 뉴스를 가져와 로컬 캐시를 업데이트하는 cron 작업의 동작을 제어합니다. 비활성화해도 캐시된 뉴스는 계속 표시됩니다.",
+    "update_succeeded": "뉴스 배포 설정이 업데이트되었습니다"
+  },
   "maintenance_mode": {
     "maintenance_mode": "유지 보수 모드",
     "under_maintenance_mode": "유지 보수 모드 중",
@@ -369,6 +376,10 @@
     "page_bulk_export_explanation": "모든 사용자가 메뉴에서 한 번에 페이지와 모든 하위 페이지를 내보낼 수 있는 기능을 활성화합니다. 내보낸 데이터는 저장 기간이 지나면 자동으로 삭제됩니다.",
     "page_bulk_export_warning": "대량 페이지 내보내기 기능은 모든 사용자에게 제공됩니다. 시스템 리소스 유지를 위해 최소한의 사용을 부탁드립니다. 관리자라면 모든 사용자에게 이 사실을 알려주십시오.",
     "page_bulk_export_storage_period": "저장 기간",
+    "page_bulk_export_reload_title": "페이지 다시 로드",
+    "page_bulk_export_reload_prompt": "설정을 반영하려면 페이지를 다시 로드해야 합니다. 지금 다시 로드하시겠습니까?",
+    "page_bulk_export_reload_dismiss": "지금 하지 않음",
+    "reload_page": "다시 로드",
     "update": "업데이트",
     "mail_settings": "이메일 설정",
     "mailer_is_not_set_up": "이메일 설정이 되어 있지 않습니다.",
@@ -376,6 +387,15 @@
     "transmission_method": "전송 방식",
     "smtp_label": "SMTP",
     "ses_label": "SES(AWS)",
+    "oauth2_label": "OAuth 2.0 (Google Workspace)",
+    "oauth2_description": "Google Workspace를 사용하여 이메일을 보내기 위한 OAuth 2.0 인증을 구성합니다. Google Cloud Console에서 OAuth 2.0 자격 증명을 생성하고 갱신 토큰을 얻어야 합니다.",
+    "oauth2_user": "이메일 주소",
+    "oauth2_user_help": "인증된 Google 계정의 이메일 주소",
+    "oauth2_client_id": "클라이언트 ID",
+    "oauth2_client_secret": "클라이언트 시크릿",
+    "oauth2_refresh_token": "갱신 토큰",
+    "oauth2_refresh_token_help": "OAuth 2.0 인증 흐름에서 얻은 갱신 토큰",
+    "placeholder_leave_blank": "기존 값을 유지하려면 비워두세요",
     "send_test_email": "테스트 이메일 전송",
     "success_to_send_test_email": "테스트 이메일 전송 성공",
     "smtp_settings": "SMTP 설정",
@@ -404,6 +424,7 @@
     "azure_storage_account_name": "스토리지 계정 이름",
     "azure_storage_container_name": "컨테이너 이름",
     "azure_note_for_the_only_env_option": "Azure 설정은 환경 변수 값에 의해 제한됩니다.<br>이 설정을 변경하려면 환경 변수 <code>{{env}}</code>의 값을 false로 변경하거나 삭제하십시오.",
+    "azure_note_for_the_only_env_option_cloud": "Azure 설정은 GROWI.cloud 관리 화면에서 변경할 수 있습니다.",
     "file_upload": "파일 업로드 설정용입니다. 파일 업로드 설정을 완료하면 파일 업로드 기능, 프로필 사진 기능 등이 활성화됩니다.",
     "test_connection": "메일 연결 테스트",
     "change_setting": "주의: 이 설정을 완료하지 않으면 지금까지 업로드한 파일에 접근할 수 없습니다.",
@@ -416,7 +437,8 @@
     "enable": "활성화",
     "disable": "비활성화",
     "use_env_var_if_empty": "데이터베이스 값이 비어 있으면 환경 변수 <code>{{variable}}</code>의 값이 사용됩니다.",
-    "note_for_the_only_env_option": "GCS 설정은 환경 변수 값에 의해 제한됩니다.<br>이 설정을 변경하려면 환경 변수 <code>{{env}}</code>의 값을 false로 변경하거나 삭제하십시오."
+    "note_for_the_only_env_option": "GCS 설정은 환경 변수 값에 의해 제한됩니다.<br>이 설정을 변경하려면 환경 변수 <code>{{env}}</code>의 값을 false로 변경하거나 삭제하십시오.",
+    "note_for_the_only_env_option_cloud": "GCS 설정은 GROWI.cloud 관리 화면에서 변경할 수 있습니다."
   },
   "markdown_settings": {
     "markdown_settings": "마크다운 설정",
@@ -447,6 +469,18 @@
       "tag_names": "태그 이름",
       "tag_attributes": "태그 속성",
       "import_recommended": "권장 {{target}} 가져오기"
+    },
+    "content-disposition_header": "Content-Disposition 마임 타입(MIME Type) 설정",
+    "content-disposition_options": {
+      "add_header": "마임 타입 추가",
+      "note": "참고: 마임 타입을 추가하면 다른 리스트에서 자동으로 제거됩니다.",
+      "inline_header": "인라인(Inline) 마임 타입",
+      "attachment_header": "파일 첨부(Attachment) 마임 타입",
+      "inline_button": "인라인",
+      "attachment_button": "파일 첨부",
+      "no_inline": "설정된 인라인 타입이 없습니다.",
+      "no_attachment": "설정된 파일 첨부 타입이 없습니다.",
+      "remove_button": "삭제"
     }
   },
   "customize_settings": {
@@ -760,7 +794,8 @@
       "revoke_read_only_access": "읽기 전용 권한 취소",
       "grant_read_only_access": "읽기 전용 권한 부여",
       "send_invitation_email": "초대 이메일 전송",
-      "resend_invitation_email": "초대 이메일 재전송"
+      "resend_invitation_email": "초대 이메일 재전송",
+      "deleted_user": "(삭제된 사용자)"
     },
     "reset_password": "비밀번호 재설정",
     "reset_password_modal": {
@@ -860,6 +895,14 @@
     "available_action_list_explanation": "현재 설정에서 검색/볼 수 있는 작업 목록",
     "action_list": "작업 목록",
     "disable_mode_explanation": "감사 로그가 현재 비활성화되어 있습니다. 활성화하려면 환경 변수 <code>AUDIT_LOG_ENABLED</code>를 true로 설정하십시오.",
+    "export": "내보내기",
+    "export_audit_log": "감사 로그 내보내기",
+    "export_requested": "내보내기 요청이 접수되었습니다. 내보내기가 완료되면 알림을 받게 됩니다.",
+    "export_failed": "내보내기 시작에 실패했습니다",
+    "duplicate_export_confirm": "동일한 조건의 내보내기가 이미 진행 중입니다. 다시 시작하시겠습니까?",
+    "restart_export": "내보내기 다시 시작",
+    "confirm_export": "내보내기 확인",
+    "disable_mode_explanation_cloud": "현재 감사 로그가 비활성화되어 있습니다. 활성화하려면 GROWI.cloud 관리 화면에서 앱 설정을 변경하십시오.",
     "docs_url": {
       "log_type": "https://docs.growi.org/en/admin-guide/admin-cookbook/audit-log-setup.html#log-types"
     }
@@ -885,7 +928,9 @@
     "confirm": "플러그인 삭제?"
   },
   "cloud_setting_management": {
-    "to_cloud_settings": "GROWI.cloud 설정 열기"
+    "to_cloud_settings": "GROWI.cloud 설정 열기",
+    "change_from_cloud": "GROWI.cloud 관리 화면에서 설정을 변경할 수 있습니다.",
+    "storage_change_from_cloud": "현재 파일 업로드 방법은 {{fileUploadType}} 입니다. 설정은 GROWI.cloud 관리 화면에서 변경할 수 있습니다."
   },
   "audit_log_action_category": {
     "Page": "페이지",

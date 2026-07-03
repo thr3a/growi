@@ -1,16 +1,20 @@
 import { type JSX, useCallback } from 'react';
-import Head from 'next/head';
+import Script from 'next/script';
 import type { IGraphViewerGlobal } from '@growi/remark-drawio';
 
+import { patchStencilRegistryUrls } from './patch-stencil-registry-urls';
 import { generateViewerMinJsUrl } from './use-viewer-min-js-url';
 
 declare global {
   var GraphViewer: IGraphViewerGlobal;
+  var mxStencilRegistry: { libraries: Record<string, string[]> } | undefined;
 }
 
 type Props = {
   drawioUri: string;
 };
+
+const DEFAULT_DRAWIO_ORIGIN = 'https://embed.diagrams.net';
 
 export const DrawioViewerScript = ({ drawioUri }: Props): JSX.Element => {
   const loadedHandler = useCallback(() => {
@@ -29,8 +33,17 @@ export const DrawioViewerScript = ({ drawioUri }: Props): JSX.Element => {
     GraphViewer.prototype.lightboxZIndex = 1200;
     GraphViewer.prototype.toolbarZIndex = 1200;
 
+    try {
+      const origin = new URL(drawioUri).origin;
+      if (origin !== DEFAULT_DRAWIO_ORIGIN) {
+        patchStencilRegistryUrls(mxStencilRegistry?.libraries, origin);
+      }
+    } catch {
+      // skip patching if drawioUri cannot be parsed
+    }
+
     GraphViewer.processElements();
-  }, []);
+  }, [drawioUri]);
 
   // Return empty element if drawioUri is not provided to avoid Invalid URL error
   if (!drawioUri) {
@@ -40,13 +53,10 @@ export const DrawioViewerScript = ({ drawioUri }: Props): JSX.Element => {
   const viewerMinJsSrc = generateViewerMinJsUrl(drawioUri);
 
   return (
-    <Head>
-      <script
-        type="text/javascript"
-        async
-        src={viewerMinJsSrc}
-        onLoad={loadedHandler}
-      />
-    </Head>
+    <Script
+      src={viewerMinJsSrc}
+      strategy="afterInteractive"
+      onLoad={loadedHandler}
+    />
   );
 };

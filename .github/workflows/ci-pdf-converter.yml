@@ -29,14 +29,14 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [24.x]
 
     steps:
     - uses: actions/checkout@v4
 
-    - uses: pnpm/action-setup@v4
+    - uses: pnpm/action-setup@v6
 
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
@@ -65,14 +65,14 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [24.x]
 
     steps:
     - uses: actions/checkout@v4
 
-    - uses: pnpm/action-setup@v4
+    - uses: pnpm/action-setup@v6
 
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
@@ -104,14 +104,14 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [24.x]
 
     steps:
     - uses: actions/checkout@v4
 
-    - uses: pnpm/action-setup@v4
+    - uses: pnpm/action-setup@v6
 
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
@@ -142,7 +142,7 @@ jobs:
     - name: Assembling all dependencies
       run: |
         rm -rf out
-        pnpm deploy out --prod --filter @growi/pdf-converter
+        pnpm deploy out --prod --legacy --filter @growi/pdf-converter
         rm -rf apps/pdf-converter/node_modules && mv out/node_modules apps/pdf-converter/node_modules
 
     - name: pnpm run start:prod:ci

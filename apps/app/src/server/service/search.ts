@@ -8,6 +8,7 @@ import {
   isIncludeAiMenthion,
   removeAiMenthion,
 } from '~/features/search/utils/ai';
+import { excludeUserPagesFromQuery } from '~/features/search/utils/disable-user-pages';
 import { SearchDelegatorName } from '~/interfaces/named-query';
 import type {
   IFormattedSearchResult,
@@ -86,36 +87,46 @@ const findPageListByIds = async (pageIds: ObjectIdLike[], crowi: any) => {
 };
 
 class SearchService implements SearchQueryParser, SearchResolver {
+  protected constructor() {}
+
   crowi: Crowi;
 
   isErrorOccuredOnHealthcheck: boolean | null;
 
   isErrorOccuredOnSearching: boolean | null;
 
-  fullTextSearchDelegator: any & ElasticsearchDelegator;
+  fullTextSearchDelegator: ElasticsearchDelegator;
 
   nqDelegators: { [key in SearchDelegatorName]: SearchDelegator };
 
-  constructor(crowi: Crowi) {
-    this.crowi = crowi;
+  static async create(crowi: Crowi) {
+    const instance = new SearchService();
 
-    this.isErrorOccuredOnHealthcheck = null;
-    this.isErrorOccuredOnSearching = null;
+    instance.crowi = crowi;
+
+    instance.isErrorOccuredOnHealthcheck = null;
+    instance.isErrorOccuredOnSearching = null;
 
     try {
-      this.fullTextSearchDelegator = this.generateFullTextSearchDelegator();
-      this.nqDelegators = this.generateNQDelegators(
-        this.fullTextSearchDelegator,
+      const tmpFullTextSearchDelegator =
+        instance.generateFullTextSearchDelegator();
+      if (tmpFullTextSearchDelegator == null) {
+        throw new Error('Failed to initialize search delegator');
+      }
+      instance.fullTextSearchDelegator = tmpFullTextSearchDelegator;
+      instance.nqDelegators = instance.generateNQDelegators(
+        instance.fullTextSearchDelegator,
       );
       logger.info('Succeeded to initialize search delegators');
     } catch (err) {
       logger.error(err);
     }
 
-    if (this.isConfigured) {
-      this.fullTextSearchDelegator.init();
-      this.registerUpdateEvent();
+    if (instance.isConfigured) {
+      await instance.fullTextSearchDelegator.init();
+      instance.registerUpdateEvent();
     }
+    return instance;
   }
 
   get isConfigured() {
@@ -320,42 +331,45 @@ class SearchService implements SearchQueryParser, SearchResolver {
     return this.fullTextSearchDelegator.normalizeIndices();
   }
 
-  async rebuildIndex() {
-    return this.fullTextSearchDelegator.rebuildIndex();
+  async rebuildIndex(shouldEmitProgress = false) {
+    return this.fullTextSearchDelegator.rebuildIndex({ shouldEmitProgress });
   }
 
   async parseSearchQuery(
     _queryString: string,
     nqName: string | null,
   ): Promise<ParsedQuery> {
+    const disableUserPages = configManager.getConfig(
+      'security:disableUserPages',
+    );
     const queryString = normalizeQueryString(_queryString);
-
     const terms = this.parseQueryString(queryString);
 
-    if (nqName == null) {
-      return { queryString, terms };
+    let parsedQuery: ParsedQuery = { queryString, terms };
+
+    if (nqName != null) {
+      const nq = await NamedQuery.findOne({ name: normalizeNQName(nqName) });
+
+      if (nq != null) {
+        const { aliasOf, delegatorName } = nq;
+
+        if (aliasOf != null) {
+          parsedQuery = {
+            queryString: normalizeQueryString(aliasOf),
+            terms: this.parseQueryString(aliasOf),
+          };
+        } else {
+          parsedQuery = { queryString, terms, delegatorName };
+        }
+      } else {
+        logger.debug(
+          `Delegated to full-text search since a named query document did not found. (nqName="${nqName}")`,
+        );
+      }
     }
 
-    const nq = await NamedQuery.findOne({ name: normalizeNQName(nqName) });
-
-    // will delegate to full-text search
-    if (nq == null) {
-      logger.debug(
-        `Delegated to full-text search since a named query document did not found. (nqName="${nqName}")`,
-      );
-      return { queryString, terms };
-    }
-
-    const { aliasOf, delegatorName } = nq;
-
-    let parsedQuery: ParsedQuery;
-    if (aliasOf != null) {
-      parsedQuery = {
-        queryString: normalizeQueryString(aliasOf),
-        terms: this.parseQueryString(aliasOf),
-      };
-    } else {
-      parsedQuery = { queryString, terms, delegatorName };
+    if (disableUserPages) {
+      excludeUserPagesFromQuery(parsedQuery.terms);
     }
 
     return parsedQuery;

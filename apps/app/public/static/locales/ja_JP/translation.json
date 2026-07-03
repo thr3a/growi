@@ -562,7 +562,8 @@
       "Code Block": "コードブロック",
       "Comment Out": "非表示にする",
       "Comment Out Desc": "(コメントアウト)"
-    }
+    },
+    "Other Shortcuts": "その他のショートカット"
   },
   "modal_resolve_conflict": {
     "conflicts_with_new_body_on_server_side": "サーバー側の新しい本文と衝突します。ページ本文を選択または編集して衝突を解消してください。",
@@ -693,7 +694,9 @@
     }
   },
   "default_ai_assistant": {
-    "not_set": "デフォルトアシスタントが設定されていません"
+    "not_set": "デフォルトアシスタントが設定されていません",
+    "open_cloud_settings_to_enable": "AI 連携を有効にするには GROWI.cloud の管理画面をご確認ください",
+    "to_cloud_settings": "GROWI.cloud の管理画面へ"
   },
   "ai_assistant_substance": {
     "add_assistant": "アシスタントを追加する",
@@ -894,6 +897,11 @@
     "started_on": "開始日時",
     "file_upload_not_configured": "ファイルアップロード設定が完了していません"
   },
+  "audit_log_bulk_export": {
+    "download_expired": "ダウンロード期限が切れました",
+    "job_expired": "エクスポート時間が長すぎるため、処理が中断されました",
+    "no_results": "指定されたフィルターに一致する監査ログはありませんでした"
+  },
   "message": {
     "successfully_connected": "接続に成功しました!",
     "fail_to_save_access_token": "アクセストークンの保存に失敗しました、再度お試しください。",
@@ -988,7 +996,8 @@
   "user_group": {
     "select_group": "グループを選ぶ",
     "belonging_to_no_group": "所属しているグループが見つかりませんでした。",
-    "manage_user_groups": "グループ管理"
+    "manage_user_groups": "グループ管理",
+    "only_yourself": "自分のみ"
   },
   "fix_page_grant": {
     "modal": {
@@ -1037,6 +1046,8 @@
   },
   "user_home_page": {
     "bookmarks": "ブックマーク",
+    "contribution_graph": "コントリビューショングラフ",
+    "contribution_migration_in_progress": "コントリビューションデータを準備しています。少し待ってから再読み込みしてください。",
     "recently_created": "最近作成したページ",
     "recent_activity": "最近のアクティビティ",
     "unknown_action": "未指定の変更を加えました",
@@ -1110,5 +1121,98 @@
     "success-toaster": "最新の本文を同期しました",
     "skipped-toaster": "エディターがアクティブではないため、同期をスキップしました。エディターを開いて再度お試しください。",
     "error-toaster": "最新の本文の同期に失敗しました"
+  },
+  "toolbar": {
+    "attachments": "添付ファイル",
+    "bold": "太字",
+    "bullet_list": "箇条書きリスト",
+    "checklist": "チェックリスト",
+    "code": "コード",
+    "diagram": "ダイアグラム",
+    "editor_guide": "エディターガイド",
+    "emoji": "絵文字",
+    "heading": "見出し",
+    "italic": "イタリック",
+    "numbered_list": "番号付きリスト",
+    "quote": "引用",
+    "strikethrough": "取り消し線",
+    "table": "テーブル",
+    "template": "テンプレート",
+    "text_formatting": "テキスト書式"
+  },
+  "editor_guide": {
+    "title": "エディターガイド",
+    "tabs": {
+      "textstyle": "テキストスタイル",
+      "layout": "レイアウト",
+      "decoration": "装飾"
+    },
+    "textstyle": {
+      "copy_done": "コピーしました！",
+      "this": "これは",
+      "is": "です",
+      "bold": "太字",
+      "italic": "斜体",
+      "strikethrough": "取り消し線",
+      "inline_code": "インラインコード",
+      "bold_italic": "全体が太字か斜体",
+      "emoji": "絵文字",
+      "sub_sup": "下付き・上付き",
+      "link_label": "ラベル付きリンク",
+      "link_docs": "GROWI ドキュメント",
+      "link_growi": "GROWIのリンク",
+      "link_sandbox": "砂場ページはこちら",
+      "all_important": "このテキストはすべて\n重要です",
+      "sub_text": "下付き",
+      "sup_text": "上付き",
+      "is_text": "これは{{val}}です"
+    },
+    "layout": {
+      "copy_done": "コピーしました！",
+      "header": "ヘッダー",
+      "header_text": "見出し",
+      "list": "箇条書きリスト",
+      "list_text": "箇条書きリストです",
+      "ordered_list": "番号付きリスト",
+      "ordered_list_text": "番号付きリストです",
+      "checkbox": "チェックボックス",
+      "task": "タスク",
+      "quote": "引用",
+      "quote_text": "引用",
+      "multi_quote": "多重引用",
+      "hr": "水平線",
+      "br": "改行",
+      "br_code": "スペース2つ入れると  改行\nできます",
+      "br_preview_1": "スペース2つ入れると",
+      "br_preview_2": "改行できます",
+      "code_block": "コードブロック",
+      "code_block_text": "ここにコードを追加",
+      "table": "表",
+      "left": "左揃え",
+      "right": "右揃え",
+      "center": "中央揃え",
+      "row_text": "この列は",
+      "row_display": "で表示されます",
+      "footnote": "脚注",
+      "footnote_label": "脚注つきテキスト",
+      "footnote_desc": "注記はこのように書きます"
+    },
+    "decoration": {
+      "copy_done": "コピーしました！",
+      "style": "スタイル",
+      "alert": "アラート",
+      "alert_with_custom_title": "ラベル付きアラート",
+      "alert_with_custom_title_text": "カスタムタイトル",
+      "alert_unavailable": "このスタイルでは使用できません",
+      "badge": "バッジ",
+      "text_color": "テキストカラー",
+      "back_color": "背景色",
+
+      "placeholder": "テキストが入ります",
+      "docs_title": "Bootstrap5 公式ドキュメント",
+      "docs_badge": "バッジの詳細はこちら",
+      "docs_color": "カラーの詳細はこちら",
+      "docs_alert": "アラートブロックの詳細はこちら"
+    }
   }
 }

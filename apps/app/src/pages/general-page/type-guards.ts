@@ -2,6 +2,7 @@ import { isIPageInfo } from '@growi/core/dist/interfaces';
 
 import loggerFactory from '~/utils/logger';
 
+import { NextjsRoutingType } from '../utils/nextjs-routing-utils';
 import type { GeneralPageInitialProps } from './types';
 
 const logger = loggerFactory('growi:pages:general-page:type-guards');
@@ -17,17 +18,17 @@ export function isValidGeneralPageInitialProps(
 
   // Then validate GeneralPageInitialProps-specific properties
   // CommonPageInitialProps
-  if (p.isNextjsRoutingTypeInitial !== true) {
+  if (p.nextjsRoutingType === NextjsRoutingType.SAME_ROUTE) {
     logger.warn(
-      'isValidGeneralPageInitialProps: isNextjsRoutingTypeInitial is not true',
-      { isNextjsRoutingTypeInitial: p.isNextjsRoutingTypeInitial },
+      { nextjsRoutingType: p.nextjsRoutingType },
+      'isValidGeneralPageInitialProps: nextjsRoutingType must be equal to NextjsRoutingType.INITIAL or NextjsRoutingType.FROM_OUTSIDE',
     );
     return false;
   }
   if (typeof p.growiVersion !== 'string') {
     logger.warn(
-      'isValidGeneralPageInitialProps: growiVersion is not a string',
       { growiVersion: p.growiVersion },
+      'isValidGeneralPageInitialProps: growiVersion is not a string',
     );
     return false;
   }
@@ -36,8 +37,8 @@ export function isValidGeneralPageInitialProps(
   if (p.meta != null && typeof p.meta === 'object') {
     if (!isIPageInfo(p.meta)) {
       logger.warn(
-        'isValidGeneralPageInitialProps: meta is not a valid IPageInfo',
         { meta: p.meta },
+        'isValidGeneralPageInitialProps: meta is not a valid IPageInfo',
       );
       return false;
     }

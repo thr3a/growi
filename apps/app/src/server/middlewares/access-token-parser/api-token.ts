@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 
 import loggerFactory from '~/utils/logger';
 
-import { extractBearerToken } from './extract-bearer-token';
+import { extractAccessToken } from './extract-access-token';
 
 const logger = loggerFactory('growi:middleware:access-token-parser:api-token');
 
@@ -15,19 +15,15 @@ export const parserForApiToken = async (
   req: AccessTokenParserReq,
   res: Response,
 ): Promise<void> => {
-  // Extract token from Authorization header first
-  // It is more efficient to call it only once in "AccessTokenParser," which is the caller of the method
-  const bearerToken = extractBearerToken(req.headers.authorization);
-
-  // Try all possible token sources in order of priority
-  const accessToken =
-    bearerToken ?? req.query.access_token ?? req.body.access_token;
-
-  if (accessToken == null || typeof accessToken !== 'string') {
+  const accessToken = extractAccessToken(req);
+  if (accessToken == null) {
     return;
   }
 
-  logger.debug('accessToken is', accessToken);
+  logger.debug(
+    { accessToken: `${accessToken.slice(0, 4)}...${accessToken.slice(-4)}` },
+    'accessToken is',
+  );
 
   const User = mongoose.model<HydratedDocument<IUser>, { findUserByApiToken }>(
     'User',

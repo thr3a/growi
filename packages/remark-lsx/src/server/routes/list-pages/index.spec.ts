@@ -1,4 +1,5 @@
 import type { IPageHasId, IUser } from '@growi/core';
+import { escapeStringForMongoRegex } from '@growi/core/dist/utils';
 import type { Request, Response } from 'express';
 import createError from 'http-errors';
 import { mock } from 'vitest-mock-extended';
@@ -186,7 +187,9 @@ describe('listPages', () => {
       // setup
       const pagePath = '/parent';
       const optionsFilter = '^child';
-      const expectedRegex = /^\/parent\/child/;
+      const expectedRegex = new RegExp(
+        `^${escapeStringForMongoRegex('/parent/')}${escapeStringForMongoRegex('child')}`,
+      );
 
       // when
       addFilterCondition(queryMock, pagePath, optionsFilter);
@@ -199,7 +202,9 @@ describe('listPages', () => {
       // setup
       const pagePath = '/parent';
       const optionsFilter = 'child';
-      const expectedRegex = /^\/parent\/.*child/;
+      const expectedRegex = new RegExp(
+        `^${escapeStringForMongoRegex('/parent/')}.*${escapeStringForMongoRegex('child')}`,
+      );
 
       // when
       addFilterCondition(queryMock, pagePath, optionsFilter);
@@ -225,7 +230,9 @@ describe('listPages', () => {
       // setup
       const pagePath = '/parent';
       const optionsFilter = 'child';
-      const expectedRegex = /^\/parent\/.*child/;
+      const expectedRegex = new RegExp(
+        `^${escapeStringForMongoRegex('/parent/')}.*${escapeStringForMongoRegex('child')}`,
+      );
 
       // when
       addFilterCondition(queryMock, pagePath, optionsFilter, true);
@@ -313,7 +320,9 @@ describe('when excludedPaths is handled', () => {
     await handler(reqMock, resMock);
 
     // check if the logic generates the correct regex: ^\/(user|tmp)(\/|$)
-    const expectedRegex = /^\/(user|tmp)(\/|$)/;
+    const expectedRegex = new RegExp(
+      `^\\/(${escapeStringForMongoRegex('user')}|${escapeStringForMongoRegex('tmp')})(\\/|$)`,
+    );
     expect(queryMock.and).toHaveBeenCalledWith([
       {
         path: { $not: expectedRegex },

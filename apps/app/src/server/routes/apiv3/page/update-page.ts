@@ -1,5 +1,5 @@
 import type { IPage, IRevisionHasId, IUserHasId } from '@growi/core';
-import { allOrigin, getIdForRef, Origin } from '@growi/core';
+import { allOrigin, getIdForRef, getIdStringForRef, Origin } from '@growi/core';
 import { SCOPE } from '@growi/core/dist/interfaces';
 import { ErrorV3 } from '@growi/core/dist/models';
 import { serializeUserSecurely } from '@growi/core/dist/models/serializers';
@@ -32,6 +32,7 @@ import {
   serializePageSecurely,
   serializeRevisionSecurely,
 } from '~/server/models/serializers';
+import { shouldGenerateUpdate } from '~/server/service/activity/update-activity-logic';
 import { configManager } from '~/server/service/config-manager/config-manager';
 import { preNotifyService } from '~/server/service/pre-notify';
 import { normalizeLatestRevisionIfBroken } from '~/server/service/revision/normalize-latest-revision-if-broken';
@@ -118,24 +119,50 @@ export const updatePageHandlersFactory = (crowi: Crowi): RequestHandler[] => {
       await yjsService.syncWithTheLatestRevisionForce(req.body.pageId);
     }
 
-    // persist activity
-    const creator =
-      updatedPage.creator != null
-        ? getIdForRef(updatedPage.creator)
-        : undefined;
-    const parameters = {
-      targetModel: SupportedTargetModel.MODEL_PAGE,
-      target: updatedPage,
-      action: SupportedAction.ACTION_PAGE_UPDATE,
-    };
-    const activityEvent = crowi.events.activity;
-    activityEvent.emit(
-      'update',
-      res.locals.activity._id,
-      parameters,
-      { path: updatedPage.path, creator },
-      preNotifyService.generatePreNotify,
-    );
+    // Decide if update activity should generate
+    let shouldGenerateUpdateActivity = false;
+    try {
+      const targetPageId = getIdStringForRef(updatedPage);
+      const currentActivityId = getIdStringForRef(res.locals.activity);
+      const currentUserId = req.user ? getIdStringForRef(req.user) : undefined;
+
+      shouldGenerateUpdateActivity = await shouldGenerateUpdate({
+        currentUserId,
+        targetPageId,
+        currentActivityId,
+      });
+    } catch (err) {
+      logger.error(
+        'Failed to determine whether to generate update activity.',
+        err,
+      );
+    }
+
+    if (shouldGenerateUpdateActivity) {
+      try {
+        // persist activity
+        const creator =
+          updatedPage.creator != null
+            ? getIdForRef(updatedPage.creator)
+            : undefined;
+        const parameters = {
+          targetModel: SupportedTargetModel.MODEL_PAGE,
+          target: updatedPage,
+          action: SupportedAction.ACTION_PAGE_UPDATE,
+          contributor: req.user,
+        };
+        const activityEvent = crowi.events.activity;
+        activityEvent.emit(
+          'update',
+          res.locals.activity._id,
+          parameters,
+          { path: updatedPage.path, creator },
+          preNotifyService.generatePreNotify,
+        );
+      } catch (err) {
+        logger.error('Failed to generate update activity', err);
+      }
+    }
 
     // global notification
     try {
@@ -145,7 +172,7 @@ export const updatePageHandlersFactory = (crowi: Crowi): RequestHandler[] => {
         req.user,
       );
     } catch (err) {
-      logger.error('Edit notification failed', err);
+      logger.error({ err }, 'Edit notification failed');
     }
 
     // user notification
@@ -161,13 +188,16 @@ export const updatePageHandlersFactory = (crowi: Crowi): RequestHandler[] => {
           'update',
           option,
         );
-        results.forEach((result) => {
+        for (const result of results) {
           if (result.status === 'rejected') {
-            logger.error('Create user notification failed', result.reason);
+            logger.error(
+              { err: result.reason },
+              'Create user notification failed',
+            );
           }
-        });
+        }
       } catch (err) {
-        logger.error('Create user notification failed', err);
+        logger.error({ err }, 'Create user notification failed');
       }
     }
 
@@ -180,7 +210,7 @@ export const updatePageHandlersFactory = (crowi: Crowi): RequestHandler[] => {
         const openaiService = getOpenaiService();
         await openaiService?.updateVectorStoreFileOnPageUpdate(updatedPage);
       } catch (err) {
-        logger.error('Rebuild vector store failed', err);
+        logger.error({ err }, 'Rebuild vector store failed');
       }
     }
   }
@@ -280,7 +310,6 @@ export const updatePageHandlersFactory = (crowi: Crowi): RequestHandler[] => {
           409,
         );
       }
-
       let updatedPage: HydratedDocument<PageDocument>;
       let previousRevision: IRevisionHasId | null;
       try {
@@ -298,7 +327,39 @@ export const updatePageHandlersFactory = (crowi: Crowi): RequestHandler[] => {
           options.grant = grant;
           options.userRelatedGrantUserGroupIds = userRelatedGrantUserGroupIds;
         }
-        previousRevision = await Revision.findById(sanitizeRevisionId);
+
+        // Priority 1: Use provided revisionId (for conflict detection)
+        previousRevision = null;
+        if (sanitizeRevisionId != null) {
+          try {
+            previousRevision = await Revision.findById(sanitizeRevisionId);
+          } catch (error) {
+            logger.error(
+              {
+                revisionId: sanitizeRevisionId,
+                pageId: currentPage._id,
+                err: error,
+              },
+              'Failed to fetch previousRevision by revisionId',
+            );
+          }
+        }
+
+        // Priority 2: Fallback to currentPage.revision (for diff detection)
+        if (previousRevision == null && currentPage.revision != null) {
+          try {
+            previousRevision = await Revision.findById(currentPage.revision);
+          } catch (error) {
+            logger.error(
+              {
+                pageId: currentPage._id,
+                revisionId: currentPage.revision,
+                err: error,
+              },
+              'Failed to fetch previousRevision by currentPage.revision',
+            );
+          }
+        }
 
         // There are cases where "revisionId" is not required for revision updates
         // See: https://dev.growi.org/651a6f4a008fee2f99187431#origin-%E3%81%AE%E5%BC%B7%E5%BC%B1
@@ -310,7 +371,7 @@ export const updatePageHandlersFactory = (crowi: Crowi): RequestHandler[] => {
           options,
         );
       } catch (err) {
-        logger.error('Error occurred while updating a page.', err);
+        logger.error({ err }, 'Error occurred while updating a page.');
         return res.apiv3Err(err);
       }
 

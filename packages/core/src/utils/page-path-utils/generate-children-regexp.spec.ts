@@ -17,6 +17,8 @@ describe('generateChildrenRegExp', () => {
       invalidPaths: ['/parent', '/parent/child/grandchild', '/other/path'],
     },
     {
+      // escapeStringForMongoRegex does not escape ASCII space (it is PCRE-safe as-is),
+      // unlike RegExp.escape which would emit \x20.
       path: '/parent (with brackets)',
       expected: '^\\/parent \\(with brackets\\)(\\/[^/]+)\\/?$',
       validPaths: [
@@ -36,6 +38,14 @@ describe('generateChildrenRegExp', () => {
         '/parent[with square]',
         '/parent[with square]/child/grandchild',
       ],
+    },
+    {
+      // Regression for #11235: a path containing U+3000 (full-width space) must NOT be
+      // escaped to 　 — MongoDB's PCRE2 rejects \u (error 51091). The char passes through literally.
+      path: '/親　ページ',
+      expected: '^\\/親　ページ(\\/[^/]+)\\/?$',
+      validPaths: ['/親　ページ/child', '/親　ページ/テスト'],
+      invalidPaths: ['/親　ページ', '/親　ページ/child/grandchild'],
     },
     {
       path: '/parent*with+special?chars',
@@ -60,12 +70,11 @@ describe('generateChildrenRegExp', () => {
       expect(validPath).toMatch(result);
     });
 
-    test.each(invalidPaths)(
-      'should not match invalid path: %s',
-      (invalidPath) => {
-        const result = generateChildrenRegExp(path);
-        expect(invalidPath).not.toMatch(result);
-      },
-    );
+    test.each(
+      invalidPaths,
+    )('should not match invalid path: %s', (invalidPath) => {
+      const result = generateChildrenRegExp(path);
+      expect(invalidPath).not.toMatch(result);
+    });
   });
 });

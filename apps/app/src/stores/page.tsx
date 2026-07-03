@@ -90,6 +90,26 @@ export const mutateAllPageInfo = (): Promise<void[]> => {
   return mutate((key) => Array.isArray(key) && key[0] === '/page/info');
 };
 
+const hasShareLinkId = (
+  shareLinkId: string | null | undefined,
+): shareLinkId is string => {
+  return shareLinkId != null && shareLinkId.trim().length > 0;
+};
+
+/**
+ * Build query params for /page/info endpoint.
+ * Only includes shareLinkId when it is a non-empty string.
+ */
+const buildPageInfoParams = (
+  pageId: string,
+  shareLinkId: string | null | undefined,
+): { pageId: string; shareLinkId?: string } => {
+  if (hasShareLinkId(shareLinkId)) {
+    return { pageId, shareLinkId };
+  }
+  return { pageId };
+};
+
 export const useSWRxPageInfo = (
   pageId: string | null | undefined,
   shareLinkId?: string | null,
@@ -98,19 +118,21 @@ export const useSWRxPageInfo = (
   // Cache remains from guest mode when logging in via the Login lead, so add 'isGuestUser' key
   const isGuestUser = useIsGuestUser();
 
-  // assign null if shareLinkId is undefined in order to identify SWR key only by pageId
-  const fixedShareLinkId = shareLinkId ?? null;
-
   const key = useMemo(() => {
-    return pageId != null
-      ? ['/page/info', pageId, fixedShareLinkId, isGuestUser]
-      : null;
-  }, [fixedShareLinkId, isGuestUser, pageId]);
+    if (pageId == null) return null;
+    // Guests without a share link cannot access page info, so skip the request
+    if (isGuestUser && !hasShareLinkId(shareLinkId)) return null;
+    return ['/page/info', pageId, shareLinkId, isGuestUser];
+  }, [shareLinkId, isGuestUser, pageId]);
 
   const swrResult = useSWRImmutable(
     key,
-    ([endpoint, pageId, shareLinkId]: [string, string, string | null]) =>
-      apiv3Get(endpoint, { pageId, shareLinkId }).then(
+    ([endpoint, pageId, shareLinkId]: [
+      string,
+      string,
+      string | null | undefined,
+    ]) =>
+      apiv3Get(endpoint, buildPageInfoParams(pageId, shareLinkId)).then(
         (response) => response.data,
       ),
     { fallbackData: initialData },
@@ -136,19 +158,20 @@ export const useSWRMUTxPageInfo = (
   // Cache remains from guest mode when logging in via the Login lead, so add 'isGuestUser' key
   const isGuestUser = useIsGuestUser();
 
-  // assign null if shareLinkId is undefined in order to identify SWR key only by pageId
-  const fixedShareLinkId = shareLinkId ?? null;
-
   const key = useMemo(() => {
     return pageId != null
-      ? ['/page/info', pageId, fixedShareLinkId, isGuestUser]
+      ? ['/page/info', pageId, shareLinkId, isGuestUser]
       : null;
-  }, [fixedShareLinkId, isGuestUser, pageId]);
+  }, [shareLinkId, isGuestUser, pageId]);
 
   return useSWRMutation(
     key,
-    ([endpoint, pageId, shareLinkId]: [string, string, string | null]) =>
-      apiv3Get(endpoint, { pageId, shareLinkId }).then(
+    ([endpoint, pageId, shareLinkId]: [
+      string,
+      string,
+      string | null | undefined,
+    ]) =>
+      apiv3Get(endpoint, buildPageInfoParams(pageId, shareLinkId)).then(
         (response) => response.data,
       ),
   );

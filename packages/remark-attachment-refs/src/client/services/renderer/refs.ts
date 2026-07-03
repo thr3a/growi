@@ -1,4 +1,5 @@
 import { pathUtils } from '@growi/core/dist/utils';
+import { loggerFactory } from '@growi/logger';
 import type {
   LeafGrowiPluginDirective,
   TextGrowiPluginDirective,
@@ -9,8 +10,6 @@ import type { Schema as SanitizeOption } from 'hast-util-sanitize';
 import { selectAll } from 'hast-util-select';
 import type { Plugin } from 'unified';
 import { visit } from 'unist-util-visit';
-
-import loggerFactory from '../../../utils/logger';
 
 const logger = loggerFactory(
   'growi:remark-attachment-refs:services:renderer:refs',
@@ -104,7 +103,7 @@ export const remarkPlugin: Plugin = () => (tree) => {
         return;
       }
 
-      logger.debug('a node detected', attributes);
+      logger.debug({ attributes }, 'a node detected');
 
       // kebab case to camel case
       attributes.maxWidth = attributes['max-width'];
@@ -151,6 +150,7 @@ const resolvePath = (pagePath: string, basePath: string) => {
 
 type RefRehypePluginParams = {
   pagePath?: string;
+  isSharedPage?: boolean;
 };
 
 export const rehypePlugin: Plugin<[RefRehypePluginParams]> = (options = {}) => {
@@ -171,7 +171,15 @@ export const rehypePlugin: Plugin<[RefRehypePluginParams]> = (options = {}) => {
 
     for (const refElem of elements) {
       if (refElem.properties == null) {
-        continue;
+        // Initialize properties if null to avoid errors down the line
+        refElem.properties = {};
+      }
+
+      // Inject isSharedPage from the renderer config unless the element already
+      // declares it, so the directive can disable itself on a share link page.
+      const isSharedPage = refElem.properties.isSharedPage;
+      if (isSharedPage == null || typeof isSharedPage !== 'boolean') {
+        refElem.properties.isSharedPage = options.isSharedPage;
       }
 
       const prefix = refElem.properties.prefix;
@@ -200,13 +208,17 @@ export const rehypePlugin: Plugin<[RefRehypePluginParams]> = (options = {}) => {
   };
 };
 
+// Attributes injected by the renderer (not authored in markdown) that must
+// survive sanitization for every ref directive.
+const COMMON_ATTRIBUTES = ['isSharedPage'];
+
 export const sanitizeOption: SanitizeOption = {
   tagNames: ['ref', 'refimg', 'refs', 'refsimg', 'gallery'],
   attributes: {
-    ref: REF_SUPPORTED_ATTRIBUTES,
-    refimg: REF_IMG_SUPPORTED_ATTRIBUTES,
-    refs: REFS_SUPPORTED_ATTRIBUTES,
-    refsimg: REFS_IMG_SUPPORTED_ATTRIBUTES,
-    gallery: REFS_IMG_SUPPORTED_ATTRIBUTES,
+    ref: [...REF_SUPPORTED_ATTRIBUTES, ...COMMON_ATTRIBUTES],
+    refimg: [...REF_IMG_SUPPORTED_ATTRIBUTES, ...COMMON_ATTRIBUTES],
+    refs: [...REFS_SUPPORTED_ATTRIBUTES, ...COMMON_ATTRIBUTES],
+    refsimg: [...REFS_IMG_SUPPORTED_ATTRIBUTES, ...COMMON_ATTRIBUTES],
+    gallery: [...REFS_IMG_SUPPORTED_ATTRIBUTES, ...COMMON_ATTRIBUTES],
   },
 };

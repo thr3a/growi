@@ -1,8 +1,259 @@
 # Changelog
 
-## [Unreleased](https://github.com/growilabs/compare/v7.4.3...HEAD)
+## [Unreleased](https://github.com/growilabs/compare/v7.5.6...HEAD)
 
 *Please do not manually update this file. We've automated the process.*
+
+## [v7.5.6](https://github.com/growilabs/compare/v7.5.5...v7.5.6) - 2026-06-25
+
+### 💎 Features
+
+* feat: Contribution Graph on the user's profile (#10509) @arvid-e
+* feat(comment): Comment mention and add In-App-notification (#11058) @Ryosei-Fukushima
+* feat: Changes Index and Revision Diff APIs (#11353) @yuki-takei
+* feat: Add button to make all notification as read (#11352) @ryotaro-nagahara
+
+### 🚀 Improvement
+
+* imprv: Expose news body (#11317) @ryotaro-nagahara
+* imprv: Include page revert action in supported contribution actions (#11321) @arvid-e
+* imprv: Page create button interaction (#11313) @hikaru-n-cpu
+
+### 🐛 Bug Fixes
+
+* fix: Suppress modifier shortcuts in editable elements (#11340) @yuki-takei
+* fix: escape </style> breakout in renderCustomCss (#11298) @yuki-takei
+* fix: Use req.user.username in LDAP Execute Sync instead of req.user.name (#11356) @yuki-takei
+* feat(page-bulk-export): Rework bulk PDF/HTML export to render Markdown like the web (tables, math, emoji, directives) (#11288) @yuki-takei
+
+### 🧰 Maintenance
+
+* ci(deps): bump js-yaml from 4.1.1 to 4.2.0 (#11311) @[dependabot[bot]](https://github.com/apps/dependabot)
+* chore(deps): dedupe pnpm-lock.yaml to CI-gate release dependency churn (#11343) @yuki-takei
+* ci(deps-dev): bump vitest from 3.2.4 to 3.2.6 (#11279) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps): bump form-data from 4.0.5 to 4.0.6 (#11335) @[dependabot[bot]](https://github.com/apps/dependabot)
+
+## [v7.5.5](https://github.com/growilabs/compare/v7.5.4...v7.5.5) - 2026-06-10
+
+### 🚀 Improvement
+
+* imprv: Enable API token header "X-GROWI-ACCESS-TOKEN" (#11244) @yuki-takei
+
+### 🐛 Bug Fixes
+
+* fix: disable $lsx() and attachment-refs directives on share link pages to prevent Basic auth challenge (#11271) @yuki-takei
+* fix: Prevent bulk-export cleanup race on shared attachment (#11229) @tomoyuki-t-weseek
+* fix: Remove uglifycss to preserve CSS Color Level 4 syntax (#11277) @yuki-takei
+* fix: Index rebuild fails on boot when initializing a Crowi instance takes a long time (#11247) @ryu-sato
+* fix: Page operations and v5 page migration fail for paths containing non-ASCII whitespace (e.g. U+3000) (#11236) @yuki-takei
+* fix(editor): fix Shift+Arrow selection stuck on wrapped lines by upgrading @codemirror/commands to ^6.10.3 (#11264) @yuki-takei
+* fix(editor): Preserve page grant on mobile & before grant loads (#11272) (#11276) @yuki-takei
+* fix(ui): right-align ModalHeader close content wrapped in a custom element (#11269) @yuki-takei
+* fix(attachment): deny direct access to /uploads to prevent stored XSS (#11257) @miya
+* fix(page-grant): guard against TypeError when grantedUsers is empty in calcApplicableGrantData (#11211) @yuki-takei
+
+### 🧰 Maintenance
+
+* support: Verify initial pages are created with content after installation (#11234) @Ryosei-Fukushima
+* ci(deps): bump mermaid from 11.10.0 to 11.15.0 (#11121) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps): bump axios from 1.15.0 to 1.16.0 (#11260) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps): bump qs from 6.14.2 to 6.15.2 (#11209) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps-dev): bump turbo from 2.1.3 to 2.9.14 (#11202) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps): bump js-cookie from 3.0.5 to 3.0.7 (#11205) @[dependabot[bot]](https://github.com/apps/dependabot)
+
+## [v7.5.4](https://github.com/growilabs/compare/v7.5.3...v7.5.4) - 2026-05-27
+
+### 💎 Features
+
+* feat: Retrieve GROWI news (#10986) @ryotaro-nagahara
+* feat: Editor guide (#10847) @yuki-takei
+* feat(otel): Add growi_installed_at metrics (#11214) @ryotaro-nagahara
+* feat(otel): add yjs docs count and mongoose connection pool metrics (v7 backport) (#11218) @yuki-takei
+
+### 🐛 Bug Fixes
+
+* fix: UserPicture in order to show tooltip in production builds (#11192) @yuki-takei
+* fix: Correct parent grant value in /grant-data endpoint (#11181) @yuki-takei
+* fix: Permit GRANT_RESTRICTED child under any parent grant (#11182) @yuki-takei
+* fix(editor): Fix cursor stuck on wrapped lines by upgrading @codemirror/view to ^6.42.1 (#11153) @yuki-takei
+* fix(bookmark): Add owner authorization checks to bookmark folder api (#11178) @Ryosei-Fukushima
+* fix(bulk-export): Set completedAt on all bulk export completion paths (#11195) @tomoyuki-t-weseek
+* fix(admin): Prompt reload after toggling page bulk export setting (#11180) @tomoyuki-t-weseek
+* fix(drawio): draw.io stencil URLs for local instances (#11196) @yuki-takei
+* fix(bulk-export): Show bulk-export restart modal on duplicate-job error (#11186) @tomoyuki-t-weseek
+* fix(admin): stop infinite render loop on G2G data transfer page (#11166) @miya
+
+## [v7.5.3](https://github.com/growilabs/compare/v7.5.2...v7.5.3) - 2026-05-14
+
+### 🐛 Bug Fixes
+
+* fix: GrowiSlides throws an unhandled exception when the rendererOptions are undefined (#11110) @Ryosei-Fukushima
+* fix: Rebalance blockquote margins in wiki and page comments (#11072) @yuki-takei
+* fix(drawio): Prevent host CSS leaking into <foreignObject> (#11068) @yuki-takei
+* fix(search): resolve nested <button> DOM warning in search result list (#11065) @yuki-takei
+* fix: Page publish/unpublish IDOR bypasses page grant system (#11032) @yuki-takei
+
+### 🧰 Maintenance
+
+* support: switch pnpm install to corepack & devcontainer node:2 (#11157) @yuki-takei
+* ci(deps): bump next from 16.2.3 to 16.2.6 (#11117) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps): bump @opentelemetry/auto-instrumentations-node from 0.60.1 to 0.75.0 (#11112) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps): bump @opentelemetry/sdk-node from 0.202.0 to 0.217.0 (#11114) @[dependabot[bot]](https://github.com/apps/dependabot)
+* support: Figma plugin (#11069) @satof3
+* ci(deps): bump next from 16.2.1 to 16.2.3 (#10995) @[dependabot[bot]](https://github.com/apps/dependabot)
+* ci(deps): bump mongoose from 6.13.8 to 6.13.9 (#11083) @[dependabot[bot]](https://github.com/apps/dependabot)
+* support: Add vulnerability hunters (#11071) @hikaru-n-cpu
+* support: Fix ES security settings for CI (#11048) @yuki-takei
+
+## [v7.5.2](https://github.com/growilabs/compare/v7.5.1...v7.5.2) - 2026-04-22
+
+### 🚀 Improvement
+
+* imprv: Render page tree item title as a real anchor (#11029) @yuki-takei
+
+### 🐛 Bug Fixes
+
+* fix(editor): Editor breaks when an ID created by useId() is passed to a  reactstrap Popover/Tooltip targets (#11039) @yuki-takei
+* fix: Request requiring login is being made on the shared link page (#11026) @miya
+* fix: Search scope children as default setting is not applied (#11027) @miya
+* fix(slack): Normalize proxyUri to undefined for custom bot without proxy mode (#11035) @yuki-takei
+* fix: Avoid setState-in-render warning in useHydrateGlobalEachAtoms (#11023) @yuki-takei
+* fix: Stabilize watch-rendering-and-rescroll test suite (#11037) @yuki-takei
+
+### 🧰 Maintenance
+
+* support: Upgrade Biome (#11040) @yuki-takei
+
+## [v7.5.1](https://github.com/growilabs/compare/v7.5.0...v7.5.1) - 2026-04-16
+
+### 💎 Features
+
+* feat(editor): Add full Emacs markdown-mode keybindings (#10980) @yuki-takei
+* feat(ui): Add Other Shortcuts link to modal footer (#10976) @tomoyuki-t-weseek
+* feat(editor): Collaborative editor awareness with rich cursors and off-screen indicators (#10981) @yuki-takei
+* feat: Define actions that result in Create vs Edit activities (#10818) @arvid-e
+* feat(editor): Add full Emacs markdown-mode keybindings (#10980) @yuki-takei
+
+### 🚀 Improvement
+
+* feat(editor): Collaborative editor awareness with rich cursors and off-screen indicators (#10981) @yuki-takei
+* feat: add dedicated share link page API and simplify GET /page (#11000) @miya
+
+### 🐛 Bug Fixes
+
+* fix: Initial page fails to generate automatically upon a new installation (#11007) @miya
+* fix(security): upgrade axios to ^1.15.0 (CVSS 10.0) (#11009) @yuki-takei
+* fix(security): Path traversal (#10998) @mariko-h
+* fix: Initial page fails to generate automatically upon a new installation (#11007) @miya
+* fix: Unify documentation URL locale logic (#10999) @tomoyuki-t-weseek
+* fix(admin): Prevent flickering for V5 Page Migration section on app settings page (#10992) @yuki-takei
+* fix(security): Path traversal (#10998) @mariko-h
+* fix(mail): TypeError when sending test email via SMTP (#10991) @yuki-takei
+
+### 🧰 Maintenance
+
+* support: Upgrade Claude Code Spec-Driven Development (SDD) to v3 (#11014) @yuki-takei
+* support: Add contributor (#10985) @satof3
+* support: Migrate logger to pino (#10958) @yuki-takei
+
+## [v7.5.0](https://github.com/growilabs/compare/v7.4.7...v7.5.0) - 2026-04-07
+
+### 💎 Features
+
+* feat(ai): Suggest path to save (#10777) @tomoyuki-t-weseek
+* feat: Audit log bulk export (#10874) @Ryosei-Fukushima
+* feat(page-create-modal): add template help link icon (#10899) @tomoyuki-t-weseek
+* feat: add tooltips to editor toolbar (#10938) @Ryosei-Fukushima
+* feat: Add growi cloud link to audit log settings (#10881) @ryota-t0401
+
+### 🚀 Improvement
+
+* imprv: Staff credit (#10839) @yuki-takei
+* imprv(lsx): Allow spaces in attribute names (#10931) @NJisEverywhere
+* imprv: pre-fill export modal with current filter values (#10944) @NJisEverywhere
+* imprv(presentation): Decouple Marp from GrowiSlides (#10840) @yuki-takei
+* imprv(ui): Implement the improved New button. (#10937) @yuyaiwahori
+
+### 🐛 Bug Fixes
+
+* fix: re-scroll to hash target after lazy-rendered content completes (#10853) @miya
+* fix: Bulk export fails due to S3 upload complete version (#10833) @ryotaro-nagahara
+* fix: Duplicate user data is appearing in the user table at /user/admin (#10940) @miya
+* fix: Deleted users are not displayed in the user list on the user management page (/admin/users) (#10934) @miya
+* fix: Resolve React warnings during page rendering (#10913) @yuki-takei
+
+### 🧰 Maintenance
+
+* support: Upgrade Next.js to v16 (#10831) @yuki-takei
+* support(yjs): Migrate collaborative editing transport from y-socket.io to y-websocket (#10889) @yuki-takei
+* support: Upgrade vite v6, vitest v3, and related packages (#10945) @yuki-takei
+* ci(deps-dev): bump vite from 6.4.1 to 6.4.2 (#10960) @[dependabot[bot]](https://github.com/apps/dependabot)
+* support: Upgrade version-pinned packages and replace escape-string-regexp with RegExp.escape() (#10920) @yuki-takei
+* support: Migrate to Turbopack (#10838) @yuki-takei
+* support: Modernize Dockerfile (#10809) @yuki-takei
+* support: Reclassify deps (#10873) @yuki-takei
+* support(dev): Reduce modules loaded (#10822) @yuki-takei
+
+## [v7.4.7](https://github.com/growilabs/compare/v7.4.6...v7.4.7) - 2026-03-23
+
+### 💎 Features
+
+* feat: Prevent inline mime type sniffing vulnerabilities (#10087) @arvid-e
+
+### 🐛 Bug Fixes
+
+* fix(editor): Disable bracketMatching to prevent IME composition rendering corruption (#10900) @miya
+
+## [v7.4.6](https://github.com/growilabs/compare/v7.4.5...v7.4.6) - 2026-03-10
+
+### 🐛 Bug Fixes
+
+* fix: mobile editor page title display (#10712) @satof3
+* fix: Exclude user page data from search response when user pages are disabled (#10740) @arvid-e
+* fix(search): prevent Downshift from intercepting Home/End keys in search input (#10815) @yuki-takei
+* fix: Openai thread IDOR (#10806) @ryotaro-nagahara
+
+### 🧰 Maintenance
+
+* support(claude): Add SessionStart hook for Claude Code on the web (#10816) @yuki-takei
+
+## [v7.4.5](https://github.com/growilabs/compare/v7.4.4...v7.4.5) - 2026-02-19
+
+### 💎 Features
+
+* feat: Realtime Increment View Count Without Refreshing Pages (#10760) @ryotaro-nagahara
+
+### 🚀 Improvement
+
+* imprv: Unchanged revision (#10770) @yuki-takei
+* imprv: Close the Sidebar in drawer mode when the route changes (#10763) @yuki-takei
+
+### 🐛 Bug Fixes
+
+* fix: Use currentPageId for share link page fetching (#10797) @yuki-takei
+* fix: Allow viewing shared pages regardless of page permissions (#10762) @ryotaro-nagahara
+* fix: Bulk export fails due to S3 upload minimal version (#10782) @ryotaro-nagahara
+* fix: Block revisions API from returning info about user pages when user pages are disabled (#10751) @arvid-e
+* fix: OpenAPI spec mismatch for GET /page endpoint response format (#10787) @[copilot-swe-agent[bot]](https://github.com/apps/copilot-swe-agent)
+
+### 🧰 Maintenance
+
+* support: Extract `/page/info` endpoint handler into a dedicated module (#10795) @yuki-takei
+* ci(deps): bump qs from 6.14.1 to 6.14.2 (#10785) @[dependabot[bot]](https://github.com/apps/dependabot)
+
+## [v7.4.4](https://github.com/growilabs/compare/v7.4.3...v7.4.4) - 2026-01-30
+
+### 🐛 Bug Fixes
+
+* fix: Search navigation (#10749) @[copilot-swe-agent[bot]](https://github.com/apps/copilot-swe-agent)
+* fix: User pages are displayed in page list when 'Disable user pages' is on (#10752) @miya
+* fix: Disable logo update button when no file is selected (#10587) @hikaru-n-cpu
+
+### 🧰 Maintenance
+
+* support: Setup Claude Code environment (#10746) @yuki-takei
+* support: Improve test parallelism (#10747) @yuki-takei
+* support: Typecheck by tsgo (#10717) @yuki-takei
 
 ## [v7.4.3](https://github.com/growilabs/compare/v7.4.2...v7.4.3) - 2026-01-21
 

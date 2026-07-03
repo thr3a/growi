@@ -14,16 +14,19 @@ sudo chmod 700 /tmp/page-bulk-export
 # Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
+# Install Claude Code
+curl -fsSL https://claude.ai/install.sh | bash
+
 # Setup pnpm
-SHELL=bash pnpm setup
-eval "$(cat /home/vscode/.bashrc)"
+export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
+export PATH="$PNPM_HOME/bin:$HOME/.local/bin:$PATH"
+mkdir -p "$PNPM_HOME"
+# Use the Docker volume mounted at /workspace/.pnpm-store (see .devcontainer/compose.yml).
+# Without this, pnpm auto-falls-back to <workspace>/.pnpm-store because $HOME
+# (overlay FS) and the workspace (bind mount) are on different filesystems.
 pnpm config set store-dir /workspace/.pnpm-store
 
-# Install turbo
-pnpm install turbo --global
-
-# Install Claude Code
-pnpm install @anthropic-ai/claude-code --global
+pnpm install --global turbo
 
 # Install dependencies
 turbo run bootstrap

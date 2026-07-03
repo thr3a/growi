@@ -1,10 +1,11 @@
 import {
+  type CSSProperties,
   forwardRef,
   type JSX,
   memo,
   type ReactNode,
   useCallback,
-  useRef,
+  useState,
 } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -33,7 +34,12 @@ type BaseUserPictureRootProps = {
   className?: string;
 };
 
-type UserPictureRootWithoutLinkProps = BaseUserPictureRootProps;
+type UserPictureRootWithoutLinkProps = BaseUserPictureRootProps & {
+  onClick?: () => void;
+  rootClassName?: string;
+  rootStyle?: CSSProperties;
+  testId?: string;
+};
 
 type UserPictureRootWithLinkProps = BaseUserPictureRootProps & {
   username: string;
@@ -43,8 +49,37 @@ const UserPictureRootWithoutLink = forwardRef<
   HTMLSpanElement,
   UserPictureRootWithoutLinkProps
 >((props, ref) => {
+  const { onClick, rootClassName, rootStyle, testId } = props;
+  const interactive = onClick != null;
+  const resolvedStyle: CSSProperties | undefined = interactive
+    ? { cursor: 'pointer', ...rootStyle }
+    : rootStyle;
+  if (interactive) {
+    return (
+      // biome-ignore lint/a11y/useSemanticElements: UserPicture is used in varied layout contexts where a native button would break styling
+      <span
+        ref={ref}
+        className={rootClassName ?? props.className}
+        style={resolvedStyle}
+        data-testid={testId}
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') onClick();
+        }}
+        role="button"
+        tabIndex={0}
+      >
+        {props.children}
+      </span>
+    );
+  }
   return (
-    <span ref={ref} className={props.className}>
+    <span
+      ref={ref}
+      className={rootClassName ?? props.className}
+      style={resolvedStyle}
+      data-testid={testId}
+    >
       {props.children}
     </span>
   );
@@ -82,42 +117,6 @@ const UserPictureRootWithLink = forwardRef<
   );
 });
 
-// wrapper with Tooltip
-const withTooltip =
-  <P extends BaseUserPictureRootProps>(
-    UserPictureSpanElm: React.ForwardRefExoticComponent<
-      P & React.RefAttributes<HTMLSpanElement>
-    >,
-  ) =>
-  (props: P): JSX.Element => {
-    const { displayName, size } = props;
-    const username = 'username' in props ? props.username : undefined;
-
-    const tooltipClassName = `${moduleTooltipClass} user-picture-tooltip-${size ?? 'md'}`;
-    const userPictureRef = useRef<HTMLSpanElement>(null);
-
-    return (
-      <>
-        <UserPictureSpanElm ref={userPictureRef} {...props} />
-        <UncontrolledTooltip
-          placement="bottom"
-          target={userPictureRef}
-          popperClassName={tooltipClassName}
-          delay={0}
-          fade={false}
-        >
-          {username ? (
-            <>
-              {`@${username}`}
-              <br />
-            </>
-          ) : null}
-          {displayName}
-        </UncontrolledTooltip>
-      </>
-    );
-  };
-
 /**
  * type guard to determine whether the specified object is IUser
  */
@@ -151,6 +150,10 @@ type Props = {
   noLink?: boolean;
   noTooltip?: boolean;
   className?: string;
+  onClick?: () => void;
+  rootClassName?: string;
+  rootStyle?: CSSProperties;
+  testId?: string;
 };
 
 export const UserPicture = memo((userProps: Props): JSX.Element => {
@@ -160,6 +163,10 @@ export const UserPicture = memo((userProps: Props): JSX.Element => {
     noLink,
     noTooltip,
     className: additionalClassName,
+    onClick,
+    rootClassName,
+    rootStyle,
+    testId,
   } = userProps;
 
   // Extract user information
@@ -181,20 +188,68 @@ export const UserPicture = memo((userProps: Props): JSX.Element => {
     .filter(Boolean)
     .join(' ');
 
+  // Callback ref into state so the tooltip mounts AFTER the host span is in
+  // the DOM. reactstrap's UncontrolledTooltip resolves `target.current` once
+  // in componentDidMount; when the tooltip is a child of the target span,
+  // React's bottom-up commit order leaves the parent ref unset at that
+  // moment, so the tooltip permanently fails to attach listeners. The race
+  // is masked in dev by next/dynamic's slower resolution but fires in
+  // production builds.
+  const [rootEl, setRootEl] = useState<HTMLSpanElement | null>(null);
+
+  const tooltipClassName = `${moduleTooltipClass} user-picture-tooltip-${size ?? 'md'}`;
+
   // biome-ignore lint/performance/noImgElement: ignore
   const imgElement = <img src={src} alt={displayName} className={className} />;
-  const baseProps = { displayName, size, children: imgElement };
+
+  const children = (
+    <>
+      {imgElement}
+      {rootEl != null && showTooltip && (
+        <UncontrolledTooltip
+          placement="bottom"
+          target={rootEl}
+          popperClassName={tooltipClassName}
+          delay={0}
+          fade={false}
+        >
+          {username ? (
+            <>
+              {`@${username}`}
+              <br />
+            </>
+          ) : null}
+          {displayName}
+        </UncontrolledTooltip>
+      )}
+    </>
+  );
 
   if (username == null || noLink) {
-    const Component = showTooltip
-      ? withTooltip(UserPictureRootWithoutLink)
-      : UserPictureRootWithoutLink;
-    return <Component {...baseProps} />;
+    return (
+      <UserPictureRootWithoutLink
+        ref={setRootEl}
+        displayName={displayName}
+        size={size}
+        onClick={onClick}
+        rootClassName={rootClassName}
+        rootStyle={rootStyle}
+        testId={testId}
+      >
+        {children}
+      </UserPictureRootWithoutLink>
+    );
   }
 
-  const Component = showTooltip
-    ? withTooltip(UserPictureRootWithLink)
-    : UserPictureRootWithLink;
-  return <Component {...baseProps} username={username} />;
+  return (
+    <UserPictureRootWithLink
+      ref={setRootEl}
+      displayName={displayName}
+      size={size}
+      username={username}
+    >
+      {children}
+    </UserPictureRootWithLink>
+  );
 });
 UserPicture.displayName = 'UserPicture';

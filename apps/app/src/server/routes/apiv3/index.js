@@ -1,3 +1,5 @@
+import { factory as aiToolsRouteFactory } from '~/features/ai-tools/server/routes/apiv3';
+import { factory as auditLogBulkExportRouteFactory } from '~/features/audit-log-bulk-export/server/routes/apiv3';
 import growiPlugin from '~/features/growi-plugin/server/routes/apiv3/admin';
 import { factory as openaiRouteFactory } from '~/features/openai/server/routes';
 import { allreadyInstalledMiddleware } from '~/server/middlewares/application-not-installed';
@@ -37,6 +39,10 @@ module.exports = (crowi, app) => {
   // admin
   routerForAdmin.use('/admin-home', require('./admin-home')(crowi));
   routerForAdmin.use('/markdown-setting', require('./markdown-setting')(crowi));
+  routerForAdmin.use(
+    '/content-disposition-settings',
+    require('./content-disposition-settings')(crowi),
+  );
   routerForAdmin.use('/app-settings', require('./app-settings')(crowi));
   routerForAdmin.use(
     '/customize-setting',
@@ -123,6 +129,10 @@ module.exports = (crowi, app) => {
   }
 
   router.use('/in-app-notification', require('./in-app-notification')(crowi));
+  router.use(
+    '/news',
+    require('~/features/news/server/routes/news').default(crowi),
+  );
 
   router.use('/personal-setting', require('./personal-setting')(crowi));
   router.use('/user-activities', require('./user-activities')(crowi));
@@ -141,7 +151,19 @@ module.exports = (crowi, app) => {
 
   router.use('/page', require('./page')(crowi));
   router.use('/pages', require('./pages')(crowi));
-  router.use('/revisions', require('./revisions')(crowi));
+  {
+    const revisionsRouter = require('./revisions')(crowi);
+    const {
+      changesRouteHandlersFactory,
+    } = require('~/features/revision-diff/server/routes/changes');
+    const {
+      diffRouteHandlersFactory,
+    } = require('~/features/revision-diff/server/routes/diff');
+
+    revisionsRouter.get('/changes', changesRouteHandlersFactory(crowi));
+    revisionsRouter.post('/diff', diffRouteHandlersFactory(crowi));
+    router.use('/revisions', revisionsRouter);
+  }
 
   router.use('/page-listing', pageListing(crowi));
 
@@ -181,8 +203,11 @@ module.exports = (crowi, app) => {
       crowi,
     ),
   );
+  router.use('/audit-log-bulk-export', auditLogBulkExportRouteFactory(crowi));
 
   router.use('/openai', openaiRouteFactory(crowi));
+
+  router.use('/ai-tools', aiToolsRouteFactory(crowi));
 
   router.use('/user', userRouteFactory(crowi));
 

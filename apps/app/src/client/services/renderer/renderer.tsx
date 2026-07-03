@@ -1,9 +1,11 @@
+import dynamic from 'next/dynamic';
 import { isClient } from '@growi/core/dist/utils/browser-utils';
 import * as presentation from '@growi/presentation/dist/client/services/sanitize-option';
 import * as refsGrowiDirective from '@growi/remark-attachment-refs/dist/client';
 import * as drawio from '@growi/remark-drawio';
 import * as lsxGrowiDirective from '@growi/remark-lsx/dist/client';
 import assert from 'assert';
+import type { Schema as SanitizeOption } from 'hast-util-sanitize';
 import katex from 'rehype-katex';
 import sanitize from 'rehype-sanitize';
 import slug from 'rehype-slug';
@@ -20,7 +22,10 @@ import { LightBox } from '~/client/components/ReactMarkdownComponents/LightBox';
 import { RichAttachment } from '~/client/components/ReactMarkdownComponents/RichAttachment';
 import { TableWithEditButton } from '~/client/components/ReactMarkdownComponents/TableWithEditButton';
 import * as callout from '~/features/callout';
-import * as mermaid from '~/features/mermaid';
+import {
+  remarkPlugin as mermaidRemarkPlugin,
+  sanitizeOption as mermaidSanitizeOption,
+} from '~/features/mermaid/services';
 import * as plantuml from '~/features/plantuml';
 import type { RendererOptions } from '~/interfaces/renderer-options';
 import type { RendererConfigExt } from '~/interfaces/services/renderer';
@@ -29,6 +34,7 @@ import * as keywordHighlighter from '~/services/renderer/rehype-plugins/keyword-
 import * as relocateToc from '~/services/renderer/rehype-plugins/relocate-toc';
 import * as attachment from '~/services/renderer/remark-plugins/attachment';
 import * as codeBlock from '~/services/renderer/remark-plugins/codeblock';
+import * as mention from '~/services/renderer/remark-plugins/mention';
 import * as xsvToTable from '~/services/renderer/remark-plugins/xsv-to-table';
 import {
   generateCommonOptions,
@@ -39,12 +45,19 @@ import loggerFactory from '~/utils/logger';
 
 // import EasyGrid from './PreProcessor/EasyGrid';
 
-import '@growi/remark-lsx/dist/client/style.css';
-import '@growi/remark-attachment-refs/dist/client/style.css';
+import './Renderer.vendor-styles.prebuilt';
 
 const logger = loggerFactory('growi:cli:services:renderer');
 
 assert(isClient(), 'This module must be loaded only from client modules.');
+
+const MermaidViewer = dynamic(
+  () =>
+    import('~/features/mermaid/components/MermaidViewer').then(
+      (mod) => mod.MermaidViewer,
+    ),
+  { ssr: false },
+);
 
 export const generateViewOptions = (
   pagePath: string,
@@ -63,7 +76,7 @@ export const generateViewOptions = (
       { plantumlUri: config.plantumlUri, isDarkMode: config.isDarkMode },
     ],
     [drawio.remarkPlugin, { isDarkMode: config.isDarkMode }],
-    mermaid.remarkPlugin,
+    mermaidRemarkPlugin,
     xsvToTable.remarkPlugin,
     attachment.remarkPlugin,
     remarkGithubAdmonitionsToDirectives,
@@ -83,7 +96,8 @@ export const generateViewOptions = (
             getCommonSanitizeOption(config),
             presentation.sanitizeOption,
             drawio.sanitizeOption,
-            mermaid.sanitizeOption,
+            mermaidSanitizeOption,
+            plantuml.sanitizeOption,
             callout.sanitizeOption,
             attachment.sanitizeOption,
             lsxGrowiDirective.sanitizeOption,
@@ -100,7 +114,10 @@ export const generateViewOptions = (
       lsxGrowiDirective.rehypePlugin,
       { pagePath, isSharedPage: config.isSharedPage },
     ],
-    [refsGrowiDirective.rehypePlugin, { pagePath }],
+    [
+      refsGrowiDirective.rehypePlugin,
+      { pagePath, isSharedPage: config.isSharedPage },
+    ],
     rehypeSanitizePlugin,
     katex,
     [relocateToc.rehypePluginStore, { storeTocNode }],
@@ -121,8 +138,9 @@ export const generateViewOptions = (
     components.refsimg = refsGrowiDirective.RefsImg;
     components.gallery = refsGrowiDirective.Gallery;
     components.drawio = DrawioViewerWithEditButton;
+    components.plantuml = plantuml.PlantUmlViewer;
     components.table = TableWithEditButton;
-    components.mermaid = mermaid.MermaidViewer;
+    components.mermaid = MermaidViewer;
     components.callout = callout.CalloutViewer;
     components.attachment = RichAttachment;
     components.img = LightBox;
@@ -166,6 +184,49 @@ export const generateTocOptions = (
   return options;
 };
 
+const getSanitizePluginForSimpleView = (
+  config: RendererConfigExt,
+  additionalOptions?: SanitizeOption,
+): Pluggable | (() => void) => {
+  return config.isEnabledXssPrevention
+    ? [
+        sanitize,
+        deepmerge(
+          getCommonSanitizeOption(config),
+          presentation.sanitizeOption,
+          drawio.sanitizeOption,
+          mermaidSanitizeOption,
+          plantuml.sanitizeOption,
+          callout.sanitizeOption,
+          attachment.sanitizeOption,
+          lsxGrowiDirective.sanitizeOption,
+          refsGrowiDirective.sanitizeOption,
+          codeBlock.sanitizeOption,
+          additionalOptions ?? {},
+        ),
+      ]
+    : () => {};
+};
+
+const replaceSanitizePlugin = (
+  rehypePlugins: Pluggable[],
+  config: RendererConfigExt,
+  sanitizePlugin: Pluggable | (() => void),
+): void => {
+  if (!config.isEnabledXssPrevention) return;
+
+  const idx = rehypePlugins.findIndex(
+    (p) => Array.isArray(p) && p[0] === sanitize,
+  );
+  if (idx === -1) {
+    logger.warn(
+      'sanitize plugin not found; sanitize options will not be applied',
+    );
+    return;
+  }
+  rehypePlugins[idx] = sanitizePlugin;
+};
+
 export const generateSimpleViewOptions = (
   config: RendererConfigExt,
   pagePath: string,
@@ -184,7 +245,7 @@ export const generateSimpleViewOptions = (
       { plantumlUri: config.plantumlUri, isDarkMode: config.isDarkMode },
     ],
     [drawio.remarkPlugin, { isDarkMode: config.isDarkMode }],
-    mermaid.remarkPlugin,
+    mermaidRemarkPlugin,
     xsvToTable.remarkPlugin,
     attachment.remarkPlugin,
     remarkGithubAdmonitionsToDirectives,
@@ -200,23 +261,7 @@ export const generateSimpleViewOptions = (
     remarkPlugins.push(breaks);
   }
 
-  const rehypeSanitizePlugin: Pluggable | (() => void) =
-    config.isEnabledXssPrevention
-      ? [
-          sanitize,
-          deepmerge(
-            getCommonSanitizeOption(config),
-            presentation.sanitizeOption,
-            drawio.sanitizeOption,
-            mermaid.sanitizeOption,
-            callout.sanitizeOption,
-            attachment.sanitizeOption,
-            lsxGrowiDirective.sanitizeOption,
-            refsGrowiDirective.sanitizeOption,
-            codeBlock.sanitizeOption,
-          ),
-        ]
-      : () => {};
+  const rehypeSanitizePlugin = getSanitizePluginForSimpleView(config);
 
   // add rehype plugins
   rehypePlugins.push(
@@ -224,7 +269,10 @@ export const generateSimpleViewOptions = (
       lsxGrowiDirective.rehypePlugin,
       { pagePath, isSharedPage: config.isSharedPage },
     ],
-    [refsGrowiDirective.rehypePlugin, { pagePath }],
+    [
+      refsGrowiDirective.rehypePlugin,
+      { pagePath, isSharedPage: config.isSharedPage },
+    ],
     [keywordHighlighter.rehypePlugin, { keywords: highlightKeywords }],
     rehypeSanitizePlugin,
     katex,
@@ -239,7 +287,8 @@ export const generateSimpleViewOptions = (
     components.refsimg = refsGrowiDirective.RefsImgImmutable;
     components.gallery = refsGrowiDirective.GalleryImmutable;
     components.drawio = drawio.DrawioViewer;
-    components.mermaid = mermaid.MermaidViewer;
+    components.plantuml = plantuml.PlantUmlViewer;
+    components.mermaid = MermaidViewer;
     components.callout = callout.CalloutViewer;
     components.attachment = RichAttachment;
     components.img = LightBox;
@@ -248,6 +297,33 @@ export const generateSimpleViewOptions = (
   if (config.isEnabledXssPrevention) {
     verifySanitizePlugin(options, false);
   }
+  return options;
+};
+
+// Mention highlighting applies to comments only. Applying it in search results, timeline,
+// or sidebar would falsely treat @tokens in non-comment content as user mentions.
+// Mention plugin and its sanitize schema are injected via post-processing on top of
+// generateSimpleViewOptions rather than forking the base builder.
+export const generateCommentViewOptions = (
+  config: RendererConfigExt,
+  pagePath: string,
+  overrideIsEnabledLinebreaks?: boolean,
+): RendererOptions => {
+  const options = generateSimpleViewOptions(
+    config,
+    pagePath,
+    undefined,
+    overrideIsEnabledLinebreaks,
+  );
+  const { remarkPlugins, rehypePlugins } = options;
+
+  remarkPlugins.push(mention.remarkPlugin);
+  replaceSanitizePlugin(
+    rehypePlugins,
+    config,
+    getSanitizePluginForSimpleView(config, mention.sanitizeOption),
+  );
+
   return options;
 };
 
@@ -260,17 +336,18 @@ export const generatePresentationViewOptions = (
 
   const { rehypePlugins } = options;
 
-  const rehypeSanitizePlugin: Pluggable | (() => void) =
-    config.isEnabledXssPrevention
-      ? [sanitize, deepmerge(addLineNumberAttribute.sanitizeOption)]
-      : () => {};
+  // addLineNumberAttribute must run before sanitize so that the data-line attributes
+  // it adds are preserved by the sanitize schema.
+  rehypePlugins.unshift(addLineNumberAttribute.rehypePlugin);
+  replaceSanitizePlugin(
+    rehypePlugins,
+    config,
+    getSanitizePluginForSimpleView(
+      config,
+      addLineNumberAttribute.sanitizeOption,
+    ),
+  );
 
-  // add rehype plugins
-  rehypePlugins.push(addLineNumberAttribute.rehypePlugin, rehypeSanitizePlugin);
-
-  if (config.isEnabledXssPrevention) {
-    verifySanitizePlugin(options, false);
-  }
   return options;
 };
 
@@ -290,7 +367,7 @@ export const generatePreviewOptions = (
       { plantumlUri: config.plantumlUri, isDarkMode: config.isDarkMode },
     ],
     [drawio.remarkPlugin, { isDarkMode: config.isDarkMode }],
-    mermaid.remarkPlugin,
+    mermaidRemarkPlugin,
     xsvToTable.remarkPlugin,
     attachment.remarkPlugin,
     remarkGithubAdmonitionsToDirectives,
@@ -309,7 +386,8 @@ export const generatePreviewOptions = (
           deepmerge(
             getCommonSanitizeOption(config),
             drawio.sanitizeOption,
-            mermaid.sanitizeOption,
+            mermaidSanitizeOption,
+            plantuml.sanitizeOption,
             callout.sanitizeOption,
             attachment.sanitizeOption,
             lsxGrowiDirective.sanitizeOption,
@@ -326,7 +404,10 @@ export const generatePreviewOptions = (
       lsxGrowiDirective.rehypePlugin,
       { pagePath, isSharedPage: config.isSharedPage },
     ],
-    [refsGrowiDirective.rehypePlugin, { pagePath }],
+    [
+      refsGrowiDirective.rehypePlugin,
+      { pagePath, isSharedPage: config.isSharedPage },
+    ],
     addLineNumberAttribute.rehypePlugin,
     rehypeSanitizePlugin,
     katex,
@@ -341,7 +422,8 @@ export const generatePreviewOptions = (
     components.refsimg = refsGrowiDirective.RefsImgImmutable;
     components.gallery = refsGrowiDirective.GalleryImmutable;
     components.drawio = drawio.DrawioViewer;
-    components.mermaid = mermaid.MermaidViewer;
+    components.plantuml = plantuml.PlantUmlViewer;
+    components.mermaid = MermaidViewer;
     components.callout = callout.CalloutViewer;
     components.attachment = RichAttachment;
     components.img = LightBox;
