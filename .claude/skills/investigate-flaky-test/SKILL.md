@@ -445,8 +445,9 @@ git checkout -b "$BRANCH" origin/master
 
 # ONE -m. git reads only the LAST paragraph of the message as the trailer
 # block, so splitting these lines across several -m flags makes every trailer
-# but the last paragraph invisible to the workflow (measured in task 1.1/1.6
-# of the flaky-ci-closed-loop spec).
+# but the last paragraph invisible to the workflow (the one-paragraph rule is
+# the Repro Request / Result contract in .kiro/specs/ci-flaky-test-detection's
+# design.md).
 git commit --allow-empty -m "$(printf 'chore: request a flaky repro for #%s\n\nFlaky-Repro-Spec: %s\nFlaky-Repro-Project: %s\nFlaky-Repro-Mode: file\nFlaky-Repro-Repeat: 3\nFlaky-Repro-Issue: %s\n' \
   "$ISSUE_NUMBER" "$SPEC_PATH" "$PROJECT" "$ISSUE_NUMBER")"
 
@@ -1102,8 +1103,9 @@ is what makes the push measurable. Git reads only the **last paragraph** of a
 message as trailers, so `Fixes #{ISSUE_NUMBER}` may come before the block but
 never after it, and the five trailers must be consecutive lines inside a
 single `-m`: splitting them across several `-m` flags puts each in its own
-paragraph and the workflow then sees only the last one (measured in task
-1.1/1.6 of the flaky-ci-closed-loop spec).
+paragraph and the workflow then sees only the last one (the one-paragraph rule
+is the Repro Request / Result contract in
+`.kiro/specs/ci-flaky-test-detection`'s design.md).
 
 **The same applies to this session's own signature lines.** Commits made from
 Claude Code end with `Co-Authored-By:` and `Claude-Session:` trailers, and
