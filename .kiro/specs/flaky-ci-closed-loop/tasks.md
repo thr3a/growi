@@ -108,7 +108,7 @@
   - 以降の Step 番号を繰り下げ、重複・欠番を作らない
   - 観測可能な完了状態: #11707（最終観測 2026-08-14）を手順に当てるとクローズ対象になり、最終観測が 14 日以内の issue は対象外になる、と手順だけから決まる
   - _Requirements: 10.1, 10.2, 10.3_
-- [ ] 4.3 ダッシュボードの節と報告項目を追加する
+- [x] 4.3 ダッシュボードの節と報告項目を追加する
   - Step 5（4.2 の挿入で旧 Step 4 から繰り下がったダッシュボード更新）の表の下に `## Awaiting human decision`（`Tracking issue | Paused at | Recommendation | New observations since pause`）と `## Auto-closed this run`（0 件なら `None.`）を追加する。Paused at は `flaky/needs-decision` の最新 labeled イベント時刻、Recommendation は停止コメントの `- Recommendation:` 行、New observations はその時刻より後の観測コメント数
   - 巻き添え候補・連鎖列挙・Repro result・Auto-closed・Closed: deterministic の各見出しが Occurrences に数えられないことを Step 5 の定義に明記する
   - Step 6（旧 Step 5 の報告）に「再現実行の回数と合計 CI 時間、判断待ち件数、自動クローズ件数、PR 自身の変更として除外した件数」を追加する
@@ -189,3 +189,4 @@
 - 3.2: PR 作成のゲートは **3 条件を 6-B の 1 箇所**で判定（① fix コミット SHA に紐づく `### Repro result` が `- Failed: 0`・`- Runs:` ≥ 依頼回数、② `ci-app-*` の check-run が 1 件以上あり全て success、③ 差分が Step 3 が特定した範囲に収まる）。③ を満たさない製品コード広範囲の修正は MEDIUM で PR を作らず判断待ち。check-run は push と PR で同名が 2 件並ぶので `group_by(.name) | map(sort_by(.started_at) | last)` で重複除去
 - 3.2: **`run-playwright` は PR を開いた時点では動かない**（`reusable-app-prod.yml` はマージキュー `mergify/merge-queue/**` か `workflow_dispatch` のときだけ実行。#11863 の head では `skipped`）。Playwright 修正の検証は「マージキューで動く `run-playwright`（retries 2）」に委ねると書く。**→ 5.1 / 7.1**: research.md「Playwright の扱い」と `flaky-repro.yml` L99 付近のコメントの「PR の run-playwright」を直す。→ 5.1: `flaky-ci-routine.md` の「`**Fix PR**` マーカーは investigate Step 6-A が書く」は **6-C** に移った
 - 3.2: fix コミットに `Co-Authored-By:` / `Claude-Session:` を付けるときは **`Flaky-Repro-*` と同じ最終段落に置く**（別段落にすると git は最後の段落しか trailer と読まず、依頼が見えなくなる）。6.2 で実際の修正を出すときの注意
+- 4.3: ダッシュボードの `## Awaiting human decision` は Step 5 項目 2 のコメント取得を `{body, created_at, user}` に広げて読む。Paused at より前の `- Recommendation:` 行を使ったときは欄の先頭に `(may be stale) ` を付ける。Paused at が `—`（labeled イベントが読めない）でも空文字との時刻比較はしない。**→ 6.3**: 今日の実データでは自動クローズ対象は #11707 と **#11708** の 2 件（6.3 の受け入れ文は #11707 のみ）
