@@ -111,7 +111,27 @@ MEDIUM or LOW reading at a gate, or a "confirmation not measured" outcome —
 ends the same way. Do this; the individual stop points below only point here
 rather than restating it.
 
-1. **Post one comment** on the tracking issue saying what was measured, what
+1. **Add the label** `flaky/needs-decision` (defined in the same **Shared
+   constants** block) — **before** posting the comment, not after:
+
+   ```bash
+   gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}/labels" -X POST -f 'labels[]=flaky/needs-decision'
+   ```
+
+   `POST` is additive, which is what this needs: the tier label
+   (`flaky/confirmed` / `flaky/suspected`) and the phase label stay untouched,
+   because being paused is a separate axis from either. Leave the phase label
+   at `{EXACT_PHASE_UNDER_INVESTIGATION_LABEL}` — the investigation is paused,
+   not resolved.
+
+   **Label first, then comment — this order is a contract, not a
+   preference** (defined in `flaky-ci-routine.md` **Shared constants** →
+   Pause ordering). Labelling first is what puts the pause comment inside
+   the window the dashboard reads the Recommendation from; that block holds
+   the window itself and what goes wrong under the reverse order. Follow it
+   rather than re-deriving it here.
+
+2. **Post one comment** on the tracking issue saying what was measured, what
    is missing, and which options are open. Its **last two lines** are, in
    this order:
 
@@ -132,19 +152,6 @@ rather than restating it.
    Open the comment with a **bold lead-in**, never a `###` heading, for the
    reason 2-E gives.
 
-2. **Add the label** `flaky/needs-decision` (defined in the same **Shared
-   constants** block):
-
-   ```bash
-   gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}/labels" -X POST -f 'labels[]=flaky/needs-decision'
-   ```
-
-   `POST` is additive, which is what this needs: the tier label
-   (`flaky/confirmed` / `flaky/suspected`) and the phase label stay untouched,
-   because being paused is a separate axis from either. Leave the phase label
-   at `{EXACT_PHASE_UNDER_INVESTIGATION_LABEL}` — the investigation is paused,
-   not resolved.
-
 3. **Stop there.** Nothing is watched afterwards and nothing is scheduled —
    see "Routine discipline" just before Error Handling. The next routine run
    picks the issue up once a human has answered.
@@ -157,7 +164,7 @@ would put a row on the dashboard's awaiting-decision list with nobody
 waiting on it.
 
 **The stop points this covers.** Every one of them pauses exactly as above —
-comment (signed, `- Recommendation:` last), label, stop:
+label, comment (signed, `- Recommendation:` last), stop:
 
 | Stop point | The reading that stops it |
 |---|---|
@@ -238,7 +245,10 @@ after the first).
 The title is `flaky: {IDENTITY_KEY}` (set by `detect-flaky-ci`), where
 `IDENTITY_KEY` is one of:
 - `vitest:{SPEC_PATH}:{TEST_TITLE}` — reproduce with vitest, precise identity.
-- `playwright:{SPEC_PATH}:{TEST_TITLE}` — reproduce with Playwright, precise identity.
+- `playwright:{BROWSER}:{SPEC_PATH}:{TEST_TITLE}` — reproduce with Playwright,
+  precise identity. `{BROWSER}` is `chromium` / `firefox` / `webkit`, and it
+  is always present: the same spec can be flaky in one engine and not
+  another, so `detect-flaky-ci` Step 3 makes it part of the key.
 - `playwright:{BROWSER}` — a **job-level fallback identity**: `detect-flaky-ci`
   could not isolate which spec was flaky from the CI log alone. The issue
   body's evidence section will say so explicitly. In this case, do not guess
@@ -248,9 +258,39 @@ The title is `flaky: {IDENTITY_KEY}` (set by `detect-flaky-ci`), where
   (artifact retention expired), report LOW confidence at Step 4 rather than
   guessing.
 
-Parse the identity key from the title (split on the first `:` and then on the
-last `:` to isolate `SPEC_PATH`/`TEST_TITLE` — `SPEC_PATH` values here are
-project-relative paths and never contain a bare `:`, so this is unambiguous).
+Parse the identity key from the title in this order — **do not** split on
+the first and last `:`, which gets both the browser segment and a title
+containing `:` wrong (#11903's title contains two of them):
+
+1. **Kind** — everything up to the first `:` (`vitest` or `playwright`).
+2. **Browser**, for `playwright` only — everything up to the next `:`.
+3. **Spec path** — the *shortest* following segment that ends in a
+   source-file extension (`.ts`, `.tsx`, `.js`, `.jsx`) **immediately followed
+   by `:`**. The extension-plus-colon is what anchors the split; nothing else
+   in the key is a reliable boundary. Run this on everything after the kind:
+
+   ```
+   ^([^:]+:)?(.+?\.(tsx?|jsx?)):(.*)$
+   ```
+
+   Group 1 (optional) absorbs the browser segment when there is one, group 2
+   is `{SPEC_PATH}`, and group 4 is `{TEST_TITLE}`. The extension list is
+   deliberately wider than `spec`/`integ` because one documented identity
+   class has a plain `.ts` path: the shared setup-hook key
+   `vitest:test/setup/migrate-mongo.ts:beforeAll … setup hook timeout (20000ms) during ci-app-test-integration`
+   (#11752) — its `{SPEC_PATH}` is the setup file, and the whole remainder is
+   the title. A title that itself mentions a file (`… Cannot find module
+   dev/bunyan-format.js (thread-stream worker)`, #11818) is safe because the
+   shortest match wins and that mention is not followed by `:`.
+4. **Test title** — everything after that path's `:`, **verbatim**,
+   including any further `:` it contains. Never trim or re-split it.
+
+If the regex does not match a `playwright:` key, the title is the job-level
+fallback key `playwright:{BROWSER}` described just above. Treat it as that,
+do not try to recover a spec path from it. A `vitest:` key that does not
+match is malformed (no `detect-flaky-ci` path produces one) — stop and report
+it as a precondition failure rather than guessing a path.
+
 Collect every observation block from the body and comments (run URLs,
 commits, log excerpts) — later
 observations may show the failure mode drifting or repeating identically,
@@ -567,10 +607,29 @@ gh api "repos/growilabs/growi/actions/workflows/ci-app-prod.yml/runs?per_page=50
   -q '.workflow_runs[] | {databaseId: .id, conclusion, headSha: .head_sha, createdAt: .created_at}'
 ```
 
-For each candidate run, fetch the relevant job's log (same method Step 0 of
-`flaky-ci-routine.md` decided — `gh run view --log*` or
-`mcp__github__get_job_logs`, whichever this run is using; see
-`detect-flaky-ci` Step 2/2b) and grep for the test title. Build a picture of:
+Those calls return run ids only, so list each candidate run's jobs first —
+the log endpoint below is addressed by `{JOB_ID}`, never by a run id:
+
+```bash
+gh api "repos/growilabs/growi/actions/runs/${RUN_ID}/jobs" \
+  -q '.jobs[] | {id, name, conclusion}'
+```
+
+Pick the job whose `name` hosts this identity (the vitest job that runs the
+spec, or the `run-playwright` shard for this browser — its name carries the
+browser, e.g. `test-prod-node24 / run-playwright (chromium, 1/2, 8.0)`).
+
+For each candidate run, fetch that job's log (same method Step 0 of
+`flaky-ci-routine.md` decided — `gh api --allow-escape-sequences
+"repos/growilabs/growi/actions/jobs/{JOB_ID}/logs"` piped through
+`sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g'`, or `mcp__github__get_job_logs`,
+whichever this run is using; `detect-flaky-ci` Step 2 gives both commands in
+full) and grep for the test title. **Do not reach for
+`gh run view --job {JOB_ID} --log-failed` here**: on a run that was re-run
+it exits 0 and hands back the *latest* attempt's log rather than the
+attempt the job id belongs to, so a failure investigated from it reads as a
+pass, with no error to notice — `detect-flaky-ci` Step 2 records the
+measured case. Build a picture of:
 how often it fails, whether the failure mode is identical every time (points
 to a deterministic race, easier to fix) or varies (points to genuine timing
 noise), and — critically — read the **stack trace / error origin** in each

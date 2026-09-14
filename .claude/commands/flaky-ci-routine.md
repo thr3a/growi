@@ -15,11 +15,13 @@ chain, whether it's triggered by cron or run by hand.
 ## Shared constants
 
 Strings that more than one step — and more than one skill — has to spell
-identically. **This file is the single definition site.** `detect-flaky-ci`
+identically, plus the one **ordering** two of them have to agree on.
+**This file is the single definition site.** `detect-flaky-ci`
 and `investigate-flaky-test` must refer to this block rather than restating
-these strings in their own text. *(Revalidation Trigger: if any string here
-changes, re-check every place that reads it — Step 2 below, the stop
-handling in `investigate-flaky-test`, and the dashboard/report steps.)*
+these strings, or that ordering, in their own text. *(Revalidation Trigger:
+if any string here changes, or the pause ordering below changes, re-check
+every place that reads it — Step 2 below, Step 5's dashboard cells, the stop
+handling in `investigate-flaky-test`, and the report steps.)*
 
 ### Needs-decision label
 
@@ -42,6 +44,35 @@ exactly this line, as the comment's **last** line:
 ```
 
 One line, no wrapping. The dashboard reads it back verbatim.
+
+### Pause ordering
+
+When `investigate-flaky-test` pauses an issue for a human decision, the two
+writes happen in this order and only this order:
+
+1. add the `flaky/needs-decision` label, **then**
+2. post the signed pause comment, whose last line is the
+   `- Recommendation:` line defined just above.
+
+The dashboard's side of the same contract is the **current-pause window**:
+it takes the newest `labeled` event for `flaky/needs-decision` as **Paused
+at**, and accepts a comment whose `created_at` falls in
+`[Paused at − 120 seconds, ∞)` — that is, at or after **Paused at**, or up to
+two minutes before it.
+
+Labelling first is what puts the pause comment inside that window. Posting
+first would place it before **Paused at**, the dashboard would fall back to
+its widened search, and the `(may be stale) ` prefix would end up stamped on
+exactly the issues that paused correctly — a warning that means the opposite
+of what it says. The two minutes of slack at the lower end cover clock skew
+between the two writes and issues paused under the old comment-first
+ordering; both are a matter of seconds, and two minutes is far narrower than
+the gap to any previous pause cycle.
+
+**This is the single definition of that order and that window.**
+`investigate-flaky-test`'s "Pausing for a human decision" and Step 5's
+Recommendation cell each implement one half of it and point back here rather
+than re-deriving the reasoning.
 
 ### Automated-author signatures
 
@@ -135,12 +166,25 @@ harder to clean up than a clean stop before starting.
 ### Job Log Fetch Method — decide once, for the whole run
 
 `detect-flaky-ci` and `investigate-flaky-test` both need to read CI job
-logs. `gh run view --log-failed` / `--log` works by following a signed
-redirect to a different domain (`results-receiver.actions.githubusercontent.com`
-/ `*.blob.core.windows.net`); a cloud routine's egress proxy blocks that
-redirect target regardless of whether the request comes from `gh` or a raw
-`gh api` call (confirmed empirically — this is a network policy on the
-redirect's destination domain, not a `gh`-vs-REST distinction). The GitHub
+logs. There is exactly one `gh` command for that:
+
+```
+gh api --allow-escape-sequences "repos/growilabs/growi/actions/jobs/{JOB_ID}/logs"
+```
+
+`gh run view --job {JOB_ID} --log-failed` is **not** an alternative to it —
+on a run that was re-run it exits 0 and hands back the *latest* attempt's
+log, whatever attempt the job id belongs to, so a failure reads as a pass
+with nothing to notice. `detect-flaky-ci` Step 2 spells out that command,
+that reason and the measured case; it is named here only so it is
+recognizable as the one to stay away from.
+
+The command above reaches the log by following a signed redirect to a
+different domain (`results-receiver.actions.githubusercontent.com` /
+`*.blob.core.windows.net`), and a cloud routine's egress proxy blocks that
+redirect's destination. The block is a network policy on the destination
+domain, not on the shape of the request (confirmed empirically), so no other
+way of asking `gh` for the log gets around it either. The GitHub
 MCP server's `mcp__github__get_job_logs` tool fetches the same content
 server-side and is not subject to that restriction.
 
@@ -319,10 +363,14 @@ investigations, for one issue. If an issue appears in both, process it
 information than "newly detected", and dropping the B entry would resume the
 investigation without the answer it was waiting for.
 
-If **both** selections are empty, report that and stop — there is nothing to
-investigate this run. A non-empty selection B alone is enough to continue,
-even when selection A is empty (that is the normal shape of a run whose only
-work is a human's answer arriving).
+If **both** selections are empty, report that, **skip Step 3 and continue
+with Step 4** — there is nothing to investigate this run, but there is still
+work to do. This is not a stop condition for the routine: Steps 4 and 5 run
+on every run regardless of what Step 3 did or didn't do (Step 5 says so
+about itself), so ending the run here would skip this run's auto-closes and
+leave the dashboard showing the previous run's state. A non-empty selection
+B alone is enough to continue, even when selection A is empty (that is the
+normal shape of a run whose only work is a human's answer arriving).
 
 ## Step 3 — Investigate each, autonomously
 
@@ -546,7 +594,22 @@ named after the cutoff and reduces the test to `[ "$NEWEST" ]`, which is true
 for every issue — the step would then close nothing and report "0
 auto-closed" with no error to show for it.
 
-For a stale issue, first post the record, then close the issue:
+For a stale issue, first post the record, then close the issue.
+**Print `${NEWEST}` and `${STALE_DAYS}` and confirm both are non-empty in
+the very shell that runs the heredoc, immediately before posting.** This
+heredoc interpolates them, so an empty variable posts a comment reading
+`- Newest observation:` with nothing after it — no error, nothing to notice,
+and the only repair is a `PATCH` on the comment afterwards (which has been
+needed for real, on #11707 and #11708, when a loop lost the value between
+computing it in 4-B and posting here).
+
+**If either value is empty, do not post and do not close.** Leave the issue
+**open and untouched**, exactly as 4-D does, and list its number in the Step
+6 report under `Skipped (observation date unreadable)` — the same list 4-D
+feeds. The two rules differ only in where the missing value came from: 4-D's
+date could not be *read* in the first place, this one was read and then lost
+before it got here. Neither is a reason to comment on an issue or close it,
+and both leave the same visible trace, so they report in one place:
 
 ```bash
 gh api -X POST repos/growilabs/growi/issues/{N}/comments -f body="$(cat <<EOF
@@ -618,7 +681,9 @@ The output of this step is three lists:
   hand this to Step 5, for the `## Auto-closed this run` section it renders
   below the table, and to Step 6, which reports the count and the numbers;
 - the issues **kept open by a human reopen** (4-C), by number;
-- the issues **skipped because no date could be read** (4-D), by number.
+- the issues **skipped because no usable date was in hand** (4-D, plus 4-E's
+  empty-`${NEWEST}`/`${STALE_DAYS}` guard, which leaves the issue untouched
+  the same way), by number.
 
 Step 6 lists all three. If a list is empty, say so explicitly rather than
 omitting it.
@@ -675,7 +740,17 @@ table with that tier, same as any other active issue.
    First / Last seen, Fix PR) read only `body`.
 
 3. **Build one row per issue** with columns `Identity | Tier | First seen |
-   Last seen | Occurrences | Tracking issue | Fix PR`:
+   Last seen | Occurrences | Tracking issue | Fix PR`.
+
+   **Row order, on every run** — not only when item 6 has to truncate: by
+   tier first, `confirmed` before `suspected` before `observing`, then by
+   tracking-issue number **ascending** within a tier. Both keys are stable
+   values, so the same active issue set always renders in the same order and
+   two consecutive dashboard bodies differ only where something actually
+   changed. Leaving the order unspecified means it shuffles run to run and a
+   reader cannot tell a reordering from a real change.
+
+   The columns:
    - Identity: the issue title with the `flaky: ` prefix removed.
    - Tier: `observing` / `suspected` / `confirmed`, from the label found above.
    - Occurrences: **1** (the tracking issue's own body, i.e. the first
@@ -743,9 +818,17 @@ table with that tier, same as any other active issue.
      comments either, leave both cells `—` (em dash) and note this issue
      number in the Step 6 report — do not guess a date.
    - Tracking issue: a link to the issue.
-   - Fix PR: **forward-only**. Populate this only if one of the comments
-     from step 2 is exactly a `**Fix PR**: {URL}` marker (written by
-     `investigate-flaky-test` Step 6-C). If no such marker comment exists —
+   - Fix PR: **forward-only**. Populate this from the comments fetched in
+     step 2: a comment provides the Fix PR when **any line of its body**,
+     with trailing whitespace trimmed, is exactly `**Fix PR**: {URL}`
+     (written by `investigate-flaky-test` Step 6-C). Take the **last** such
+     comment. Matching a whole comment body against the marker instead
+     misses every marker posted before the bare-one-line convention: #11821,
+     #11851 and #11858 all carry the marker followed by a blank line, `---`
+     and the Claude Code signature, so a whole-body match leaves their Fix
+     PR cell `—` forever, which is what the dashboard showed until this rule
+     changed. Matching per line costs nothing — no other comment this system
+     posts contains a line of that shape. If no such marker comment exists —
      including for tracking issues created before this convention existed —
      write `—` (em dash). Do **not** scan the issue body or other comments
      for a PR URL as a fallback: those free-form mentions can reference
@@ -822,10 +905,12 @@ table with that tier, same as any other active issue.
 6. **The ~65536-character body limit applies to the whole body** — title,
    notes, paragraph, table, and both sections from item 5 — not to the table
    alone. Measure all of it. If it does not fit, truncate **table rows
-   only**: sort the remaining rows by confidence tier (confirmed >
-   suspected > observing) then by most-recent-last-seen, keep as many rows
-   from the top as fit, and state explicitly — using item 5's note line —
-   how many rows were truncated and why. Never truncate silently.
+   only**: keep as many rows from the top of item 3's order as fit, drop the
+   rest, and state explicitly — using item 5's note line — how many rows
+   were truncated and why. Never truncate silently. Truncation does not
+   reorder anything: item 3 fixes the order for every run, and keeping its
+   top rows already keeps the strongest tiers, which is what a truncated
+   table most needs to show.
 
    **Never drop either of item 5's two sections to save space, and never
    drop their zero-state lines** (`No issues are waiting for a human
@@ -883,39 +968,57 @@ uses, then continue as below. Do not skip the row.
   issue as "no `labeled` event could be read", so a number appearing in both
   places is the expected shape, not a double count.
   **Recommendation is still filled in for such a row**, via the widened
-  search described below (newest automated comment carrying the line,
-  regardless of time), and is prefixed `(may be stale) ` like any other
-  widened result. **Never compare a comment's `created_at` against an empty
-  `PAUSED_AT`** — Step 2-B's warning applies here unchanged: `.created_at >
-  ""` is true for every comment, so the "at or after" test would silently
-  pass everything and the widening would look like a normal match.
+  search described below: skip the window computation entirely, take the
+  newest automated comment carrying the line regardless of time, and prefix
+  it `(may be stale) ` like any other widened result.
+  **Never run the window arithmetic on an empty `PAUSED_AT`.** `date -u -d
+  " - 120 seconds"` does not fail on an empty value — it reads the whole
+  expression as relative to *now* and returns now − 120 seconds, exit 0. The
+  row would then be filtered against a two-minute window ending at the
+  current moment, which almost nothing falls inside, and the handful of
+  comments that did would be accepted as if they were this pause's own. Both
+  outcomes look like ordinary results, with no error to notice.
 - **Recommendation** — read from this issue's comments (fetched as just
   described; no extra call for the normal case). Among the comments that are
   **automated** (see **Shared constants** → Automated-author signatures, and
-  evaluate both checks there) and whose `created_at` is at or after
-  **Paused at**, take the newest one whose **last non-empty line** begins
-  with `- Recommendation: `, strip that prefix, and put the rest of the line
-  in the cell verbatim.
+  evaluate both checks there) and whose `created_at` falls in this issue's
+  **current-pause window**, take the newest one whose **last non-empty line**
+  begins with `- Recommendation: `, strip that prefix, and put the rest of
+  the line in the cell verbatim.
+  - **The current-pause window** is defined — its bounds, the pause-comment
+    ordering it pairs with, and the reason — in **Shared constants** → Pause
+    ordering; follow that, do not restate it. String comparison cannot
+    subtract, so compute the window's
+    lower bound once, the way 4-A computes `CUTOFF`, and compare every
+    comment's `created_at` against that single value:
+
+    ```bash
+    WINDOW_START="$(date -u -d "$PAUSED_AT - 120 seconds" +%Y-%m-%dT%H:%M:%SZ)"
+    # a comment qualifies when  "$created_at" > "$WINDOW_START"  (string
+    # comparison, sound for the fixed-width ISO-8601 reason Step 2-B gives)
+    ```
+
+    **Only run that `date` command on a non-empty `PAUSED_AT`** — see the
+    **Paused at** cell above for what to do when it is empty.
   - **Last line, not first — deliberately the opposite of 4-B's rule for
     `Date:`.** **Shared constants** pins this line as the pause comment's
     *last* line, so reading from the end is what matches the contract. 4-B
     takes the *first* `Date:` because a log excerpt further down an
     observation comment can contain a line that looks like one. The two
     rules differ because the two contracts differ; do not "unify" them.
-  - **If nothing qualifies at or after Paused at, widen the search once** to
+  - **If no comment falls in that window at all, widen the search once** to
     the newest automated comment carrying the line at any time, and use it —
     but write the cell as `(may be stale) {line}`, with that exact prefix.
-    The label and the pause comment are two separate REST calls made seconds
-    apart, and either can land first, so a strict "at or after" test would
-    render `—` for a correctly paused issue often enough to matter. The skew
-    this repairs is seconds, but the line it finds can be arbitrarily old —
-    an issue paused, answered, resumed and paused again, whose newest pause
-    comment failed to post, would show the previous cycle's recommendation.
+    The line it finds can be arbitrarily old: an issue paused, answered,
+    resumed and paused again, whose newest pause comment failed to post,
+    would show the previous cycle's recommendation.
     The prefix is what carries that caveat to the person reading the
     dashboard, who never sees this procedure: it tells them the line may
     predate the current pause and that the issue itself is the authority.
-    Never apply the prefix to a line that did qualify at or after
-    **Paused at** — it would then mean nothing.
+    **Never apply the prefix to a line that did fall inside the window** —
+    a correctly paused issue would then carry the warning on every run,
+    which is the opposite of what it means, and the prefix would stop
+    telling a reader anything.
   - If there is still none, write `—`. Never substitute a summary of the
     comment: this cell is a verbatim copy of a line the investigation wrote,
     or it is empty.

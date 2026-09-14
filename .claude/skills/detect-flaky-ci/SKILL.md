@@ -359,8 +359,47 @@ For each failed run returned, skip it if its `url` already appears in the
 issue's body or any of its comments (already recorded — re-reading it would
 be wasted work and could double-count an observation). For the rest, fetch
 the relevant job(s)' log (same Step-0-decided method as Step 2) and grep
-for this identity's exact `FAIL {SPEC_PATH} > ... > {TEST_TITLE}` block. A
-match is a genuine backfilled observation this issue never had:
+for this identity's exact `FAIL {SPEC_PATH} > ... > {TEST_TITLE}` block.
+
+**A grep hit is not yet an observation — put it through the same two filters
+a fresh failure goes through**, and only what survives both counts here:
+
+- **Infra noise** (Step 2's denylist), at the same per-failure granularity
+  Step 2 defines: the hit is noise when a denylist string appears in that
+  `FAIL` block's own excerpt, or when the job log carries a denylist match
+  inside a shared `test/setup/**` hook failure.
+- **Failures the PR itself owns** (the check between Step 3 and Step 4): the
+  hit is excluded when the run's head commit is **not an ancestor of
+  `master`** *and*, on top of that, either a PR the commit belongs to changed
+  the failing spec file, or the commit belongs to no PR at all. Not being an
+  ancestor of `master` is a precondition of **both** arms, not just the
+  first: a commit already merged into `master` is never excluded on this
+  ground, whether or not a PR can be found for it. What the fresh path
+  excludes there is excluded here too.
+
+Both checks are written further down this file because that is where the
+fresh-failure path meets them; they apply here all the same, even though
+④ runs earlier (Step 1.5). Read them now rather than treating them as "not
+reached yet".
+
+Skipping them lets a backfill hit escalate an issue on evidence the rest of
+this skill has already ruled out. The measured case: #11707's identity
+(`external-user-group-sync.integ.ts > … > syncs groups and deletes groups
+that do not exist externally`) greps out as a clean `FAIL` block from runs
+34838590966 and 34838596432 — and neither run is evidence of anything. Their
+head commit is not an ancestor of `master`, sits on the branch
+`experiment/isolate-false-app-integration`, and belongs to no PR at all, so
+the fresh path excludes it under "Still no PR → exclude". Their job logs
+additionally carry `getaddrinfo ENOTFOUND` (a keycloak test resolving
+`dummy-keycloak-host.com`); whether the denylist also applies depends on
+whether that error sits in this identity's own `FAIL` block, per the
+per-failure granularity above — but the PR-owned check settles it on its
+own. Firing ④ on those runs anyway escalates
+#11707 to `flaky/suspected`, which also takes it out of the routine's
+auto-close set (`flaky/observing` only), on evidence that is not evidence.
+
+A hit that survives both filters is a genuine backfilled observation this
+issue never had:
 
 ```bash
 gh issue comment {NUMBER} --repo growilabs/growi --body "$(cat <<'EOF'
@@ -384,9 +423,10 @@ gh issue edit {NUMBER} --repo growilabs/growi --remove-label "flaky/observing" -
 A backfill hit always escalates straight to `flaky/suspected` (never
 `flaky/confirmed`) regardless of how many backfilled occurrences are
 found — it is still mechanical suspicion, not an empirical rerun; the same
-promotion rule as ①-③ applies. If the deeper search finds nothing, leave
-the issue at `flaky/observing` and move on; this is not a required gate, it
-is a best-effort extra pass.
+promotion rule as ①-③ applies. If the deeper search finds nothing — or finds
+only hits the two filters above discard — leave the issue at
+`flaky/observing`, post no comment, change no label, and move on; this is
+not a required gate, it is a best-effort extra pass.
 
 Genuinely subtle flakiness that doesn't show up in any of ①-⑤ still needs
 the old accumulation path (or a human/LLM eyeballing it later) — none of
@@ -452,12 +492,12 @@ for WORKFLOW in ci-app.yml ci-app-prod.yml; do
   while :; do
     resp=$(gh api -X GET "repos/growilabs/growi/actions/workflows/${WORKFLOW}/runs" \
       -f status=completed -F per_page=100 -F "page=${page}")
-    count=$(echo "$resp" | jq '.workflow_runs | length')
+    count=$(printf '%s\n' "$resp" | jq '.workflow_runs | length')
     [ "$count" -eq 0 ] && break
-    echo "$resp" | jq -c '.workflow_runs[] | {databaseId: .id, conclusion, headSha: .head_sha, createdAt: .created_at, url: .html_url, event, attempt: .run_attempt}' \
+    printf '%s\n' "$resp" | jq -c '.workflow_runs[] | {databaseId: .id, conclusion, headSha: .head_sha, createdAt: .created_at, url: .html_url, event, attempt: .run_attempt}' \
       >> "/tmp/${WORKFLOW}-runs.jsonl"
     total=$((total + count))
-    oldest_epoch=$(echo "$resp" | jq -r '.workflow_runs[-1].created_at' | date -u -f - +%s 2>/dev/null || date -u -d "$(echo "$resp" | jq -r '.workflow_runs[-1].created_at')" +%s)
+    oldest_epoch=$(printf '%s\n' "$resp" | jq -r '.workflow_runs[-1].created_at' | date -u -f - +%s 2>/dev/null || date -u -d "$(printf '%s\n' "$resp" | jq -r '.workflow_runs[-1].created_at')" +%s)
     if [ "$oldest_epoch" -lt "$CUTOFF_EPOCH" ]; then break; fi
     if [ "$total" -ge "$MAX_RUNS" ]; then
       echo "TRUNCATED: ${WORKFLOW} hit --max-runs-per-workflow=${MAX_RUNS} before reaching the ${WINDOW_HOURS}h window boundary — report this explicitly in Step 5" >&2
@@ -467,6 +507,15 @@ for WORKFLOW in ci-app.yml ci-app-prod.yml; do
   done
 done
 ```
+
+**Feed JSON to `jq` with `printf '%s\n' "$var"`, never `echo "$var"`.** In
+`zsh` — which is the interactive shell this routine has actually been run
+from — the builtin `echo` expands backslash escapes, so the `\n` inside a
+JSON string value becomes a real newline before `jq` ever sees it and the
+parse dies with `Invalid string: control characters from U+0000 through
+U+001F must be escaped`. `printf '%s\n'` passes the bytes through unchanged
+in every shell. The same applies anywhere else in this file a JSON variable
+is piped into `jq`.
 
 (`ci-app.yml` = "Node CI for app development", `ci-app-prod.yml` = "Node CI
 for app production" — confirm with
@@ -531,7 +580,11 @@ it.
 
 For each remaining failed run, list its jobs and keep the ones with
 `conclusion == "failure"` (skip `cancelled` — those are pre-emptions by a
-newer push, not evidence of anything):
+newer push, not evidence of anything). The run id selects the jobs here; the
+`{JOB_ID}` it returns is what the log fetch below is addressed by — no *log
+fetch* after this one takes a run id. Jobs are still listed per run (Step 2b
+does exactly that, and so does ④'s backfill); it is only the log endpoint
+that is addressed by job id, for the attempt reason spelled out below:
 
 ```bash
 gh api repos/growilabs/growi/actions/runs/{RUN_ID}/jobs -q '.jobs[] | select(.conclusion == "failure") | {id, name}'
@@ -543,7 +596,7 @@ Fetch Method" probe — it is decided once, at the very start of the routine,
 not re-decided per log). If invoked standalone (not via `/flaky-ci-routine`),
 do that same one-time probe yourself before this step: check whether
 `mcp__github__get_job_logs` appears in your available tools; if so, use it
-for every job log fetch below; if not, use `gh run view --log-failed`. Do
+for every job log fetch below; if not, use the `gh` path below. Do
 not try one and fall back to the other per log — that produces
 run-to-run-inconsistent behavior for no benefit, since the capability is a
 property of the environment, not of any individual log fetch.
@@ -551,8 +604,28 @@ property of the environment, not of any individual log fetch.
 ```bash
 # gh path (devcontainer / any environment where the egress proxy allows
 # results-receiver.actions.githubusercontent.com and *.blob.core.windows.net)
-gh run view {RUN_ID} --repo growilabs/growi --job {JOB_ID} --log-failed
+gh api --allow-escape-sequences "repos/growilabs/growi/actions/jobs/{JOB_ID}/logs" \
+  | sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g'
 ```
+
+**Never use `gh run view --job {JOB_ID} --log-failed` to read a specific
+attempt's log.** When a run has been re-run, that command exits 0 and prints
+a full log — but it is the **latest** attempt's log, whatever attempt the
+job id belongs to. Nothing warns you. Run 34846386483 is the measured case:
+attempt 1 failed, attempt 2 succeeded, and asking for failed job
+103983310790 (attempt 1) returned attempt 2's successful log, so the
+evidence to judge the failure on read `150 passed`. That silently destroys the
+same-SHA attempt flip described above — the one gold-standard vitest signal
+this skill has. The `actions/jobs/{JOB_ID}/logs` endpoint is addressed by
+job id rather than by run, so it returns that job's own attempt.
+
+Two details of the command: `--allow-escape-sequences` is required, or `gh`
+refuses with exit 1 and `the response contains terminal escape sequences;
+pass --allow-escape-sequences to output it anyway`; and the `sed` strips the
+ANSI colour codes the raw log carries, which would otherwise break the
+literal string matching every step below does. Unlike `--log-failed`, this
+endpoint returns the **whole** job log including the steps that passed, so
+grep it (`FAIL `, `::error`, ` flaky`) rather than reading it whole.
 
 ```
 # MCP path (cloud routine — the blob-storage redirect above is Forbidden
@@ -571,27 +644,69 @@ skill's initial design review only surfaced because a *different* test in
 the same shard genuinely failed). To catch these, additionally scan
 successful `run-playwright` jobs from runs in the Step 1 list (any
 conclusion, not just failed runs), grepping rather than reading the full log
-to keep this cheap:
+to keep this cheap.
+
+**Select those jobs with `contains("run-playwright")`, not a prefix match.**
+The job runs through the reusable `Reusable build and test app for
+production` workflow, and GitHub prefixes the calling job's name onto it, so
+the real names read `test-prod-node24 / run-playwright (chromium, 1/2, 8.0)`.
+A prefix match on the job name matches none of them and turns this whole
+step into a silent no-op — on the scan that found this, the same run list
+yielded 0 jobs by prefix and 61 by substring. As in Step 2, the run id
+selects the jobs and each returned `{JOB_ID}` is what the log fetch is
+addressed by:
 
 ```bash
-# gh path
-gh run view {RUN_ID} --repo growilabs/growi --job {JOB_ID} --log \
-  | grep -iE "flaky|Retry #|^:*error file="
+gh api repos/growilabs/growi/actions/runs/{RUN_ID}/jobs \
+  -q '.jobs[] | select(.name | contains("run-playwright")) | select(.conclusion == "success") | {id, name}'
+```
+
+```bash
+# gh path — same command and same two details as the failed-job fetch above
+gh api --allow-escape-sequences "repos/growilabs/growi/actions/jobs/{JOB_ID}/logs" \
+  | sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g' \
+  | grep -iE "flaky|Retry #|test-failed|error file="
 
 # MCP path — fetch then grep the returned text the same way
 mcp__github__get_job_logs(owner="growilabs", repo="growi", job_id={JOB_ID}, failed_only=false)
 ```
 
-Use the same Step-0-decided method as the failed-job fetch above.
+Use the same Step-0-decided method as the failed-job fetch above. What each
+alternative is there for: `flaky` keeps the summary count line (`1 flaky`)
+that Step 3 reads the shard's own count from, `error file=` keeps the
+`::error` annotations Step 3 builds the precise identity out of, and
+`Retry #` / `test-failed` keep the surrounding retry and attachment lines
+that go into the issue's evidence excerpt.
+
+**`error file=` is deliberately unanchored — do not add a `^`.** The
+`actions/jobs/{JOB_ID}/logs` endpoint prefixes every line with a timestamp
+(`2026-09-14T09:22:51.3976078Z …`), so a line-start anchor can never match;
+and the annotation is often printed mid-line anyway, right after the
+reporter's progress dots. Measured on job 103921032242: anchored, 0 matches;
+unanchored, 1 — the one annotation this shard's whole identity depends on.
+An anchored pattern therefore hands Step 3 an excerpt with no `title=` in
+it, which fires Step 3's own tier-2 fallback and turns every flake found
+through this step into a coarse `playwright:{BROWSER}` issue.
+
+**Do not add a retry-digit alternative either** (a pattern matching `retry0`,
+`retry1`, …). A previous version of this grep had one, and on that same job
+all 12 of its matches were `pw:api` debug lines mentioning a
+`comment-retry0` test fixture — not one of them an attachment path.
+`test-failed` is what keeps the attachment paths.
 
 If this is empty, the shard had no flakiness — move on. If it has a
 ` flaky` count > 0, proceed to Step 3's Playwright extraction using this
-grepped excerpt (it is sufficient; do not re-fetch the full log).
+grepped excerpt (it is sufficient; do not re-fetch the full log). Note for
+Step 3's count test: these jobs concluded `success`, and a test that is
+still failing after its last retry fails the job, so `N failed` is 0 by
+construction here and the shard's count sum is the `N flaky` number alone.
 
 **Classify infrastructure noise first — do not track these as flaky.** Match
-the log against this denylist (case-insensitive substring match). If any
+the failure against this denylist (case-insensitive substring match). If any
 pattern matches, log it in this run's report as "infra noise, skipped" and
-move to the next job. This list is deliberately small and additive — extend
+move on to the next failure in the same job. (Dropping the whole job is the
+`test/setup/**` exception below, and only that.) This list is deliberately
+small and additive — extend
 it when a genuine false positive is found, don't broaden matches speculatively:
 
 - `ECONNREFUSED`
@@ -607,6 +722,24 @@ it when a genuine false positive is found, don't broaden matches speculatively:
   the public network going missing says nothing about the product's
   determinism
 
+**Match per failure, not per job log.** A failure is infra noise when a
+denylist string appears in **that failure's own excerpt** — its `FAIL` block
+together with the error and stack lines printed under it — not merely
+somewhere in the same job log. A job log is a whole CI job's output, so
+searching all of it discards every failure in the job on the strength of one
+unrelated line. The measured case: runs 34838590966 / 34838596432 carried 97
+failures across 68 spec files, one of which was a keycloak test resolving
+`dummy-keycloak-host.com` and printing `getaddrinfo ENOTFOUND`. Job-wide
+matching drops that one failure *and the other 96* — which are not infra
+noise and have nothing to do with keycloak's DNS.
+
+**The one exception is a shared setup hook.** When the denylist string
+appears in the failure of a hook registered under `test/setup/**` (the
+shared setup-hook shape Step 3 defines), every failure in that job log is
+noise, because that hook runs before all of them and the whole job was
+starved by the same infrastructure problem. Nothing else in a job log has
+that reach.
+
 Everything that doesn't match is a candidate for Step 3.
 
 ## Step 3: Extract Test Identity and Evidence
@@ -619,11 +752,13 @@ identity** — the same spec lands on a different shard number across runs
 the identity key would fragment one flaky spec into many never-deduped
 issues. The browser (`chromium`/`firefox`/`webkit`) IS meaningful — the same
 spec can be flaky in one engine and not another. Extract it from the job
-name, e.g. `run-playwright (firefox, 1/2, 8.0)` → browser = `firefox`.
+name, e.g. `test-prod-node24 / run-playwright (firefox, 1/2, 8.0)` →
+browser = `firefox` (the `test-prod-node24 / ` part is the reusable
+workflow's calling job — see Step 2b).
 
 The reliable, structured signal is the trailing summary line (`N failed`,
-`N flaky`, `N passed`) and the `::error file=...,title=...` annotations for
-genuinely-failed specs. **Attributing a specific `flaky` count to a specific
+`N flaky`, `N passed`) and the `::error file=...,title=...` annotations.
+**Attributing a specific `flaky` count to a specific
 spec name from the raw log is not reliable** — the CI reporter's console
 output interleaves per-step Playwright debug traces (`pw:api ...`) with
 retry/attachment lines in a way that does not cleanly pair a `Retry #N`
@@ -631,30 +766,110 @@ block with the spec it belongs to. Do not try to build a precise
 adjacency/pairing heuristic here; it will misattribute. Use a two-tier
 approach instead:
 
-1. **Precise identity** — only when unambiguous: if the log's `::error`
-   annotations account for exactly `N failed` and there is exactly one
-   distinct spec/title referenced anywhere in retry-attachment paths
-   (`playwright/output/{slug}.../test-failed-N.png`) that is **not** among
-   the `::error`-annotated titles, that leftover slug is the flaky one —
-   use `playwright:{BROWSER}:{SPEC_PATH}:{TEST_TITLE}` (recover the human
-   title from the slug by matching it against spec files under
-   `apps/app/playwright/` if needed). Always include `{BROWSER}`, per the
+**A test that failed and then passed on retry is annotated too.** Playwright
+emits an `::error file=...,title=...` annotation for it just as it does for
+a test that ended failed, and the summary line then reads `0 failed` /
+`1 flaky`. That is the *most common* shape of a Playwright flake, so do not
+build the precise identity out of anything the annotations are expected to
+be missing — the flaky test is in the annotation list, not left over beside
+it.
+
+1. **Precise identity (tier 1)** — use it when **both** of these hold in the
+   ANSI-stripped log of that one shard:
+
+   - the log carries **exactly one distinct** `::error file=…,title=…`
+     annotation, and
+   - the shard's own summary counts add up to that single annotation: `N
+     flaky` plus `N failed` equals 1 (a missing line counts as 0 — a
+     successful shard prints no `failed` line at all).
+
+   The two together are what make the attribution safe: the counts say the
+   shard produced exactly one non-clean test result, and the single
+   annotation is the only thing in the log that names one. There is nothing
+   left for it to be confused with, so no adjacency guessing is involved.
+
+   **Do not require a retry attachment path.** `apps/app/playwright.config.ts` sets
+   `screenshot: 'only-on-failure'`, so a test whose retry *passes* writes
+   failure artifacts for the first attempt only; the retry's own output
+   directory never appears in the log. Since a retry that passes is the most
+   common flake shape, an attachment-path test would be empty almost every
+   time and tier 2 would fire on exactly the cases tier 1 exists for. (The
+   annotation's `file=` value is a project path, while an attachment path
+   carries a slugified test name, so the two do not literally contain one
+   another either.)
+
+   The identity is then `playwright:{BROWSER}:{SPEC_PATH}:{TEST_TITLE}`,
+   with both halves **normalized** — the annotation's raw values are not the
+   identity:
+
+   - `{SPEC_PATH}` — the `file=` value with the leading `apps/app/` removed.
+   - `{TEST_TITLE}` — the `title=` value with the leading `[{browser}] › `
+     removed, then the `{path}:{line}:{col} › ` location segment that
+     follows it removed, then **every remaining ` › ` replaced by ` > `**.
+
+   Worked example, the annotation that produced issue #11903:
+
+   ```
+   file=apps/app/playwright/20-basic-features/inline-comment.spec.ts
+   title=[chromium] › playwright/20-basic-features/inline-comment.spec.ts:4758:3 › Inline comment - visual refresh: mockup cross-check captures › Capture popover states 5 (normal) and 6 (edit mode) in DARK mode (Req 4.4)
+   ```
+
+   normalizes to this identity key (what #11903's title carries today):
+
+   ```
+   playwright:chromium:playwright/20-basic-features/inline-comment.spec.ts:Inline comment - visual refresh: mockup cross-check captures > Capture popover states 5 (normal) and 6 (edit mode) in DARK mode (Req 4.4)
+   ```
+
+   Normalizing is not cosmetic: Step 4 searches for an existing issue by
+   this exact title, so an un-normalized key (with `apps/app/`, with the
+   `[chromium] › file:line:col › ` prefix, or with ` › ` left in place) does
+   not match the issue the previous run created and files a duplicate
+   instead. Note that a title may itself contain `:` — #11903's does — so
+   never rebuild the key by splitting the normalized title on punctuation.
+
+   Always include `{BROWSER}`, per the
    "browser IS meaningful" rule above — every tracking issue this skill has
    created for a specific spec already carries it (e.g. #11785 is
    `playwright:webkit:playwright/20-basic-features/comments.spec.ts:...`);
    omitting it here would fork the identity key from the title format Step
    4 actually searches on, which is exactly the "title/search mismatch →
    duplicate" failure that section warns about.
-2. **Fallback (job-level)** — in every other case (multiple candidates,
-   nothing unambiguous), use `playwright:{BROWSER}` as the identity and say
-   so explicitly in the issue body: "flaky test detected in this shard's log
-   (see excerpt below) but the specific spec could not be isolated from the
-   log alone — see the linked run for the full report." This is intentional:
-   a coarser but honest identity beats a fabricated precise one.
+2. **Fallback (tier 2, job-level)** — use `playwright:{BROWSER}` as the
+   identity in each of these three cases, which are exactly the cases tier 1
+   does not cover:
 
-Either tier counts as a **confirmed** occurrence (see Step 4) — Playwright
-already retried in-run and still needed a retry to pass, regardless of
-whether this skill can name the exact spec.
+   - **more than one distinct annotation** in the shard's log — several
+     tests are named and which one the count refers to is genuinely unknown;
+   - **the counts do not add up to the annotation count** (`N flaky` + `N
+     failed` is not 1 against a single annotation) — the log is describing
+     more, or fewer, non-clean results than it names, so the one annotation
+     cannot be assumed to account for the shard's count;
+   - **the annotation carries no `title=` value** — there is then a file but
+     no test to name.
+
+   Say so explicitly in the issue body: "flaky test detected in this shard's
+   log (see excerpt below) but the specific spec could not be isolated from
+   the log alone — see the linked run for the full report." This is
+   intentional: a coarser but honest identity beats a fabricated precise one.
+
+Either tier counts as a **confirmed** occurrence (see Step 4) **when the
+shard's summary reports `N flaky` ≥ 1** — Playwright already retried in-run
+and the test still needed a retry to pass, regardless of whether this skill
+can name the exact spec. That is the Step 2b shape (`0 failed / 1 flaky`).
+
+The one shape tier 1 admits that this does **not** cover is `1 failed /
+0 flaky` on the Step 2 failed-job path: the counts still sum to 1 and the
+annotation still names the test, so the precise identity is right, but the
+test failed on **every** attempt — nothing about that is retry-proven. Treat
+such a result exactly like a vitest failure, per the Vitest section below:
+the identity is precise, and the result is an **observation**, not a
+confirmation. Run it through "Cheap Suspicion Mining" — ①, ② and ③ apply
+(⑤ does not: it is about a Vitest project's `setupFiles` hook, which a
+`run-playwright` job has no counterpart for) — a hit makes it a
+**suspected** occurrence (tier 2), otherwise it is a plain observation
+(tier 1, the passive `flaky/observing` path). **Either way, proceed to
+Step 4.** Never record a failed-every-attempt Playwright result as
+`confirmed`.
 
 ### Vitest jobs (`ci-app-test`, `ci-app-test-integration`)
 
@@ -1438,7 +1653,11 @@ Print a short summary of this run: which job-log fetch method Step 0 chose
 workflow fell in it (and whether `--max-runs-per-workflow` truncated that —
 report this explicitly, never silently), how many runs were skipped via the
 Step 1.5 skip-list (already-known, not re-fetched), how many jobs actually
-scanned, how many classified as infra noise (with which pattern), how many
+scanned, how many **failures** were classified as infra noise (with which
+pattern) — counted per `FAIL` block, because Step 2 matches the denylist per
+failure, not per job — and how many **whole jobs** were discarded because the
+matching line sat inside a `test/setup/**` hook failure, which is the one
+case that reaches every failure in the log. Then: how many
 new issues created, how many existing issues updated, how many escalated to
 `flaky/suspected` vs `flaky/confirmed`, and **a separate hit count for each
 of the five mining checks** (①, ②, ③, ⑤, ④'s backfill) — since all of
@@ -1488,16 +1707,17 @@ This is the only user-facing output — do not create files.
   constraint, not a reason to stop the whole run.
 - `gh api` rate limit hit: report how far the scan got and stop; do not retry
   in a tight loop.
-- A job log too large to fit in context: use `--log-failed` (already filters
-  to failed steps) rather than `--log`; if still too large, grep for `FAIL `,
-  `::error`, and ` flaky` lines only instead of reading the full log.
+- A job log too large to fit in context: the `actions/jobs/{JOB_ID}/logs`
+  endpoint returns the whole job log, passing steps included, so grep for
+  `FAIL `, `::error`, and ` flaky` lines only instead of reading it whole.
 - Ambiguous identity (test title changed between occurrences of the same
   underlying flake): do not attempt fuzzy matching — treat as a new issue.
   False negatives here (a missed dedupe) are cheap; false positives (wrongly
   merging two different flakes) are not.
-- Job log content unreachable via either method (`gh run view --log*`
-  returns Forbidden, or `mcp__github__get_job_logs` is not among your
-  available tools): this is the known blob-storage-redirect restriction
+- Job log content unreachable via either method (`gh api
+  .../actions/jobs/{JOB_ID}/logs` returns Forbidden, since it follows the
+  same blob-storage redirect; or `mcp__github__get_job_logs` is not among
+  your available tools): this is the known blob-storage-redirect restriction
   (see the Job Log Fetch Method note in Steps 2/2b) — it means the Step 0
   probe in `flaky-ci-routine.md` picked wrong, or this skill is running
   standalone in an environment with neither path available. Report which
