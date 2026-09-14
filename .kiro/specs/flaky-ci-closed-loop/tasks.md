@@ -33,11 +33,12 @@
   - 観測可能な完了状態: `flaky-repro/**` への空コミット push 後、REST で両 workflow の run 一覧を見てもそのブランチの run が無い
   - _Requirements: 6.7_
   - _Boundary: CI Exclusion_
-- [ ] 1.5 (P) 判断待ちラベルを作る
+- [x] 1.5 (P) 判断待ちラベルを作る
   - REST でラベル `flaky/needs-decision`（説明 100 文字以内）を作成する
   - 観測可能な完了状態: `gh api repos/growilabs/growi/labels/flaky%2Fneeds-decision` がラベルを返す
   - _Requirements: 9.1_
   - _Boundary: Needs-Decision State_
+  - **実施結果**: 2026-09-14、親コンテキストで REST 作成（color `d93f0b`、説明 "Autonomous flaky investigation paused; a human decision is needed (see dashboard #11720)"）。GET で存在を確認済み
 - [ ] 1.6 測定器を 3 シナリオで実測する
   - 安定 spec で `Failed: 0`（1.2 と同じブランチで可）、`@codemirror/state` を 2 バージョンに分けた lockfile を含むブランチで `AdminCodeEditor.spec.tsx` を流して `Failed: 3`、存在しない spec で `failure` の 3 つを確認する
   - 1.4 の除外が効いていること（通常 CI の run が作られない）も同じ push で確認する
