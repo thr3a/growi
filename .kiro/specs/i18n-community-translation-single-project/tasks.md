@@ -90,7 +90,7 @@
   - _Depends: 2.1, 3.1, 4.1_
   - _Blocked: 本番運用として貢献者に公開する前の最終確認であり、`docs/i18n-community-translation-setup.md`の残りのプロビジョニング手順（承認ボットアカウント等）が完了してから実行すること。_
 
-- [ ] 5.3 リポジトリ全体のlint・test・buildが green であること、既存の同期ロジックに回帰が無いことを確認する
+- [x] 5.3 リポジトリ全体のlint・test・buildが green であること、既存の同期ロジックに回帰が無いことを確認する
   - 変更した5ファイル（`sync-config.ts`/`poeditor-client.ts`/`push-source.ts`/`pull-translations.ts`/`language-code-map.ts`）が、既存の `turbo run lint` / `turbo run test` / `turbo run build`（`@growi/app`）に悪影響を与えていないことを確認する
   - `DiffClassifier`・GitHub アダプタ・承認ボット分離など、本amendで変更していないコンポーネントの既存テストが引き続き通過することを確認する
   - 観測可能な完了状態: `turbo run lint --filter @growi/app` / `turbo run test --filter @growi/app` / `turbo run build --filter @growi/app` がすべて成功する
