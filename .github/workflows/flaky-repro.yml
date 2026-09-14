@@ -96,8 +96,11 @@ jobs:
 
           # A `fix/flaky-**` branch is an ordinary fix branch that happens to be named
           # after a flaky issue, and design.md keeps one case deliberately trailer-less:
-          # a Playwright fix, whose verification is the PR's own `run-playwright`. Such a
-          # push is not a repro request at all, so it is reported as "nothing to measure"
+          # a Playwright fix, whose verification is the `run-playwright` job that runs
+          # once the PR enters the merge queue. reusable-app-prod.yml gates that job on
+          # `head_ref` starting with `mergify/merge-queue/` (or on workflow_dispatch), so
+          # it does NOT run when the PR is opened. Such a push is not a repro request at
+          # all, so it is reported as "nothing to measure"
           # rather than as a rejected request — otherwise every Playwright fix PR would
           # carry a red `flaky-repro` check. A `flaky-repro/**` branch exists only to be
           # measured, so an empty request there is still an error.
@@ -191,7 +194,8 @@ jobs:
       # in ci-app.yml, so that a repro runs on the same toolchain as the CI job
       # whose failure it is reproducing.
       #
-      # Revalidation Trigger (design.md): when ci-app.yml changes the setup
+      # Revalidation Trigger (design.md in .kiro/specs/ci-flaky-test-detection):
+      # when ci-app.yml changes the setup
       # actions, their versions, the Node version, or the dist cache key,
       # change this file in the same commit. Keep the matching cross-reference
       # comment in ci-app.yml pointing back here.
@@ -298,7 +302,7 @@ jobs:
           # They are not optional: the dist cache is restore-only above, so on a
           # cache miss `**/dist` is empty and vitest cannot resolve `@growi/*`.
           #
-          # Revalidation Trigger (design.md): keep in sync with the `dependsOn`
+          # Revalidation Trigger (design.md in .kiro/specs/ci-flaky-test-detection): keep in sync with the `dependsOn`
           # of the `test:*` tasks in apps/app/turbo.json. Check with
           # `turbo run test:unit --filter=@growi/app --dry-run`.
 

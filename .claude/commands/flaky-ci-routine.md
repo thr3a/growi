@@ -615,10 +615,8 @@ appears exactly once in the dashboard, as `confirmed`. Do not touch the
 The output of this step is three lists:
 
 - the `{issue number, newest observation date}` pairs **actually closed** —
-  hand this to Step 5, for the `## Auto-closed this run` section that
-  Step 5 renders below the table (added alongside this step — if Step 5 has
-  no such section yet, add it rather than dropping the list), and to Step 6,
-  which reports the count and the numbers;
+  hand this to Step 5, for the `## Auto-closed this run` section it renders
+  below the table, and to Step 6, which reports the count and the numbers;
 - the issues **kept open by a human reopen** (4-C), by number;
 - the issues **skipped because no date could be read** (4-D), by number.
 
@@ -701,7 +699,7 @@ table with that tier, same as any other active issue.
      | `### Repro result` | the `flaky-repro` workflow (Requirement 6.2) |
      | `### Auto-closed: …` | Step 4-E of this command |
      | `### Closed: deterministic cause, not flaky` | `investigate-flaky-test` |
-     | `**Fix PR**: {URL}` | `investigate-flaky-test` Step 6-A |
+     | `**Fix PR**: {URL}` | `investigate-flaky-test` Step 6-C |
      | any **human comment** | a person — see **Shared constants** → Automated-author signatures for how to tell a human comment from one this system wrote |
 
      None of these first lines begins with either counted heading, so the
@@ -747,7 +745,7 @@ table with that tier, same as any other active issue.
    - Tracking issue: a link to the issue.
    - Fix PR: **forward-only**. Populate this only if one of the comments
      from step 2 is exactly a `**Fix PR**: {URL}` marker (written by
-     `investigate-flaky-test` Step 6-A). If no such marker comment exists —
+     `investigate-flaky-test` Step 6-C). If no such marker comment exists —
      including for tracking issues created before this convention existed —
      write `—` (em dash). Do **not** scan the issue body or other comments
      for a PR URL as a fallback: those free-form mentions can reference
@@ -988,7 +986,7 @@ None.
 Summarize the run: which `JOB_LOG_METHOD` Step 0 selected, how many issues
 were newly confirmed vs newly suspected by Step 1 (and, of the suspected
 ones, how many `investigate-flaky-test` promoted to confirmed via its
-one-time rerun vs left at suspected pending human review), how many issues
+confirmation measurement vs left at suspected pending human review), how many issues
 Step 2 re-selected after a human decision (selection B), how many
 `flaky/needs-decision` issues Step 2 had to skip because no `labeled` event
 could be read (empty PAUSED_AT — list their numbers so a human can look),
