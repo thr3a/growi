@@ -44,16 +44,17 @@ These two accepted labels mean different things and change Step 2:
 
 - **`flaky/confirmed`** — already empirically proven (Playwright's in-run
   retry already IS the proof, or a prior vitest threshold-accumulation
-  already reached two independent observations). No confirmation rerun is
-  owed here before proceeding to root-cause work — go straight into Step 2's
-  existing evidence-gathering.
+  already reached two independent observations). No confirmation measurement
+  is owed here before proceeding to root-cause work — go straight into Step
+  2's existing evidence-gathering.
 - **`flaky/suspected`** — `detect-flaky-ci`'s cheap mechanical mining (diff/
   PR mismatch, sandwich pattern, or matrix divergence) found this, but
   nothing has actually reproduced it live yet. This skill owes it exactly
-  **one** confirmation rerun (not the 2-3 tally used elsewhere in this
-  skill — that budget is for a different purpose, see Step 2) before
-  treating the flakiness itself as real. See "Step 2, `flaky/suspected`
-  path" below.
+  **one** confirmation measurement — a single push of the repro workflow,
+  which replays the spec 3 times on current `master` (not the deeper tally
+  described in Step 2's second tier, which is a separate budget for a
+  different purpose) — before treating the flakiness itself as real. See
+  "Step 2, `flaky/suspected` path" below.
 
 ---
 
@@ -112,58 +113,269 @@ gh issue edit {ISSUE_NUMBER} --repo growilabs/growi --remove-label "{EXACT_PHASE
 
 ## Step 2: Gather Evidence
 
-### `flaky/suspected` path: kick off the confirmation rerun first, in parallel
+### `flaky/suspected` path: take the confirmation measurement first, in parallel
 
 If the issue's label is `flaky/suspected` (see Precondition), start its
-one-time confirmation rerun **before** doing anything else in this step, so
-it executes in the background while the static analysis below reads:
+one-time confirmation measurement **before** doing anything else in this
+step, so it runs in the background while the static analysis below reads.
 
-```bash
-gh run rerun {RUN_ID} --repo growilabs/growi --failed
-```
-
-where `{RUN_ID}` is the run cited in the issue's "First observation" (or
-the mining evidence, if a later comment's observation is what triggered the
-mining hit). Do not wait for it here — proceed immediately to the static
-analysis below, and only come back to check this rerun's result at the end
-of this step, right before Step 3. This is a single rerun, not the 2-3
-tally used in the "second tier" below — that tally is a different budget
-for a different purpose (root-cause confidence), spent later, in Step 4/6.
+The measurement is taken by `.github/workflows/flaky-repro.yml`: a push to a
+`flaky-repro/**` branch whose head commit carries a `Flaky-Repro-*` git
+trailer block makes that workflow replay one spec N times on real CI
+infrastructure (the same toolchain, MongoDB replica set and Elasticsearch
+`ci-app.yml` uses) and post the tally to the tracking issue. Driving it needs
+only the two abilities this skill always has — pushing a branch and reading
+REST. (`gh run rerun` is not used at this gate any more: a cloud routine's
+token has no `actions:write`, so that path returned 403 and stopped every
+`flaky/suspected` issue before anything was measured.)
 
 **This is a hard gate, not an optional courtesy — Step 3 may not start
-until it is satisfied.** Immediately after firing the command above, write
-down (in your own working notes, and later in the issue comment or PR body)
-one of exactly three outcomes: `rerun passed`, `rerun failed again`, or
-`rerun could not be attempted` (see below). Reaching Step 3 without one of
+until it is satisfied.** Before reaching Step 3, write down (in your own
+working notes, and later in the issue comment or PR body) one of exactly
+three outcomes, decided in 2-E below: `confirmed`, `possible genuine
+regression`, or `confirmation not measured`. Reaching Step 3 without one of
 these three recorded is the failure mode this gate exists to catch — a
 plausible-looking root cause already visible in the issue's existing
-evidence (e.g. matrix divergence) is not a substitute for actually firing
-this command, no matter how convincing that existing evidence looks.
+evidence (e.g. matrix divergence) is not a substitute for the measurement,
+no matter how convincing that existing evidence looks.
 
-When you check back: if the rerun **passed** with no code change, that is
-empirical proof of flakiness — escalate the label before continuing:
+#### 2-A: derive the repro request from the identity key
+
+The identity key parsed in Step 1 is `vitest:{SPEC_PATH}:{TEST_TITLE}`, and
+`SPEC_PATH` is **already relative to `apps/app`** (e.g.
+`src/server/routes/apiv3/g2g-transfer-key-keep-alive.integ.ts`). Pass it
+verbatim — the workflow rejects a repository-relative `apps/app/...` value.
+Derive the vitest project from the same path:
+
+| `SPEC_PATH` ends with | `Flaky-Repro-Project` |
+|---|---|
+| `.exclusive.integ.ts` | `app-integration-exclusive` |
+| `.integ.ts` (any other) | `app-integration` |
+| `.spec.tsx` / `.spec.jsx` | `app-components` |
+| `.spec.ts` / `.spec.js` | `app-unit` |
+
+One gap in that table: a spec under `src/features/growi-vault/__tests__/`
+belongs to the `app-integration-vault` project, which the workflow's
+allowlist does not accept — and `app-integration` explicitly excludes those
+files, so requesting it yields `No test files found`, a failed job, and no
+measurement. Do not push a request for such a spec. Record
+"confirmation not measured (no repro project for vault specs)" and pause with
+`flaky/needs-decision`, exactly as in 2-E's third outcome.
+
+A `playwright:` identity never enters this gate: Playwright's in-run retry is
+already the proof of non-determinism, so those issues arrive as
+`flaky/confirmed`. If one somehow carries `flaky/suspected`, skip straight to
+the primary tier below and state in Step 4 that no repro measurement applies
+to a Playwright identity.
+
+#### 2-B: push the request
 
 ```bash
-gh issue edit {ISSUE_NUMBER} --repo growilabs/growi --remove-label "flaky/suspected" --add-label "flaky/confirmed"
+ISSUE_NUMBER=11823
+SPEC_PATH='src/server/routes/apiv3/g2g-transfer-key-keep-alive.integ.ts'
+PROJECT='app-integration'
+BRANCH="flaky-repro/issue-${ISSUE_NUMBER}-keep-alive"   # short slug, [a-z0-9-]
+
+git fetch origin master
+git checkout -b "$BRANCH" origin/master
+
+# ONE -m. git reads only the LAST paragraph of the message as the trailer
+# block, so splitting these lines across several -m flags makes every trailer
+# but the last paragraph invisible to the workflow (measured in task 1.1/1.6
+# of the flaky-ci-closed-loop spec).
+git commit --allow-empty -m "$(printf 'chore: request a flaky repro for #%s\n\nFlaky-Repro-Spec: %s\nFlaky-Repro-Project: %s\nFlaky-Repro-Mode: file\nFlaky-Repro-Repeat: 3\nFlaky-Repro-Issue: %s\n' \
+  "$ISSUE_NUMBER" "$SPEC_PATH" "$PROJECT" "$ISSUE_NUMBER")"
+
+git push -u origin "$BRANCH"
+REPRO_SHA=$(git rev-parse HEAD)
 ```
 
-If it **failed again**, you cannot yet tell "still flaky, unlucky twice"
-from "actually a real regression that only looks CI-specific" with a single
-data point — do not silently treat this as confirmed. Carry it into Step 4
-as an explicit caveat (same handling as "reruns failed 100% of the time" in
-that step's confidence table) rather than assuming the mining hit was
-correct.
+`Flaky-Repro-Mode: file` and `Flaky-Repro-Repeat: 3` are the defaults this
+gate uses: 3 independent runs of the one spec, each in its own process. The
+issue already documents at least one CI failure, so the only thing this
+measurement has to establish is whether the spec can pass at all on unchanged
+code — three runs separate that from a real regression, which fails 3/3.
 
-If the rerun **could not even be attempted** — `gh run rerun` itself
-errors out (e.g. 403 "Resource not accessible by integration" because this
-session's token lacks `actions:write`), as opposed to completing and
-failing — do not treat this as equivalent to "no rerun was needed" or
-quietly fold it into Step 6's later repeat-CI tally. A missing tool is not
-evidence of flakiness. Record the exact error, note explicitly that the
-one-time confirmation rerun this gate requires was never actually
-performed, and carry that into Step 4 (see its confidence table) as its own
-distinct situation — not the "reruns failed 100% of the time" row, which
-requires a rerun to have actually run and failed.
+**Why the branch is cut from `origin/master`, not from the failing run's
+commit.** The question this gate answers is "is this spec non-deterministic
+on current `master`". The failing commit cannot serve as the base anyway:
+`.github/workflows/flaky-repro.yml` is not in its tree, and a workflow only
+runs if its file exists on the pushed ref, so that push would start nothing
+at all. If the spec no longer exists on `master`, the workflow rejects the
+request (`Flaky-Repro-Spec does not exist in this commit`) and its check-run
+is `failure`, which routes the issue to "confirmation not measured" in 2-E.
+That is the correct outcome, not a bug — a spec that is gone from `master`
+has nothing left to measure.
+
+**No normal CI run is created by this push** (Requirement 6.7 of the
+`ci-flaky-test-detection` spec): the commit is empty, and `ci-app.yml` /
+`ci-app-prod.yml` do not run on `flaky-repro/**`.
+
+#### 2-C: wait for the `flaky-repro` check-run
+
+Do not wait here — 2-B is the last thing done before the static analysis
+below. Go read that now; 2-C through 2-F then run at the end of this step,
+right before Step 3, while the measurement has had time to finish. When you
+come back, poll REST every 60 seconds, for at most 30 minutes from the push:
+
+```bash
+gh api "repos/growilabs/growi/commits/${REPRO_SHA}/check-runs" \
+  -q '.check_runs[] | select(.name == "flaky-repro") | {status, conclusion, html_url}'
+```
+
+Three ways out of the poll:
+
+- the check-run reports `status == "completed"` → take its `conclusion` to 2-D;
+- **no check-run named `flaky-repro` has appeared within the first ~5
+  minutes** → the instrument never started. Stop polling now rather than
+  burning the full 30 minutes, and treat it as "confirmation not measured"
+  (2-E), naming the likely causes in the stop comment: the branch name did
+  not match `flaky-repro/**`, or the base commit predates `flaky-repro.yml`;
+- 30 minutes elapse with the check-run still `queued` / `in_progress` →
+  "confirmation not measured" as well.
+
+The check-run's conclusion answers only "could a measurement be taken at
+all": `success` means the request was valid and the runs happened (the tests
+themselves may well have failed — that is the measurement), `failure` means
+the request was rejected or the setup broke and nothing was measured.
+
+#### 2-D: read the tally from the `### Repro result` comment
+
+```bash
+REPRO_RESULT_FILE="${TMPDIR:-/tmp}/flaky-repro-${ISSUE_NUMBER}.md"
+
+gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}/comments?per_page=100" --paginate --slurp \
+  | jq -r --arg sha "$REPRO_SHA" '
+      [ flatten[]
+        | select(.body | startswith("### Repro result"))
+        | select(.body | split("\n") | any(. == "- Commit: " + $sha)) ]
+      | last // empty | .body' > "$REPRO_RESULT_FILE"
+
+grep -m1 -E '^- Runs:' "$REPRO_RESULT_FILE"
+grep -m1 -E '^- Failed:' "$REPRO_RESULT_FILE"
+```
+
+**The comment must be the one this push produced.** A tracking issue
+accumulates `### Repro result` comments — the confirmation measurement, a
+later rate measurement (second tier), the fix verification in Step 6 — so
+"the newest one" is not the same thing as "mine". Match on the
+`- Commit: ${REPRO_SHA}` line, the first of the result's fixed lines, and let
+an empty file mean "no result for this commit" rather than silently reading
+somebody else's tally. Among comments for the same commit take the **newest**
+(`last`), because a manually re-run job leaves a second one.
+
+Three details of that pipeline are load-bearing, each measured against this
+repo's real data:
+
+- `--slurp` and `-q` cannot be combined (gh 2.100.0 rejects it), hence the
+  pipe into `jq` rather than gh's own `-q`;
+- `--paginate -q` would apply the filter to **each page separately**, so no
+  aggregation (`last`, `[...]`) may live inside `-q` — `--slurp` plus
+  `flatten[]` is what makes the selection see every page at once;
+- `test("^- Commit: …"; "m")` does **not** anchor per line in jq 1.8.1, so
+  the `split("\n") | any(...)` form stays.
+
+`grep -m1` matters for the same reason: the comment ends with an excerpt of
+the failing run's output, and a vitest excerpt can itself contain a line
+beginning with `- Failed:`. The seven fixed `- Key: value` lines
+(`- Commit:`, `- Branch:`, `- Mode:`, `- Runs:`, `- Failed:`, `- Per-run:`,
+`- Workflow run:`) always come first, in that order, before any note or
+fenced excerpt.
+
+**A `success` conclusion on its own is not evidence that anything was
+measured.** The workflow posts the comment in a separate step that
+deliberately does not fail the job, so a comment that never arrived (a locked
+issue, a momentary GitHub outage) leaves the check-run green with only a
+warning annotation behind it. Require **both**: the check-run completed
+`success`, **and** a `### Repro result` comment carrying
+`- Commit: ${REPRO_SHA}` exists with a `- Runs:` value of at least 1 and a
+`- Failed:` line. If either is missing, the outcome is "confirmation not
+measured" — the job summary is for human readers, and the issue's existing
+static evidence is not a substitute.
+
+#### 2-E: decide, from the tally alone
+
+| Reading | Outcome |
+|---|---|
+| `Failed` < `Runs` — at least one run passed | **confirmed** |
+| `Failed` == `Runs` — every run failed | **possible genuine regression** |
+| check-run `failure`; or no `flaky-repro` check-run within ~5 min; or still unfinished after 30 min; or no `### Repro result` comment for this commit, no `- Runs:` line, or `- Runs: 0` | **confirmation not measured** |
+
+**confirmed** — a spec that passes at least once on unchanged code, with a
+recorded CI failure behind it, is non-deterministic. Escalate the label
+(REST, per Error Handling — the `gh issue edit` / `gh label` paths are
+GraphQL-backed and a cloud routine's session rejects them):
+
+```bash
+gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}/labels" -X POST -f 'labels[]=flaky/confirmed'
+gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}/labels/flaky%2Fsuspected" -X DELETE
+```
+
+Then record the tally in a comment, counting the CI failure the issue already
+documents as one more failing sample — written as
+**recorded CI failure 1 + `Failed` / `Runs` + 1**. With `- Runs: 3` and
+`- Failed: 1` that reads `2 / 4`. The decision above used the workflow's own
+`Failed`/`Runs`; the `+1` figure is for the record only, never fed back into
+the comparison.
+
+```bash
+gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}/comments" -X POST -f body="$(cat <<'EOF'
+**Confirmation measurement** — the repro workflow ran this spec 3 times on
+current `master` with no code change: 1 failed, 2 passed
+({workflow run URL}). Counting the CI failure already recorded above as a
+failing sample, the tally is **2 / 4**.
+
+Escalated `flaky/suspected` → `flaky/confirmed`.
+EOF
+)"
+```
+
+Use a bold lead-in, not a `###` heading: `### Repro result` belongs to the
+workflow, and `### Additional observation` / `### Backfilled observation` are
+what `detect-flaky-ci` counts as occurrences. This comment must not be
+mistaken for either.
+
+**possible genuine regression** — every measured run failed on unchanged
+`master` code, so "the mining hit was right and this is flaky" is no longer
+the leading reading. Do **not** promote the label; leave `flaky/suspected` in
+place. Write the finding to the issue (same comment shape, quoting `- Runs:`
+and `- Failed:` and the workflow run URL) stating that the spec failed on
+every measured run and that a real regression is the leading hypothesis, then
+carry MEDIUM into Step 4 — see its confidence table.
+
+**confirmation not measured** — nothing was measured, so this gate cannot be
+crossed. Post a comment saying so (which of the conditions above applied,
+the check-run URL if there is one, and the likely cause), add the
+`flaky/needs-decision` label, end the comment with a single
+`- Recommendation: <one line>` line, then clean up the branch (2-F) and stop:
+
+```bash
+gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}/labels" -X POST -f 'labels[]=flaky/needs-decision'
+```
+
+Do not let the issue's existing static evidence stand in for the missing
+measurement, and do not fold this into any later tally: a measurement that
+did not happen is not evidence of anything.
+
+#### 2-F: delete the confirmation branch
+
+```bash
+git push origin --delete "$BRANCH"
+git switch -          # leave the throwaway ref before anything branches again
+git branch -D "$BRANCH"
+rm -f "$REPRO_RESULT_FILE"
+```
+
+Do this on **every** exit path — including the ones where no result was ever
+read (rejected request, timeout, check-run absent), or `flaky-repro/**` refs
+accumulate on the remote. Deleting the branch starts no workflow run (task
+1.6 measured this: the `flaky-repro` run count was unchanged after its three
+self-test branches were deleted).
+
+Leaving the local branch is not cosmetic: every later step branches from
+wherever HEAD is, so staying on the repro branch would make Step 5-A cut the
+fix branch off it and carry the empty `chore: request a flaky repro` commit
+into the fix PR.
 
 ### Primary tier — CI log analysis (always available, no live services needed)
 
@@ -208,31 +420,26 @@ static-analyze for timing-dependent patterns (missing
 `comments.spec.ts` "strict mode violation: resolved to 2 elements" pattern,
 a real example already seen in this repo's CI).
 
-**Second tier — actively re-run the real CI job (always available, no local
-services needed, and stronger than local reproduction).** `detect-flaky-ci`
-noted that a same-SHA rerun flipping from failure to success is the
-gold-standard flaky signal, but treated it as rare because it only happens
-when a human manually reruns. This skill does not have to wait for that —
-it can trigger it directly, using GitHub Actions' own real MongoDB replica
-set / Elasticsearch / browsers instead of whatever local environment this
-skill happens to be running in:
+**Second tier — measure a failure rate with the same repro workflow (always
+available, no local services needed, and stronger than local
+reproduction).** The confirmation gate above spends 3 runs on a yes/no
+question ("does this spec ever pass on unchanged code?"). Root-cause work
+sometimes needs a rate instead: "failed 1/10" and "failed 9/10" point at
+very different mechanisms — the first looks like genuine timing noise, the
+second like a deterministic bug that merely presents as CI-only — and they
+land on different rows of Step 4's confidence table.
 
-```bash
-gh run rerun {RUN_ID} --repo growilabs/growi --failed
-```
+To take that measurement, push a second request exactly as in 2-B…2-F, on
+its own branch (`flaky-repro/issue-{ISSUE_NUMBER}-rate`), with a higher
+`Flaky-Repro-Repeat` — 10 is the workflow's cap. It runs on GitHub Actions'
+own MongoDB replica set and Elasticsearch rather than on whatever local
+environment this skill happens to be running in.
 
-where `{RUN_ID}` is a run cited in the issue's evidence. Wait for it to
-complete (`gh run watch {RUN_ID} --repo growilabs/growi`), then fetch the
-new attempt's job log exactly as in Step 1/`detect-flaky-ci` Step 2. Repeat
-2-3 times to build a same-commit pass/fail tally — e.g. "failed 1/4 reruns"
-is meaningfully different evidence from "failed 4/4 reruns" for both the
-root-cause read (the former looks like real non-determinism, the latter
-looks more like a deterministic bug that merely presents as CI-only) and
-for Step 4's confidence assessment. This costs CI minutes on the real repo,
-so do not loop indefinitely — 2-3 reruns is enough signal; stop earlier if a
-clear pattern emerges (e.g. it fails every single time — that increasingly
-looks like a real regression, not a flake, and is worth flagging as such
-even though `detect-flaky-ci` escalated it).
+This is a **different budget** from the confirmation gate, and it costs real
+CI minutes: take it once, and only when the rate would actually change the
+Step 3 category or the Step 4 confidence. A `flaky/confirmed` issue that
+arrives without a confirmation measurement (see Precondition) can use this
+tier directly when a rate is what the root-cause read is missing.
 
 **Bonus tier — live reproduction, only if the current environment supports
 it.** Probe rather than assume:
@@ -417,13 +624,12 @@ alternative explicitly rather than defaulting to the bump.
 
 | Situation | Confidence |
 |---|---|
-| Root cause pinpointed (category from Step 3 is clear, consistent with the Step 2 rerun tally) + fix is surgical (1-2 files) | HIGH |
+| Root cause pinpointed (category from Step 3 is clear, consistent with the Step 2 repro tally) + fix is surgical (1-2 files) | HIGH |
 | Root cause identified but fix touches product code with broader blast radius, or category is ambiguous between "shared state" and "product race" | MEDIUM |
-| Reruns failed 100% of the time (looks like a real regression, not a flake — see Step 2's note) | MEDIUM — flag this explicitly, do not silently treat it as a flaky-test fix |
-| Issue came in as `flaky/suspected` and its one confirmation rerun (Step 2) also failed | MEDIUM — the mining hit alone is not empirical proof; say explicitly that the confirmation rerun did not reproduce a pass, so this could be a real regression rather than a flake, and that only one rerun was budgeted (not the 100%-tally case above) |
-| Issue came in as `flaky/suspected` and its one confirmation rerun (Step 2) could not even be attempted (e.g. `actions:write` unavailable) | MEDIUM at best, never HIGH — a tooling gap is not proof of anything; say explicitly that the required confirmation rerun was never performed at all, distinct from "attempted and failed" above, and that existing static evidence (e.g. matrix divergence already in the issue) does not substitute for it |
+| The repro tally is `Failed == Runs` — every measured run failed on unchanged `master` code (Step 2's "possible genuine regression") | MEDIUM — flag this explicitly, do not silently treat it as a flaky-test fix. Quote the `- Runs:` / `- Failed:` values and say that a real regression is the leading hypothesis; the mining hit that produced a `flaky/suspected` label is not empirical proof on its own, and the label stays `flaky/suspected` |
+| The confirmation was not measured at all — check-run `failure`, no `flaky-repro` check-run, the 30-minute wait elapsed, or no readable `### Repro result` comment for this commit (Step 2, 2-E) | MEDIUM at best, never HIGH — nothing was measured, which is not proof of anything in either direction. Say explicitly that the required confirmation measurement never produced a tally, distinct from "measured and failed every run" above, and that the issue's existing static evidence (e.g. matrix divergence, a diff/PR mismatch) does not substitute for it. This is a `flaky/needs-decision` stop at Step 2; if a human decision brought the investigation back here, state which reading of the evidence that decision supplied |
 | Proposed fix is a bare timeout increase, with no check for whether the test's cost scales with a parameter (see the Step 3 guardrail) | MEDIUM at best — go back and check for a redesign before treating this as HIGH, even if the diff is small and clean |
-| CI evidence and reruns alone do not localize a cause | LOW |
+| CI evidence and the repro tally together do not localize a cause | LOW |
 
 **In `autonomous` mode:**
 - **HIGH** → proceed to Step 5 automatically. State the category and planned fix.
@@ -603,20 +809,19 @@ top of the repeat-CI tally above.)
   investigate (see Precondition).
 - `gh run rerun` itself errors out (403 "Resource not accessible by
   integration", or any other failure to even start the rerun — not the
-  rerun completing and failing) at Step 2 or Step 6-B: this is a **known
+  rerun completing and failing) at Step 6-B: this is a **known
   recurring constraint** in some execution environments (e.g. a
   restricted-token cloud/bot session), not a rare edge case, and it is not
   grounds to skip the gate or treat existing static evidence as a
   substitute. Record the exact error, cap confidence at MEDIUM per the
-  Step 4 / Step 6-C tables above, and — in autonomous mode — stop and ask
-  rather than silently proceeding as if the rerun budget had been spent.
-  Do not defer mentioning this constraint until after a fix has already
-  been implemented and a PR opened; if the token cannot do this, that is
-  known from the very first rerun attempt, at Step 2, before any code is
-  written.
+  Step 6-C table above, and — in autonomous mode — stop and ask rather than
+  silently proceeding as if the rerun budget had been spent. (Step 2 is no
+  longer affected: its confirmation gate is driven by a branch push and REST
+  reads, neither of which needs `actions:write`.)
 - A human approves proceeding with a best-guess fix at a MEDIUM gate for an
-  issue that came in as `flaky/suspected` and whose confirmation rerun
-  failed (Step 2/Step 4): the label is still `flaky/suspected` at that
+  issue that came in as `flaky/suspected` and whose confirmation measurement
+  came back `Failed == Runs` (Step 2/Step 4): the label is still
+  `flaky/suspected` at that
   point, not `flaky/confirmed` — do not silently promote it. Leave the
   label as-is and let the PR body's Root Cause section carry the caveat
   that this was never empirically reproduced; only Step 6-D's "reruns
