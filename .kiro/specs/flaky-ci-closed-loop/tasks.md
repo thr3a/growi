@@ -54,7 +54,7 @@
     - 実測で見つけて直した点: 抜粋に vitest の ANSI 色コードが混ざる → 抜粋生成時に除去。集計がジョブログに出ないので `gh run view --log` で追えない → 結果ブロックをログにも出力（いずれも数行の追加、YAML と `bash -n` で確認）
 
 - [ ] 2. Core A: 検出（`detect-flaky-ci/SKILL.md`）— 集約と追跡対象外
-- [ ] 2.1 (P) 巻き添えと連鎖を 1 issue にまとめる
+- [x] 2.1 (P) 巻き添えと連鎖を 1 issue にまとめる
   - 1 つのジョブログに `test/setup/` 配下を指す `Hook timed out` があるとき、同じログの他ファイルの `Hook timed out` / `Test timed out` は新規 issue にせず、共有フックの追跡 issue に `### Collateral candidate` 見出しでコメントする（run URL・ファイル・テスト名・timeout 値）。アサーション失敗・unhandled rejection・接続エラーは対象外と明記する
   - 巻き添え候補として記録したテストが、共有フック timeout の無い run で失敗したときは通常の識別として扱い、候補コメントの run URL を初回観測の補足として引く
   - 同一ファイル・同一 run の複数 FAIL は先頭を識別とし、後続は issue 本文の「Cascaded in the same run」節に列挙する
@@ -177,3 +177,6 @@
 - 1.4: workflow 内のコメントで spec を参照するときは、port-back 後も残る **`.kiro/specs/ci-flaky-test-detection`** を指す（amend spec のディレクトリは 7.3 で消える）
 - 1.3: 結果コメントの本文は 1.2 が描いた `result.md` をそのまま送る（抜粋の囲みは 1.2 側で 1 回だけ描く。suite モードの補足文も 1.2 のレンダラー内で描き、サマリとコメントが食い違わないようにした）。投稿 step は `requested == 'true' && issue != ''` のときだけ動き、`always()` を付けていないので測定 step が落ちればコメントは付かない。POST 失敗は `::warning::` と `### Could not post the repro result to issue #N` の記録で exit 0（結論は「測定できたか」のみ）
 - 1.3 → 3.1 / 3.2: 抜粋の中に `- Failed:` で始まる行が混ざり得るので、routine が読むときは **先頭一致で最初の 1 行だけ**（`grep -m1 -E '^- (Runs|Failed):'`）を取る。固定 7 行は補足文・囲みより前に必ず連続して並ぶ
+- 2.1: 共有 setup フックの識別は既存 issue の題名が揺れている（#11752 はフックのパス、#11821/#11850 は spec ファイル名）ため、Step 4 の完全一致とは別に「題名に `test/setup/<hook>` を含む open issue」を探すパス照合を置いた。**→ 5.1 で扱う**: この照合は open issue 限定なので、共有フックの issue が閉じられた後の再発は再オープン経路に届かず別 issue になる。#11752 の題名を識別キーに揃えるか、閉じた issue も照合対象にして CLOSED 経路へ渡すよう明記する
+- 2.1: 巻き添えと連鎖の範囲は **同じジョブログ**（run ではない）。design.md の「同一 run」より狭いが、ジョブは別プロセスなので汚れた状態は 1 ジョブ内でしか伝わらない。**→ 7.1 の port-back で design.md を現在の事実に直す**
+- 2.1 → 5.1: `detect-flaky-ci/SKILL.md` から `flaky-ci-routine.md Step 4 item 3`（Occurrences の定義）を参照している。4.2 の Step 挿入で **Step 5** にずれるので、5.1 の突き合わせは他ファイルからの Step 番号参照も対象にする

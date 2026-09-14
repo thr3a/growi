@@ -563,6 +563,243 @@ run it through "Cheap Suspicion Mining" above — a hit there makes this a
 **suspected** occurrence (tier 2) instead of a plain observation (tier 1).
 Either way, proceed to Step 4.
 
+**But not every FAIL block is its own identity.** One cause routinely
+produces many FAIL blocks in a single job log: a shared setup hook that
+times out takes down every spec file the pool handed it, and the first
+failing test in a spec file can poison the rest of that file. The three
+subsections below fold those into one identity **before** anything reaches
+Step 4. Apply them in this order — they are what keeps the tracker's issue
+count equal to the number of causes:
+
+1. Shared setup-hook timeouts (one identity per hook, not per spec file)
+2. Collateral timeouts in the same job log
+3. Cascaded failures in the same spec file and job log
+
+### Shared setup-hook timeouts: one identity per hook, not per spec file
+
+A hook registered in a Vitest **project's `setupFiles`** (e.g.
+`test/setup/migrate-mongo.ts`) runs for every spec file assigned to the
+worker, so when it times out, the spec files that report `FAIL` are
+incidental — they are the files that happened to be in flight, not N
+separate flaky tests. (This is the same phenomenon mining check ⑤
+measures; ⑤ decides the *tier*, this decides the *identity*.)
+
+**How to tell a shared setup-hook timeout from a spec file's own hook:**
+read the stack frame printed directly under the error, not the `FAIL` line:
+
+```
+Error: Hook timed out in 20000ms.
+ ❯ test/setup/migrate-mongo.ts:52:1      ← under test/setup/ → shared setup hook
+```
+
+```
+Error: Hook timed out in 10000ms.
+ ❯ src/server/service/user-group.integ.ts:60:3   ← a spec file → NOT a shared setup hook
+```
+
+The frame is the only reliable discriminator, and it decides the routing on
+its own:
+
+- **Frame resolves under `test/setup/`** → shared setup-hook timeout. Every
+  spec file in this job log failing with the same error and the same frame
+  collapses into **one** identity. List the affected spec files inside the
+  issue body / observation comment's log excerpt; do not open one issue per
+  file.
+- **Frame resolves into a spec file** → this is that spec file's own
+  `beforeAll`/`beforeEach`, and it is **not** a shared setup-hook timeout —
+  even when the hook body calls a helper defined under `test/setup/`. The
+  `getInstance()` timeouts are exactly this case: the helper lives in
+  `test/setup/crowi.ts`, but the hook that timed out is registered in the
+  spec file and the frame says so. Route it as an ordinary identity — or, if
+  this job log also has a shared setup-hook timeout, as collateral (next
+  subsection). A hook has no test title, so spell the identity's
+  `{TEST_TITLE}` part as
+  `beforeAll hook timeout ({N}ms) — {the call on the frame line, e.g. getInstance()}`
+  (substitute `beforeEach`/`afterAll`/`afterEach` as the log says). This is
+  the spelling the existing tracking issues already use (#11821:
+  `vitest:src/server/service/page/v5.non-public-page.integ.ts:beforeAll hook timeout (10000ms) — getInstance()`),
+  so the exact-title match in Step 4 — including the promotion of a
+  collateral candidate to its own issue (Requirement 7.2) — lands on the
+  same issue instead of opening a duplicate.
+
+Identity key for a shared setup-hook timeout (used when creating a new
+issue):
+
+`vitest:{SETUP_FILE_PATH}:{HOOK_NAME} setup hook timeout ({N}ms) during {JOB_NAME_WITHOUT_MATRIX}`
+
+e.g. `vitest:test/setup/migrate-mongo.ts:beforeAll setup hook timeout (20000ms) during ci-app-test-integration`.
+
+**Reconciliation exception, for shared setup-hook identities only.** Step 4
+matches on the exact title, deliberately. That works because an identity key
+is reproduced character-for-character from the log every time — which is
+true of `vitest:{SPEC_PATH}:{TEST_TITLE}` but *not* of the descriptive
+wording above, whose existing tracking issues were worded before this rule
+was written. So for this one kind of identity, look up the tracking issue by
+the setup file's path instead: among the OPEN flaky-labelled issues already
+fetched in Step 1.5 (no new API call), find those whose title contains this
+setup file's path.
+
+- **Exactly one** → that is this hook's tracking issue. Take the appropriate
+  existing-issue branch in Step 4 against it; do not create anything.
+- **None** → create a new issue with the identity key above.
+- **More than one** → create nothing, comment the observation on the
+  lowest-numbered match, and report the ambiguity (issue numbers, setup file)
+  in Step 5 so a human can merge them.
+
+Restrict the lookup to OPEN issues: this is asking "what tracks this hook
+right now", and a closed one is a historical record whose reopen decision
+belongs to Step 4's CLOSED-issue branch, reached only by an exact title
+match. This exception is scoped to setup-hook identities and nothing else —
+every other identity keeps exact-title matching, and the "do not fuzzy-match"
+rule in Step 4 and the ambiguous-identity rule in Error Handling are
+unchanged.
+
+### Collateral timeouts in the same job log
+
+When a job log contains at least one shared setup-hook timeout, the whole
+worker pool in that job was starved for time. Other files timing out in the
+same log are then most likely victims of that same starvation rather than
+flaky in their own right — filing them separately is what makes one cause
+look like four (#11851 / #11852 / #11858 all came from runs that also had a
+`test/setup/migrate-mongo.ts` hook timeout).
+
+**Collateral set** — in a job log that has a shared setup-hook timeout,
+every *other* failure in **that same job log** whose error is:
+
+- `Hook timed out in Nms` with a frame resolving into a spec file, or
+- `Test timed out in Nms` (a test body, always attributed to its spec file)
+
+**Never collateral**, no matter what else is in the log — these have no
+load-based explanation, so they go through Step 4 as ordinary identities:
+
+- assertion failures (`AssertionError`, `expected … to …`)
+- unhandled rejections
+- connection / socket errors (`ECONNREFUSED`, `MongoNetworkError`, …)
+- another shared setup-hook timeout (frame under `test/setup/`) — each
+  shared hook keeps its own identity and its own tracking issue
+
+**Scope is one job log, not one run.** A run's jobs are separate processes on
+separate runners; `ci-app-test`'s failures are not collateral of
+`ci-app-test-integration`'s starved hook. Compute the collateral set per job
+log and record the run URL only as a reference.
+
+**Order of work.** Route this log's shared setup-hook identity (or
+identities) through Step 4 first, so the tracking issue exists, then post
+**one** `### Collateral candidate` comment per job log listing every
+collateral entry from that log — and none at all when the log has a shared
+setup-hook timeout but zero collateral entries (an empty table is noise, not
+a record). When the log has two shared setup hooks,
+each one still goes through Step 4 on its own (two identities, two
+observations, two tracking issues) — but the collateral comment is still a
+single comment, posted to whichever of them the rule below picks.
+
+**Which issue receives the comment**, when a log has more than one shared
+setup-hook timeout: the one accounting for the **most affected spec files**
+in this job log; on a tie, the one whose first FAIL block appears earliest in
+the log. Post the comment even if that issue is closed — it is not an
+observation, so it must **not** go through the CLOSED-issue reopen decision,
+and it changes no labels and no tier.
+
+```bash
+gh issue comment {NUMBER} --repo growilabs/growi --body "$(cat <<'EOF'
+### Collateral candidate
+
+Not filed as separate issues: this job log also carried a shared setup-hook
+timeout (this issue's identity), so these timeouts are most likely victims of
+the same starvation rather than flaky in their own right.
+
+- Run: {RUN_HTML_URL}
+- Job: {JOB_NAME}
+- Commit: {HEAD_SHA}
+- Date: {CREATED_AT}
+
+| Spec file | Test / hook | Timeout |
+|---|---|---|
+| {SPEC_PATH} | {TEST_TITLE, or the hook, e.g. `beforeAll`} | {N}ms |
+EOF
+)"
+```
+
+Collateral entries create no issues and are not observations — see "Which
+comment headings count as an occurrence" below.
+
+**When a collateral candidate turns out to be flaky on its own.** If one of
+these spec+test pairs fails in a job log that has **no** shared setup-hook
+timeout, that failure is ordinary evidence: take it through Step 4 exactly
+as any other identity (create or update as usual). Before creating, check the
+`### Collateral candidate` comments on the tracking issues whose identity
+names a path under `test/setup/` (that set is already in hand from Step 1.5 —
+this is a re-read, not a new search) for a row naming this spec file and
+title. If one exists, add its run URL to the new issue's body as prior
+context:
+
+```
+- Prior collateral sighting: {RUN_HTML_URL} (recorded on #{N} on {DATE}; prior context, not an observation)
+```
+
+Use the earliest matching row, and do **not** move `### First observation`
+back to that date or count it toward `--vitest-threshold` — it was explicitly
+not counted as an occurrence when it was recorded.
+
+### Cascaded failures in the same spec file and job log
+
+Once a test fails, the rest of its spec file can fail for the same reason —
+a poisoned React `act()` queue, a torn-down fixture, a connection the first
+test left broken. Those later failures carry no independent information
+(#11890 / #11891 / #11892 were three such followers of #11849).
+
+**Cascade** = two or more FAIL blocks for the **same spec file** in the
+**same job log**. The **identity is the first one in log order**; every
+later FAIL block for that file in that log is a cascaded failure and gets no
+issue of its own.
+
+Read the order from the reporter's per-file block — the `×` lines, which are
+printed in the file's own execution order:
+
+```
+ ❯  app-components  src/client/.../AdminCodeEditor.spec.tsx (9 tests | 4 failed) 232ms
+   × AdminCodeEditor > theme following > applies the dark theme when in dark mode   ← identity
+   × AdminCodeEditor > accessible label > ...                                       ← cascaded
+   × AdminCodeEditor > editing aids > ...                                           ← cascaded
+   × AdminCodeEditor > controlled value > ...                                       ← cascaded
+```
+
+If that block is not in the log, fall back to the order of the
+`FAIL {SPEC_PATH} > {SUITE} > {TITLE}` blocks in the `Failed Tests` section.
+
+Cascaded titles are listed in the `Cascaded in the same run` section of the
+issue body (new issue) or of the `### Additional observation` comment
+(existing issue) — see Step 4 for both shapes.
+
+Two limits keep this from swallowing real evidence:
+
+- **One spec file only.** Unlike collateral, a cascade never spans files. Two
+  files failing in one log are two identities (unless the collateral rule
+  above applies).
+- **One job log only.** The same title failing in another job log, or in
+  another run, is an independent observation and reaches Step 4 on its own.
+
+### Which comment headings count as an occurrence
+
+The dashboard counts Occurrences as **1** (the issue body's own first
+observation) plus the comments whose **first line** prefix-matches
+`### Additional observation` or `### Backfilled observation` — see
+`.claude/commands/flaky-ci-routine.md` Step 4 item 3. Two consequences the
+rules above depend on, and which must not be "simplified" away later:
+
+- A `### Collateral candidate` comment is **never** counted: its first line
+  is neither of those two headings. That is the whole mechanism by which
+  collateral entries stay off the dashboard — no extra exclusion logic
+  exists anywhere, so renaming this heading to something starting with
+  `### Additional observation` would silently start counting them.
+- A cascade list must be **nested inside** the observation comment, under a
+  `Cascaded in the same run` heading in the middle of the body. Because only
+  the first line is matched, that comment still counts as exactly one
+  occurrence — which is what the run actually was. Never post one
+  observation comment per cascaded test (that would multiply the count), and
+  never post the cascade list as a comment of its own (nothing would count
+  it and nothing would link it to the identity).
+
 ## Step 4: Reconcile Against Existing Issues
 
 **The issue title IS the identity key, verbatim** — this is deliberate: it
@@ -626,12 +863,26 @@ gh issue create --repo growilabs/growi \
 - Job: {JOB_NAME}
 - Commit: {HEAD_SHA}
 - Date: {CREATED_AT}
+{if this identity was previously recorded as a collateral candidate, add — see Step 3:
+"- Prior collateral sighting: {RUN_HTML_URL} (recorded on #{N} on {DATE}; prior context, not an observation)"}
 
 ### Evidence
 
 ```
 {relevant log excerpt — the FAIL block or the ::error annotation + retry blocks}
 ```
+
+{if this spec file had more than one FAIL block in this job log, add the
+cascade section — heading and wording fixed, see Step 3:
+
+"### Cascaded in the same run
+
+The same spec file's later failures in this job log, folded into this issue
+rather than filed separately (they follow from the failure above, not from
+independent flakiness):
+
+- {SUITE} > {TITLE}
+- {SUITE} > {TITLE}"}
 
 {if suspected, include the specific mining evidence **for every check that matched, not just one** — one line per match, e.g.:
 "① PR #{N} changed {files}, none overlap this spec's path or stack trace"
@@ -704,6 +955,30 @@ gh issue comment {NUMBER} --repo growilabs/growi --body "$(cat <<'EOF'
 EOF
 )"
 ```
+
+**This comment shape is the single definition** used by every existing-issue
+branch below (`flaky/suspected`, `flaky/confirmed`, and the reopened-CLOSED
+path), including the addition that follows — do not restate a variant of it
+per branch.
+
+**Addition when this job log carried a cascade** (Step 3: two or more FAIL
+blocks for this spec file in one job log). Append this section to the same
+comment's body — one comment for the run, never one per cascaded test, and
+never a comment of its own:
+
+```markdown
+### Cascaded in the same run
+
+The same spec file's later failures in this job log, folded into this
+observation rather than filed separately:
+
+- {SUITE} > {TITLE}
+- {SUITE} > {TITLE}
+```
+
+The comment still counts as exactly one occurrence, because the dashboard
+prefix-matches only its first line — see "Which comment headings count as an
+occurrence" in Step 3.
 
 Then check both escalation paths, in this order:
 
@@ -867,8 +1142,21 @@ of the five mining checks** (①, ②, ③, ⑤, ④'s backfill) — since all o
 the first hit, one suspected issue can match more than one check, so these
 five counts will not sum to the total number of suspected issues. Report them
 separately anyway; this is the data that answers "which of these checks is
-actually pulling weight" over time. This is the only user-facing output —
-do not create files.
+actually pulling weight" over time.
+
+Also report what Step 3's aggregation folded together, so the difference
+between "causes" and "failures" stays visible:
+
+- how many `### Collateral candidate` comments were posted, and how many
+  tests they list in total (and on which tracking issues)
+- how many cascaded failures were folded into an identity rather than filed
+  (and for which spec files)
+- how many spec files were folded into each shared setup-hook identity
+- any shared setup-hook lookup that matched more than one OPEN tracking
+  issue (setup file and the matching issue numbers) — this needs a human to
+  merge them
+
+This is the only user-facing output — do not create files.
 
 ## Error Handling
 
