@@ -210,7 +210,7 @@ flowchart TD
 
 | Requirement | Summary | Components | Interfaces | Flows |
 |-------------|---------|------------|------------|-------|
-| 1.1, 1.2 | GitHub不要の参加導線 | Operational Prerequisites（共有POEditorプロジェクトのpublic join page。翻訳者はnamespaceタグで絞り込める） | — | — |
+| 1.1, 1.2 | GitHub不要の参加導線 | Operational Prerequisites（共有POEditorプロジェクトのpublic join page） | — | — |
 | 1.3 | 貢献手順の文書化 | Contributor Guide (`docs/i18n-community-translation.md`) | — | — |
 | 2.1, 2.2, 2.3 | ソース言語のpush同期 | PushSourceSync, NamespaceEnvelope, LanguageCodeMap, PoeditorClient, SyncConfig | `PoeditorClient.uploadTerms`, `combineNamespaceContents`, `wrapSingleNamespace`, `toPoeditorLanguageCode` | Push Flow |
 | 3.1, 3.2 | 変更種類での分岐 | PullTranslationSync, NamespaceEnvelope, LanguageCodeMap, DiffClassifier | `DiffClassifier.classify`, `extractNamespaceContent`, `toPoeditorLanguageCode` | Pull Flow |
@@ -220,20 +220,22 @@ flowchart TD
 | 6.1 | toolbar.*キーの同期範囲包含 | SyncConfig（`translation` namespace に含まれる） | — | — |
 | 7.1, 7.2 | POEditor OSSプラン運用（申請対象は共有プロジェクト1つ） | Operational Prerequisites, SyncConfig（`SHARED_POEDITOR_PROJECT_ID`） | — | — |
 | 8.1 | 同期失敗の可視性 | PushSourceSync / PullTranslationSync（ワークフロー失敗として表面化） | — | Push Flow, Pull Flow |
+| 9.1, 9.2, 9.3 | namespace・機能単位のタグによる絞り込み | PushSourceSync, NamespaceEnvelope, PoeditorClient, Operational Prerequisites（翻訳者はPOEditor自体のタグ絞り込みUIを使う。GROWI側の新規画面は作らない） | `PoeditorClient.uploadTerms`（`tag`指定）, `wrapSingleNamespace` | Push Flow |
+| 10.1, 10.2 | ロケールコードの対応 | LanguageCodeMap, PushSourceSync, PullTranslationSync | `toPoeditorLanguageCode` | Push Flow, Pull Flow |
 
 ## Components and Interfaces
 
 | Component | Domain/Layer | Intent | Req Coverage | Key Dependencies (P0/P1) | Contracts |
 |-----------|--------------|--------|--------------|--------------------------|-----------|
 | SyncConfig | Sync Tooling | 共有POEditorプロジェクトIDとnamespace↔ロケールファイルパスの宣言データ | 2.1, 6.1, 7.1 | — | State |
-| NamespaceEnvelope | Sync Tooling | namespaceのJSONラップ/アンラップを行うpure function | 2.1, 2.2, 3.1 | — | Service |
-| LanguageCodeMap | Sync Tooling | GROWIロケールコード→POEditor言語コードの対応表（pure function） | 2.1, 3.1 | — | Service |
-| PoeditorClient | Sync Tooling | POEditor API v2 の薄いラッパー（`sync_terms`/`tags` に対応） | 2.1, 3.1 | POEditor API (P0) | API |
+| NamespaceEnvelope | Sync Tooling | namespaceのJSONラップ/アンラップを行うpure function | 2.1, 2.2, 3.1, 9.1 | — | Service |
+| LanguageCodeMap | Sync Tooling | GROWIロケールコード→POEditor言語コードの対応表（pure function） | 10.1, 10.2 | — | Service |
+| PoeditorClient | Sync Tooling | POEditor API v2 の薄いラッパー（`sync_terms`/`tags` に対応） | 2.1, 3.1, 9.1 | POEditor API (P0) | API |
 | DiffClassifier | Sync Tooling | 訳文のみ/構造変更を判定するpure function | 3.1, 3.2 | — | Service |
-| PushSourceSync | Sync Tooling | en_USを統合アップロード+namespace別タグ付けの2段階でpushするCLI | 2.1, 2.2, 2.3, 8.1 | NamespaceEnvelope (P0), LanguageCodeMap (P0), PoeditorClient (P0), SyncConfig (P0) | Batch |
-| PullTranslationSync | Sync Tooling | 言語ごとに統合exportし、namespaceへ分割して分類結果に応じて反映するCLI | 3.1, 3.2, 3.3, 3.4, 8.1 | NamespaceEnvelope (P0), LanguageCodeMap (P0), PoeditorClient (P0), DiffClassifier (P0), 既存 `lint:i18n` (P0) | Batch |
+| PushSourceSync | Sync Tooling | en_USを統合アップロード+namespace別タグ付けの2段階でpushするCLI | 2.1, 2.2, 2.3, 8.1, 9.1, 10.1 | NamespaceEnvelope (P0), LanguageCodeMap (P0), PoeditorClient (P0), SyncConfig (P0) | Batch |
+| PullTranslationSync | Sync Tooling | 言語ごとに統合exportし、namespaceへ分割して分類結果に応じて反映するCLI | 3.1, 3.2, 3.3, 3.4, 8.1, 10.1 | NamespaceEnvelope (P0), LanguageCodeMap (P0), PoeditorClient (P0), DiffClassifier (P0), 既存 `lint:i18n` (P0) | Batch |
 | Contributor Guide | Docs | 貢献手順・進捗の見方の文書 | 1.3, 5.1, 5.2 | — | — |
-| Operational Prerequisites | Ops（非コード） | OSSプラン申請、共有プロジェクトの作成、public join page有効化（いずれも1プロジェクト分で完結する） | 1.1, 1.2, 7.1, 7.2 | — | — |
+| Operational Prerequisites | Ops（非コード） | OSSプラン申請、共有プロジェクトの作成、public join page有効化（いずれも1プロジェクト分で完結する） | 1.1, 1.2, 7.1, 7.2, 9.2 | — | — |
 
 `Operational Prerequisites` は `docs/i18n-community-translation-setup.md` に手順として記録する（対応する file path を持つ非コード成果物）。
 
@@ -272,7 +274,7 @@ export const SYNC_TARGETS: readonly NamespaceSyncEntry[] = [/* admin / translati
 | Field | Detail |
 |-------|--------|
 | Intent | namespace の内容を共有プロジェクト用にラップ/アンラップする pure function |
-| Requirements | 2.1, 2.2, 3.1 |
+| Requirements | 2.1, 2.2, 3.1, 9.1 |
 
 **Responsibilities & Constraints**
 - I/O を一切持たない。ファイル読み込み・API 呼び出しは呼び出し元（`PushSourceSync`/`PullTranslationSync`）の責務
@@ -314,7 +316,7 @@ export interface NamespaceEnvelopeService {
 | Field | Detail |
 |-------|--------|
 | Intent | GROWI のロケールコードを POEditor が受け付ける言語コードへ変換する |
-| Requirements | 2.1, 3.1 |
+| Requirements | 10.1, 10.2 |
 
 **Responsibilities & Constraints**
 - GROWI の5言語（`en_US`/`ja_JP`/`zh_CN`/`fr_FR`/`ko_KR`）それぞれに対応する POEditor 言語コード（`en`/`ja`/`zh-CN`/`fr`/`ko`）を宣言データとして持つ。POEditor は `en_US` のような GROWI 独自のロケールコードを受け付けない
@@ -343,7 +345,7 @@ export function toPoeditorLanguageCode(growiLocale: string): string;
 | Field | Detail |
 |-------|--------|
 | Intent | POEditor API v2 の upload/export/languages 呼び出しを抽象化する |
-| Requirements | 2.1, 3.1 |
+| Requirements | 2.1, 3.1, 9.1 |
 
 **Responsibilities & Constraints**
 - API トークンは呼び出し元から注入される（`process.env.POEDITOR_API_TOKEN`を直接読まない。**Config層**が読み、Clientには値として渡す — 依存方向 Config→Client を守る）
@@ -431,7 +433,7 @@ interface DiffClassifierService {
 | Field | Detail |
 |-------|--------|
 | Intent | en_US の翻訳ファイルを、統合アップロード1回＋namespace別タグ付けの2段階で共有POEditorプロジェクトへ push する |
-| Requirements | 2.1, 2.2, 2.3, 8.1 |
+| Requirements | 2.1, 2.2, 2.3, 8.1, 9.1, 10.1 |
 
 **Responsibilities & Constraints**
 - `SyncConfig` が宣言する全 namespace の en_US ファイルをまず全部読み込む。1つでも読み込み・JSONパースに失敗した場合、アップロードを一度も行わずに中止し、非ゼロ終了コードでワークフローを失敗させる（Requirement 8.1。プロジェクトが一部の namespace だけの状態へ収束することを避ける）
@@ -453,7 +455,7 @@ interface DiffClassifierService {
 | Field | Detail |
 |-------|--------|
 | Intent | 共有POEditorプロジェクトから言語ごとに翻訳をexportし、namespaceへ分割したうえで `DiffClassifier` の判定に応じて自動反映PRまたはレビュー必須PRを作る |
-| Requirements | 3.1, 3.2, 3.3, 3.4, 8.1 |
+| Requirements | 3.1, 3.2, 3.3, 3.4, 8.1, 10.1 |
 
 **Responsibilities & Constraints**
 - 非ソース言語（4言語）ごとに `PoeditorClient.exportTranslations` を**1回だけ**呼ぶ（namespaceごとの個別exportは行わない）。API を呼ぶ直前に `LanguageCodeMap.toPoeditorLanguageCode` で言語コードを変換する

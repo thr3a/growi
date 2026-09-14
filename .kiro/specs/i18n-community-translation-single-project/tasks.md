@@ -105,7 +105,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 4.1_
   - _Depends: 5.3_
 
-- [ ] 6.2 i18n-community-translation の requirements.md に不足している要件を末尾へ追加する
+- [x] 6.2 i18n-community-translation の requirements.md に不足している要件を末尾へ追加する
   - タスク6.1のレビューで判明: amendのRequirement 2（namespaceタグ付け）とRequirement 4（言語コードの対応）に対応する要件が、i18n-community-translationのrequirements.md（Requirement 1〜8）に存在しない。既存の要件番号は振り直さず、末尾にRequirement 9（namespace・機能単位のタグによる絞り込み）・Requirement 10（言語コードの対応）を追加する
   - 追加する要件の内容は、本amendのrequirements.mdのRequirement 2・Requirement 4の受け入れ基準をベースに、i18n-community-translation側の既存の書きぶりに合わせて転記する
   - i18n-community-translationのdesign.mdのRequirements Traceability表・各コンポーネント節（`NamespaceEnvelope`/`LanguageCodeMap`/`PoeditorClient`/`PushSourceSync`/`PullTranslationSync`）のRequirements欄を、タスク6.1で暫定的に既存要件（1.1/1.2/2.1/3.1等）へ割り当てていた箇所から、新設したRequirement 9・10を参照する形に修正する
