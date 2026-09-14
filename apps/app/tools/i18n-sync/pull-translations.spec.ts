@@ -134,9 +134,8 @@ const COMBINED_EXPORT_BY_POEDITOR_LANGUAGE: Readonly<Record<string, string>> =
  */
 const buildPoeditorClient = () => {
   const poeditorClient = mock<PoeditorClient>();
-  poeditorClient.exportTranslations.mockImplementation(
-    // biome-ignore lint/suspicious/useAwait: must match PoeditorClient's Promise-returning signature.
-    async ({ language }) => ({
+  poeditorClient.exportTranslations.mockImplementation(({ language }) =>
+    Promise.resolve({
       ok: true,
       value: COMBINED_EXPORT_BY_POEDITOR_LANGUAGE[language] ?? '{}',
     }),
