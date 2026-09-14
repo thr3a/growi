@@ -81,7 +81,7 @@
   - _Depends: 1.6_
   - _Requirements: 6.1, 6.2, 6.3, 6.6_
   - _Boundary: Confirmation Gate_
-- [ ] 3.2 修正の検証と Ready での PR 作成に置き換える
+- [x] 3.2 修正の検証と Ready での PR 作成に置き換える
   - Step 5-B / 6-A / 6-B を「`fix/flaky-<N>-<slug>` に修正コミット（trailer 付き）を push → `flaky-repro` と `ci-app-*` の check-runs を上限 45 分で待つ → `Failed == 0` かつ通常 CI が全て success なら REST で draft でない PR を作成し、本文の Verification 節に集計値と両 run の URL を書き、直後に `**Fix PR**: {URL}` マーカーを issue に書く」に置き換える
   - どちらかに失敗があれば PR を作らず、失敗内容を issue に書いて `flaky/needs-decision` を付ける
   - Playwright の修正は trailer を付けず、PR を Ready で開いて「検証は PR の `run-playwright` に委ねる」と本文に明記する
@@ -186,3 +186,6 @@
 - 3.1: 確認用ブランチは **`origin/master` HEAD から切る**（design.md の「失敗 run の SHA から」を変更）。失敗コミットの木には `flaky-repro.yml` が無いので push しても workflow が起動せず、workflow ファイルの push には `workflows: write` が要る可能性もある。測る問いは「現在の master でその spec が非決定的か」。spec が master に無ければ workflow が拒否 → 判断待ち。**→ 7.1 の port-back で design.md を直す**
 - 3.1 → 3.2 / 4.3: 結果コメントは**今回の push の SHA で紐づけて読む**（`- Commit: $REPRO_SHA` 行を持つ `### Repro result` の最新 1 件）。「最新のコメント」では、判断待ちからの再開や Step 6 の検証で積み重なった古い集計を拾う。`gh api --paginate --slurp | jq`（`--slurp` と `-q` は併用不可、`-q` はページごとに当たる、jq の `"m"` フラグは行頭に効かない — いずれも実測）。3.2 の修正検証も fix コミットの SHA で同じく紐づける
 - 3.1: `src/features/growi-vault/__tests__/*.integ.ts` は `app-integration-vault` project で allowlist に無い → push せず「確認未測定（vault 用の repro project 無し）」で判断待ち。→ 3.3 で 2-E 第 3 の結末の「ブランチ掃除」がこの経路では不要なことを一言添える
+- 3.2: PR 作成のゲートは **3 条件を 6-B の 1 箇所**で判定（① fix コミット SHA に紐づく `### Repro result` が `- Failed: 0`・`- Runs:` ≥ 依頼回数、② `ci-app-*` の check-run が 1 件以上あり全て success、③ 差分が Step 3 が特定した範囲に収まる）。③ を満たさない製品コード広範囲の修正は MEDIUM で PR を作らず判断待ち。check-run は push と PR で同名が 2 件並ぶので `group_by(.name) | map(sort_by(.started_at) | last)` で重複除去
+- 3.2: **`run-playwright` は PR を開いた時点では動かない**（`reusable-app-prod.yml` はマージキュー `mergify/merge-queue/**` か `workflow_dispatch` のときだけ実行。#11863 の head では `skipped`）。Playwright 修正の検証は「マージキューで動く `run-playwright`（retries 2）」に委ねると書く。**→ 5.1 / 7.1**: research.md「Playwright の扱い」と `flaky-repro.yml` L99 付近のコメントの「PR の run-playwright」を直す。→ 5.1: `flaky-ci-routine.md` の「`**Fix PR**` マーカーは investigate Step 6-A が書く」は **6-C** に移った
+- 3.2: fix コミットに `Co-Authored-By:` / `Claude-Session:` を付けるときは **`Flaky-Repro-*` と同じ最終段落に置く**（別段落にすると git は最後の段落しか trailer と読まず、依頼が見えなくなる）。6.2 で実際の修正を出すときの注意

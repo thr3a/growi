@@ -657,8 +657,17 @@ comment so it is discoverable later.
 ### 5-A: Branch
 
 ```bash
-git checkout -b fix/flaky-{ISSUE_NUMBER}-{short-description}
+ISSUE_NUMBER=11823
+FIX_BRANCH="fix/flaky-${ISSUE_NUMBER}-{short-description}"   # short slug, [a-z0-9-]
+
+git fetch origin master
+git checkout -b "$FIX_BRANCH" origin/master
 ```
+
+Cut it from `origin/master` for the reason 2-B spells out: a workflow only
+runs if its file exists on the pushed ref, so a fix branch based on a commit
+that predates `.github/workflows/flaky-repro.yml` produces no `flaky-repro`
+check-run at all, and 6-B would then have nothing to gate on.
 
 ### 5-B: Fix
 
@@ -670,45 +679,295 @@ Both essential-test-design and essential-test-patterns skills apply here —
 consult them if the fix touches test code, same as any other test change in
 this repo (`.claude/rules/testing.md`).
 
-Push the fix to the branch and open the PR (Step 6) *before* running
-verification — verification here means repeatedly re-running the PR's own
-real CI, which needs the PR to exist and its checks to have run at least
-once. If the environment happens to support local execution (probed in Step
-2), run that too as a fast pre-push sanity check, but it never substitutes
-for the PR-CI-based verification in Step 6.
+**Verification comes before the PR, not after it.** The fix commit carries a
+Repro Request of its own (5-C), so pushing the branch measures the fix the
+same way Step 2 measured the flake: the repro workflow replays the spec three
+times against the fixed code and posts the tally to the tracking issue, while
+`ci-app.yml` runs the ordinary suites on the same commit. Step 6 reads both
+and only then decides whether a PR is opened at all. If the environment
+happens to support local execution (probed in Step 2), run that too as a fast
+pre-push sanity check, but it never substitutes for the measurement in Step 6.
 
 ### 5-C: Commit
 
-```
-fix(scope): stabilize flaky test — {short root cause}
+The fix commit's message **ends** with the Repro Request trailer block — that
+is what makes the push measurable. Git reads only the **last paragraph** of a
+message as trailers, so `Fixes #{ISSUE_NUMBER}` may come before the block but
+never after it, and the five trailers must be consecutive lines inside a
+single `-m`: splitting them across several `-m` flags puts each in its own
+paragraph and the workflow then sees only the last one (measured in task
+1.1/1.6 of the flaky-ci-closed-loop spec).
 
-Fixes #{ISSUE_NUMBER}
+**The same applies to this session's own signature lines.** Commits made from
+Claude Code end with `Co-Authored-By:` and `Claude-Session:` trailers, and
+those must go **inside that same final paragraph**, alongside the
+`Flaky-Repro-*` lines — never as a paragraph of their own after them. A blank
+line between the two groups makes the signature the last paragraph, which
+means git reports only `Co-Authored-By` / `Claude-Session` as trailers, the
+workflow sees no `Flaky-Repro-Spec`, and the push measures nothing. Use the
+exact signature lines this session was given, in place of the placeholders
+below:
+
+```bash
+# $ISSUE_NUMBER is the one 5-A set.
+SPEC_PATH='src/server/routes/apiv3/g2g-transfer-replace-procedure.exclusive.integ.ts'
+PROJECT='app-integration-exclusive'   # derived with 2-A's table
+
+git commit -m "$(printf 'fix(scope): stabilize flaky test — %s\n\nFixes #%s\n\nFlaky-Repro-Spec: %s\nFlaky-Repro-Project: %s\nFlaky-Repro-Mode: file\nFlaky-Repro-Repeat: 3\nFlaky-Repro-Issue: %s\nCo-Authored-By: %s\nClaude-Session: %s\n' \
+  '{short root cause}' "$ISSUE_NUMBER" "$SPEC_PATH" "$PROJECT" "$ISSUE_NUMBER" \
+  '{Co-Authored-By value for this session}' '{Claude-Session URL for this session}')"
+
+# Confirm git sees all of them as one trailer block before pushing:
+git log -1 --format='%(trailers:only=true)'
 ```
+
+That last command is the check that matters: it must list the five
+`Flaky-Repro-*` lines. If it prints only the signature lines, the paragraph
+split happened — amend the message rather than pushing.
+
+`Flaky-Repro-Spec` and `Flaky-Repro-Project` are derived exactly as in 2-A
+(path relative to `apps/app`, project from the filename suffix), and
+`Mode: file` / `Repeat: 3` are the same defaults — here they ask a different
+question: not "does this spec ever pass" but "does it pass three times out of
+three on the fixed code".
+
+**A Playwright fix carries no trailers.** The repro workflow's project
+allowlist is vitest-only, so there is nothing for it to replay. Commit such a
+fix with the plain message (`fix(scope): …` plus `Fixes #{ISSUE_NUMBER}`) and
+take the Playwright row of 6-B; a trailer-less push to `fix/flaky-**` is
+treated as "no request" and its job exits 0 without measuring anything, which
+task 1.1 made deliberate so that a Playwright PR is not painted red by a
+workflow with no work to do.
 
 ---
 
 ## Step 6: Verify via Real CI, Then the PR Readiness Gate
 
-Verification needs the fix's own commit to run through GitHub Actions' real
-MongoDB/Elasticsearch/browsers — that only happens once the branch is
-pushed and a PR exists to run checks against. So the sequence here is
-**open as draft first, verify, then decide whether to mark it ready** —
-not the reverse.
+The fix branch already carries its own Repro Request (5-C), so verification
+happens **on the branch, before any PR exists**: 6-A waits for both
+measurements on the fix commit, 6-B decides from them whether a PR is opened
+at all, and 6-C opens it — ready for review from the moment it is created.
 
-### 6-A: Open a draft PR
+Step 5 and 6-A through 6-C share shell variables (`$ISSUE_NUMBER`,
+`$FIX_BRANCH`, `$FIX_SHA`, `$CHECKS_FILE`, `$REPRO_RESULT_FILE`, `$runs`,
+`$failed`). Run them as one script; in a fresh shell, re-establish
+`ISSUE_NUMBER` and `FIX_BRANCH` from the values 5-A used and `FIX_SHA` with
+`git rev-parse`, rather than inventing new ones. The one pair that must never
+be split is the PR creation and its `**Fix PR**:` marker comment in 6-C.
 
-Open the draft PR, then immediately post a marker comment on the tracking
-issue, in the **same shell invocation** — so the Dashboard Updater (a
-separate component) can pick up this PR's link with a simple pattern match
-instead of searching issue/comment bodies in free form. `$PR_HTML_URL` only
-exists for the duration of the shell that set it — a separate tool call
-starts a fresh shell with no memory of it, so both commands below must run
-as one script, not as two independent invocations:
+*(The older shape of this step — `gh pr create --draft`, then `gh run rerun` /
+`gh run watch` for a repeat-green tally, then `gh pr ready` — is gone, and
+none of those commands appears anywhere in this skill any more. A cloud
+routine's token has no `actions:write`, so the reruns returned 403, and
+marking a PR ready is a GraphQL mutation its session blocks; PRs #11824,
+#11853 and #11863 each ended up in draft, with no tally and a paragraph asking
+a human to click "Ready for review". The push-triggered repro workflow
+replaces the tally, and REST PR creation replaces the draft/ready dance.)*
+
+### 6-A: Push the fix and wait for both measurements
 
 ```bash
-PR_HTML_URL=$(gh pr create --repo growilabs/growi --draft \
-  --title "fix: stabilize flaky test in {short scope}" \
-  --body "$(cat <<'EOF'
+# $ISSUE_NUMBER and $FIX_BRANCH are the ones 5-A set.
+IS_PLAYWRIGHT_FIX=false   # true only for a Playwright identity, which asks for no measurement (5-C)
+
+git push -u origin "$FIX_BRANCH"
+FIX_SHA=$(git rev-parse HEAD)
+
+CHECKS_FILE="${TMPDIR:-/tmp}/flaky-fix-checks-${ISSUE_NUMBER}.json"
+STARTED=$(date +%s)
+STARTUP_GRACE=$(( STARTED + 5 * 60 ))
+DEADLINE=$(( STARTED + 45 * 60 ))
+
+# Newest check-run per name. A commit carries two entries per job once a PR
+# exists (push event + pull_request event), and a superseded push leaves
+# `cancelled` ones behind; evaluating every entry would let a stale one block
+# the gate with no way out but the timeout.
+CHECKS_JQ='[ flatten[] | .check_runs[] ] | group_by(.name) | map(sort_by(.started_at) | last)'
+
+while :; do
+  gh api "repos/growilabs/growi/commits/${FIX_SHA}/check-runs?per_page=100" \
+    --paginate --slurp | jq "$CHECKS_JQ" > "$CHECKS_FILE"
+
+  repro_status=$(jq -r '[ .[] | select(.name == "flaky-repro") ] | last | .status // "absent"' "$CHECKS_FILE")
+  ci_total=$(jq '[ .[] | select(.name | startswith("ci-app-")) ] | length' "$CHECKS_FILE")
+  ci_pending=$(jq '[ .[] | select(.name | startswith("ci-app-")) | select(.status != "completed") ] | length' "$CHECKS_FILE")
+  now=$(date +%s)
+
+  if [ "$ci_total" -gt 0 ] && [ "$ci_pending" -eq 0 ] \
+     && { [ "$repro_status" = 'completed' ] || [ "$IS_PLAYWRIGHT_FIX" = true ]; }; then
+    break
+  fi
+
+  # Nothing started within the grace period: the trigger never matched, and
+  # waiting out the other 40 minutes would only delay the same answer.
+  if [ "$now" -ge "$STARTUP_GRACE" ]; then
+    if [ "$ci_total" -eq 0 ]; then
+      echo 'no ci-app-* check-run within 5 minutes — not measured'
+      break
+    fi
+    if [ "$IS_PLAYWRIGHT_FIX" != true ] && [ "$repro_status" = 'absent' ]; then
+      echo 'no flaky-repro check-run within 5 minutes — not measured'
+      break
+    fi
+  fi
+
+  if [ "$now" -ge "$DEADLINE" ]; then
+    echo 'wait capped at 45 minutes'
+    break
+  fi
+  sleep 60
+done
+
+jq -r '.[] | select(.name == "flaky-repro" or (.name | startswith("ci-app-")))
+       | "\(.name)\t\(.status)\t\(.conclusion)"' "$CHECKS_FILE"
+```
+
+**Which checks count.** Take **every** check-run whose name starts with
+`ci-app-`; do not hardcode a list. Today `ci-app.yml` produces
+`ci-app-lint (24.x)`, `ci-app-test (24.x, 6.0)` and `(24.x, 8.0)`,
+`ci-app-test-integration (24.x, 8.0, 8, 8.19.16)` and `(24.x, 8.0, 9, 9.3.3)`,
+and `ci-app-launch-dev (24.x, 6.0)` and `(24.x, 8.0)` — but those matrix cells
+change with the supported Node and MongoDB versions, and the `ci-app-` prefix
+is the stable part. `test-prod-node24 / …` (`ci-app-prod.yml`) is **not** part
+of this gate: that workflow's push trigger is an allowlist of `master` and
+`dev/*`, so it never runs on a fix branch.
+
+45 minutes is the cap for the whole wait, not per check: `ci-app-test-integration`
+alone usually takes 20–30 minutes, while the repro workflow's three file-mode
+runs finish long before it.
+
+Two endings leave the wait without a measurement. Both route to 6-B's "not
+measured" row, and both are visible within about five minutes — which is why
+the loop leaves after `$STARTUP_GRACE` instead of burning the full 45:
+
+- **no `flaky-repro` check-run appears** — the branch name did not match
+  `fix/flaky-**`, or its base predates `flaky-repro.yml` (5-A);
+- **no `ci-app-*` check-run appears** — `ci-app.yml`'s push trigger has a
+  `paths` filter, so a fix touching nothing under `apps/app/**`, `packages/**`
+  or the listed root files starts no run at all.
+
+Then read the tally **for this commit** — 2-D's pipeline with `$FIX_SHA`:
+
+```bash
+REPRO_RESULT_FILE="${TMPDIR:-/tmp}/flaky-fix-repro-${ISSUE_NUMBER}.md"
+
+gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}/comments?per_page=100" --paginate --slurp \
+  | jq -r --arg sha "$FIX_SHA" '
+      [ flatten[]
+        | select(.body | startswith("### Repro result"))
+        | select(.body | split("\n") | any(. == "- Commit: " + $sha)) ]
+      | last // empty | .body' > "$REPRO_RESULT_FILE"
+
+grep -m1 -E '^- Runs:' "$REPRO_RESULT_FILE"
+grep -m1 -E '^- Failed:' "$REPRO_RESULT_FILE"
+```
+
+Pinning on `- Commit: ${FIX_SHA}` matters more here than at 2-D. The issue
+already holds the confirmation measurement's result — a different commit,
+usually with a non-zero `- Failed:` — and reading "the newest comment" would
+report whichever of the two happened to land last. An **empty**
+`$REPRO_RESULT_FILE` is not an error: it is the "not measured" reading, and
+`grep` printing nothing is exactly how that shows up. The three `gh`/`jq`
+details behind this pipeline (`--slurp` cannot be combined with `-q`,
+`--paginate -q` filters each page separately, jq's `"m"` flag does not anchor
+per line) are documented at 2-D, and `grep -m1` is there for the same reason:
+the comment ends with an excerpt of the run's output, which can itself contain
+a line starting with `- Failed:`.
+
+### 6-B: The PR gate — decided here, and only here
+
+**A PR is created if and only if all three of these hold for `$FIX_SHA`:**
+
+1. the `### Repro result` comment pinned to `$FIX_SHA` exists and reads
+   `- Failed: 0`, with `- Runs:` at least the repeat that was requested
+   (3 by default);
+2. at least one `ci-app-*` check-run exists on `$FIX_SHA`, and **every** one
+   of them has `conclusion == "success"` (an empty set is "nothing ran", not
+   "nothing failed" — it never passes this condition);
+3. the diff touches only what Step 3 identified: a test-side fix stays inside
+   the spec file and its fixtures; a product-side fix stays inside the module
+   Step 3 named. Anything wider is MEDIUM — the tally proves the spec is
+   stable, not that the extra code is right.
+
+Anything else means **no PR**. There is no partial credit and no second place
+where this call is made: 6-C assumes the gate has already been passed.
+
+```bash
+runs=$(grep -m1 -E '^- Runs:' "$REPRO_RESULT_FILE" | sed 's/^- Runs: *//')
+failed=$(grep -m1 -E '^- Failed:' "$REPRO_RESULT_FILE" | sed 's/^- Failed: *//')
+ci_not_success=$(jq -r '[ .[] | select(.name | startswith("ci-app-"))
+                          | select(.conclusion != "success")
+                          | "\(.name)=\(.conclusion)" ] | join(", ")' "$CHECKS_FILE")
+
+echo "repro:  Runs=${runs:-none}  Failed=${failed:-none}"
+echo "ci-app not success: ${ci_not_success:-none}"
+```
+
+**Why the check-run's own conclusion cannot stand in for condition 1.** A push
+to `fix/flaky-**` whose commit carries no trailers is treated as "no request":
+the job exits 0 and its check-run is `success` having measured nothing. A
+comment that never arrived (a locked issue, a momentary GitHub outage) leaves
+the same green check-run behind, since the posting step deliberately does not
+fail the job. So `success` here means "nothing broke", never "the fix was
+measured" — the `- Failed:` and `- Runs:` lines are the evidence, and their
+absence is a "not measured" reading.
+
+**A Playwright fix takes this gate with condition 1 removed** (that is what
+`IS_PLAYWRIGHT_FIX=true` marks in 6-A), because it requested no measurement:
+conditions 2 and 3 open its PR, and the Verification section says where the
+real evidence comes from instead (6-C). The `flaky-repro` check-run on such a
+commit is the no-op `success` just described — ignore it.
+
+| Reading | Confidence | What happens |
+|---|---|---|
+| Conditions 1, 2 and 3 all hold | HIGH | open the PR (6-C) |
+| Conditions 1 and 2 hold, condition 3 does not — the diff reached beyond what Step 3 identified | MEDIUM | no PR; stop and ask, quoting the tally and naming the files outside the expected scope |
+| Condition 1 fails with `- Failed:` ≥ 1 — the spec still fails on the fixed code | LOW | no PR; the fix does not work. Quote the failing run's excerpt |
+| Condition 2 fails — some `ci-app-*` conclusion is not `success` (`failure`, `cancelled`, `timed_out`), or no `ci-app-*` check-run exists at all | LOW | no PR; the fix broke something, the push was superseded (measure the next push's SHA), or `ci-app.yml`'s `paths` filter never matched |
+| Condition 1 fails for want of a measurement — no `### Repro result` comment for `$FIX_SHA`, no `- Runs:` line, or `- Runs: 0`, including the 45-minute cap and 6-A's two early exits | MEDIUM at best, never HIGH | no PR; nothing was measured, which is evidence in neither direction |
+| Playwright fix (condition 1 does not apply) with conditions 2 and 3 holding | HIGH | open the PR (6-C) |
+
+**Autonomous**: HIGH → 6-C. MEDIUM or LOW → no PR; pause as below.
+**Interactive**: always ask, using the same readings.
+
+When the gate is not passed, leave the branch pushed — it is the evidence —
+write what failed to the tracking issue, add `flaky/needs-decision`, and stop:
+
+```bash
+gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}/comments" -X POST -f body="$(cat <<EOF
+**Fix gate not passed** — no PR was opened.
+
+- Fix commit: \`${FIX_SHA}\` on \`${FIX_BRANCH}\`
+- Condition 1 (repro tally): {\`- Runs:\` / \`- Failed:\` for this commit, or "no result comment for this commit"} ({check-run URL})
+- Condition 2 (normal CI): ${ci_not_success:-all ci-app-* success}
+- Condition 3 (scope): {the files the diff touches, against what Step 3 identified}
+- {one-line reading of which condition failed, pointing at the excerpt in the result comment when there is one}
+- Recommendation: {one line}
+EOF
+)"
+
+gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}/labels" -X POST -f 'labels[]=flaky/needs-decision'
+```
+
+Leave the phase label at `{EXACT_PHASE_UNDER_INVESTIGATION_LABEL}` — the
+investigation is paused, not resolved — and open the comment with a bold
+lead-in rather than a `###` heading, for the reason 2-E gives.
+
+### 6-C: Open the PR, ready for review, by REST
+
+The gate is 6-B; do not re-derive the condition here.
+
+Create the PR and post the marker comment in the **same shell invocation** —
+`$PR_HTML_URL` lives only as long as the shell that set it, and a separate
+tool call starts a fresh one with no memory of it:
+
+```bash
+PR_BODY_FILE="${TMPDIR:-/tmp}/flaky-fix-pr-body-${ISSUE_NUMBER}.md"
+REPRO_RUN_URL=$(grep -m1 -E '^- Workflow run:' "$REPRO_RESULT_FILE" | sed 's/^- Workflow run: *//')
+CI_RUN_URL=$(gh api "repos/growilabs/growi/actions/workflows/ci-app.yml/runs?head_sha=${FIX_SHA}&per_page=1" \
+  -q '.workflow_runs[0].html_url')
+
+cat > "$PR_BODY_FILE" <<EOF
 ## Summary
 
 {description of the fix}
@@ -719,81 +978,95 @@ PR_HTML_URL=$(gh pr create --repo growilabs/growi --draft \
 
 ## Verification
 
-In progress — re-running CI to confirm the fix holds across repeated
-executions (see comments below). This PR stays draft until that completes.
+- Repro workflow on this fix commit (\`${FIX_SHA}\`): \`- Runs: ${runs}\`,
+  \`- Failed: ${failed}\` — the spec was replayed ${runs} times against the
+  fixed code without a single failure. ${REPRO_RUN_URL}
+- Normal CI on the same commit: every \`ci-app-*\` check \`success\`. ${CI_RUN_URL}
 
-Fixes #{ISSUE_NUMBER}
+Fixes #${ISSUE_NUMBER}
 EOF
-)")
 
-gh issue comment {ISSUE_NUMBER} --repo growilabs/growi --body "**Fix PR**: ${PR_HTML_URL}"
+PR_HTML_URL=$(gh api repos/growilabs/growi/pulls -X POST \
+  -f title="fix: stabilize flaky test in {short scope}" \
+  -f head="$FIX_BRANCH" \
+  -f base=master \
+  -F draft=false \
+  -F "body=@${PR_BODY_FILE}" \
+  -q '.html_url')
+
+gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}/comments" -X POST \
+  -f body="**Fix PR**: ${PR_HTML_URL}"
 ```
 
-This comment must be its own comment — a fixed one-line marker, not
-appended to any other comment — and its exact text must be
-`**Fix PR**: {PR_HTML_URL}` (this exact string is what the Dashboard
-Updater matches on; do not add a heading or extra wording that would break
-the match, and do not reuse the `### Additional observation` /
-`### Backfilled observation` headings from `detect-flaky-ci` here — this
-comment is intentionally excluded from that issue's observation-count).
+`-F draft=false` is the whole of the readiness story: `-F` converts the
+literal `false` into a JSON boolean, which is what the endpoint's `draft`
+field expects — use `-F` here, not `-f`, which sends every value as a string.
+`-F "body=@<path>"` reads the field's value from a file, which keeps a
+multi-paragraph Markdown body out of the argument list.
 
-### 6-B: Re-run this PR's CI for a repeat-green tally
+The marker must be its own comment — a fixed one-line marker, never appended
+to another comment — and its exact text must be `**Fix PR**: {PR_HTML_URL}`.
+That exact string is what the Dashboard Updater matches on, so do not add a
+heading or extra wording that would break the match, and do not reuse
+`detect-flaky-ci`'s `### Additional observation` / `### Backfilled observation`
+headings here: this comment is deliberately excluded from that issue's
+observation count.
 
-Let the PR's initial CI run complete, then rerun the **whole run** (not
-`--failed` — it should already be green, you're building repeat-pass
-evidence, not chasing a failure) 2-3 times:
+**For a Playwright fix**, replace the Verification section with this — there
+is no repro tally to quote, and the end-to-end evidence arrives later:
 
-```bash
-gh run rerun {PR_RUN_ID} --repo growilabs/growi
-gh run watch {PR_RUN_ID} --repo growilabs/growi
-```
-
-This is the direct equivalent of the old local `--repeat=20` /
-`--repeat-each=10`, except it runs on real CI infrastructure regardless of
-what this skill's own execution environment supports.
-
-### 6-C: Confidence Assessment
-
-| Situation | Confidence |
-|---|---|
-| All reruns green + lint passes + fix stayed in scope | HIGH |
-| All reruns green but fix touched product code beyond the originally suspected file | MEDIUM |
-| Any rerun still shows the original failure, or lint/type errors | LOW |
-| The repeat-rerun tally itself could not be attempted (e.g. `gh run rerun` 403s for lack of `actions:write`) | MEDIUM at best, never HIGH on this basis alone — a single initial green run plus a tooling gap is not the same evidence as a repeat-green tally; say so explicitly rather than treating the initial pass as sufficient |
-
-**Autonomous**: HIGH → mark the PR ready and update its body with the
-verification tally (see 6-D). MEDIUM/LOW → stop and ask, leaving the PR in
-draft, presenting the rerun tally and a recommendation (same four-option
-shape as Step 4, plus "close the PR and downgrade to a comment on the
-issue" when a rerun shows the original failure recurring).
-
-**Interactive**: always ask, same options.
-
-### 6-D: Mark Ready and Update Labels (HIGH confidence, or after approval)
-
-```bash
-gh pr ready {PR_NUMBER} --repo growilabs/growi
-gh pr edit {PR_NUMBER} --repo growilabs/growi --body "$(cat <<'EOF'
-{same body as 6-A, with the Verification section replaced by:}
-
+```markdown
 ## Verification
 
-- Re-ran this PR's CI {N} times after the initial pass — {N}/{N} green.
-{- local reproduction result, if the environment supported it (bonus tier)}
-
-Fixes #{ISSUE_NUMBER}
-EOF
-)"
-
-gh issue edit {ISSUE_NUMBER} --repo growilabs/growi --remove-label "{EXACT_PHASE_UNDER_INVESTIGATION_LABEL}" --add-label "{EXACT_PHASE_RESOLVED_LABEL}"
+- Normal CI on this commit: every `ci-app-*` check `success`. {ci-app run URL}
+- End-to-end verification is delegated to the `run-playwright` job in this
+  PR's CI pipeline. It does not run on a fix-branch push, and
+  `reusable-app-prod.yml` gates it on `head_ref` starting with
+  `mergify/merge-queue/`, so it executes when this PR enters the merge queue,
+  with Playwright's own `retries: 2` on top. If the spec still needs a retry
+  there, `detect-flaky-ci` observes it and the tracking issue comes back.
 ```
 
-(`flaky/confirmed` stays — it is a permanent record that this issue was a
-real, confirmed flake, not something to remove on resolution. If the same
+Then move the issue's phase label. Read the current set and PATCH it back as
+one array:
+
+```bash
+LABELS_FILE="${TMPDIR:-/tmp}/flaky-fix-labels-${ISSUE_NUMBER}.json"
+
+gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}" -q '[.labels[].name]' \
+  | jq -c --arg rm '{EXACT_PHASE_UNDER_INVESTIGATION_LABEL}' \
+          --arg add '{EXACT_PHASE_RESOLVED_LABEL}' \
+          '{labels: ((map(select(. != $rm)) + [$add]) | unique)}' > "$LABELS_FILE"
+
+gh api "repos/growilabs/growi/issues/${ISSUE_NUMBER}" -X PATCH --input "$LABELS_FILE"
+```
+
+Fetch the exact label names first (`gh api repos/growilabs/growi/labels
+--paginate -q '.[].name'`, as the Precondition already requires) — never
+hardcode them. The whole-array PATCH is used here instead of 2-E's
+`POST /labels` plus `DELETE /labels/{name}` pair because the phase labels
+begin with an emoji (`1️⃣`, `5️⃣`), which a DELETE would have to carry
+percent-encoded in the URL path, while PATCH keeps the name in the JSON body.
+PATCH replaces the entire set, so it must be computed from the labels read
+immediately before it — which is also what keeps `flaky/confirmed` on the
+issue.
+
+### 6-D: There is no ready-flip step
+
+The PR is ready for review the moment 6-C creates it, so nothing follows.
+Turning a draft PR into a ready one is `markPullRequestReadyForReview`, a
+GraphQL-only mutation with no REST equivalent — `PUT .../ready_for_review`
+404s, and a direct `PATCH .../pulls/{n} -F draft=false` was tried on #11824
+and did not flip it — and a cloud routine's session blocks GraphQL. Creating
+the PR non-draft removes that dependency entirely: readiness is decided by
+6-B's gate, before the PR exists, rather than by a state change afterwards.
+
+`flaky/confirmed` stays on the issue — it is a permanent record that this was
+a real, confirmed flake, not something to remove on resolution. If the same
 identity key resurfaces after this merges, `detect-flaky-ci`'s "existing
-CLOSED issue found" path reopens it automatically — that recurrence check is
-the long-term backstop this skill's verification ultimately relies on, on
-top of the repeat-CI tally above.)
+CLOSED issue found" path reopens it automatically; that recurrence check is
+the long-term backstop this skill's verification ultimately relies on, on top
+of 6-B's tally.
 
 ---
 
@@ -807,26 +1080,26 @@ top of the repeat-CI tally above.)
   since Actions has no GraphQL API to begin with.
 - Issue is neither `flaky/confirmed` nor `flaky/suspected`: stop, do not
   investigate (see Precondition).
-- `gh run rerun` itself errors out (403 "Resource not accessible by
-  integration", or any other failure to even start the rerun — not the
-  rerun completing and failing) at Step 6-B: this is a **known
-  recurring constraint** in some execution environments (e.g. a
-  restricted-token cloud/bot session), not a rare edge case, and it is not
-  grounds to skip the gate or treat existing static evidence as a
-  substitute. Record the exact error, cap confidence at MEDIUM per the
-  Step 6-C table above, and — in autonomous mode — stop and ask rather than
-  silently proceeding as if the rerun budget had been spent. (Step 2 is no
-  longer affected: its confirmation gate is driven by a branch push and REST
-  reads, neither of which needs `actions:write`.)
+- The fix commit's `flaky-repro` check-run is absent or `failure`, or it
+  completed without a `### Repro result` comment carrying that commit's SHA
+  (Step 6-A): the fix was **not measured**. Do not read a `success`
+  conclusion as verification — a trailer-less push and a comment that failed
+  to post both leave the check green — and do not let Step 2's confirmation
+  tally or a fully green `ci-app-*` set stand in for it. Open no PR, post
+  what happened, add `flaky/needs-decision`, end the comment with a
+  `- Recommendation:` line, and stop. (A Playwright fix is the one exception,
+  and only because it requests no measurement: its gate is the `ci-app-*` set
+  plus the scope condition — see Step 6-B.)
 - A human approves proceeding with a best-guess fix at a MEDIUM gate for an
   issue that came in as `flaky/suspected` and whose confirmation measurement
   came back `Failed == Runs` (Step 2/Step 4): the label is still
-  `flaky/suspected` at that
-  point, not `flaky/confirmed` — do not silently promote it. Leave the
-  label as-is and let the PR body's Root Cause section carry the caveat
-  that this was never empirically reproduced; only Step 6-D's "reruns
-  green" evidence (a different, later rerun of the PR's own CI) is grounds
-  to also flip the label to `flaky/confirmed` at that point.
+  `flaky/suspected` at that point, not `flaky/confirmed` — do not silently
+  promote it, and nothing later in this run changes that. In particular a
+  `- Failed: 0` tally at Step 6 is **not** grounds to promote it: that tally
+  measures the *fixed* code, and a spec passing after a change says nothing
+  about whether the original was non-deterministic. Leave the label as-is and
+  let the PR body's Root Cause section carry the caveat that the flakiness was
+  never empirically reproduced.
 - Reproduction impossible in devcontainer (e.g. browser deps missing): fall
   back to log-based analysis, note the limitation, and do not let this alone
   push confidence below what the CI evidence already supports.
