@@ -99,30 +99,37 @@
 
 ## 6. amend spec の後始末: 変更内容を i18n-community-translation へ差し戻し、本specを削除する
 
-- [ ] 6.1 design.mdの変更内容を i18n-community-translation の design.md へ反映する
+- [x] 6.1 design.mdの変更内容を i18n-community-translation の design.md へ反映する
   - Architecture・File Structure Plan・Components and Interfacesのうち、単一プロジェクト構成に関わる箇所（`SyncConfig`/`NamespaceEnvelope`/`PoeditorClient`/`PushSourceSync`/`PullTranslationSync`の記述）を書き換える。「namespaceごとに3プロジェクト」という記述を残さない
   - Boundary Commitments > Revalidation Triggers を、本amendで確定した内容（プロジェクト数固定に伴うトリガーの退役、機能単位タグ追加時の再検証条件）に更新する
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 4.1_
   - _Depends: 5.3_
 
-- [ ] 6.2 research.mdの設計判断（JSON統合ラップ方式、2段階アップロード、export入れ子保持の未検証事項）を i18n-community-translation の research.md へ転記する
+- [ ] 6.2 i18n-community-translation の requirements.md に不足している要件を末尾へ追加する
+  - タスク6.1のレビューで判明: amendのRequirement 2（namespaceタグ付け）とRequirement 4（言語コードの対応）に対応する要件が、i18n-community-translationのrequirements.md（Requirement 1〜8）に存在しない。既存の要件番号は振り直さず、末尾にRequirement 9（namespace・機能単位のタグによる絞り込み）・Requirement 10（言語コードの対応）を追加する
+  - 追加する要件の内容は、本amendのrequirements.mdのRequirement 2・Requirement 4の受け入れ基準をベースに、i18n-community-translation側の既存の書きぶりに合わせて転記する
+  - i18n-community-translationのdesign.mdのRequirements Traceability表・各コンポーネント節（`NamespaceEnvelope`/`LanguageCodeMap`/`PoeditorClient`/`PushSourceSync`/`PullTranslationSync`）のRequirements欄を、タスク6.1で暫定的に既存要件（1.1/1.2/2.1/3.1等）へ割り当てていた箇所から、新設したRequirement 9・10を参照する形に修正する
+  - _Requirements: (i18n-community-translation-single-project) 2.1, 2.2, 2.3, 4.1, 4.2_
+  - _Depends: 6.1_
+
+- [ ] 6.3 research.mdの設計判断（JSON統合ラップ方式、2段階アップロード、export入れ子保持の未検証事項）を i18n-community-translation の research.md へ転記する
   - _Requirements: 1.1, 1.2, 2.1_
   - _Depends: 6.1_
 
-- [ ] 6.3 i18n-community-translation の tasks.md を更新する
+- [ ] 6.4 i18n-community-translation の tasks.md を更新する
   - 単一プロジェクト構成に関わる箇所（旧タスク4.2の「3プロジェクト作成」等の記述）を単一プロジェクト向けに書き換える
   - 本amendの5.2（本番相当のnamespace構成での確認）を、i18n-community-translation側の既存の実環境検証タスク（プロビジョニング待ちで`_Blocked:_`のもの）へ統合し、確認事項として引き継ぐ。二重のタスクを作らない
   - 本amendで発見・修正した言語コード変換の不具合（`en_US`をそのままPOEditorへ渡すと失敗する）と、その修正（`LanguageCodeMap`）を Implementation Notes に記録し、既存タスクの完了状態と矛盾しないようにする
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 4.1, 4.2_
-  - _Depends: 6.1_
+  - _Depends: 6.1, 6.2_
 
-- [ ] 6.4 i18n-community-translation の spec.json の `updated_at` を更新する（`phase`/`approvals`はそのまま）
-  - _Depends: 6.3_
+- [ ] 6.5 i18n-community-translation の spec.json の `updated_at` を更新する（`phase`/`approvals`はそのまま）
+  - _Depends: 6.4_
 
-- [ ] 6.5 本spec（`i18n-community-translation-single-project`）のディレクトリを削除する
+- [ ] 6.6 本spec（`i18n-community-translation-single-project`）のディレクトリを削除する
   - `.kiro/specs/i18n-community-translation-single-project/` を削除する
   - 観測可能な完了状態: 変更内容が i18n-community-translation 側に反映済みで、本specのディレクトリが存在しない
-  - _Depends: 6.2, 6.3, 6.4_
+  - _Depends: 6.2, 6.3, 6.4, 6.5_
 
 ## Implementation Notes
 
