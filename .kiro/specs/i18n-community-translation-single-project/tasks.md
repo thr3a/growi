@@ -37,7 +37,7 @@
 
 ## 2. Core: push経路を統合アップロード＋namespace別タグ付けに書き換える
 
-- [ ] 2.1 (P) push CLIを、全namespace統合アップロード1回＋namespaceごとの非破壊的なタグ付けアップロードの2段階に書き換える
+- [x] 2.1 (P) push CLIを、全namespace統合アップロード1回＋namespaceごとの非破壊的なタグ付けアップロードの2段階に書き換える
   - 全namespaceのen_USファイルを読み込み、1つのJSONに統合したうえで、プロジェクト全体を収束させるアップロードを**1回だけ**実行する
   - 続けてnamespaceごとに、そのnamespaceの内容だけをラップしたJSONを、削除を発生させない設定・該当namespaceのタグ付きでアップロードする
   - POEditor APIを呼ぶ直前に、GROWIのソース言語コード（`en_US`）をPOEditorの言語コード（`en`）へ変換する（既存実装が変換していなかった不具合の修正）
