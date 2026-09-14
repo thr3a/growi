@@ -116,7 +116,7 @@
   - _Requirements: 1.1, 1.2, 2.1_
   - _Depends: 6.1_
 
-- [ ] 6.4 i18n-community-translation の tasks.md を更新する
+- [x] 6.4 i18n-community-translation の tasks.md を更新する
   - 単一プロジェクト構成に関わる箇所（旧タスク4.2の「3プロジェクト作成」等の記述）を単一プロジェクト向けに書き換える
   - 本amendの5.2（本番相当のnamespace構成での確認）を、i18n-community-translation側の既存の実環境検証タスク（プロビジョニング待ちで`_Blocked:_`のもの）へ統合し、確認事項として引き継ぐ。二重のタスクを作らない
   - 本amendで発見・修正した言語コード変換の不具合（`en_US`をそのままPOEditorへ渡すと失敗する）と、その修正（`LanguageCodeMap`）を Implementation Notes に記録し、既存タスクの完了状態と矛盾しないようにする
