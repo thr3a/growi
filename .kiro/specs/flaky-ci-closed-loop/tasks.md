@@ -88,7 +88,7 @@
   - 6-C の確信度表から「rerun 403」行を外し、集計値ベースにする。6-D の `gh pr ready` を削除する
   - 観測可能な完了状態: 手順のどこにも `--draft` と `gh pr ready` が無く、PR 作成の前提条件（`Failed == 0` かつ通常 CI green）が 1 箇所に明記されている
   - _Requirements: 6.4, 6.5_
-- [ ] 3.3 停止の作法を統一する（判断待ちラベル・決定的原因のクローズ・購読禁止）
+- [x] 3.3 停止の作法を統一する（判断待ちラベル・決定的原因のクローズ・購読禁止）
   - MEDIUM / LOW で停止する全箇所（Step 2 の未測定、Step 4、Step 6-C）で `flaky/needs-decision` を付け、停止コメント末尾に `- Recommendation: <1 行>` を固定形式で書く
   - 人の判断コメントを渡されて再開したときは最初に `flaky/needs-decision` を外し、その判断で Step 4 / 6-C のゲートを通す
   - 決定的原因（依存の重複・生成物の不足・ビルド順序・マージキュー上だけの不整合）と判定したら `### Closed: deterministic cause, not flaky` を書いて `not planned` でクローズし、phase を `⏏ phase/wontfix` に付け替える
@@ -190,3 +190,6 @@
 - 3.2: **`run-playwright` は PR を開いた時点では動かない**（`reusable-app-prod.yml` はマージキュー `mergify/merge-queue/**` か `workflow_dispatch` のときだけ実行。#11863 の head では `skipped`）。Playwright 修正の検証は「マージキューで動く `run-playwright`（retries 2）」に委ねると書く。**→ 5.1 / 7.1**: research.md「Playwright の扱い」と `flaky-repro.yml` L99 付近のコメントの「PR の run-playwright」を直す。→ 5.1: `flaky-ci-routine.md` の「`**Fix PR**` マーカーは investigate Step 6-A が書く」は **6-C** に移った
 - 3.2: fix コミットに `Co-Authored-By:` / `Claude-Session:` を付けるときは **`Flaky-Repro-*` と同じ最終段落に置く**（別段落にすると git は最後の段落しか trailer と読まず、依頼が見えなくなる）。6.2 で実際の修正を出すときの注意
 - 4.3: ダッシュボードの `## Awaiting human decision` は Step 5 項目 2 のコメント取得を `{body, created_at, user}` に広げて読む。Paused at より前の `- Recommendation:` 行を使ったときは欄の先頭に `(may be stale) ` を付ける。Paused at が `—`（labeled イベントが読めない）でも空文字との時刻比較はしない。**→ 6.3**: 今日の実データでは自動クローズ対象は #11707 と **#11708** の 2 件（6.3 の受け入れ文は #11707 のみ）
+- 3.3: 停止コメントは **署名が最後から 2 行目、`- Recommendation:` が最終行**（routine の Shared constants とダッシュボードの読み方が「最終行」を前提にしているため。私の当初指示「署名を最終行」は誤り）。それ以外のコメントは署名が最終行、`**Fix PR**` マーカーは署名無し。停止の作法は「Pausing for a human decision」の 1 ブロックに集約し、6 つの停止点はそこを参照する
+- 3.3 → 5.1: **detect の CLOSED-issue 再オープン経路は `phase/resolved` しか外さない**。決定的原因のクローズは `⏏ phase/wontfix` を付けるので、再オープン時に `phase/wontfix` と `phase/new` が並ぶ。5.1 で detect 側を「`phase/*` を全部外してから `phase/new` を付ける」に直す
+- **事故（3.3 実装中、2026-09-14 15:47Z）**: 実装者が構文チェックのつもりで fenced block を `bash -n` でなく `bash` で実行し、#11849 に対してクローズコメント投稿・ラベル `{EXACT_PHASE_WONTFIX_LABEL}`（プレースホルダ名のまま）の作成・クローズが実行された。1 分以内に全て戻し（コメント削除・ラベル削除・再オープン・元ラベル復元）、内容の損失は無いが、timeline に 4 イベントが残る。**以後の実装者・レビュー担当への指示に「fenced block は `bash -n` 以外で実行しない」を明示する**
