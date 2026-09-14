@@ -103,7 +103,7 @@
   - 観測可能な完了状態: Step 2 を読むと、人のコメントの有無と時刻だけで「再選択する／しない」が一意に決まり、Claude 署名付きコメントでは再選択されない
   - _Requirements: 9.3_
   - _Boundary: Target Selection_
-- [ ] 4.2 再発しない observing issue の自動クローズを追加する
+- [x] 4.2 再発しない observing issue の自動クローズを追加する
   - Step 3 の後に新 Step を挿入し、open かつ `flaky/observing` で、本文と観測コメントの `Date:` の最大値から `--stale-days`（既定 14）以上経過したものを `### Auto-closed: not reproduced within 14 days` を書いて `not planned` でクローズする。`Fixed by` は書かない
   - 以降の Step 番号を繰り下げ、重複・欠番を作らない
   - 観測可能な完了状態: #11707（最終観測 2026-08-14）を手順に当てるとクローズ対象になり、最終観測が 14 日以内の issue は対象外になる、と手順だけから決まる
@@ -157,7 +157,7 @@
 - [ ] 7. 元 spec へ移して、この spec を削除する（spec-lifecycle）
 - [x] 7.1 `ci-flaky-test-detection` の requirements.md に Requirement 6〜11 を末尾に追記し、design.md の該当節（Requirement 2・3・5 の契約、Revalidation Triggers、File Structure Plan、Components）を「amend が無かったかのように」現在の事実で書き直す
   - 観測可能な完了状態: 元 spec の requirements.md に 6.1〜11.3 があり、design.md に `flaky-repro.yml` と判断待ち状態の記述があり、履歴の語り（「以前は〜だった」）が無い
-- [ ] 7.2 本 spec の research.md の Design Decisions と研究ログを元 spec の research.md に移す
+- [x] 7.2 本 spec の research.md の Design Decisions と研究ログを元 spec の research.md に移す
   - 観測可能な完了状態: 元 spec の research.md に「権限」「測定器の比較」「回数」「paths フィルタ」「結果の置き場所」「巻き添えの範囲」「人のコメント判定」の各決定がある
 - [ ] 7.3 元 spec の spec.json の `updated_at` を更新し、`.kiro/steering/roadmap.md` に本 spec の行があれば削除し、`.kiro/specs/flaky-ci-closed-loop/` を削除する
   - 観測可能な完了状態: `.kiro/specs/flaky-ci-closed-loop/` が存在せず、`grep -r flaky-ci-closed-loop .kiro` が 0 件
