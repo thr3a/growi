@@ -772,7 +772,7 @@ table with that tier, same as any other active issue.
      |---|---|
      | `### Collateral candidate` | `detect-flaky-ci` (Requirement 7.1) |
      | `### Repro result` | the `flaky-repro` workflow (Requirement 6.2) |
-     | `### Auto-closed: …` | Step 4-E of this command |
+     | `### Auto-closed: …` | Step 4-E of this command, or `investigate-flaky-test` closing on a human "not reproduced" decision (same heading prefix on purpose) |
      | `### Closed: deterministic cause, not flaky` | `investigate-flaky-test` |
      | `**Fix PR**: {URL}` | `investigate-flaky-test` Step 6-C |
      | any **human comment** | a person — see **Shared constants** → Automated-author signatures for how to tell a human comment from one this system wrote |
