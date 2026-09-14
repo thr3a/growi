@@ -124,13 +124,13 @@
   - 観測可能な完了状態: 上記の各文字列を grep すると、定義箇所と参照箇所の綴りが全て一致する
   - _Depends: 1.3, 2.1, 3.3, 4.2, 4.3_
   - _Requirements: 6.2, 7.1, 9.1, 10.1_
-- [ ] 5.2 クラウド routine の設定を更新する（ユーザーの承認を得て実行）
+- [x] 5.2 クラウド routine の設定を更新する（ユーザーの承認を得て実行）
   - `growi-flaky-ci-routine` のプロンプトに `--window-hours=32` を追加する（cron を `0 */8 * * *` に戻す案も提示し、ユーザーが選ぶ）
   - `Investigate GROWI Issues` のプロンプトの手順 1 に「ラベル名が `flaky/` で始まる issue は対象外」を追加する
   - `investigate-flaky-test` を Opus 系で動かす案を費用と合わせて判断材料として提示する（決定はユーザー）
   - 観測可能な完了状態: 2 つの routine の `derived_state.prompt` に上記文言が含まれている
   - _Requirements: 11.1, 11.2_
-- [ ] 5.3 既存の判断待ち issue を新しい状態に移す
+- [x] 5.3 既存の判断待ち issue を新しい状態に移す
   - `flaky/suspected` または `flaky/confirmed` で `phase/under-investigation` のまま止まっている open issue（2026-09-14 時点で 11 件）に `flaky/needs-decision` を付け、既存の停止コメントの推奨案を `- Recommendation: <1 行>` の形で追記する
   - 観測可能な完了状態: 対象 issue 全てにラベルと Recommendation 行があり、次回のダッシュボードの `## Awaiting human decision` に載る
   - _Depends: 1.5, 4.3_
@@ -193,3 +193,5 @@
 - 3.3: 停止コメントは **署名が最後から 2 行目、`- Recommendation:` が最終行**（routine の Shared constants とダッシュボードの読み方が「最終行」を前提にしているため。私の当初指示「署名を最終行」は誤り）。それ以外のコメントは署名が最終行、`**Fix PR**` マーカーは署名無し。停止の作法は「Pausing for a human decision」の 1 ブロックに集約し、6 つの停止点はそこを参照する
 - 3.3 → 5.1: **detect の CLOSED-issue 再オープン経路は `phase/resolved` しか外さない**。決定的原因のクローズは `⏏ phase/wontfix` を付けるので、再オープン時に `phase/wontfix` と `phase/new` が並ぶ。5.1 で detect 側を「`phase/*` を全部外してから `phase/new` を付ける」に直す
 - **事故（3.3 実装中、2026-09-14 15:47Z）**: 実装者が構文チェックのつもりで fenced block を `bash -n` でなく `bash` で実行し、#11849 に対してクローズコメント投稿・ラベル `{EXACT_PHASE_WONTFIX_LABEL}`（プレースホルダ名のまま）の作成・クローズが実行された。1 分以内に全て戻し（コメント削除・ラベル削除・再オープン・元ラベル復元）、内容の損失は無いが、timeline に 4 イベントが残る。**以後の実装者・レビュー担当への指示に「fenced block は `bash -n` 以外で実行しない」を明示する**
+- 5.2（実施結果、2026-09-14 15:57Z、ユーザー承認済み）: `growi-flaky-ci-routine`（trig_015hftCjMvk2F6AW59t3tLLV）のプロンプトに `--window-hours=32` の指定と「購読・通知・再起床の予約をしない、最終報告を書いたらセッションを終える」を追加。`Investigate GROWI Issues`（trig_01VWWpiRKJPhKM55BiUEmPtb）の手順 1 に「`flaky/` で始まるラベルを持つ issue は対象外」を、手順 4 に同じ購読禁止を追加。cron は `0 0,16` のまま。**モデルは未変更（claude-sonnet-5）** — Opus 化は費用と合わせてユーザー判断（research.md「routine のモデル」参照）。API 応答ではプロンプト内の絵文字ラベル名の異体字セレクタ（U+FE0F）が落ちて表示されるが、スキルはラベル名を API から取り直すので影響なし
+- 5.3（実施結果、2026-09-14 15:57Z）: `flaky/suspected` / `flaky/confirmed` で止まっている open issue **14 件**（#11752 #11802 #11817 #11818 #11819 #11821 #11823 #11836 #11849 #11851 #11858 #11862 #11900 #11903。tasks 作成時の見積り 11 件より増えていた）に `flaky/needs-decision` を付け、署名付き・末尾 `- Recommendation:` 行のコメントを投稿。`flaky/observing` の #11707 / #11708 は 6.3 の自動クローズ対象なので対象外
