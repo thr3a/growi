@@ -36,7 +36,7 @@ const FILE_CONTENTS: Readonly<Record<string, string>> = {
 };
 
 /** The POEditor language code en_US must be converted to before any API call (Requirement 4.1). */
-const POEDITOR_SOURCE_LANGUAGE = 'en';
+const POEDITOR_SOURCE_LANGUAGE = 'en-us';
 
 const mockReadNamespaceFile = () =>
   vi.fn(async (absolutePath: string) => FILE_CONTENTS[absolutePath]);

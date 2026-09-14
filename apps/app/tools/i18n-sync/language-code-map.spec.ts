@@ -4,7 +4,7 @@ import { toPoeditorLanguageCode } from './language-code-map';
 
 describe('toPoeditorLanguageCode', () => {
   it.each([
-    ['en_US', 'en'],
+    ['en_US', 'en-us'],
     ['ja_JP', 'ja'],
     ['zh_CN', 'zh-CN'],
     ['fr_FR', 'fr'],

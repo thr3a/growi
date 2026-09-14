@@ -7,7 +7,7 @@
  */
 
 export const GROWI_TO_POEDITOR_LANGUAGE: Readonly<Record<string, string>> = {
-  en_US: 'en',
+  en_US: 'en-us',
   ja_JP: 'ja',
   zh_CN: 'zh-CN',
   fr_FR: 'fr',

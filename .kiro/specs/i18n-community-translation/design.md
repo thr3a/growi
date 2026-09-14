@@ -319,7 +319,7 @@ export interface NamespaceEnvelopeService {
 | Requirements | 10.1, 10.2 |
 
 **Responsibilities & Constraints**
-- GROWI の5言語（`en_US`/`ja_JP`/`zh_CN`/`fr_FR`/`ko_KR`）それぞれに対応する POEditor 言語コード（`en`/`ja`/`zh-CN`/`fr`/`ko`）を宣言データとして持つ。POEditor は `en_US` のような GROWI 独自のロケールコードを受け付けない
+- GROWI の5言語（`en_US`/`ja_JP`/`zh_CN`/`fr_FR`/`ko_KR`）それぞれに対応する POEditor 言語コード（`en-us`/`ja`/`zh-CN`/`fr`/`ko`）を宣言データとして持つ。POEditor は `en_US` のような GROWI 独自のロケールコードを受け付けない。`en_US`（米国英語）には POEditor 公式の言語コード一覧にある `en-us`（English (US)）を使う。単なる `en` はPOEditor画面上でイギリス国旗アイコンが表示されるため使わない
 - 変換は `PushSourceSync`/`PullTranslationSync` が `PoeditorClient` を呼ぶ直前にのみ適用する。ファイルパスの解決（`SyncConfig.localeFilePath`）や namespace の処理は引き続き GROWI のロケールコードで行う（変換を POEditor API 境界の直前だけに閉じる）
 
 **Contracts**: Service [x]
@@ -327,7 +327,7 @@ export interface NamespaceEnvelopeService {
 ##### Service Interface
 ```typescript
 export const GROWI_TO_POEDITOR_LANGUAGE: Readonly<Record<string, string>> = {
-  en_US: 'en',
+  en_US: 'en-us',
   ja_JP: 'ja',
   zh_CN: 'zh-CN',
   fr_FR: 'fr',

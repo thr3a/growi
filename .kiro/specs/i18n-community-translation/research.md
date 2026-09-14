@@ -9,7 +9,7 @@
   - upload エンドポイントには「20秒に1リクエスト」という明文化されたレート制限があり、逐次呼び出しはこの間隔を空ける必要がある
   - POEditor の GitHub 連携は存在せず、API 呼び出しを自作する前提（brief.md の判断と一致）
   - `master` の branch protection は classic Required Pull Request Reviews を有効化しておらず、Mergify アプリと merge queue に委ねている。「翻訳のみの変更は自動反映」を実現する具体的な仕組み（GitHub 標準の auto-merge か、Mergify のラベル条件によるキュー投入か）は、既存の Mergify 設定を変更せずに済むかどうかまでは未検証 — タスク化して実装時に確認する
-  - POEditor は言語コードとして GROWI のロケールコード（`en_US`/`ja_JP`/`zh_CN`/`fr_FR`/`ko_KR`）をそのままでは受け付けない。`en_US` を渡すと `"Wrong language code"` エラーになる。正しくは `en`/`ja`/`zh-CN`/`fr`/`ko` へ変換する必要があり、これを行わない実装は push のたびに失敗する（実プロジェクトでの実測により判明）
+  - POEditor は言語コードとして GROWI のロケールコード（`en_US`/`ja_JP`/`zh_CN`/`fr_FR`/`ko_KR`）をそのままでは受け付けない。`en_US` を渡すと `"Wrong language code"` エラーになる。正しくは `en-us`/`ja`/`zh-CN`/`fr`/`ko` へ変換する必要があり、これを行わない実装は push のたびに失敗する（実プロジェクトでの実測により判明。ただし `en_US` に対応する具体的なコードは実測時点では単なる `en` としていたが、PRレビューでの指摘を受け `en-us`（English (US)、POEditor公式の言語コード一覧に別掲）へ修正した。`en` のままだとPOEditor画面上でイギリス国旗アイコンが表示されるため。`en-us` 自体は実際のプロジェクトでまだ実行時検証していない — 単なる `en` は実測で受理されることを確認済みだが、`en-us` は公式ドキュメントの一覧に基づく変更であり、実プロビジョニング後の動作確認（tasks.md 6.1/6.2）で改めて確認すること）
 
 ## Research Log
 
@@ -47,7 +47,7 @@
   - `{"_amend_probe": {"dummy_key": "..."}}` としてアップロードし `type=i18next` でexportしたところ、`_amend_probe` というトップレベルキーの下に入れ子構造のまま返ってきた。namespaceラップの入れ子保持は実証済み
   - `_amend_probe` が存在する状態で、別namespace `_amend_probe_2` だけを含むファイルを `sync_terms=1` でアップロードしたところ、レスポンスに `"deleted": 1` と出て `_amend_probe` が実際に削除された。namespaceごとに `sync_terms=1` を呼ぶと相互に削除し合うという懸念は、実際に起きる不具合であることが実証された
   - POEditor内部の用語モデルは、i18nextの入れ子構造から term（末端のキー）と context（親キーパス、`"_amend_probe_2"` のように引用符ごと文字列化された形）を自動的に導出していた（`terms/list`で確認）。ただしこれは内部表現の詳細であり、export（`type=i18next`）の入出力契約には影響しない
-  - この検証の過程で、POEditorが言語コードとして `en_US` を受け付けず `"Wrong language code"` エラーになることを発見した。GROWIの5言語に対応するPOEditorの言語コードは、POEditor公式ドキュメントの言語一覧で確認したところ `en`/`ja`/`zh-CN`/`fr`/`ko` である
+  - この検証の過程で、POEditorが言語コードとして `en_US` を受け付けず `"Wrong language code"` エラーになることを発見した。この場では代わりに単なる `en` が受理されることを実測で確認したが、後日のPRレビューで「`en` だとPOEditor画面上でイギリス国旗アイコンが表示されて紛らわしい」との指摘を受け、POEditor公式の言語コード一覧にある `en-us`（English (US)）に変更した（`ja`/`zh-CN`/`fr`/`ko` は変更なし）。`en-us` 自体は実プロジェクトでの実測はまだ行っていない
 - **Implications**: namespaceラップの入れ子保持、および namespaceごとの `sync_terms=1` が相互削除を起こすことの2点は、どちらも確認済みとしてリスクから除去できる。言語コード変換（GROWIロケール→POEditor言語コードの対応表）は新たに必要な実装項目として追加する
 
 ### 既存 `master` の branch protection / マージ経路
