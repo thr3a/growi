@@ -123,7 +123,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 4.1, 4.2_
   - _Depends: 6.1, 6.2_
 
-- [ ] 6.5 i18n-community-translation の spec.json の `updated_at` を更新する（`phase`/`approvals`はそのまま）
+- [x] 6.5 i18n-community-translation の spec.json の `updated_at` を更新する（`phase`/`approvals`はそのまま）
   - _Depends: 6.4_
 
 - [ ] 6.6 本spec（`i18n-community-translation-single-project`）のディレクトリを削除する
