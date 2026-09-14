@@ -438,6 +438,9 @@ jobs:
             else
               tail -n 40 "$FAIL_LOG" > "$EXCERPT"
             fi
+            # vitest colours its output even without a TTY here; strip the ANSI
+            # escapes (and CRs) so the excerpt reads cleanly in the issue comment.
+            sed -i -E 's/\x1b\[[0-9;]*[A-Za-z]//g; s/\r$//' "$EXCERPT"
           fi
 
           # --- The result, rendered once -------------------------------------
@@ -477,6 +480,9 @@ jobs:
           } > "$RESULT_MD"
 
           cat "$RESULT_MD" >> "$GITHUB_STEP_SUMMARY"
+          # Echo the same block to the job log so the tally can be read with
+          # `gh run view --log` without opening the summary UI.
+          cat "$RESULT_MD"
 
           {
             echo "runs=${RUNS}"

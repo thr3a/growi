@@ -39,12 +39,19 @@
   - _Requirements: 9.1_
   - _Boundary: Needs-Decision State_
   - **実施結果**: 2026-09-14、親コンテキストで REST 作成（color `d93f0b`、説明 "Autonomous flaky investigation paused; a human decision is needed (see dashboard #11720)"）。GET で存在を確認済み
-- [ ] 1.6 測定器を 3 シナリオで実測する
+- [x] 1.6 測定器を 3 シナリオで実測する
   - 安定 spec で `Failed: 0`（1.2 と同じブランチで可）、`@codemirror/state` を 2 バージョンに分けた lockfile を含むブランチで `AdminCodeEditor.spec.tsx` を流して `Failed: 3`、存在しない spec で `failure` の 3 つを確認する
   - 1.4 の除外が効いていること（通常 CI の run が作られない）も同じ push で確認する
   - 観測可能な完了状態: 3 シナリオの結果コメント／サマリの URL が tasks.md の実施結果に残っている。使った `flaky-repro/selftest-*` ブランチは削除済み
   - _Depends: 1.3, 1.4_
   - _Requirements: 6.1, 6.3, 6.6, 6.7_
+  - **実施結果**（2026-09-14、親コンテキストで push・確認・削除）:
+    - 安定 spec（`src/server/util/compare-objectId.spec.ts`, app-unit, Repeat 3, Issue 無し）: https://github.com/growilabs/growi/actions/runs/34855151808 — `success`、vitest の「1 passed」が 3 回、Elasticsearch と結果投稿の step は skipped（Issue 無しなのでサマリのみ）
+    - 決定的失敗（dependabot PR #11887 の lockfile ＋ 本ブランチをマージ、`AdminCodeEditor.spec.tsx`, app-components, Repeat 3, Issue 11849）: https://github.com/growilabs/growi/actions/runs/34855319591 — `success`（測定できた）、#11849 に `github-actions[bot]` が `### Repro result` / `- Runs: 3` / `- Failed: 3` / `- Per-run: fail, fail, fail` を投稿。抜粋は「multiple instances of @codemirror/state」の本物のエラー
+    - 存在しない spec（Issue 11849 指定）: https://github.com/growilabs/growi/actions/runs/34855154910 — `failure`、注釈「`Flaky-Repro-Spec` does not exist in this commit: `apps/app/src/server/util/does-not-exist.spec.ts`」、コメント無し
+    - 追加で観測: trailer 無しの `flaky-repro/**` push（run 34855146313）は「Trailer `Flaky-Repro-Spec` is missing」で `failure`（厳格側の経路）
+    - `flaky-repro/**` 3 ブランチへの push で `ci-app.yml` / `ci-app-prod.yml` の run は 0 件（6.7）。3 ブランチ削除後も flaky-repro の run 数は 4 のまま（削除の push では起動しない — 1.1 レビュー指摘 5 の確認）
+    - 実測で見つけて直した点: 抜粋に vitest の ANSI 色コードが混ざる → 抜粋生成時に除去。集計がジョブログに出ないので `gh run view --log` で追えない → 結果ブロックをログにも出力（いずれも数行の追加、YAML と `bash -n` で確認）
 
 - [ ] 2. Core A: 検出（`detect-flaky-ci/SKILL.md`）— 集約と追跡対象外
 - [ ] 2.1 (P) 巻き添えと連鎖を 1 issue にまとめる
