@@ -112,7 +112,7 @@
   - _Requirements: (i18n-community-translation-single-project) 2.1, 2.2, 2.3, 4.1, 4.2_
   - _Depends: 6.1_
 
-- [ ] 6.3 research.mdの設計判断（JSON統合ラップ方式、2段階アップロード、export入れ子保持の未検証事項）を i18n-community-translation の research.md へ転記する
+- [x] 6.3 research.mdの設計判断（JSON統合ラップ方式、2段階アップロード、export入れ子保持の未検証事項）を i18n-community-translation の research.md へ転記する
   - _Requirements: 1.1, 1.2, 2.1_
   - _Depends: 6.1_
 
