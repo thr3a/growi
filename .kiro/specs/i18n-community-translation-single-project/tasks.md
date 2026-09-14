@@ -27,7 +27,7 @@
   - _Requirements: 1.1, 1.2, 2.1_
   - _Boundary: PoeditorClient_
 
-- [ ] 1.4 (P) GROWIのロケールコードとPOEditorの言語コードの対応表を実装する
+- [x] 1.4 (P) GROWIのロケールコードとPOEditorの言語コードの対応表を実装する
   - GROWIの5言語（`en_US`/`ja_JP`/`zh_CN`/`fr_FR`/`ko_KR`）それぞれに対応するPOEditorの言語コード（`en`/`ja`/`zh-CN`/`fr`/`ko`）を宣言データとして持つ
   - 宣言されていないロケールコードを渡した場合は例外を投げる
   - GROWIの5言語それぞれが正しいPOEditor言語コードに変換されること、未宣言のロケールで例外になることを検証する単体テストを書く
