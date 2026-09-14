@@ -1,0 +1,258 @@
+name: Flaky repro
+
+# Measuring instrument for the flaky-test routine.
+#
+# The routine's execution environment has no `actions: write`, so it cannot
+# re-run CI to decide whether a failure is non-deterministic. Instead it pushes
+# a commit carrying a `Flaky-Repro-*` git trailer block, and this workflow runs
+# the requested spec and reports the tally. The check-run conclusion says only
+# whether the measurement could be taken:
+#   success — the request was valid and the run happened (tests may have failed)
+#   failure — the request was rejected or the setup broke; nothing was measured
+#
+# Contract: `Repro Request / Result` in .kiro/specs/ci-flaky-test-detection.
+# The trailers must form ONE trailer block, i.e. the last paragraph of the head
+# commit message.
+
+on:
+  push:
+    branches:
+      - flaky-repro/**
+      - fix/flaky-**
+  # No `pull_request` trigger on purpose: a fork must not be able to start this.
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  # The job id is the check-run name the routine polls for. Do not add a
+  # `strategy.matrix` here: that would rename the check-run to
+  # `flaky-repro (<value>)` and the routine's exact-name lookup would miss it.
+  flaky-repro:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Parse and validate the repro request
+        id: request
+        run: |
+          set -euo pipefail
+
+          reject() {
+            {
+              echo "## Flaky repro request rejected"
+              echo
+              echo "$1"
+              echo
+              echo "Head commit: \`${GITHUB_SHA:-$(git log -1 --format=%H)}\`"
+              echo
+              echo '```'
+              git log -1 --format=%B
+              echo '```'
+              echo
+              echo "Expected trailer block, as the last paragraph of the commit message:"
+              echo
+              echo '```'
+              echo "Flaky-Repro-Spec: <path under apps/app, e.g. src/server/util/foo.spec.ts>"
+              echo "Flaky-Repro-Project: app-unit | app-components | app-integration | app-integration-exclusive"
+              echo "Flaky-Repro-Mode: file | suite            # optional, default file"
+              echo "Flaky-Repro-Repeat: <1-10>                # optional, default 3"
+              echo "Flaky-Repro-Issue: <issue number>         # optional"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::flaky-repro: $1"
+            exit 1
+          }
+
+          # Every trailer must sit in ONE trailer block, i.e. the LAST paragraph of the
+          # commit message. `git commit -m a -m b` makes each -m its own paragraph, so
+          # only the last one is read as a trailer block and the rest are silently
+          # invisible here. Producers must pass the whole block as a single -m (or -F).
+          # Result lands in TRAILER_VALUE: a plain return keeps `reject` in this shell,
+          # where its `exit 1` actually stops the step.
+          TRAILER_VALUE=''
+          read_trailer() {
+            local key="$1" value
+            value="$(git log -1 --format="%(trailers:key=${key},valueonly)")"
+            if [ "$(printf '%s\n' "$value" | wc -l)" -gt 1 ]; then
+              reject "Trailer \`${key}\` appears more than once in the head commit. Give it exactly one value."
+            fi
+            # Strip surrounding whitespace so a stray trailing space is not a rejection.
+            value="${value#"${value%%[![:space:]]*}"}"
+            TRAILER_VALUE="${value%"${value##*[![:space:]]}"}"
+          }
+
+          read_trailer Flaky-Repro-Spec;    SPEC="$TRAILER_VALUE"
+          read_trailer Flaky-Repro-Project; PROJECT="$TRAILER_VALUE"
+          read_trailer Flaky-Repro-Mode;    MODE="$TRAILER_VALUE"
+          read_trailer Flaky-Repro-Repeat;  REPEAT="$TRAILER_VALUE"
+          read_trailer Flaky-Repro-Issue;   ISSUE="$TRAILER_VALUE"
+
+          # A `fix/flaky-**` branch is an ordinary fix branch that happens to be named
+          # after a flaky issue, and design.md keeps one case deliberately trailer-less:
+          # a Playwright fix, whose verification is the PR's own `run-playwright`. Such a
+          # push is not a repro request at all, so it is reported as "nothing to measure"
+          # rather than as a rejected request — otherwise every Playwright fix PR would
+          # carry a red `flaky-repro` check. A `flaky-repro/**` branch exists only to be
+          # measured, so an empty request there is still an error.
+          if [ -z "${SPEC}${PROJECT}${MODE}${REPEAT}${ISSUE}" ]; then
+            case "${GITHUB_REF_NAME:-}" in
+              fix/flaky-*)
+                {
+                  echo "## Flaky repro: nothing to measure"
+                  echo
+                  echo "The head commit of \`${GITHUB_REF_NAME}\` carries no \`Flaky-Repro-*\` trailer,"
+                  echo "so no repro was requested."
+                } >> "$GITHUB_STEP_SUMMARY"
+                echo "requested=false" >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+            esac
+          fi
+
+          MODE="${MODE:-file}"
+          REPEAT="${REPEAT:-3}"
+
+          # --- Flaky-Repro-Spec: mandatory, apps/app-relative, must exist ---------------
+          [ -n "$SPEC" ] || reject "Trailer \`Flaky-Repro-Spec\` is missing."
+          # The value is later handed to vitest as an argument. Restricting it to this
+          # character set keeps it free of anything a shell or YAML expression could act
+          # on, so no other layer has to re-sanitise it. Square brackets are in the set
+          # because Next.js dynamic-route directories need them (src/pages/[[...path]]/);
+          # they are glob characters, so every use of the value must stay quoted.
+          if [[ ! $SPEC =~ ^[]A-Za-z0-9._/[-]+$ ]]; then
+            reject "\`Flaky-Repro-Spec\` may only contain A-Z a-z 0-9 and . _ / - [ ] but was \`${SPEC}\`."
+          fi
+          case "$SPEC" in
+            /*) reject "\`Flaky-Repro-Spec\` must be relative to \`apps/app\`, not an absolute path (\`${SPEC}\`)." ;;
+            apps/app/*) reject "\`Flaky-Repro-Spec\` must be relative to \`apps/app\`. Drop the \`apps/app/\` prefix: \`${SPEC#apps/app/}\`." ;;
+            ..|../*|*/..|*/../*) reject "\`Flaky-Repro-Spec\` must not leave \`apps/app\` (\`${SPEC}\`)." ;;
+          esac
+          [ -f "apps/app/${SPEC}" ] || reject "\`Flaky-Repro-Spec\` does not exist in this commit: \`apps/app/${SPEC}\`."
+
+          # --- Flaky-Repro-Project: mandatory, allowlisted ------------------------------
+          # Keep in sync with the vitest project names in apps/app/vitest.workspace.mts and
+          # the test:* scripts in apps/app/package.json (Revalidation Trigger).
+          [ -n "$PROJECT" ] || reject "Trailer \`Flaky-Repro-Project\` is missing."
+          case "$PROJECT" in
+            app-unit|app-components|app-integration|app-integration-exclusive) ;;
+            *) reject "\`Flaky-Repro-Project\` must be one of app-unit, app-components, app-integration, app-integration-exclusive but was \`${PROJECT}\`." ;;
+          esac
+
+          # --- Flaky-Repro-Mode: optional, default file ---------------------------------
+          case "$MODE" in
+            file|suite) ;;
+            *) reject "\`Flaky-Repro-Mode\` must be \`file\` or \`suite\` but was \`${MODE}\`." ;;
+          esac
+
+          # --- Flaky-Repro-Repeat: optional, default 3, 1..10 ---------------------------
+          case "$REPEAT" in
+            [1-9]|10) ;;
+            *) reject "\`Flaky-Repro-Repeat\` must be an integer from 1 to 10 but was \`${REPEAT}\`." ;;
+          esac
+
+          # --- Flaky-Repro-Issue: optional, positive integer ----------------------------
+          if [ -n "$ISSUE" ]; then
+            case "$ISSUE" in
+              0*|*[!0-9]*) reject "\`Flaky-Repro-Issue\` must be a positive issue number but was \`${ISSUE}\`." ;;
+            esac
+          fi
+
+          {
+            echo "requested=true"
+            echo "spec=${SPEC}"
+            echo "project=${PROJECT}"
+            echo "mode=${MODE}"
+            echo "repeat=${REPEAT}"
+            echo "issue=${ISSUE}"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Flaky repro request"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Spec | \`${SPEC}\` |"
+            echo "| Project | \`${PROJECT}\` |"
+            echo "| Mode | \`${MODE}\` |"
+            echo "| Repeat | ${REPEAT} |"
+            echo "| Issue | ${ISSUE:-none (the result stays in this summary only)} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ----------------------------------------------------------------------
+      # Cross-reference: the four steps below are a copy of the setup steps of
+      # `ci-app-test-integration` in ci-app.yml, so that a repro runs on the
+      # same toolchain as the CI job whose failure it is reproducing.
+      #
+      # Revalidation Trigger (design.md): when ci-app.yml changes the setup
+      # actions, their versions, the Node version, or the dist cache key,
+      # change this file in the same commit. Keep the matching cross-reference
+      # comment in ci-app.yml pointing back here.
+      #
+      # One deliberate difference: the dist cache is restore-only here.
+      # Repro branches are throwaway and push often, so saving under the shared
+      # `dist-ci-app-*` key would churn the repository cache quota and evict
+      # ci-app.yml's own entries. The key and restore-keys stay identical so
+      # that this workflow still reads those entries.
+      # ----------------------------------------------------------------------
+      #
+      # Every step below is skipped when the push carried no repro request
+      # (`requested=false`, see the validation step).
+      - uses: pnpm/action-setup@v6
+        if: steps.request.outputs.requested == 'true'
+
+      - uses: actions/setup-node@v6
+        if: steps.request.outputs.requested == 'true'
+        with:
+          node-version: 24.x
+          cache: 'pnpm'
+
+      - name: Restore dist
+        if: steps.request.outputs.requested == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            **/.turbo
+            **/dist
+            **/node_modules/.cache/turbo
+          key: dist-ci-app-${{ runner.OS }}-node24.x-${{ github.sha }}
+          restore-keys: |
+            dist-ci-app-${{ runner.OS }}-node24.x-
+
+      - name: Install dependencies
+        if: steps.request.outputs.requested == 'true'
+        run: |
+          pnpm add turbo --global
+          pnpm install --frozen-lockfile
+
+      # Service startup, the repeated runs and the tally are added between the
+      # install step above and the report step below.
+      - name: Report the prepared request
+        if: steps.request.outputs.requested == 'true'
+        # Validated values are passed as environment variables, never
+        # interpolated into the script body: a `${{ }}` expression is expanded
+        # into the shell source before bash sees it, so its content would be
+        # executable. Keep this shape when adding steps.
+        env:
+          SPEC: ${{ steps.request.outputs.spec }}
+          PROJECT: ${{ steps.request.outputs.project }}
+          MODE: ${{ steps.request.outputs.mode }}
+          REPEAT: ${{ steps.request.outputs.repeat }}
+          ISSUE: ${{ steps.request.outputs.issue }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo
+            echo "### Workspace ready"
+            echo
+            echo "Dependencies installed for project \`${PROJECT}\`, mode \`${MODE}\`, repeat ${REPEAT}."
+            echo "Target spec: \`apps/app/${SPEC}\`."
+            if [ -n "${ISSUE}" ]; then
+              echo "Result destination: issue #${ISSUE}."
+            else
+              echo "Result destination: this summary (no \`Flaky-Repro-Issue\` given)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -8,7 +8,7 @@
 編集するため逐次で進める（各グループの先頭サブタスクだけに `(P)` を付けている）。
 
 - [ ] 1. Foundation: 測定器（再現 workflow）と、それが動く前提を整える
-- [ ] 1.1 再現 workflow の骨格と依頼の検証を作る
+- [x] 1.1 再現 workflow の骨格と依頼の検証を作る
   - `flaky-repro/**` と `fix/flaky-**` への push で起動し、`pull_request` では起動しない
   - 権限は `contents: read` と `issues: write` に限定する
   - head commit の git trailer（Spec / Project / Mode / Repeat / Issue）を読み、allowlist（project 名 4 種、mode 2 種、repeat 1〜10、spec がリポジトリ内に実在）で検証する。検証に落ちたら理由をジョブサマリに書いて job を失敗させる
@@ -154,3 +154,12 @@
   - 観測可能な完了状態: 元 spec の research.md に「権限」「測定器の比較」「回数」「paths フィルタ」「結果の置き場所」「巻き添えの範囲」「人のコメント判定」の各決定がある
 - [ ] 7.3 元 spec の spec.json の `updated_at` を更新し、`.kiro/steering/roadmap.md` に本 spec の行があれば削除し、`.kiro/specs/flaky-ci-closed-loop/` を削除する
   - 観測可能な完了状態: `.kiro/specs/flaky-ci-closed-loop/` が存在せず、`grep -r flaky-ci-closed-loop .kiro` が 0 件
+
+## Implementation Notes
+- 1.1: git は**最後の段落**だけを trailer ブロックとして読む。`git commit -m A -m B` のように `-m` を複数回渡すと trailer が段落ごとに分かれて読めなくなるので、依頼を書く側（3.1 / 3.2 の手順）は Spec / Project / Mode / Repeat / Issue を **1 つの `-m` の中に連続した行**として書く。workflow は段落分割と重複キーを不正として落とす
+- 1.1: `Flaky-Repro-Spec` は **`apps/app` 起点**の相対パス（例 `src/server/util/foo.spec.ts`）。リポジトリ起点（`apps/app/...`）は拒否される。design.md の Testing Strategy や 1.6 の例はリポジトリ起点の書き方なので、3.1 の手順は apps/app 起点で書く
+- 1.1: trailer が 1 つも無い `fix/flaky-**` への push は「依頼なし」として **exit 0**（後続 step は skip）。Playwright の修正 PR を赤くしないための意図的な挙動。したがって **check-run が success でも測定が行われた証拠にはならない** — 3.2 の PR 作成条件は「`### Repro result` コメントの `- Failed:` / `- Runs:` 行が存在し `Failed == 0`」と書く（conclusion だけで判定しない）。`flaky-repro/**` 側は trailer 無しで exit 1
+- 1.1: `src/pages/[[...path]]/` 配下に spec があるため `[` `]` を許可文字に含めている。1.2 では値を常に引用符付きで渡し、vitest の位置引数フィルタがこのパスに一致することを確認する
+- 1.1: dist キャッシュは restore 専用（`actions/cache/restore@v4`、key は ci-app.yml と同一）。キャッシュに当たらない回は `**/dist` が空なので、1.2 で vitest を呼ぶ前に依存パッケージの dist を turbo で用意する必要がある
+- 1.1 → 1.4: `ci-app.yml` 側の相互参照コメント（flaky-repro.yml のサービス起動手順と同時に直す旨）は 1.4 の作業内容に含める
+- 1.1 → 1.6: ブランチ削除の push で workflow が起動しないことを run 一覧で確認する。起動していたら `if: github.event.deleted != true` を足す
