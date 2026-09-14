@@ -155,6 +155,110 @@ compare against that commit's own diff instead
 (`gh api repos/growilabs/growi/commits/{HEAD_SHA} -q '.files[].filename'`)
 and skip the description check.
 
+**A `pnpm-lock.yaml` change is never "unrelated" by default — check it
+before letting ① fire.** A dependency bump changes what the test actually
+runs against, so a diff that touches nothing but the lockfile is not
+evidence that the PR is innocent. Reading it as one is how #11849 was
+tracked as flaky across 13 observations while it was in fact failing
+deterministically on the dependabot branch that produced it: the
+regenerated lockfile left `@codemirror/state` resolved at two versions at
+once, and the test blew up on CodeMirror's `instanceof` check. So whenever
+`pnpm-lock.yaml` is among the PR's changed files, fetch that one file's
+patch and compare package names both ways before concluding ① matched:
+
+```bash
+gh api repos/growilabs/growi/pulls/{PR_NUMBER}/files --paginate \
+  -q '.[] | select(.filename == "pnpm-lock.yaml") | .patch'
+```
+
+On a commit with no associated PR — the branch just above, which compares
+against the commit's own diff — run this check too, taking the patch from
+that same commit endpoint (`.files[]` carries `filename` and `patch` in the
+same shape as a PR's):
+`gh api repos/growilabs/growi/commits/{HEAD_SHA} -q '.files[] | select(.filename == "pnpm-lock.yaml") | .patch'`.
+A merge-queue commit that rolls up a dependabot PR lands here, so skipping
+it would leave exactly the case this check exists for unguarded.
+
+**Package names from the lockfile patch** — look only at `+`/`-` lines, and
+read the name out of whichever shape the line has:
+
+| Line shape | Package name |
+|---|---|
+| `+  '@codemirror/state@6.7.4':` — quoted entry header (`packages:` / `snapshots:` sections) | the quoted token up to its **last** `@` → `@codemirror/state` |
+| `+  '@inquirer/checkbox@5.2.2(@types/node@24.13.4)':` — the same header with a **peer-resolution suffix** | strip the trailing `(…)` group **first**, then cut at the last `@` → `@inquirer/checkbox` |
+| `-      '@codemirror/state': 6.7.1` — dependency entry, `'name': version` | the quoted key → `@codemirror/state` |
+| `+  /@scope/name@version:` — unquoted header form written by older pnpm lockfile versions | the text between the leading `/` and the version → `@scope/name` |
+
+Two rules, applied in this order, are what make the table work:
+
+1. **Strip a trailing parenthesised group before anything else.** A
+   `snapshots:` entry records the peers a package was resolved against
+   inside `(…)`, and that group contains `@`s of its own — PR #11886's
+   patch has 36 such `+`/`-` lines. Cutting at the last `@` without
+   stripping it first yields `@inquirer/checkbox@5.2.2(@types/node`, a name
+   that matches nothing. (The peers named inside the parentheses are
+   resolution context, not this entry's own name; a peer that genuinely
+   changed has its own entry line elsewhere in the same patch.)
+2. **Then split on the *last* `@`, not the first** — a leading `@` is the
+   scope marker, never the name/version separator.
+
+The first three shapes are what this repo's current lockfile actually
+produces (the first and third both appear in the `@codemirror` patch of PRs
+#11886 / #11887 / #11888, the second throughout the same patch); the fourth
+is a tolerated variant, not the expected one.
+
+**Package names from the failure's stack trace** — the frames printed under
+the error, in the log excerpt you already have:
+
+| Frame shape | Package name |
+|---|---|
+| `❯ inner ../../node_modules/.pnpm/@codemirror+state@6.7.1/node_modules/@codemirror/state/dist/index.js:2016:23` | the `.pnpm/` segment, cut at the first `_` (none here), then at its last `@`, then `+` → `/` → `@codemirror/state` |
+| `❯ .../node_modules/.pnpm/@uiw+react-codemirror@4.23.8_@babel+runtime@7.29.7_@codemirror+autocomplete@6.18.4_@cod_bc61e38c16b4d6c6ec98653a35cbfdb9/node_modules/…` — the same segment carrying **peer suffixes** | cut at the **first** `_` → `@uiw+react-codemirror@4.23.8`, then at the last `@`, then `+` → `/` → `@uiw/react-codemirror` |
+| `❯ .../node_modules/@uiw/react-codemirror/esm/useCodeMirror.js:80:124` — a plain `node_modules/` path, no `.pnpm/` | the segment(s) after `node_modules/` — two segments when the first starts with `@` → `@uiw/react-codemirror` |
+
+Two rules again, in this order, mirroring the lockfile side:
+
+1. **Cut the `.pnpm/` segment at the first `_`.** pnpm appends the peers a
+   package was resolved against, separated by `_`, and hashes the tail when
+   it gets long — so the segment carries several `@`s that belong to other
+   packages. Going straight to the last `@` on the second row above yields
+   `@uiw/react-codemirror@4.23.8_@babel/runtime@7.29.7_@codemirror/autocomplete`,
+   which is not a package at all and matches nothing. Each of those peers
+   has its own `.pnpm/` frame elsewhere in the trace if it is actually on
+   the stack.
+2. **Then split on the last `@`, then turn `+` back into `/`** — pnpm
+   rewrites the `/` of a scoped name to `+` when naming store directories,
+   which is the only reason the same package is spelled two ways.
+
+An unscoped package works the same way: `react-dom@18.2.0_react@18.2.0` →
+first `_` → `react-dom@18.2.0` → last `@` → `react-dom`.
+
+**If any package name appears in both sets, ① does not fire for this
+failure.** Do not count it as a mining hit, do not name it in the Status
+line, and record why in the issue body (see the template in Step 4) as:
+
+```
+- ① not applicable: lockfile changed `@codemirror/state` (versions 6.7.1 → 6.7.4) and the failure's stack trace runs through it
+```
+
+Suppressing ① is **not** an exclusion — the failure still goes through
+Step 4 as usual. ② / ③ / ⑤ are evaluated and stand on their own if they
+matched; if nothing else matched, the identity falls through to the passive
+`flaky/observing` path exactly as any other unremarkable observation does.
+When the identity already has an open issue and ① is being re-evaluated in
+Step 4's escalation path 1, the same suppression applies — put the line
+above in that run's observation comment instead of the issue body.
+
+A lockfile-only PR (dependabot regenerating `pnpm-lock.yaml`) is the typical
+case here, and such a failure is usually **deterministic on that branch**
+rather than flaky. Note that the exclusion rule in "Failures the PR itself
+owns" below does *not* remove it: that rule only fires when the PR changed
+the failing spec file, which a lockfile-only PR by definition did not. All
+this check does is stop ① from manufacturing suspicion out of a diff it
+misread. Proving the cause deterministic and closing the issue under
+`### Closed: deterministic cause, not flaky` is `investigate-flaky-test`'s
+job, not this skill's.
+
 **② Sandwich pattern.** Within the `--window-hours` window already fetched
 in Step 1, look for the same vitest identity key failing in two (or more) runs
 with a run of the *same job* in between that succeeded. A failure that
@@ -496,6 +600,10 @@ it when a genuine false positive is found, don't broaden matches speculatively:
 - `docker: Error response from daemon`
 - generic `curl` retry exhaustion (`--retry 60` blocks timing out, seen in
   `ci-app.yml` / `reusable-app-prod.yml` service-wait steps)
+- `Failed to download file.` — a test that downloads a real file from
+  github.com over the public network (the plugin-install integ test, #11708);
+  the public network going missing says nothing about the product's
+  determinism
 
 Everything that doesn't match is a candidate for Step 3.
 
@@ -800,6 +908,122 @@ rules above depend on, and which must not be "simplified" away later:
   never post the cascade list as a comment of its own (nothing would count
   it and nothing would link it to the identity).
 
+### Failures the PR itself owns: exclude before Step 4
+
+A tracking issue is only worth having if it describes something that fails
+non-deterministically **on `master`**. A spec file that a PR is in the
+middle of writing fails on that PR's own branch for the most ordinary reason
+there is — the change isn't finished — and that failure will never be seen
+again once the branch is gone. Filing it produces an issue nobody can act
+on: #11864 tracks a spec that PR #11827 was adding on the feature branch
+`feat/185872-backlinks`, and #11799 tracks one that PR #11750 was adding as
+it went through the merge queue.
+
+Run this check **once per identity that survives the folding above**,
+between Step 3 and Step 4, for both vitest and Playwright identities. Per
+identity, not per run: the same run can carry one failure the PR owns and
+another it does not, and only the first is excluded. Cascaded followers and
+collateral entries are already folded away by then, so they are never
+excluded separately — they live or die with the identity they were folded
+into.
+
+**Step A — is the failing commit on `master` at all?**
+
+```bash
+gh api -X GET repos/growilabs/growi/compare/master...{HEAD_SHA} -q .status
+```
+
+- `behind` or `identical` → the commit **is** an ancestor of `master`; the
+  failure happened on code that actually shipped. Skip the rest of this
+  check and go to Step 4 normally.
+- `ahead` or `diverged` → the commit is **not** an ancestor of `master`
+  (`ahead` = it carries commits `master` doesn't; `diverged` = both sides
+  carry their own). Continue with Step B.
+
+**Step B — find every PR the commit belongs to.**
+
+```bash
+gh api repos/growilabs/growi/commits/{HEAD_SHA}/pulls \
+  -q '.[] | {number, base: .base.ref, state}'
+```
+
+Consider **every** PR this returns, not `.[0]` — ①'s `-q '.[0].number'` is
+fine for picking one description to read, but it is wrong here. Commit
+`537cb7bc96e56cf0d9fa610cb18d2e74128f8394` (#11864's run 33857470813)
+belongs to two: #11610 based on `master` and #11827 based on the feature
+branch `feat/185872-backlinks`. Both changed the failing spec; `.[0]` would
+have reported only one of them. Do **not** filter by base branch either —
+a PR targeting a feature branch is exactly the case this rule exists for.
+
+If the endpoint returns nothing, the commit may still belong to a PR by
+another route:
+
+- **Merge-queue commits.** Mergify names the branch
+  `mergify/merge-queue/{hash}` — a hash, **not** the PR number — and the
+  commit drops its PR
+  association once the queue entry is done, so `commits/{sha}/pulls` comes
+  back empty (verified on `00d87f7cfa520e93f5e407b5996ea837a4db4d0c`, the
+  commit behind #11799). The PR number is in the commit message instead:
+
+  ```bash
+  gh api repos/growilabs/growi/commits/{HEAD_SHA} -q '.commit.message'
+  ```
+
+  Its first line reads `Merge of #{PR_NUMBER}` (that commit's says
+  `Merge of #11750`). Match only that literal `Merge of #{N}` pattern, and
+  take every occurrence of it — Mergify can batch several PRs into one
+  queue commit, so more than one is normal. Do **not** scrape arbitrary
+  `#{N}` tokens from the rest of the message: a squashed body's
+  `Refs #...` / `Fixes #...` names an issue or an unrelated PR, and
+  fetching that PR's files would exclude a real flake. A merge-queue commit is
+  never an ancestor of `master` — the queue rebuilds the merge — and it is
+  garbage-collected once the PR lands, so treat it exactly like any other
+  non-ancestor commit rather than as a special case.
+- **Still no PR.** A direct push to a feature branch. Skip Step C and
+  **exclude** the failure: the commit is not on `master` and there is no PR
+  whose files could vindicate it, so there is nothing here that a tracking
+  issue could ever be checked against. Report it in Step 5 with the head
+  branch name in place of a PR number.
+
+**Step C — did any of those PRs change the failing spec file?**
+
+```bash
+gh api repos/growilabs/growi/pulls/{PR_NUMBER}/files --paginate -q '.[].filename'
+```
+
+Reuse the files already fetched for the PR ① looked at; fetch
+`pulls/{n}/files` for any other PR the commit belongs to. ① only ever reads
+`.[0]`'s files, so on a commit with more than one associated PR — the #11864
+case above — the others have not been fetched yet.
+
+**Match by path suffix, not by equality.** The two sides are rooted
+differently: PR `files[].filename` is relative to the repository root
+(`apps/app/src/features/backlinks/server/services/page-link-lifecycle.integ.ts`),
+while a vitest identity's `{SPEC_PATH}` is what the reporter prints, which is
+relative to `apps/app`
+(`src/features/backlinks/server/services/page-link-lifecycle.integ.ts`). A
+PR file matches when its filename **equals `{SPEC_PATH}` or ends with
+`/{SPEC_PATH}`**. Comparing the two for equality finds nothing and quietly
+turns this whole check into a no-op — do not "simplify" it to `==`.
+
+- **Any PR changed the failing spec file** → **exclude**. Create no issue,
+  post no comment on an existing issue for this identity, change no label,
+  and add no occurrence: this identity does not enter Step 4 at all. Count
+  it in Step 5 and list the PR number(s) that matched.
+- **No PR changed it** → the PR is not responsible for this spec; go to
+  Step 4 normally. (A dependency bump that broke the spec without touching
+  it lands here — see ①'s lockfile check above, which stops ① from calling
+  such a failure "unrelated", but does not exclude it.)
+- **A Playwright job-level fallback identity** (`playwright:{BROWSER}`, no
+  spec path) has nothing to match against, so it can never be excluded by
+  Step C. Let it through to Step 4.
+
+**Fail open.** If Step A's compare returns an error (a merge-queue commit
+can be garbage-collected before the scan reaches it, giving `404`), or the
+PR/files fetch fails, **do not exclude** — go to Step 4 as usual and note
+the unresolved check in Step 5. Losing a real flake to an API hiccup on an
+unattended run is far worse than carrying one issue that a human can close.
+
 ## Step 4: Reconcile Against Existing Issues
 
 **The issue title IS the identity key, verbatim** — this is deliberate: it
@@ -883,6 +1107,9 @@ independent flakiness):
 
 - {SUITE} > {TITLE}
 - {SUITE} > {TITLE}"}
+
+{if ① was suppressed by the lockfile check (see ① in "Cheap Suspicion Mining"), add this line regardless of which tier this issue ends up at:
+"- ① not applicable: lockfile changed `{PKG}` (versions {OLD} → {NEW}) and the failure's stack trace runs through it"}
 
 {if suspected, include the specific mining evidence **for every check that matched, not just one** — one line per match, e.g.:
 "① PR #{N} changed {files}, none overlap this spec's path or stack trace"
@@ -1155,6 +1382,22 @@ between "causes" and "failures" stays visible:
 - any shared setup-hook lookup that matched more than one OPEN tracking
   issue (setup file and the matching issue numbers) — this needs a human to
   merge them
+
+Then report what never became a tracking issue at all, so that a shrinking
+issue count can be told apart from a check that quietly stopped working:
+
+- **excluded as PR-owned failures** — how many identities "Failures the PR
+  itself owns" (Step 3) kept out of Step 4, each with the PR number(s) whose
+  files matched the failing spec, or the head branch name when the commit
+  had no PR. One excluded failure can name more than one PR, so these
+  numbers do not line up one-to-one with the count.
+- **① suppressed by a lockfile match** — how many failures had ① stopped
+  because a package in the PR's `pnpm-lock.yaml` patch also appeared in the
+  failure's stack trace, and which packages. These failures were *not*
+  excluded; they went through Step 4 like any other, usually landing at
+  `flaky/observing`. Report them separately from the exclusions above.
+- any identity whose PR-owned check could not be completed because the
+  compare or PR fetch failed (fail-open, so it was tracked anyway)
 
 This is the only user-facing output — do not create files.
 
