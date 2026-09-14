@@ -51,7 +51,7 @@
 
 ## 3. Core: pull経路を言語ごとの統合exportに書き換える
 
-- [ ] 3.1 (P) pull CLIのexport集計処理を、namespaceごとの個別exportから言語ごとの統合exportへ書き換える
+- [x] 3.1 (P) pull CLIのexport集計処理を、namespaceごとの個別exportから言語ごとの統合exportへ書き換える
   - 非ソース言語ごとに、GROWIのロケールコードをPOEditorの言語コードへ変換したうえで、全namespaceを含む統合exportを**1回だけ**呼ぶ
   - 統合結果を namespace ごとに分割してから、既存の変更判定処理（`DiffClassifier.classify`）へ渡す。判定結果の集計・グループ化・PR分岐ロジック自体は変更しない。リポジトリへの書き込み先ファイルパスの解決は引き続きGROWIのロケールコードで行う
   - ある言語の統合exportがJSONとして不正な形式だった場合、その言語に属する全namespaceの組み合わせをまとめてスキップ対象として扱い、他の言語の処理は継続する
