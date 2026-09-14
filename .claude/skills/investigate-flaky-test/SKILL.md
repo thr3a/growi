@@ -416,7 +416,18 @@ Derive the vitest project from the same path:
 | `.spec.tsx` / `.spec.jsx` | `app-components` |
 | `.spec.ts` / `.spec.js` | `app-unit` |
 
-One gap in that table: a spec under `src/features/growi-vault/__tests__/`
+**A path matching none of those four suffixes has no repro project at all.**
+The match is on the full suffix, not on `.ts` alone: a shared setup-hook
+identity such as `test/setup/migrate-mongo.ts` (the live case is #11752)
+ends in a bare `.ts` and therefore matches no row — it is not `app-unit`.
+There is no project to name, so the measurement cannot even be requested.
+Do not push a request for such an identity, and do not guess a project.
+Record "confirmation not measured (no repro project for this path)" and
+pause per **Pausing for a human decision**, exactly as in 2-E's third
+outcome — except that 2-F does not apply here (no branch to clean up,
+because nothing was ever pushed).
+
+A second gap: a spec under `src/features/growi-vault/__tests__/`
 belongs to the `app-integration-vault` project, which the workflow's
 allowlist does not accept — and `app-integration` explicitly excludes those
 files, so requesting it yields `No test files found`, a failed job, and no
@@ -448,11 +459,37 @@ git checkout -b "$BRANCH" origin/master
 # but the last paragraph invisible to the workflow (the one-paragraph rule is
 # the Repro Request / Result contract in .kiro/specs/ci-flaky-test-detection's
 # design.md).
-git commit --allow-empty -m "$(printf 'chore: request a flaky repro for #%s\n\nFlaky-Repro-Spec: %s\nFlaky-Repro-Project: %s\nFlaky-Repro-Mode: file\nFlaky-Repro-Repeat: 3\nFlaky-Repro-Issue: %s\n' \
-  "$ISSUE_NUMBER" "$SPEC_PATH" "$PROJECT" "$ISSUE_NUMBER")"
+git commit --allow-empty -m "$(printf 'chore: request a flaky repro for #%s\n\nFlaky-Repro-Spec: %s\nFlaky-Repro-Project: %s\nFlaky-Repro-Mode: file\nFlaky-Repro-Repeat: 3\nFlaky-Repro-Issue: %s\nCo-Authored-By: %s\nClaude-Session: %s\n' \
+  "$ISSUE_NUMBER" "$SPEC_PATH" "$PROJECT" "$ISSUE_NUMBER" \
+  '{Co-Authored-By value for this session}' '{Claude-Session URL for this session}')"
 
+# Confirm git sees all of them as one trailer block BEFORE pushing:
+git log -1 --format='%(trailers:only=true)'
+```
+
+**This session's own signature lines go inside the same final paragraph as
+the five `Flaky-Repro-*` lines.** Commits made from Claude Code end with
+`Co-Authored-By:` and `Claude-Session:` trailers, and they must sit
+alongside those five — never as a paragraph of their own after them. A blank
+line between the two groups makes the signature the last paragraph, so git
+reports only `Co-Authored-By` / `Claude-Session` as trailers, the workflow
+sees no `Flaky-Repro-Spec`, and the push measures nothing. Use the exact
+signature lines this session was given, in place of the placeholders above.
+
+That is why the block above stops at the check instead of running the push:
+the check is a gate, not a printout. It must list all five `Flaky-Repro-*`
+lines. If it prints only the signature lines, the paragraph split happened —
+amend the message and run it again. Push only once the five lines appear
+(this block continues the same shell as the one above — `$BRANCH` is still
+set there):
+
+```bash
 git push -u origin "$BRANCH"
 REPRO_SHA=$(git rev-parse HEAD)
+
+# Hand both values to 2-C, which usually runs in a later shell (see 2-C).
+REQUEST_ENV="${TMPDIR:-/tmp}/flaky-repro-request-${ISSUE_NUMBER}.env"
+printf 'BRANCH=%s\nREPRO_SHA=%s\n' "$BRANCH" "$REPRO_SHA" > "$REQUEST_ENV"
 ```
 
 `Flaky-Repro-Mode: file` and `Flaky-Repro-Repeat: 3` are the defaults this
@@ -480,8 +517,39 @@ has nothing left to measure.
 
 Do not wait here — 2-B is the last thing done before the static analysis
 below. Go read that now; 2-C through 2-F then run at the end of this step,
-right before Step 3, while the measurement has had time to finish. When you
-come back, poll REST every 60 seconds, for at most 30 minutes from the push:
+right before Step 3, while the measurement has had time to finish.
+
+`$BRANCH` and `$REPRO_SHA` live only in the shell that 2-B set them in, so
+that interleave usually means 2-C..2-F run in a different shell with both
+unset — and an unset `$REPRO_SHA` turns the poll below into a request for
+`commits//check-runs`, which never reports the measurement. Re-establish
+them from the hand-off file 2-B wrote rather than re-pushing — the branch is
+already on `origin`, and pushing a second request would measure the wrong
+commit:
+
+```bash
+REQUEST_ENV="${TMPDIR:-/tmp}/flaky-repro-request-${ISSUE_NUMBER}.env"
+if [ -r "$REQUEST_ENV" ]; then
+  . "$REQUEST_ENV"           # sets BRANCH and REPRO_SHA exactly as 2-B pushed them
+else
+  echo "no hand-off file for #${ISSUE_NUMBER} — the request cannot be identified"
+fi
+[ -n "${BRANCH:-}" ] && [ -n "${REPRO_SHA:-}" ] || echo "BRANCH/REPRO_SHA unknown"
+```
+
+Read the values back from that file, not from `git ls-remote`: the remote
+lists refs in name order, so a pattern match on
+`flaky-repro/issue-${ISSUE_NUMBER}-*` would return the alphabetically first
+branch, and if an earlier run's branch survived a failed 2-F cleanup that
+would silently be the *old* request — and 2-D would then pin its `- Commit:`
+match to the old measurement. If the file is missing or either value is
+empty, do not guess and do not re-push: treat the measurement as
+**confirmation not measured** (2-E's third outcome), pause per **Pausing for
+a human decision**, and leave any `flaky-repro/issue-${ISSUE_NUMBER}-*`
+branches on `origin` for the human to inspect.
+
+When you come back, poll REST every 60 seconds, for at most 30 minutes from
+the push:
 
 ```bash
 gh api "repos/growilabs/growi/commits/${REPRO_SHA}/check-runs" \
@@ -1139,6 +1207,18 @@ split happened — amend the message rather than pushing.
 `Mode: file` / `Repeat: 3` are the same defaults — here they ask a different
 question: not "does this spec ever pass" but "does it pass three times out of
 three on the fixed code".
+
+**2-A's two exceptions apply here too**, and they matter more at this step
+because an issue that arrives already `flaky/confirmed` reaches Step 5
+without ever passing through 2-A. Apply the table *and* both exceptions: a
+path matching none of the four suffixes (a shared setup-hook identity like
+`test/setup/migrate-mongo.ts`) and a spec under
+`src/features/growi-vault/__tests__/` both have no usable project. When no
+project can be derived, **do not push the fix branch** — an unmeasurable
+push cannot clear 6-B's gate, so there is nothing for it to lead to. Record
+"confirmation not measured (no repro project for this path)" and pause per
+**Pausing for a human decision** instead, leaving the fix uncommitted on the
+working tree or held on an unpushed branch for the human to decide on.
 
 **A Playwright fix carries no trailers.** The repro workflow's project
 allowlist is vitest-only, so there is nothing for it to replay. Commit such a

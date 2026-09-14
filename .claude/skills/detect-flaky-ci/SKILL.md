@@ -2,7 +2,7 @@
 name: detect-flaky-ci
 description: Scan recent GROWI CI runs for flaky (non-deterministic) job/test failures and track them as GitHub issues. Detection only — never modifies source code. Usage - /detect-flaky-ci [--window-hours=N] [--vitest-threshold=N]
 allowed-tools: Bash, Read, Grep
-argument-hint: "[--window-hours=16] [--vitest-threshold=2]"
+argument-hint: "[--window-hours=32] [--vitest-threshold=2]"
 ---
 
 # detect-flaky-ci
@@ -27,10 +27,10 @@ this skill re-derives everything it needs by querying the tracker on each run.
 
 `$ARGUMENTS` (all optional):
 - `--window-hours=N` — scan every completed run of each watched workflow
-  created in the last N hours, rather than a fixed run count. Default `16`
-  (twice this routine's 8-hour cron cadence — see "Why a time window, not a
-  run count" below). Pass this explicitly when invoking standalone outside
-  `/flaky-ci-routine`'s cron cadence.
+  created in the last N hours, rather than a fixed run count. Default `32`
+  (twice the longest gap between two consecutive cron fires of this routine
+  — see "Why a time window, not a run count" below). Pass this explicitly
+  when invoking standalone outside `/flaky-ci-routine`'s cron cadence.
 - `--max-runs-per-workflow=N` — safety cap on how many runs within the
   window this skill will actually process per workflow, in case CI volume
   spikes far beyond what the window is sized for. Default `300`. If the
@@ -47,14 +47,20 @@ A fixed run count (the old `--lookback=30`) silently stops covering older
 failures on any day where the watched workflow runs more than 30 times —
 those failures scroll out of the scanned range and are never seen at all,
 with no error or warning. A time window sized to the routine's own cron
-cadence closes this gap without needing any persisted state between runs
+schedule closes this gap without needing any persisted state between runs
 (consistent with this skill's "no memory between runs" design — see
-Overview): as long as the window is at least **twice** the cron interval,
-one entirely skipped cron fire (cloud environment failure, etc.) still gets
-fully covered by the next successful one. `/flaky-ci-routine` runs every 8
-hours, hence the default of 16.
+Overview): as long as the window is at least **twice the longest gap
+between two consecutive fires**, one entirely skipped or late cron fire
+(cloud environment failure, a queued start, etc.) still leaves the next
+successful run's window overlapping the previous one, so nothing falls
+between them.
 
-This does mean a run created 15 hours ago gets scanned by up to two
+**Size it off the longest gap, not an average.** The routine's cron is
+`0 0,16 * * *`, so the gaps alternate 16 hours and 8 hours — the longest is
+16, hence the default of `32`. Taking the shorter gap (or an 8-hour
+"cadence") would leave the 16-hour gap uncovered whenever a fire is missed.
+
+This does mean a run created 30 hours ago gets scanned by up to two
 consecutive routine runs (deliberate overlap for safety) — Step 4's
 existing-issue reconciliation (backed by the Step 1.5 skip-list below)
 already treats a previously-seen run as a no-op, so the second pass costs
@@ -497,7 +503,7 @@ first, stop once a page's oldest run falls before the cutoff, and stop
 early (report why) if `--max-runs-per-workflow` is hit first:
 
 ```bash
-WINDOW_HOURS={window-hours, default 16}
+WINDOW_HOURS={window-hours, default 32}
 MAX_RUNS={max-runs-per-workflow, default 300}
 CUTOFF_EPOCH=$(( $(date -u +%s) - WINDOW_HOURS * 3600 ))
 
@@ -641,7 +647,18 @@ pass --allow-escape-sequences to output it anyway`; and the `sed` strips the
 ANSI colour codes the raw log carries, which would otherwise break the
 literal string matching every step below does. Unlike `--log-failed`, this
 endpoint returns the **whole** job log including the steps that passed, so
-grep it (`FAIL `, `::error`, ` flaky`) rather than reading it whole.
+grep it rather than reading it whole. Three literal patterns — `FAIL `,
+`::error`, ` flaky` — plus one regular expression, so use `grep -E` and add
+`[0-9]+ (failed|flaky|passed|skipped)`.
+
+**That last pattern is what keeps Playwright's summary count lines.** Step
+3's tier-1 identity rule reads `N flaky` **and** `N failed` off the shard
+and requires them to sum to 1; the three literal patterns capture the
+`flaky` line but not the `failed` one, and without it the sum cannot be
+computed at all. The rule's "a missing line counts as 0" clause only holds
+once the summary has actually been captured — a line absent from an
+uncaptured summary is unknown, not zero, and must fall back to the coarse
+tier-2 identity rather than being read as 0.
 
 ```
 # MCP path (cloud routine — the blob-storage redirect above is Forbidden
@@ -797,7 +814,11 @@ it.
      annotation, and
    - the shard's own summary counts add up to that single annotation: `N
      flaky` plus `N failed` equals 1 (a missing line counts as 0 — a
-     successful shard prints no `failed` line at all).
+     successful shard prints no `failed` line at all). "Missing" means
+     **absent from a summary that was captured**. If the grep used to fetch
+     the log never matched the summary lines in the first place, both counts
+     are unknown rather than 0, and this test does not apply — fall back to
+     the job-level identity below instead of reading the gap as a zero.
 
    The two together are what make the attribution safe: the counts say the
    shard produced exactly one non-clean test result, and the single
@@ -1757,7 +1778,11 @@ This is the only user-facing output — do not create files.
   in a tight loop.
 - A job log too large to fit in context: the `actions/jobs/{JOB_ID}/logs`
   endpoint returns the whole job log, passing steps included, so grep for
-  `FAIL `, `::error`, and ` flaky` lines only instead of reading it whole.
+  `FAIL `, `::error`, ` flaky` and the summary count lines
+  (`[0-9]+ (failed|flaky|passed|skipped)`) only — the same `grep -E` Step 2
+  uses — instead of reading it whole. Dropping the count lines would make
+  the Playwright tier-1 test read "unknown" and fall back to the coarse
+  identity (Step 3).
 - Ambiguous identity (test title changed between occurrences of the same
   underlying flake): do not attempt fuzzy matching — treat as a new issue.
   False negatives here (a missed dedupe) are cheap; false positives (wrongly

@@ -282,9 +282,9 @@ Elasticsearch 9 のセルでしか出ない非決定性は、この手段では�
 
 #### Acceptance Criteria
 
-1. When 1 つの run で共有 setup フックの timeout が観測され、かつ同じ run で別のテストファイルの timeout（フックまたはテスト本体）が観測された場合, the flaky-ci-routine shall 後者を新しい issue にせず、共有 setup フックの追跡 issue に「巻き添えの可能性」として記録する。
-2. When 前項で「巻き添えの可能性」として記録したテストが、共有 setup フックの timeout を含まない run で再び失敗した場合, the flaky-ci-routine shall そのときに初めて独立した追跡 issue を作成する。
-3. When 1 つのテストファイル内で、先頭の失敗に続いて同じ run の後続テストが連鎖して失敗した場合, the flaky-ci-routine shall 先頭の失敗だけを識別として issue 化し、連鎖した失敗は同じ issue に列挙する。
+1. When 1 つのジョブログで共有 setup フックの timeout が観測され、かつ同じジョブログで別のテストファイルの timeout（フックまたはテスト本体）が観測された場合, the flaky-ci-routine shall 後者を新しい issue にせず、共有 setup フックの追跡 issue に「巻き添えの可能性」として記録する。範囲を run ではなくジョブログとするのは、run の各ジョブが別のランナー上の別プロセスとして走るため、共有フックの timeout が汚す状態は 1 つのジョブの中にしか伝わらないからである。
+2. When 前項で「巻き添えの可能性」として記録したテストが、共有 setup フックの timeout を含まないジョブログで再び失敗した場合, the flaky-ci-routine shall そのときに初めて独立した追跡 issue を作成する。
+3. When 1 つのテストファイル内で、先頭の失敗に続いて同じジョブログの後続テストが連鎖して失敗した場合, the flaky-ci-routine shall 先頭の失敗だけを識別として issue 化し、連鎖した失敗は同じ issue に列挙する。
 4. The flaky-ci-routine shall 「巻き添えの可能性」として記録したテストと、連鎖として列挙したテストを、ダッシュボードの独立した行として数えない。
 
 ### Requirement 8: flaky でない失敗の追跡対象からの除外
@@ -293,7 +293,7 @@ Elasticsearch 9 のセルでしか出ない非決定性は、この手段では�
 
 #### Acceptance Criteria
 
-1. When 失敗した run のコミットが既定ブランチの履歴に含まれず、かつその run に紐づく PR が失敗したテストのファイルを追加または変更している場合, the flaky-ci-routine shall その失敗を追跡対象外とし（issue を作らず）、実行サマリーに件数を報告する。
+1. When 失敗した run のコミットが既定ブランチの履歴に含まれず、かつ次のいずれかに当てはまる場合（(a) その run に紐づく PR が失敗したテストのファイルを追加または変更している、(b) そのコミットに紐づく PR が 1 つも無い）, the flaky-ci-routine shall その失敗を追跡対象外とし（issue を作らず）、実行サマリーに件数を報告する。
 2. When 「変更内容と無関係な失敗」の判定を行う際に、PR の差分に依存関係のロックファイルの変更が含まれる場合, the flaky-ci-routine shall 失敗のスタックトレースに現れるパッケージ名がそのロックファイル差分に含まれるかを確認し、含まれる場合は「無関係」と判定しない。
 3. When 失敗ログが外部ネットワークからの取得失敗（例: `Failed to download file.`）に一致する場合, the flaky-ci-routine shall それをインフラノイズとして flaky 分類から除外する。
 4. When 調査の結果、失敗が非決定的ではなく決定的な原因（依存関係の重複、生成物の不足、ビルド順序など）によるものと判定された場合, the flaky-ci-routine shall 追跡 issue に判定理由を記録して flaky 追跡としてはクローズし、原因の修正は通常の issue / PR として扱う旨を残す。

@@ -209,8 +209,9 @@ Invoke the `detect-flaky-ci` skill with `$ARGUMENTS` passed through
 (`--window-hours`, `--max-runs-per-workflow`, `--vitest-threshold`) plus the
 `JOB_LOG_METHOD` decided in Step 0. If `--window-hours` isn't in
 `$ARGUMENTS`, don't force a value here — let `detect-flaky-ci`'s own
-default (twice its cron cadence) apply. Let it finish and report its
-summary.
+default apply (`32`: twice the longest gap between two consecutive cron
+fires of this routine, whose `0 0,16 * * *` schedule alternates 16-hour and
+8-hour gaps). Let it finish and report its summary.
 
 `--stale-days=N` is **not** one of the arguments forwarded here: it is
 consumed by this command's own Step 4 and `detect-flaky-ci` does not accept
