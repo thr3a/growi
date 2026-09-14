@@ -142,7 +142,7 @@
   - 観測可能な完了状態: 対象 issue に Repro result コメントと集計の記録があり、ラベルが手順の判定と一致している
   - _Depends: 3.1, 5.1_
   - _Requirements: 6.1, 6.2, 6.3, 6.7_
-- [ ] 6.2 修正の検証と Ready PR を実在の修正で通す
+- [x] 6.2 修正の検証と Ready PR を実在の修正で通す
   - 原因が特定済みで 1 行で直る issue（例: #11823 の `fs.rm` に `force` が無い問題）を `investigate-flaky-test` の Step 5〜6 で扱い、`fix/flaky-**` への push → `Failed: 0` と通常 CI green → draft でない PR と `**Fix PR**` マーカーが作られることを確認する
   - 観測可能な完了状態: PR が `draft: false` で存在し、本文の Verification 節に集計値と run の URL があり、issue にマーカーコメントがある
   - _Depends: 3.2, 5.1_
@@ -200,4 +200,5 @@
 - 5.1 → 7.2: research.md「Playwright の扱い」の「PR 自身の `run-playwright`」は誤り（マージキューでのみ実行）。port-back 時に直す
 - 6.1/6.2（事故と是正、2026-09-14 16:30Z 頃）: 5.3 の移行で **#11819 と #11823 の推奨行がちょうど入れ違っていた**（#11819 = replace-procedure の `fs.rm` ENOENT、#11823 = keep-alive の expireAt が 3 間隔で進まない）。tasks.md の 6.1/6.2 の例示も #11823 と書いていたため、最初の測定と修正を #11823 宛てに push してしまった。是正: 誤った 2 ブランチを削除、両 issue の推奨行を PATCH で修正、#11819 宛てに再 push。**#11823 に残った `### Repro result` 2 件（github-actions[bot]、コミット b9a64ded / 89af5caf）は削除が権限判定で止まったため未削除**（観測数にも SHA 照合にも影響しない）。教訓: push 前に **issue 本文の Identity key と trailer の Spec を突き合わせる**。この照合は investigate の 2-A が identity key から Spec を導く手順になっている限り自動で満たされる（今回は手動で番号を書いたのが原因）
 - 6.1（実施結果、2026-09-14 17:40Z 頃）: #11819 の確認測定は `Runs: 3 / Failed: 0`（記録済み CI 失敗を加えて 1 / 4）→ **確定**。`flaky/suspected` → `flaky/confirmed` の昇格、集計コメント、確認ブランチ削除まで手順どおり通った。判断待ちからの再開は「人のコメント」でなく操作者起動だったため、`flaky/needs-decision` の除去理由を集計コメントに明記した
-- 6.2（進行中の学び）: **`flaky-repro.yml` が master に無い間だけの制約** — 修正ブランチを feature ブランチの先端から切ると測定は取れるが、PR の差分に feature の内容が混ざり 6-B 第 3 条件で落ちる。逆に origin/master から切ると差分は 1 ファイルだが workflow が無く測定が取れない。今回は「feature 先端上のコミット `9cac3088` で測定（Failed 0 / Runs 3 ＋ ci-app 7 件 success）→ 差分同一のコミットを origin/master に載せ直して `00d70e2e` を PR にする」で通し、PR 本文に SHA の対応を明記した。**本 spec のマージ後は 5-A どおり origin/master から切れば測定 SHA と PR の SHA が一致する**ので、手順の変更は不要。また 6-B 第 3 条件の差分は `git diff origin/master...HEAD`（3 点、merge-base 起点）で取ること — 2 点だと master 側にしか無いファイルも混ざる
+- 6.2（進行中の学び）: **`flaky-repro.yml` が master に無い間だけの制約** — 修正ブランチを feature ブランチの先端から切ると測定は取れるが、PR の差分に feature の内容が混ざり 6-B 第 3 条件で落ちる。逆に origin/master から切ると差分は 1 ファイルだが workflow が無く測定が取れない。今回は「feature 先端上のコミット `9cac3088` で測定（Failed 0 / Runs 3 ＋ ci-app 7 件 success）→ 差分同一のコミットを origin/master に載せ直して `00d70e2e` を PR にする」で通し、PR 本文に SHA の対応を明記した。**本 spec のマージ後は 5-A どおり origin/master から切れば測定 SHA と PR の SHA が一致する**ので、手順の変更は不要。また 6-B 第 3 条件の差分は `git diff origin/master...HEAD`（3 点、merge-base 起点）で取ること — 2 点だと master 側にしか無いファイルも混ざる（6-B のコマンド例に追記済み）
+- 6.2（実施結果、2026-09-14 18:30Z 頃）: PR **#11913**（`draft: false`、head `00d70e2e`、本文 Verification に `Runs: 3 / Failed: 0` と 3 つの run URL）、#11819 に `**Fix PR**: …/pull/11913` マーカー、ラベルは `type/bug, flaky/confirmed, 5️⃣ phase/resolved`。REST だけで PR 作成 → マーカー → 全配列 PATCH のラベル遷移が通ることを確認
