@@ -23,7 +23,7 @@
   - テストが落ちても job は落とさない。前処理の失敗だけが job の失敗
   - 観測可能な完了状態: 既知の安定 spec（例: `apps/app/src/server/util` 配下の spec 1 本）を Repeat 3 で push すると、job が `success` で終わり、サマリに `Runs: 3 / Failed: 0` と各回の結果が出る
   - _Requirements: 6.1, 6.4_
-- [ ] 1.3 結果を追跡 issue にコメントする
+- [x] 1.3 結果を追跡 issue にコメントする
   - `Flaky-Repro-Issue` があるとき、`### Repro result` 見出しで `- Commit:` `- Branch:` `- Mode:` `- Runs:` `- Failed:` `- Per-run:` `- Workflow run:` の固定並びの 1 コメントを投稿する。失敗回の FAIL ブロック抜粋は 40 行まで
   - `Flaky-Repro-Issue` が無いときはサマリのみ
   - 観測可能な完了状態: 検証用 issue を指定して push すると、その issue に上記形式のコメントが 1 件付き、`- Runs:` と `- Failed:` の行を `gh api` で機械的に取り出せる
@@ -168,3 +168,5 @@
 - 1.2: 1 回目の実行で `No test files found` なら「測定できなかった」として job を失敗させる。2 回目以降なら fail 1 回として集計を続ける。suite モードで `app-integration-exclusive` を頼むと `test:integ` が統合系 2 project を流す（design.md の対応表どおり）— 1.3 の結果整形で一言添える
 - 1.4: `ci-app-prod.yml` は `on.push.branches` の allowlist 方式（GitHub は `branches` と `branches-ignore` の併用を許さない）。`flaky-repro/**` は allowlist に一致しないので既に除外されており、コメントでその旨を記録した（`branches-ignore` は追加していない）。ci-app.yml 側の相互参照コメントはコピー対象の全 step（pnpm / setup-node / dist cache の key 形式 / install / MongoDB / Elasticsearch）と各バージョンを Revalidation Trigger として列挙し、コピー範囲の先頭（`pnpm/action-setup` の直前）に置いた
 - 1.4: workflow 内のコメントで spec を参照するときは、port-back 後も残る **`.kiro/specs/ci-flaky-test-detection`** を指す（amend spec のディレクトリは 7.3 で消える）
+- 1.3: 結果コメントの本文は 1.2 が描いた `result.md` をそのまま送る（抜粋の囲みは 1.2 側で 1 回だけ描く。suite モードの補足文も 1.2 のレンダラー内で描き、サマリとコメントが食い違わないようにした）。投稿 step は `requested == 'true' && issue != ''` のときだけ動き、`always()` を付けていないので測定 step が落ちればコメントは付かない。POST 失敗は `::warning::` と `### Could not post the repro result to issue #N` の記録で exit 0（結論は「測定できたか」のみ）
+- 1.3 → 3.1 / 3.2: 抜粋の中に `- Failed:` で始まる行が混ざり得るので、routine が読むときは **先頭一致で最初の 1 行だけ**（`grep -m1 -E '^- (Runs|Failed):'`）を取る。固定 7 行は補足文・囲みより前に必ず連続して並ぶ

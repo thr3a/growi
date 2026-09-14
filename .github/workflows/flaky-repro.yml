@@ -455,6 +455,17 @@ jobs:
             echo "- Failed: ${FAILED}"
             echo "- Per-run: ${PER_RUN}"
             echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            # `suite` mode runs the project's whole test script, and `test:integ`
+            # is the script of BOTH integration projects. So a tally produced
+            # from an `app-integration-exclusive` request also contains
+            # `app-integration`'s result, which the reader of `- Mode: suite`
+            # cannot tell on its own. Written as its own paragraph after the
+            # fixed `- Key: value` lines so that their order — the part the
+            # routine reads — stays uninterrupted.
+            if [ "$MODE" = 'suite' ] && [ "$SUITE_SCRIPT" = 'test:integ' ]; then
+              echo
+              echo "Note: \`suite\` mode ran \`pnpm run test:integ\` once, which covers both \`app-integration\` and \`app-integration-exclusive\` — a failure counted here may come from either project."
+            fi
             if [ -n "$EXCERPT" ]; then
               echo
               # Four backticks: GROWI's own specs carry Markdown fixtures, so a
@@ -483,3 +494,63 @@ jobs:
           # must not colour its conclusion. Only the steps before this one can
           # turn the job red.
           exit 0
+
+      # Delivery, kept separate from the measurement above so that a problem
+      # reaching GitHub can never be read as a problem taking the measurement.
+      #
+      # Skipped when the request named no issue (`Flaky-Repro-Issue` is
+      # optional — the result then lives in the job summary alone), and, because
+      # a failed step stops the ones after it, skipped as well when the
+      # measurement itself gave up ("nothing was measured"): a rejected or
+      # unmeasurable request must leave no comment behind.
+      - name: Post the result to the tracking issue
+        id: comment
+        if: steps.request.outputs.requested == 'true' && steps.request.outputs.issue != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ steps.request.outputs.issue }}
+          RESULT_PATH: ${{ steps.repro.outputs.result_path }}
+        run: |
+          set -euo pipefail
+
+          # The body is `result.md` byte for byte — the same text the job
+          # summary carries, because the measuring step renders it once for both
+          # (the failing run's excerpt is already inside that file; appending it
+          # here would print it twice).
+          #
+          # One comment per pushed commit: this step runs once per job and never
+          # looks for an earlier comment to edit. Re-running the job by hand
+          # leaves a second comment for the same commit, which the routine
+          # tolerates by reading the newest one.
+          RESPONSE="${RUNNER_TEMP}/comment-response.txt"
+
+          # A failed POST must not fail the job. The routine reads this job's
+          # conclusion as the answer to "was a measurement taken at all?", so
+          # exiting non-zero because of a locked issue or a momentary GitHub
+          # outage would make it discard a tally that was in fact produced, and
+          # ask a human to decide instead. The failure is therefore reported the
+          # way a human notices it — an annotation plus the job summary, which
+          # already holds the full result — while the conclusion stays `success`.
+          if gh api "repos/${GITHUB_REPOSITORY}/issues/${ISSUE}/comments" \
+               -X POST \
+               -F "body=@${RESULT_PATH}" \
+               --jq '.html_url' > "$RESPONSE" 2>&1; then
+            {
+              echo
+              echo "Posted to issue #${ISSUE}: $(cat "$RESPONSE")"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo
+              # Not `### Repro result`: that heading is the routine's anchor for
+              # a measured tally, and this section is the opposite of one.
+              echo "### Could not post the repro result to issue #${ISSUE}"
+              echo
+              echo "The measurement finished; only the comment failed. The result is above in this summary."
+              echo
+              echo '```'
+              cat "$RESPONSE"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::flaky-repro: could not post the result to issue #${ISSUE}; the tally is in the job summary"
+          fi
