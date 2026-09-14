@@ -208,11 +208,11 @@ describe('runPush', () => {
     // keeps the "nothing is uploaded unless every namespace is usable"
     // guarantee intact instead of converging POEditor to a partial project.
     const poeditorClient = okClient();
-    const readNamespaceFile = vi.fn(async (absolutePath: string) => {
+    const readNamespaceFile = vi.fn((absolutePath: string) => {
       if (absolutePath === '/base/locales/en_US/commons.json') {
-        return '{"broken": ';
+        return Promise.resolve('{"broken": ');
       }
-      return FILE_CONTENTS[absolutePath];
+      return Promise.resolve(FILE_CONTENTS[absolutePath]);
     });
 
     const result = await runPush({
