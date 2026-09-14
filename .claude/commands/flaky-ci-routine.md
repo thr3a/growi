@@ -1,6 +1,6 @@
 ---
 name: flaky-ci-routine
-description: Full flaky-CI routine - detect flaky CI failures, then investigate/fix every newly-confirmed one. Designed to be run unattended from a cron schedule. Usage: /flaky-ci-routine [--window-hours=N] [--vitest-threshold=N]
+description: Full flaky-CI routine - detect flaky CI failures, then investigate/fix every newly-confirmed one. Designed to be run unattended from a cron schedule. Usage: /flaky-ci-routine [--window-hours=N] [--vitest-threshold=N] [--stale-days=N]
 ---
 
 # /flaky-ci-routine
@@ -157,7 +157,7 @@ else: JOB_LOG_METHOD=gh
 State `JOB_LOG_METHOD` explicitly when invoking `detect-flaky-ci` and
 `investigate-flaky-test` below (e.g. as a line in the prompt: "Job log
 fetch method for this run: {JOB_LOG_METHOD}"), and include it in this
-command's own Step 4 report.
+command's own Step 6 report.
 
 ## Step 1 — Detect
 
@@ -167,6 +167,10 @@ Invoke the `detect-flaky-ci` skill with `$ARGUMENTS` passed through
 `$ARGUMENTS`, don't force a value here — let `detect-flaky-ci`'s own
 default (twice its cron cadence) apply. Let it finish and report its
 summary.
+
+`--stale-days=N` is **not** one of the arguments forwarded here: it is
+consumed by this command's own Step 4 and `detect-flaky-ci` does not accept
+it. Pass down only the three named above, not the raw `$ARGUMENTS` string.
 
 ## Step 2 — Select newly-actionable issues
 
@@ -261,7 +265,7 @@ Two things about the shape of these commands, both of which matter:
   comparison `.created_at > ""` is true for *every* comment, so skipping the
   guard silently selects the issue on the strength of any old human comment.
   Treat an empty `PAUSED_AT` as "cannot determine when it was paused":
-  **do not** select the issue, and note it in the Step 5 report so a human
+  **do not** select the issue, and note it in the Step 6 report so a human
   can look. Do not fall back to the issue's `created_at` or `updated_at` —
   either would select the issue on every subsequent run.
 
@@ -272,7 +276,7 @@ re-opened by new observations arriving, nor by time passing, nor by the
 routine running again. Only a human's answer restarts it — the issue was
 paused precisely because a human decision was missing, so restarting without
 one would stop again at the same gate and spend CI time for nothing. Paused
-issues with no answer stay visible on the dashboard (Step 4) and nowhere
+issues with no answer stay visible on the dashboard (Step 5) and nowhere
 else.
 
 Also note what Step 2 does **not** do: it does not remove the
@@ -305,7 +309,7 @@ long list of new issues from delaying nothing. Step 3's existing rule —
 process them **sequentially, one at a time** — applies unchanged to the
 merged list.
 
-**Deduplicate by issue number while merging** (same rule Step 4 applies when
+**Deduplicate by issue number while merging** (same rule Step 5 applies when
 it merges its three tier queries). Nothing stops an issue from carrying
 `flaky/needs-decision` *and* a tier label with the still-new phase label at
 the same time, which would otherwise put it in both selections and make
@@ -344,7 +348,253 @@ move to the next one" rather than blocking the whole routine: note it in the
 final report as needing human attention and continue with the next issue in
 the list.
 
-## Step 4 — Update the dashboard
+## Step 4 — Auto-close stale observing issues
+
+An identity that was seen once and never again should not stay on the
+dashboard forever. This step closes each `flaky/observing` tracking issue
+whose **newest observation** is at least `--stale-days` old (default **14**),
+recording why it was closed.
+
+It runs **here** — after the investigate loop of Step 3 and before the
+dashboard update of Step 5 — so that the dashboard Step 5 builds already
+reflects this run's closures instead of listing issues that were closed
+seconds earlier.
+
+Read `--stale-days=N` from `$ARGUMENTS`; if it is absent use `14`. Compute
+the cutoff once, at the start of the step:
+
+```bash
+STALE_DAYS=14   # or the value of --stale-days=N from $ARGUMENTS
+CUTOFF="$(date -u -d "${STALE_DAYS} days ago" +%Y-%m-%dT%H:%M:%SZ)"
+```
+
+### 4-A — List the candidates: `flaky/observing` only
+
+```bash
+gh api -X GET repos/growilabs/growi/issues -f state=open -f labels="flaky/observing" --paginate -q '.[] | {number,title}'
+```
+
+`flaky/suspected` and `flaky/confirmed` issues are **never** auto-closed,
+whatever their dates say. An issue reached those tiers because it already has
+more than one piece of evidence, or because it is queued for (or already
+under) investigation; going quiet for two weeks is not a reason to drop work
+that a human or `investigate-flaky-test` still owes an answer on. Silence
+only means "probably not worth tracking" at the `observing` tier, where a
+single observation is all there ever was.
+
+### 4-B — Compute each candidate's newest observation date
+
+The newest observation date is the **maximum `Date:` value** over exactly two
+sources — the same set the dashboard counts as observations (Step 5 item 3):
+
+- the issue **body**'s `### First observation` section's `Date:` line, and
+- the `Date:` line of **every comment whose first line begins with
+  `### Additional observation` or `### Backfilled observation`**.
+
+Everything else is excluded: `### Collateral candidate`, `### Repro result`,
+`### Auto-closed: …`, `### Closed: deterministic cause, not flaky`,
+investigation and stop comments, and human comments. None of them is an
+observation, so none of them may keep an issue alive.
+
+**Never use the issue's `created_at` or `updated_at`** as a substitute.
+`updated_at` is bumped by every label change, marker comment and human note,
+so an issue that has not been observed for a month can look fresh (real case:
+#11708's `updated_at` read 2026-09-14 while its newest observation was
+2026-08-13). `created_at` misses a backfilled observation that predates the
+issue, and is wrong here for the same underlying reason — neither field is an
+observation.
+
+Take the **first** `- Date:` line of each qualifying comment and stop there.
+The log excerpt further down an observation comment can contain a line that
+looks like one, so reading the last match would pick up text out of a CI log
+(the same hazard as reading `- Runs:` / `- Failed:` out of a
+`### Repro result` excerpt).
+
+```bash
+# body: the Date: line inside ### First observation, first match only
+BODY_DATE="$(gh api repos/growilabs/growi/issues/{N} -q '.body' \
+  | awk '/^### First observation/{f=1;next} /^### /{f=0} f && /^-?[[:space:]]*Date:/{sub(/^-?[[:space:]]*Date:[[:space:]]*/,"");print;exit}')"
+
+# observation comments: one Date: per qualifying comment, first match only
+COMMENT_DATES="$(gh api -X GET repos/growilabs/growi/issues/{N}/comments --paginate \
+  -q '.[] | select(.body | split("\n")[0] | (startswith("### Additional observation") or startswith("### Backfilled observation")))
+          | [ .body | split("\n")[] | select(test("^-?[ \t]*Date:")) ][0] // empty
+          | sub("^-?[ \t]*Date:[ \t]*"; "")')"
+
+NEWEST="$(printf '%s\n%s\n' "$BODY_DATE" "$COMMENT_DATES" | grep -v '^[[:space:]]*$' | sort | tail -1)"
+```
+
+The fold happens in the shell, not inside `-q`, for the reason Step 2 already
+gives: `--paginate` applies the `-q` expression to each page separately, so a
+jq program that aggregates internally returns one answer per page. The
+`sort | tail -1` compares the timestamps as strings, which is sound for the
+same reason stated there — GitHub and `detect-flaky-ci` both write
+fixed-width ISO-8601 UTC (`2026-08-14T07:39:31Z`), and for that form
+lexicographic order is chronological order.
+
+### 4-C — Skip an issue a human reopened after this step closed it
+
+A human who reopens an auto-closed issue is saying "keep tracking this" — and
+the issue is, by definition, still stale, so the next run would close it
+again and the reopen would never stick. Detect that case and leave the issue
+alone.
+
+Read the two moments that decide it, folding each in the shell for the reason
+4-B gives (`--paginate` runs `-q` per page, so an aggregate inside `-q`
+returns one answer per page):
+
+```bash
+# newest moment the issue was reopened
+REOPENED_AT="$(gh api -X GET repos/growilabs/growi/issues/{N}/events --paginate \
+  -q '.[] | select(.event == "reopened") | .created_at' | sort | tail -1)"
+
+# newest moment this step closed it
+AUTOCLOSED_AT="$(gh api -X GET repos/growilabs/growi/issues/{N}/comments --paginate \
+  -q '.[] | select(.body | split("\n")[0] | startswith("### Auto-closed:")) | .created_at' | sort | tail -1)"
+```
+
+Skip the issue **only when both values exist and the reopen is the later
+one**:
+
+```bash
+if [[ -n "$REOPENED_AT" && -n "$AUTOCLOSED_AT" && "$REOPENED_AT" > "$AUTOCLOSED_AT" ]]; then
+  : # reopened after this step closed it — leave it open, record it, move on
+fi
+```
+
+Both comparisons are string comparisons, sound for the same fixed-width
+ISO-8601 reason 4-B states. Matching the comment on the prefix
+`### Auto-closed:` — not the full heading — is what makes the guard work at
+any `--stale-days` value.
+
+**An issue with no `### Auto-closed:` comment is not covered by this guard,
+deliberately.** This step never closed such an issue, so there is nothing for
+a human to have undone: closing it now is the first close, which is exactly
+what this step is for. A `reopened` event on its own says nothing about the
+stale-close policy — #11707, for instance, was closed at
+`2026-08-15T12:42:30Z` and reopened at `2026-08-15T12:43:44Z` by the same
+person, an accidental click undone 74 seconds later, and treating that as a
+decision would exempt the issue from auto-close forever. When
+`detect-flaky-ci` reopens an issue it posts a `### Additional observation`
+alongside, so the date rule in 4-B already keeps those open on the evidence
+itself — and a reopen from that path leaves the issue `flaky/confirmed`,
+which 4-A excludes in any case.
+
+Record each issue skipped here as **kept open by a human reopen**, and carry
+it to 4-F.
+
+### 4-D — A date that cannot be read is never a reason to close
+
+If `NEWEST` comes out empty (a hand-created issue that someone labeled
+`flaky/observing` by hand: no `### First observation` section and no
+observation comments), or the value found is not fixed-width ISO-8601 UTC
+ending in `Z` — in which case comparing it against `CUTOFF` in 4-E would be
+meaningless — leave the issue **open and untouched** and note its number in
+the Step 6 report. This is the same shape as Step 5's "leave the cells `—`
+and note the number" path for an issue with no readable dates. Closing an
+issue because its date could not be parsed is the one failure of this step
+that a human would have to undo by hand, so never close on missing data.
+
+### 4-E — Close the ones at or past the threshold
+
+An issue is stale when `NEWEST` is at or before `CUTOFF` (equivalently, when
+`now - NEWEST >= STALE_DAYS`). Write that test as `[[ ... ]]`, never `[ ... ]`:
+
+```bash
+if [[ "$NEWEST" > "$CUTOFF" ]]; then
+  : # newer than the cutoff — leave this issue open and untouched
+else
+  : # at or past the threshold — post the comment below, then close
+fi
+```
+
+Inside `[[ ]]`, `>` compares the two operands as strings, which is sound here
+for the same fixed-width ISO-8601 reason 4-B gives. Inside single brackets,
+`>` is **output redirection**: `[ "$NEWEST" > "$CUTOFF" ]` creates a file
+named after the cutoff and reduces the test to `[ "$NEWEST" ]`, which is true
+for every issue — the step would then close nothing and report "0
+auto-closed" with no error to show for it.
+
+For a stale issue, first post the record, then close the issue:
+
+```bash
+gh api -X POST repos/growilabs/growi/issues/{N}/comments -f body="$(cat <<EOF
+### Auto-closed: not reproduced within ${STALE_DAYS} days
+
+- Newest observation: ${NEWEST}
+- Threshold: ${STALE_DAYS} days with no new observation
+- Closed by: \`/flaky-ci-routine\` Step 4
+
+Closing as \`not planned\`: this identity was observed and has not recurred
+within the threshold. If it fails again, \`detect-flaky-ci\` reopens this
+issue rather than opening a new one.
+EOF
+)"
+
+gh api -X PATCH repos/growilabs/growi/issues/{N} -f state=closed -f state_reason=not_planned
+```
+
+Post the record first, then close — never the reverse, or a failed comment
+would leave a closed issue with no record. If the `PATCH` itself fails after
+the comment posted, note the issue number under "close failed" in the Step 6
+report and continue the run; the issue stays open with an orphan
+`### Auto-closed:` comment, the next run finds no newer `reopened` event, and
+it closes the issue then (posting a second `### Auto-closed:` comment — expected
+in that situation, not a defect).
+
+At the default `--stale-days=14` the heading is exactly:
+
+```
+### Auto-closed: not reproduced within 14 days
+```
+
+With any other `--stale-days` value, keep the literal prefix
+`### Auto-closed: not reproduced within ` and follow it with the actual
+number and ` days` (e.g. `### Auto-closed: not reproduced within 30 days`).
+Anything that reads these comments back matches on the prefix
+`### Auto-closed:` alone, so the trailing number never has to be parsed.
+
+**The comment must not contain a `Fixed by` line — that absence is
+load-bearing, not an oversight.** `detect-flaky-ci`'s "Existing CLOSED issue
+found" path decides whether new evidence is a real recurrence or a
+late-surfacing pre-fix failure by comparing the evidence's commit date
+against the issue's resolution time, which it reads from a free-text
+`Fixed by #{PR_NUMBER}` comment. With no such line anywhere on the issue it
+cannot determine a resolution time, and its documented behaviour for that
+case is to fall through to the "genuine recurrence" branch: reopen the issue
+and escalate it to `flaky/confirmed`. That fall-through **is** Requirement
+10.2's re-open path. An issue closed here was never fixed, so any later
+failure of the same identity is by definition a recurrence and must come
+straight back; writing a resolution marker would make `detect-flaky-ci`
+compare new evidence against a fix that does not exist and silently discard
+it as pre-fix noise. For the same reason, do not describe the closure as a
+fix and do not name a PR in the comment.
+
+**Leave every label in place** — in particular, keep `flaky/observing` on the
+closed issue. The tier label records what the identity was last known to be.
+When `detect-flaky-ci` reopens the issue it *adds* `flaky/confirmed` (and
+swaps the phase label), so a reopened issue carries both `flaky/observing`
+and `flaky/confirmed` at once. That is handled, not a defect: Step 5 item 1
+deduplicates by issue number and keeps the strongest tier, so the issue
+appears exactly once in the dashboard, as `confirmed`. Do not touch the
+`phase/*` label here either — no investigation conclusion was reached.
+
+### 4-F — What this step hands on
+
+The output of this step is three lists:
+
+- the `{issue number, newest observation date}` pairs **actually closed** —
+  hand this to Step 5, for the `## Auto-closed this run` section that
+  Step 5 renders below the table (added alongside this step — if Step 5 has
+  no such section yet, add it rather than dropping the list), and to Step 6,
+  which reports the count and the numbers;
+- the issues **kept open by a human reopen** (4-C), by number;
+- the issues **skipped because no date could be read** (4-D), by number.
+
+Step 6 lists all three. If a list is empty, say so explicitly rather than
+omitting it.
+
+## Step 5 — Update the dashboard
 
 Run this step **even if Step 3 stopped one or more issues for human
 decision.** "ルーティンの実行が完了した場合" (Requirement 5.1 — "when a run
@@ -360,7 +610,10 @@ table with that tier, same as any other active issue.
    exists, or a quarantine/no-action decision was made), not that the
    flaky test itself is confirmed gone; only closing the tracking issue
    removes it from the dashboard (Requirement 5.4). Do not reuse the list
-   Step 2 built — labels may have changed while Step 3 was running. Fetch
+   Step 2 built — labels may have changed while Step 3 and Step 4 were
+   running. Because this query is `state=open`, the issues Step 4 just
+   closed drop out of it on their own, which is exactly why that step runs
+   before this one. Fetch
    fresh, `open`, one tier at a time (same AND-filter reasoning as Step 2 —
    a single query can't OR two tier labels together):
 
@@ -417,7 +670,7 @@ table with that tier, same as any other active issue.
      body has no `### First observation` `Date:` line at all (e.g. a
      hand-created, manually-labeled issue) and there are no qualifying
      comments either, leave both cells `—` (em dash) and note this issue
-     number in the Step 5 report — do not guess a date.
+     number in the Step 6 report — do not guess a date.
    - Tracking issue: a link to the issue.
    - Fix PR: **forward-only**. Populate this only if one of the comments
      from step 2 is exactly a `**Fix PR**: {URL}` marker (written by
@@ -459,7 +712,7 @@ table with that tier, same as any other active issue.
      (lowest `created_at`) as canonical and update it as above. Do not
      auto-merge or delete the others. Note the anomaly (issue numbers
      found) using item 5's note line below, and also in this routine's
-     Step 5 report.
+     Step 6 report.
 
 5. **Body format**, in this exact order:
    - `# flaky-ci-routine dashboard` (title)
@@ -489,7 +742,7 @@ table with that tier, same as any other active issue.
    from the top as fit, and state explicitly — using item 5's note line —
    how many rows were truncated and why. Never truncate silently.
 
-## Step 5 — Report
+## Step 6 — Report
 
 Summarize the run: which `JOB_LOG_METHOD` Step 0 selected, how many issues
 were newly confirmed vs newly suspected by Step 1 (and, of the suspected
@@ -500,7 +753,11 @@ Step 2 re-selected after a human decision (selection B), how many
 could be read (empty PAUSED_AT — list their numbers so a human can look),
 how many were
 investigated in Step 3, how many resulted in a PR, how many were left
-pending human decision (and why), and how many were quarantined. Also
-report Step 4's outcome: whether the dashboard issue was created or updated,
+pending human decision (and why), and how many were quarantined. Report
+Step 4's outcome: how many observing issues were auto-closed, with their
+numbers, plus the numbers of any left open because a human reopened them
+after an earlier auto-close and any whose observation date could not be
+read. Also
+report Step 5's outcome: whether the dashboard issue was created or updated,
 how many rows it now lists, and whether any rows were truncated (and if so,
 how many). This is the routine's output — nothing else needs to be written.
