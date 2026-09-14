@@ -787,7 +787,7 @@ this repo has actually seen:
 
 | Deterministic cause | Real example |
 |---|---|
-| Duplicated dependency — one package resolved to two versions in `pnpm-lock.yaml` | #11849 (`@codemirror/state` duplicated by a regenerated lockfile; the spec fails 3/3, as task 1.6 measured on a branch that reproduced the duplication — the issue itself is still open on `master`) |
+| Duplicated dependency — one package resolved to two versions in `pnpm-lock.yaml` | #11849 (`@codemirror/state` duplicated by a regenerated lockfile; the spec failed 3/3 when the repro workflow's self-test replayed it on a branch that reproduced the duplication; the issue was later closed as a deterministic cause once `master`'s lockfile carried a single version again) |
 | A generated artifact missing at test time | #11870 (`Failed to resolve import "../GrowiEditor.vendor-styles.prebuilt"`) |
 | Build order — a dependency's `dist/` not built before the consumer's tests | same family as the above |
 | An inconsistency that exists only on a merge-queue commit, not on `master` | #11799 |
@@ -1144,9 +1144,10 @@ three on the fixed code".
 allowlist is vitest-only, so there is nothing for it to replay. Commit such a
 fix with the plain message (`fix(scope): …` plus `Fixes #{ISSUE_NUMBER}`) and
 take the Playwright row of 6-B; a trailer-less push to `fix/flaky-**` is
-treated as "no request" and its job exits 0 without measuring anything, which
-task 1.1 made deliberate so that a Playwright PR is not painted red by a
-workflow with no work to do.
+treated as "no request" and its job exits 0 without measuring anything — a
+deliberate choice in the workflow (see the `request` step's comments in
+`.github/workflows/flaky-repro.yml`) so that a Playwright PR is not painted
+red by a workflow with no work to do.
 
 ---
 

@@ -449,7 +449,8 @@ jobs:
 
           # --- The result, rendered once -------------------------------------
           # Written to a file rather than assembled twice: the job summary and
-          # the issue comment (task 1.3) must carry the same text, and the
+          # the issue comment (the `### Repro result` contract in
+          # .kiro/specs/ci-flaky-test-detection design.md) must carry the same text, and the
           # routine parses `- Runs:` / `- Failed:` out of whichever it reads.
           RESULT_MD="${LOG_DIR}/result.md"
           {
