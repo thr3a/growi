@@ -175,8 +175,8 @@ export const InlineCommentItem: FC<InlineCommentItemProps> = (
             <>
               {/* Same position as a normal comment's own history link:
                   right after the date, not part of the `ms-auto` group
-                  below (2026-09-11, user request). */}
-              <span className="ms-2">
+                  below. */}
+              <span className={`ms-2 ${styles['icon-button-container']}`}>
                 <CommentRevisionLink
                   id={comment.id}
                   pagePath={pagePath}
@@ -294,6 +294,7 @@ export const InlineCommentItem: FC<InlineCommentItemProps> = (
 
       <InlineCommentReplies
         parentId={comment.id}
+        pagePath={pagePath}
         pageId={comment.pageId}
         revisionId={comment.anchorOriginRevisionId}
         replies={comment.replies}

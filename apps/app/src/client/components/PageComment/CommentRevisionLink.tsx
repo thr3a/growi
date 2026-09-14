@@ -5,6 +5,8 @@ import { useTranslation } from 'next-i18next';
 import { UncontrolledTooltip } from 'reactstrap';
 import urljoin from 'url-join';
 
+import styles from './CommentEditDeleteButtons.module.scss';
+
 type CommentRevisionLinkProps = {
   /**
    * The comment's own id, used both as this instance's tooltip target
@@ -27,6 +29,11 @@ type CommentRevisionLinkProps = {
  * control; extracted verbatim (not reimplemented) when it was added to the
  * inline comment item too, so the two stay identical rather than drifting
  * (2026-09-11, user request).
+ *
+ * Shares `CommentEditDeleteButtons.module.scss`'s `.icon-button` class so
+ * its hover interaction can't drift from edit/delete's. Box-hover reveal is
+ * each caller's own wrapper, same as it already places
+ * `CommentEditDeleteButtons`.
  */
 export const CommentRevisionLink = (
   props: CommentRevisionLinkProps,
@@ -43,7 +50,7 @@ export const CommentRevisionLink = (
       <Link
         id={tooltipTargetId}
         href={urljoin(returnPathForURL(pagePath, pageId), revHref)}
-        className="page-comment-revision"
+        className={`btn btn-link page-comment-revision ${styles['icon-button']}`}
         prefetch={false}
       >
         <span className="material-symbols-outlined">history</span>

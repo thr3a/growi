@@ -14,8 +14,6 @@
     :global(.bg-comment) { @extend %bg-comment; }
     :global(.user-picture) { @extend %user-picture; }
     :global(.page-comment-main) { @extend %comment-section; }
-    // Rules that only the normal comment has (the revision link color and so
-    // on) are intentionally not copied here.
   }
 
   :global(.inline-comment-quote) {
@@ -30,11 +28,11 @@
     @extend %user-picture;
   }
 
-  // Edit/delete icon buttons (design.md: 編集・削除アイコン) are hidden by
-  // default and revealed only while hovering the card, matching
-  // CommentControl.tsx's "parent :hover + child visibility" pattern.
-  // `visibility` (not `display`) keeps the header row's layout stable while
-  // the buttons are hidden.
+  // Edit/delete icon buttons (design.md: 編集・削除アイコン) and the
+  // revision-history link's wrapper are hidden by default and revealed only
+  // while hovering the card, matching CommentControl.tsx's "parent :hover +
+  // child visibility" pattern. `visibility` (not `display`) keeps the
+  // header row's layout stable while they're hidden.
   //
   // The hover trigger is `:global(.page-comment-main)` -- each `CommentCard`
   // instance's own box (extended with `%comment-section` above) -- not `&`

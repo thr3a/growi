@@ -1,7 +1,9 @@
 // Shared 32px-square icon-button sizing and hover-opacity, used by every
 // comment surface's edit/delete pair (normal comment via `CommentControl.tsx`,
 // inline comment origin/reply via `InlineCommentItem.tsx`/
-// `InlineCommentReplies.tsx`). The popover keeps its own separate copy
+// `InlineCommentReplies.tsx`) and by `CommentRevisionLink.tsx`, so the
+// history icon's hover interaction can't drift from edit/delete's. The
+// popover keeps its own separate copy
 // (`InlineCommentPreviewPopover.module.scss`'s
 // `.inline-comment-preview-popover-icon-button`) -- its buttons are always
 // visible rather than hover-revealed, a genuinely different behavior, not

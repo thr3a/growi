@@ -1,31 +1,20 @@
 /**
  * Nested reply list + reply composer for an inline comment thread.
  *
- * Reuses the page-bottom `CommentEditor` for composing replies, but its
- * `onSubmit` is overridden to route through this thread's own `createReply`
- * instead of the default comment-post path — `pageId`/`revisionId` are
- * required props of `CommentEditor` but go unread once that override is set.
+ * Reuses the page-bottom `CommentEditor`, with `onSubmit` overridden to
+ * route through this thread's own `createReply`.
  *
- * `reply.creatorId` (not the populated `creator`) is compared against
- * `currentUser._id` to decide reply ownership, matching `InlineCommentItem`.
+ * `reply.creatorId` (not the populated `creator`) decides reply ownership,
+ * matching `InlineCommentItem`.
  *
- * Edit/delete icon buttons are the shared `CommentEditDeleteButtons`
- * component (also used by `CommentControl.tsx` for a normal comment and by
- * `InlineCommentItem.tsx` for the origin comment), wrapped here in
- * `InlineCommentItem.module.scss`'s `.icon-button-container` hover-visibility
- * rule (imported here, not duplicated): that rule is
- * `.inline-comment-item-styles .icon-button-container` with no `:global()`
- * wrapper, so it is a CSS-Modules-scoped selector, not a plain global class
- * name — matching it requires reading the class through `styles[...]` from
- * this exact module specifier so the compiled hash lines up with
- * `InlineCommentItem.tsx`'s. `InlineCommentReplyItem` always renders as a
- * descendant of that ancestor's root div (see `InlineCommentItem.tsx`), so
- * the compiled `.inline-comment-item-styles :global(.page-comment-main):hover
- * .icon-button-container` rule still reaches it -- the trigger is each
- * reply's OWN `.page-comment-main` (its `CommentCard`'s box), not the shared
- * ancestor, so hovering one reply reveals only that reply's own buttons
- * (2026-09-11, matching normal comments' per-row reveal -- see that rule's
- * own comment in `InlineCommentItem.module.scss` for why).
+ * Edit/delete buttons and the revision-history link both import
+ * `InlineCommentItem.module.scss`'s `.icon-button-container` class (rather
+ * than duplicating it) so its hover-reveal rule, scoped to each reply's own
+ * `.page-comment-main`, reaches them too.
+ *
+ * The revision link uses the same `revisionId` as the origin comment, since
+ * a reply has no anchor/revision of its own, and is shown to every viewer
+ * (unlike edit/delete), so it sits outside the `isOwnReply` check.
  */
 
 import { type FC, type JSX, useMemo, useState } from 'react';
@@ -36,6 +25,7 @@ import { NotAvailableIfReadOnlyUserNotAllowedToComment } from '~/client/componen
 import { CommentCard } from '~/client/components/PageComment/CommentCard';
 import { CommentEditDeleteButtons } from '~/client/components/PageComment/CommentEditDeleteButtons';
 import { CommentEditor } from '~/client/components/PageComment/CommentEditor';
+import { CommentRevisionLink } from '~/client/components/PageComment/CommentRevisionLink';
 import { DeleteConfirmAlert } from '~/client/components/PageComment/DeleteConfirmAlert';
 import RevisionRenderer from '~/components/PageView/RevisionRenderer';
 import type { RendererOptions } from '~/interfaces/renderer-options';
@@ -47,6 +37,7 @@ import styles from './InlineCommentItem.module.scss';
 
 type InlineCommentRepliesProps = {
   parentId: string;
+  pagePath: string;
   pageId: string;
   revisionId: string;
   replies: InlineCommentReply[];
@@ -58,6 +49,7 @@ type InlineCommentRepliesProps = {
 
 type InlineCommentReplyItemProps = {
   reply: InlineCommentReply;
+  pagePath: string;
   pageId: string;
   revisionId: string;
   rendererOptions: RendererOptions | undefined;
@@ -71,6 +63,7 @@ const InlineCommentReplyItem: FC<InlineCommentReplyItemProps> = (
 ): JSX.Element => {
   const {
     reply,
+    pagePath,
     pageId,
     revisionId,
     rendererOptions,
@@ -129,20 +122,31 @@ const InlineCommentReplyItem: FC<InlineCommentReplyItemProps> = (
           creator={reply.creator}
           createdAt={reply.createdAt}
           headerEnd={
-            isOwnReply &&
-            !isDeleteConfirmOpen && (
-              <span className="ms-auto d-flex align-items-center gap-2">
-                <span
-                  className={`d-flex align-items-center gap-1 ${styles['icon-button-container']}`}
-                >
-                  <CommentEditDeleteButtons
-                    testIdPrefix="inline-comment-reply"
-                    onClickEditBtn={() => setIsEditing(true)}
-                    onClickDeleteBtn={() => setIsDeleteConfirmOpen(true)}
-                  />
-                </span>
+            <>
+              {/* Shown to every viewer, unlike edit/delete below -- not
+                  gated by `isOwnReply`. */}
+              <span className={`ms-2 ${styles['icon-button-container']}`}>
+                <CommentRevisionLink
+                  id={reply.id}
+                  pagePath={pagePath}
+                  pageId={pageId}
+                  revisionId={revisionId}
+                />
               </span>
-            )
+              {isOwnReply && !isDeleteConfirmOpen && (
+                <span className="ms-auto d-flex align-items-center gap-2">
+                  <span
+                    className={`d-flex align-items-center gap-1 ${styles['icon-button-container']}`}
+                  >
+                    <CommentEditDeleteButtons
+                      testIdPrefix="inline-comment-reply"
+                      onClickEditBtn={() => setIsEditing(true)}
+                      onClickDeleteBtn={() => setIsDeleteConfirmOpen(true)}
+                    />
+                  </span>
+                </span>
+              )}
+            </>
           }
           footer={
             <>
@@ -183,6 +187,7 @@ export const InlineCommentReplies: FC<InlineCommentRepliesProps> = (
 ): JSX.Element => {
   const {
     parentId,
+    pagePath,
     pageId,
     revisionId,
     replies,
@@ -207,6 +212,7 @@ export const InlineCommentReplies: FC<InlineCommentRepliesProps> = (
         <InlineCommentReplyItem
           key={reply.id}
           reply={reply}
+          pagePath={pagePath}
           pageId={pageId}
           revisionId={revisionId}
           rendererOptions={rendererOptions}

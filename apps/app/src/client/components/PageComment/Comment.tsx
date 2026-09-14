@@ -177,9 +177,7 @@ export const Comment = (props: CommentProps): JSX.Element => {
           rootClassName={rootClassName}
           headerEnd={
             <>
-              {/* Unchanged position: right after the date, same `ms-2` as
-                  before this round's fix. */}
-              <span className="ms-2">
+              <span className={`ms-2 ${styles['icon-button-container']}`}>
                 <CommentRevisionLink
                   id={commentId}
                   pagePath={pagePath}
@@ -191,28 +189,12 @@ export const Comment = (props: CommentProps): JSX.Element => {
                   revisionId={String(comment.revision)}
                 />
               </span>
-              {/* 2026-09-11: only the edit/delete controls are pushed to the
-                  row's right edge with `ms-auto`, matching
-                  InlineCommentItem.tsx's own headerEnd pattern -- previously
-                  `CommentControl` rendered in the `footer` slot but was
-                  pulled to the top-right corner via
-                  `position: absolute; top: 0; right: 0`, which (per the CSS
-                  spec) is anchored to the containing block's padding edge
-                  and so ignored `.page-comment-main`'s own `1em` padding,
-                  sitting flush against the card's border instead of inset
-                  like every other header-row item (user report: looked
-                  broken next to the inline comment item, which was already
-                  in normal flow). Moving it into the header row's own flex
-                  flow makes it respect that padding the same way the
-                  revision-history link already does. The history link
-                  itself keeps its original `ms-2` position (not part of
-                  this `ms-auto` group) -- pulling it into the group too
-                  dragged it away from the date it's meant to sit next to
-                  (caught by user report right after the first version of
-                  this fix). The controls step aside while the confirmation
-                  stands in their place, so the delete request cannot be
-                  started twice -- the same composition InlineCommentItem
-                  uses. */}
+              {/* In the header row's own flex flow (`ms-auto`), not
+                  `position: absolute` -- absolute ignored
+                  `.page-comment-main`'s padding, sitting flush against the
+                  border unlike every other header item. Kept out of the
+                  revision link's `ms-2` span, which must stay next to the
+                  date. */}
               {isCurrentUserEqualsToAuthor() &&
                 !isReadOnly &&
                 !isDeleteConfirmOpen && (

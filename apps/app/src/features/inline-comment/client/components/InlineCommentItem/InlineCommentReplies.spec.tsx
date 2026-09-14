@@ -167,6 +167,7 @@ const renderReplies = (
   render(
     <InlineCommentReplies
       parentId="comment1"
+      pagePath="/page1"
       pageId="page1"
       revisionId="revision1"
       replies={[]}
@@ -684,6 +685,47 @@ describe('InlineCommentReplies', () => {
       expect(
         screen.queryByTestId('inline-comment-reply-delete-confirm'),
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe('the revision-history link', () => {
+    it('renders right after the date, linking to the page at the shared revisionId (a reply has no anchor revision of its own)', () => {
+      renderReplies({
+        replies: [reply({ id: 'reply1' })],
+        pagePath: '/page42',
+        pageId: 'page42',
+        revisionId: 'revision99',
+      });
+
+      const replyContainer = screen.getByTestId('inline-comment-reply');
+      const header = replyContainer.querySelector('.d-flex.align-items-center');
+      // `.page-comment-revision` is also the class CommentCard's own date
+      // link carries, so select by the unique id CommentRevisionLink sets
+      // instead (matches InlineCommentItem.spec.tsx's own pattern).
+      const link = header?.querySelector('#page-comment-revision-reply1');
+
+      expect(link).not.toBeNull();
+      expect(link).toHaveAttribute('href', '/page42?revisionId=revision99');
+      expect(link?.closest('.ms-2')?.parentElement).toBe(header);
+    });
+
+    it("is shown even when the current viewer is not the reply's own creator (unlike edit/delete)", () => {
+      currentUserRef.current = { _id: 'someone-else' };
+      renderReplies({
+        replies: [reply({ id: 'reply1', creatorId: 'user2' })],
+      });
+
+      expect(
+        document.getElementById('page-comment-revision-reply1'),
+      ).not.toBeNull();
+    });
+
+    it('gives the link the same hover-visibility container class as the edit/delete pair (reused, not duplicated)', () => {
+      renderReplies({ replies: [reply({ id: 'reply1' })] });
+
+      const link = document.getElementById('page-comment-revision-reply1');
+
+      expect(link?.closest('.icon-button-container')).not.toBeNull();
     });
   });
 });

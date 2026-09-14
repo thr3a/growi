@@ -41,6 +41,16 @@
       &:hover :global(.page-comment-control) {
         visibility: visible;
       }
+
+      // Scoped to this wrapper, not `.page-comment-revision` -- that class
+      // is also on the always-visible "posted X ago" link in CommentCard.tsx.
+      .icon-button-container {
+        visibility: hidden;
+      }
+
+      &:hover .icon-button-container {
+        visibility: visible;
+      }
     }
 
     // comment body
@@ -71,14 +81,6 @@
         opacity: 1;
       }
     }
-
-    :global(.page-comment-revision) {
-      :global(.material-symbols-outlined) {
-        font-size: 20px;
-        vertical-align: center;
-      }
-    }
-
 
     :global(.page-comment-meta) {
       display: flex;
