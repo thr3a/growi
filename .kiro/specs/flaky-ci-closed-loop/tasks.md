@@ -1,0 +1,155 @@
+# Implementation Plan
+
+この spec は `ci-flaky-test-detection` の amend spec である。実装が終わっても完了ではなく、最終タスク 7 で
+元 spec へ内容を移し、この spec 自身を削除した時点で完了とする（`.claude/rules/spec-lifecycle.md`）。
+
+並行実行の注意: 大タスク 2（`detect-flaky-ci/SKILL.md`）・3（`investigate-flaky-test/SKILL.md`）・4
+（`flaky-ci-routine.md`）は別ファイルなので互いに並行できる。同じ大タスク内のサブタスクは同じファイルを
+編集するため逐次で進める（各グループの先頭サブタスクだけに `(P)` を付けている）。
+
+- [ ] 1. Foundation: 測定器（再現 workflow）と、それが動く前提を整える
+- [ ] 1.1 再現 workflow の骨格と依頼の検証を作る
+  - `flaky-repro/**` と `fix/flaky-**` への push で起動し、`pull_request` では起動しない
+  - 権限は `contents: read` と `issues: write` に限定する
+  - head commit の git trailer（Spec / Project / Mode / Repeat / Issue）を読み、allowlist（project 名 4 種、mode 2 種、repeat 1〜10、spec がリポジトリ内に実在）で検証する。検証に落ちたら理由をジョブサマリに書いて job を失敗させる
+  - pnpm / node / 依存インストールは `ci-app.yml` と同じアクション・バージョンを使い、両ファイルに相互参照コメントを置く
+  - 観測可能な完了状態: 不正な trailer（存在しない spec パス）を持つ空コミットを `flaky-repro/selftest-invalid` に push すると、check-run が `failure` になりサマリに理由が出る
+  - _Requirements: 6.1, 6.6_
+- [ ] 1.2 file モードと suite モードの実行と集計を作る
+  - project に応じてサービスを起動する（統合系のみ MongoDB replica set と Elasticsearch。`ci-app.yml` の `ci-app-test-integration` と同一手順）
+  - 前提生成物を作る（`app-components` は `dev:pre:styles-components`、統合系は `pre:styles-bulk-export`）
+  - file モード: 対象 spec を別プロセスで Repeat 回実行し、各回の pass/fail を集計する。統合系は `--poolOptions.forks.maxForks=4` を揃える
+  - suite モード: project 対応のテストスクリプト（`test:unit` / `test:components` / `test:integ`）を 1 回実行する
+  - テストが落ちても job は落とさない。前処理の失敗だけが job の失敗
+  - 観測可能な完了状態: 既知の安定 spec（例: `apps/app/src/server/util` 配下の spec 1 本）を Repeat 3 で push すると、job が `success` で終わり、サマリに `Runs: 3 / Failed: 0` と各回の結果が出る
+  - _Requirements: 6.1, 6.4_
+- [ ] 1.3 結果を追跡 issue にコメントする
+  - `Flaky-Repro-Issue` があるとき、`### Repro result` 見出しで `- Commit:` `- Branch:` `- Mode:` `- Runs:` `- Failed:` `- Per-run:` `- Workflow run:` の固定並びの 1 コメントを投稿する。失敗回の FAIL ブロック抜粋は 40 行まで
+  - `Flaky-Repro-Issue` が無いときはサマリのみ
+  - 観測可能な完了状態: 検証用 issue を指定して push すると、その issue に上記形式のコメントが 1 件付き、`- Runs:` と `- Failed:` の行を `gh api` で機械的に取り出せる
+  - _Requirements: 6.1, 6.2, 6.3_
+- [ ] 1.4 (P) 通常 CI から確認用ブランチを除外する
+  - `ci-app.yml` と `ci-app-prod.yml` の `on.push.branches-ignore` に `flaky-repro/**` を追加する（`fix/flaky-**` は除外しない）
+  - 観測可能な完了状態: `flaky-repro/**` への空コミット push 後、REST で両 workflow の run 一覧を見てもそのブランチの run が無い
+  - _Requirements: 6.7_
+  - _Boundary: CI Exclusion_
+- [ ] 1.5 (P) 判断待ちラベルを作る
+  - REST でラベル `flaky/needs-decision`（説明 100 文字以内）を作成する
+  - 観測可能な完了状態: `gh api repos/growilabs/growi/labels/flaky%2Fneeds-decision` がラベルを返す
+  - _Requirements: 9.1_
+  - _Boundary: Needs-Decision State_
+- [ ] 1.6 測定器を 3 シナリオで実測する
+  - 安定 spec で `Failed: 0`（1.2 と同じブランチで可）、`@codemirror/state` を 2 バージョンに分けた lockfile を含むブランチで `AdminCodeEditor.spec.tsx` を流して `Failed: 3`、存在しない spec で `failure` の 3 つを確認する
+  - 1.4 の除外が効いていること（通常 CI の run が作られない）も同じ push で確認する
+  - 観測可能な完了状態: 3 シナリオの結果コメント／サマリの URL が tasks.md の実施結果に残っている。使った `flaky-repro/selftest-*` ブランチは削除済み
+  - _Depends: 1.3, 1.4_
+  - _Requirements: 6.1, 6.3, 6.6, 6.7_
+
+- [ ] 2. Core A: 検出（`detect-flaky-ci/SKILL.md`）— 集約と追跡対象外
+- [ ] 2.1 (P) 巻き添えと連鎖を 1 issue にまとめる
+  - 1 つのジョブログに `test/setup/` 配下を指す `Hook timed out` があるとき、同じログの他ファイルの `Hook timed out` / `Test timed out` は新規 issue にせず、共有フックの追跡 issue に `### Collateral candidate` 見出しでコメントする（run URL・ファイル・テスト名・timeout 値）。アサーション失敗・unhandled rejection・接続エラーは対象外と明記する
+  - 巻き添え候補として記録したテストが、共有フック timeout の無い run で失敗したときは通常の識別として扱い、候補コメントの run URL を初回観測の補足として引く
+  - 同一ファイル・同一 run の複数 FAIL は先頭を識別とし、後続は issue 本文の「Cascaded in the same run」節に列挙する
+  - `### Collateral candidate` が Occurrences の見出し一致から外れていることを Dashboard Updater の定義と突き合わせて明記する
+  - 観測可能な完了状態: #11752 の run 33650461350 と #11849 の run 34480781682 のログを手順に当てると、前者は #11752 への巻き添えコメント 1 件・新規 issue 0 件、後者は連鎖 3 件が本文列挙・新規 issue 0 件になると手順だけから一意に決まる
+  - _Requirements: 7.1, 7.2, 7.3_
+  - _Boundary: Identity Aggregation_
+- [ ] 2.2 flaky でない失敗を追跡対象から外す
+  - run の head SHA が master の祖先でない（REST compare の `status` が `ahead` / `diverged`）かつ、紐づく PR の files に失敗 spec のパスが含まれる場合は対象外にし、Step 5 の報告に件数と PR 番号を出す。PR が無い push run で祖先でない場合も同様
+  - 判定①で PR の files に `pnpm-lock.yaml` があるときは、その patch の `+`/`-` 行のパッケージ名と、スタックトレースの `node_modules/.pnpm/<name>@` / `node_modules/<name>/` を照合し、一致があれば①を不成立にして本文に理由を書く
+  - denylist に `Failed to download file.` を追加する（既存項目は変えない）
+  - 観測可能な完了状態: #11864 の run 33857470813 は除外件数 1 として報告され、#11849 の run では①が不成立になり、#11708 のログは infra noise に分類される、と手順だけから一意に決まる
+  - _Requirements: 8.1, 8.2, 8.3_
+  - _Boundary: Non-flaky Exclusion_
+
+- [ ] 3. Core B: 調査（`investigate-flaky-test/SKILL.md`）— 確認・検証・停止の作法
+- [ ] 3.1 (P) 確認ゲートを再現 workflow に置き換える
+  - Step 2 の `gh run rerun` 節を削除し、失敗 run の SHA から `flaky-repro/issue-<N>-<slug>` を切って空コミットに trailer（Mode file、Repeat 既定 3、Issue N）を載せて push する手順にする
+  - REST の check-runs を 60 秒間隔・上限 30 分で待ち、`flaky-repro` が完了したら `### Repro result` の `- Runs:` `- Failed:` を読む
+  - `Failed < Runs` → `flaky/confirmed` に格上げし、集計を「記録済みの失敗 1 件 + Failed / Runs + 1」の形で書く。`Failed == Runs` → 「本物の回帰の可能性」を書き Step 4 で MEDIUM。check-run が `failure` または 30 分超過または check-run 不在 → 「確認未実施」を書き `flaky/needs-decision` を付けて停止
+  - 結果を読んだ後に確認用ブランチを削除する
+  - Step 4 の確信度表を集計値ベースに書き換える（「rerun 403」行を「未測定」行に置き換える）
+  - 観測可能な完了状態: Step 2 を読むと、3 つの終わり方（確定／回帰の可能性／未測定）のどれに進むかが `- Failed:` と `- Runs:` の値と check-run の結論だけで一意に決まる
+  - _Depends: 1.6_
+  - _Requirements: 6.1, 6.2, 6.3, 6.6_
+  - _Boundary: Confirmation Gate_
+- [ ] 3.2 修正の検証と Ready での PR 作成に置き換える
+  - Step 5-B / 6-A / 6-B を「`fix/flaky-<N>-<slug>` に修正コミット（trailer 付き）を push → `flaky-repro` と `ci-app-*` の check-runs を上限 45 分で待つ → `Failed == 0` かつ通常 CI が全て success なら REST で draft でない PR を作成し、本文の Verification 節に集計値と両 run の URL を書き、直後に `**Fix PR**: {URL}` マーカーを issue に書く」に置き換える
+  - どちらかに失敗があれば PR を作らず、失敗内容を issue に書いて `flaky/needs-decision` を付ける
+  - Playwright の修正は trailer を付けず、PR を Ready で開いて「検証は PR の `run-playwright` に委ねる」と本文に明記する
+  - 6-C の確信度表から「rerun 403」行を外し、集計値ベースにする。6-D の `gh pr ready` を削除する
+  - 観測可能な完了状態: 手順のどこにも `--draft` と `gh pr ready` が無く、PR 作成の前提条件（`Failed == 0` かつ通常 CI green）が 1 箇所に明記されている
+  - _Requirements: 6.4, 6.5_
+- [ ] 3.3 停止の作法を統一する（判断待ちラベル・決定的原因のクローズ・購読禁止）
+  - MEDIUM / LOW で停止する全箇所（Step 2 の未測定、Step 4、Step 6-C）で `flaky/needs-decision` を付け、停止コメント末尾に `- Recommendation: <1 行>` を固定形式で書く
+  - 人の判断コメントを渡されて再開したときは最初に `flaky/needs-decision` を外し、その判断で Step 4 / 6-C のゲートを通す
+  - 決定的原因（依存の重複・生成物の不足・ビルド順序・マージキュー上だけの不整合）と判定したら `### Closed: deterministic cause, not flaky` を書いて `not planned` でクローズし、phase を `⏏ phase/wontfix` に付け替える
+  - PR / issue のイベント購読、モバイル通知、再起床の予約を行わないことを Error Handling の手前に明記し、署名文言の定義は `flaky-ci-routine.md` を参照する
+  - 観測可能な完了状態: SKILL.md 内の停止箇所を列挙すると全てにラベル付与と Recommendation 行があり、購読・再起床の禁止が 1 箇所に書かれている
+  - _Requirements: 8.4, 9.1, 9.5_
+
+- [ ] 4. Core C: 可視化と選択（`flaky-ci-routine.md`）
+- [ ] 4.1 (P) 判断待ち issue の再開を選択条件に加える
+  - Step 2 に「`flaky/needs-decision` を持つ open issue のうち、最新の `labeled` イベント（REST issue events）より後に、`user.type == "User"` で自動投稿の署名を持たないコメントがあるもの」を追加し、そのコメント本文を `investigate-flaky-test` に渡す
+  - 自動投稿の署名文言（`_Generated by [Claude Code]` / `*Investigated by Claude Code`）をこのファイルに定数として 1 箇所で定義する
+  - 観測可能な完了状態: Step 2 を読むと、人のコメントの有無と時刻だけで「再選択する／しない」が一意に決まり、Claude 署名付きコメントでは再選択されない
+  - _Requirements: 9.3_
+  - _Boundary: Target Selection_
+- [ ] 4.2 再発しない observing issue の自動クローズを追加する
+  - Step 3 の後に新 Step を挿入し、open かつ `flaky/observing` で、本文と観測コメントの `Date:` の最大値から `--stale-days`（既定 14）以上経過したものを `### Auto-closed: not reproduced within 14 days` を書いて `not planned` でクローズする。`Fixed by` は書かない
+  - 以降の Step 番号を繰り下げ、重複・欠番を作らない
+  - 観測可能な完了状態: #11707（最終観測 2026-08-14）を手順に当てるとクローズ対象になり、最終観測が 14 日以内の issue は対象外になる、と手順だけから決まる
+  - _Requirements: 10.1, 10.2, 10.3_
+- [ ] 4.3 ダッシュボードの節と報告項目を追加する
+  - Step 5（4.2 の挿入で旧 Step 4 から繰り下がったダッシュボード更新）の表の下に `## Awaiting human decision`（`Tracking issue | Paused at | Recommendation | New observations since pause`）と `## Auto-closed this run`（0 件なら `None.`）を追加する。Paused at は `flaky/needs-decision` の最新 labeled イベント時刻、Recommendation は停止コメントの `- Recommendation:` 行、New observations はその時刻より後の観測コメント数
+  - 巻き添え候補・連鎖列挙・Repro result・Auto-closed・Closed: deterministic の各見出しが Occurrences に数えられないことを Step 5 の定義に明記する
+  - Step 6（旧 Step 5 の報告）に「再現実行の回数と合計 CI 時間、判断待ち件数、自動クローズ件数、PR 自身の変更として除外した件数」を追加する
+  - 購読・再起床の予約を行わないことを明記する
+  - 観測可能な完了状態: ダッシュボード本文の構成（表 → 2 節）と報告項目が繰り下げ後の Step 5 / Step 6 に列挙され、既存の表の列定義は変わっていない
+  - _Requirements: 7.4, 9.2, 9.4, 9.5, 10.3, 11.3_
+
+- [ ] 5. Integration: 3 ファイルと運用設定をつなぐ
+- [ ] 5.1 見出し・定数・参照を 3 ファイルで揃える
+  - `### Repro result` / `### Collateral candidate` / `### Auto-closed: not reproduced within 14 days` / `### Closed: deterministic cause, not flaky` / `- Recommendation:` / 署名文言 / trailer 名 / ブランチ名パターンが、3 ファイルと `flaky-repro.yml` で一字一句同じであることを grep で確認し、食い違いを直す
+  - `ci-app.yml` と `flaky-repro.yml` のサービス起動手順の相互参照コメントが両方にある
+  - `flaky-ci-routine.md` 内の Step 番号の参照（本文中の「Step N」）が 4.2 の繰り下げ後の番号と一致し、重複・欠番が無い
+  - 観測可能な完了状態: 上記の各文字列を grep すると、定義箇所と参照箇所の綴りが全て一致する
+  - _Depends: 1.3, 2.1, 3.3, 4.2, 4.3_
+  - _Requirements: 6.2, 7.1, 9.1, 10.1_
+- [ ] 5.2 クラウド routine の設定を更新する（ユーザーの承認を得て実行）
+  - `growi-flaky-ci-routine` のプロンプトに `--window-hours=32` を追加する（cron を `0 */8 * * *` に戻す案も提示し、ユーザーが選ぶ）
+  - `Investigate GROWI Issues` のプロンプトの手順 1 に「ラベル名が `flaky/` で始まる issue は対象外」を追加する
+  - `investigate-flaky-test` を Opus 系で動かす案を費用と合わせて判断材料として提示する（決定はユーザー）
+  - 観測可能な完了状態: 2 つの routine の `derived_state.prompt` に上記文言が含まれている
+  - _Requirements: 11.1, 11.2_
+- [ ] 5.3 既存の判断待ち issue を新しい状態に移す
+  - `flaky/suspected` または `flaky/confirmed` で `phase/under-investigation` のまま止まっている open issue（2026-09-14 時点で 11 件）に `flaky/needs-decision` を付け、既存の停止コメントの推奨案を `- Recommendation: <1 行>` の形で追記する
+  - 観測可能な完了状態: 対象 issue 全てにラベルと Recommendation 行があり、次回のダッシュボードの `## Awaiting human decision` に載る
+  - _Depends: 1.5, 4.3_
+  - _Requirements: 9.1, 9.2_
+
+- [ ] 6. Validation: 本番 run now でシナリオ検証する
+- [ ] 6.1 確認ゲートを実在の疑いあり issue で通す
+  - 実在する `flaky/suspected` issue 1 件（例: #11823）に対して `investigate-flaky-test` を run now し、確認用ブランチの push → `### Repro result` → 確定または回帰の可能性への遷移が手順どおり起きることを確認する。確認用ブランチが削除されていることも見る
+  - 観測可能な完了状態: 対象 issue に Repro result コメントと集計の記録があり、ラベルが手順の判定と一致している
+  - _Depends: 3.1, 5.1_
+  - _Requirements: 6.1, 6.2, 6.3, 6.7_
+- [ ] 6.2 修正の検証と Ready PR を実在の修正で通す
+  - 原因が特定済みで 1 行で直る issue（例: #11823 の `fs.rm` に `force` が無い問題）を `investigate-flaky-test` の Step 5〜6 で扱い、`fix/flaky-**` への push → `Failed: 0` と通常 CI green → draft でない PR と `**Fix PR**` マーカーが作られることを確認する
+  - 観測可能な完了状態: PR が `draft: false` で存在し、本文の Verification 節に集計値と run の URL があり、issue にマーカーコメントがある
+  - _Depends: 3.2, 5.1_
+  - _Requirements: 6.4, 6.5_
+- [ ] 6.3 routine を 1 サイクル回し、選択・自動クローズ・ダッシュボードを確認する
+  - `/flaky-ci-routine --window-hours=32` を run now し、Step 2 で判断待ち issue が（人のコメントが無いので）選ばれないこと、#11707 が自動クローズされること、ダッシュボードに 2 節が追加され既存の表の行が巻き添え・連鎖で増えていないこと、Step 6（繰り下げ後の報告）に新項目が出ることを確認する
+  - 判断待ち issue 1 件に人としてコメントを付けてもう 1 サイクル回し、その issue が再選択されラベルが外れることを確認する
+  - 観測可能な完了状態: ダッシュボード #11720 の本文に `## Awaiting human decision` と `## Auto-closed this run` があり、#11707 が closed、報告に 4 つの新項目が出ている
+  - _Depends: 4.1, 4.2, 4.3, 5.3_
+  - _Requirements: 7.4, 9.2, 9.3, 9.4, 10.1, 10.2, 10.3, 11.3_
+
+- [ ] 7. 元 spec へ移して、この spec を削除する（spec-lifecycle）
+- [ ] 7.1 `ci-flaky-test-detection` の requirements.md に Requirement 6〜11 を末尾に追記し、design.md の該当節（Requirement 2・3・5 の契約、Revalidation Triggers、File Structure Plan、Components）を「amend が無かったかのように」現在の事実で書き直す
+  - 観測可能な完了状態: 元 spec の requirements.md に 6.1〜11.3 があり、design.md に `flaky-repro.yml` と判断待ち状態の記述があり、履歴の語り（「以前は〜だった」）が無い
+- [ ] 7.2 本 spec の research.md の Design Decisions と研究ログを元 spec の research.md に移す
+  - 観測可能な完了状態: 元 spec の research.md に「権限」「測定器の比較」「回数」「paths フィルタ」「結果の置き場所」「巻き添えの範囲」「人のコメント判定」の各決定がある
+- [ ] 7.3 元 spec の spec.json の `updated_at` を更新し、`.kiro/steering/roadmap.md` に本 spec の行があれば削除し、`.kiro/specs/flaky-ci-closed-loop/` を削除する
+  - 観測可能な完了状態: `.kiro/specs/flaky-ci-closed-loop/` が存在せず、`grep -r flaky-ci-closed-loop .kiro` が 0 件
