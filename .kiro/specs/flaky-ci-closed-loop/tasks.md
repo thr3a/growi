@@ -15,7 +15,7 @@
   - pnpm / node / 依存インストールは `ci-app.yml` と同じアクション・バージョンを使い、両ファイルに相互参照コメントを置く
   - 観測可能な完了状態: 不正な trailer（存在しない spec パス）を持つ空コミットを `flaky-repro/selftest-invalid` に push すると、check-run が `failure` になりサマリに理由が出る
   - _Requirements: 6.1, 6.6_
-- [ ] 1.2 file モードと suite モードの実行と集計を作る
+- [x] 1.2 file モードと suite モードの実行と集計を作る
   - project に応じてサービスを起動する（統合系のみ MongoDB replica set と Elasticsearch。`ci-app.yml` の `ci-app-test-integration` と同一手順）
   - 前提生成物を作る（`app-components` は `dev:pre:styles-components`、統合系は `pre:styles-bulk-export`）
   - file モード: 対象 spec を別プロセスで Repeat 回実行し、各回の pass/fail を集計する。統合系は `--poolOptions.forks.maxForks=4` を揃える
@@ -163,3 +163,6 @@
 - 1.1: dist キャッシュは restore 専用（`actions/cache/restore@v4`、key は ci-app.yml と同一）。キャッシュに当たらない回は `**/dist` が空なので、1.2 で vitest を呼ぶ前に依存パッケージの dist を turbo で用意する必要がある
 - 1.1 → 1.4: `ci-app.yml` 側の相互参照コメント（flaky-repro.yml のサービス起動手順と同時に直す旨）は 1.4 の作業内容に含める
 - 1.1 → 1.6: ブランチ削除の push で workflow が起動しないことを run 一覧で確認する。起動していたら `if: github.event.deleted != true` を足す
+- 1.2: MongoDB は **4 project 全てで起動**する（design.md の「統合系のみ」からの意図的な変更）。理由: unit/components の CI ジョブ `ci-app-test` も MongoDB を起動して `MONGO_URI` を渡しており、`test/setup/mongo/self-contained-connection.ts` は `MONGO_URI` があれば内蔵 memory server より優先するため、変数だけ渡してサービスが無いと安定 spec が落ちる。Elasticsearch は統合系のみ。7.1 の port-back で design.md の一文を現在の事実に直す
+- 1.2: 結果は job 内の `$RUNNER_TEMP` 配下（`result_path` = `### Repro result` ブロックの Markdown、`excerpt_path`、`log_dir`）に置かれ、step outputs で渡す。**1.3 のコメント投稿 step は同じ job に足す**（別 job にすると artifact 化が要る）
+- 1.2: 1 回目の実行で `No test files found` なら「測定できなかった」として job を失敗させる。2 回目以降なら fail 1 回として集計を続ける。suite モードで `app-integration-exclusive` を頼むと `test:integ` が統合系 2 project を流す（design.md の対応表どおり）— 1.3 の結果整形で一言添える
