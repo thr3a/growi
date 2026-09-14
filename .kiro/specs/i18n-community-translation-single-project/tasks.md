@@ -9,7 +9,7 @@
   - _Requirements: 1.1_
   - _Boundary: SyncConfig_
 
-- [ ] 1.2 (P) namespaceのJSONをラップ/アンラップする純粋関数を実装する
+- [x] 1.2 (P) namespaceのJSONをラップ/アンラップする純粋関数を実装する
   - 複数namespaceの内容を、namespace名をキーとする1つのJSONに統合する処理を実装する
   - 単一namespaceの内容を、namespace名でラップする処理を実装する
   - 統合されたJSONから特定namespaceの内容だけを取り出す処理を実装する。対象namespaceのキーが存在しない、またはオブジェクトでない場合は空オブジェクトを返す（例外を投げない）
