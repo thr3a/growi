@@ -1,6 +1,6 @@
 import type { NextRouter } from 'next/router';
 import { useRouter } from 'next/router';
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import type { Element } from 'hast';
 import { mock } from 'vitest-mock-extended';
 
@@ -17,9 +17,9 @@ import {
 import { useCurrentPagePath } from '~/states/page';
 import { useShareLinkId } from '~/states/page/hooks';
 
-import { Header } from './Header';
+import { EditLink, Header } from './Header';
 
-// Mock every hook Header depends on so the component renders in isolation.
+// Mock every hook Header/EditLink depend on so they render in isolation.
 vi.mock('next/router', () => ({
   useRouter: vi.fn(),
 }));
@@ -84,5 +84,38 @@ describe('Header', () => {
     expect(heading?.classList.contains('h6')).toBe(true);
     expect(heading?.classList.contains('font-weight-bold')).toBe(true);
     expect(heading?.classList.contains('mb-3')).toBe(true);
+  });
+});
+
+describe('EditLink', () => {
+  it('marks the icon as decorative so screen readers do not read it out', () => {
+    const { container } = render(<EditLink line={1} />);
+
+    const icon = container.querySelector('.material-symbols-outlined');
+    expect(icon).not.toBeNull();
+    expect(icon).toHaveAttribute('aria-hidden', 'true');
+    expect(icon).toHaveTextContent('edit_square');
+  });
+
+  it('keeps the button enabled and wired to startEditing when a line is provided', () => {
+    const startEditing = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useStartEditing).mockReturnValue(startEditing);
+    vi.mocked(useCurrentPagePath).mockReturnValue('/test/page');
+
+    const { container } = render(<EditLink line={5} />);
+
+    const button = container.querySelector('button');
+    expect(button).not.toBeNull();
+    expect(button).not.toBeDisabled();
+
+    fireEvent.click(button as HTMLButtonElement);
+    expect(startEditing).toHaveBeenCalledWith('/test/page');
+  });
+
+  it('disables the button when no line is provided', () => {
+    const { container } = render(<EditLink />);
+
+    const button = container.querySelector('button');
+    expect(button).toBeDisabled();
   });
 });
