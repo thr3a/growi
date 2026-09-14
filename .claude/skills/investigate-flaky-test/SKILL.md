@@ -1174,10 +1174,19 @@ failed=$(grep -m1 -E '^- Failed:' "$REPRO_RESULT_FILE" | sed 's/^- Failed: *//')
 ci_not_success=$(jq -r '[ .[] | select(.name | startswith("ci-app-"))
                           | select(.conclusion != "success")
                           | "\(.name)=\(.conclusion)" ] | join(", ")' "$CHECKS_FILE")
+git fetch origin master
+scope=$(git diff --name-only "origin/master...${FIX_SHA}")   # three dots: merge-base → fix
 
 echo "repro:  Runs=${runs:-none}  Failed=${failed:-none}"
 echo "ci-app not success: ${ci_not_success:-none}"
+echo "files changed by the fix:"; echo "$scope"
 ```
+
+Condition 3 is read from `$scope`, and the three-dot form matters: `A...B`
+lists what the fix commits changed since they left `master`, while the
+two-dot `A..B` (or `git diff A B`) also lists every file `master` gained
+after the branch point, which would fail the condition on any fix branch
+that is merely behind `master`.
 
 **Why the check-run's own conclusion cannot stand in for condition 1.** A push
 to `fix/flaky-**` whose commit carries no trailers is treated as "no request":
