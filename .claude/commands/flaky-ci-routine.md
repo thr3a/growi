@@ -8,20 +8,22 @@ description: Full flaky-CI routine - detect flaky CI failures, then investigate/
 Orchestrates the two flaky-CI skills in sequence. This command holds no
 detection or investigation logic of its own — it only sequences
 `detect-flaky-ci` and `investigate-flaky-test`, each of which is a
-self-contained skill usable on its own. Keeping the sequencing here (rather
-than inline in a cron prompt) means there is one place to read or edit the
-chain, whether it's triggered by cron or run by hand.
+self-contained skill usable on its own.
 
 ## Shared constants
 
 Strings that more than one step — and more than one skill — has to spell
-identically, plus the one **ordering** two of them have to agree on.
-**This file is the single definition site.** `detect-flaky-ci`
-and `investigate-flaky-test` must refer to this block rather than restating
-these strings, or that ordering, in their own text. *(Revalidation Trigger:
-if any string here changes, or the pause ordering below changes, re-check
-every place that reads it — Step 2 below, Step 5's dashboard cells, the stop
-handling in `investigate-flaky-test`, and the report steps.)*
+identically, the one **ordering** two of them have to agree on, and the
+conventions every `gh` call in this system follows. **This file is the single
+definition site**: `detect-flaky-ci` and `investigate-flaky-test` must refer
+to this block rather than restating these strings or that ordering in their
+own text. The same holds for the reading conventions below, which
+`detect-flaky-ci` points at; `investigate-flaky-test` still carries its own
+copies of them, to be folded in the next time that file is trimmed.
+*(Revalidation Trigger: if any string here changes, or the pause ordering
+below changes, re-check every place that reads it — Step 2 below, Step 5's
+dashboard cells, the stop handling in `investigate-flaky-test`, and the
+report steps.)*
 
 ### Needs-decision label
 
@@ -60,14 +62,11 @@ at**, and accepts a comment whose `created_at` falls in
 `[Paused at − 120 seconds, ∞)` — that is, at or after **Paused at**, or up to
 two minutes before it.
 
-Labelling first is what puts the pause comment inside that window. Posting
-first would place it before **Paused at**, the dashboard would fall back to
-its widened search, and the `(may be stale) ` prefix would end up stamped on
-exactly the issues that paused correctly — a warning that means the opposite
-of what it says. The two minutes of slack at the lower end cover clock skew
-between the two writes and issues paused under the old comment-first
-ordering; both are a matter of seconds, and two minutes is far narrower than
-the gap to any previous pause cycle.
+Labelling first is what puts the pause comment inside that window; posting
+first would stamp the `(may be stale) ` prefix on exactly the issues that
+paused correctly, a warning meaning the opposite of what it says. How the
+window and its two minutes of slack are derived: research.md →
+「pause の順序と current-pause window」.
 
 **This is the single definition of that order and that window.**
 `investigate-flaky-test`'s "Pausing for a human decision" and Step 5's
@@ -93,22 +92,52 @@ Used to tell a **human** comment from one this system posted. A comment is
 
    The first is the trailing signature of a Claude Code comment. The second
    is matched as a bare substring — deliberately **without** the surrounding
-   emphasis markers — because the posted line varies in both the wrapper and
-   the suffix: #11851 reads `*Investigated by Claude Code (autonomous
-   flaky-ci-routine)*`, #11707 reads `*Investigated by Claude Code*`, and
-   #11708 reads `_Investigated by Claude Code_`. Matching on the words alone
-   catches all three; matching on `*...` would let the `_..._` form through
-   as a human comment.
+   emphasis markers — because the posted line's wrapper and suffix vary:
+   `*Investigated by Claude Code (autonomous flaky-ci-routine)*`,
+   `*Investigated by Claude Code*` and `_Investigated by Claude Code_` all
+   occur. Matching on `*...` would let the `_..._` form through as a human
+   comment.
 
-**Evaluate both checks** — deciding on only one of them is not enough, even
-though a single positive result already makes the comment automated. When this routine runs
-from a human maintainer's `gh` token rather than as an app, every comment it
-posts is authored by that human's login with `user.type == "User"`, so the
-author check would pass it off as a human decision; the signature is the only
-thing that distinguishes it. Conversely a human could in principle quote a
-signature, but a bot author is decisive on its own.
+**Evaluate both checks** — a single positive result already makes the comment
+automated, but deciding on only one of them is not enough: when this routine
+runs from a human maintainer's `gh` token rather than as an app, every comment
+it posts carries that human's login with `user.type == "User"`, so the
+signature is the only thing separating it from a real human decision.
 
-A comment is a **human comment** exactly when neither (1) nor (2) holds.
+A comment is a **human comment** exactly when neither (1) nor (2) holds. (A
+human who quotes a signature is therefore classified as automated — an
+accepted false positive; a bot author is decisive on its own.)
+
+### Reading conventions
+
+How this system talks to the GitHub API. All three hold everywhere `gh` is
+used — in this file and in both skills — so they are stated once here, and
+every place that relies on one points back here instead of re-deriving it.
+
+**REST, never GraphQL.** Every issue/label/PR read and write goes through
+`gh api repos/growilabs/growi/…`, never a `gh issue` / `gh label` / `gh pr`
+subcommand. Those subcommands are GraphQL-backed, and a cloud routine's `gh`
+session sits behind an egress proxy that rejects GraphQL — in practice every
+one of them that accepts `--json` on issues/labels/PRs. `gh run …` is
+unaffected: GitHub's Actions API is REST-only regardless of `--json`. **Pass
+`-X GET` explicitly whenever `-f`/`-F` is used for a read** — `gh api`
+defaults to `POST` the moment any `-f`/`-F` is present, and a read endpoint
+rejects that with a confusing `422 … "title" wasn't supplied`, routed to the
+issue-*creation* endpoint's validator.
+
+**Aggregate outside `gh api`, never inside `-q`.** `--paginate` applies the
+`-q` expression to **each page separately**, so a jq program that aggregates
+internally (e.g. `[.[] | select(...)] | max`) silently returns one answer per
+page. Emit one object per matching item and fold afterwards — `sort | tail -1`
+in the shell, or `jq -s … | last` — which is correct on any number of pages.
+
+**Timestamps compare as strings.** GitHub returns `created_at`, and this
+system writes every `Date:` line, as fixed-width ISO-8601 UTC
+(`2026-09-14T12:12:24Z`); for that form lexicographic order is chronological
+order. `sort`, `tail -1` and `>` inside `[[ ]]` are therefore sound on these
+values as they stand. Never reformat or localize a timestamp before comparing
+it. String comparison cannot subtract, so a window bound is computed once
+with `date -u -d` and then compared as a string like any other.
 
 ## Step 0 — Ensure `gh` is available and can write via REST
 
@@ -138,18 +167,10 @@ gh --version
 ```
 
 Then confirm actual write capability — **do not trust `gh auth status`
-alone**: a cloud routine's `gh` session showed an "Active account: true"
-with a token `gh auth status` itself calls invalid, which is confusing but
-not the real signal to gate on either way. The real constraint (confirmed
-empirically) is narrower and stranger than "authenticated or not": this
-environment's `gh` sits behind an egress proxy that serves plain REST calls
-to `repos/{owner}/{repo}/...` with real data, but rejects `gh`'s
-GraphQL-backed commands — which includes `--json` on `gh issue`/`gh label`/
-`gh pr` (NOT `gh run ...`, which is REST-only in GitHub's API regardless of
-`--json`, and unaffected). So probe with plain REST, since that's what
-every step in this routine actually uses (`detect-flaky-ci` and
-`investigate-flaky-test` were rewritten to use `gh api` for all
-issue/label/PR reads and writes for exactly this reason):
+alone**: it has reported an active account while calling that same token
+invalid, and neither half of that is the signal to gate on. The real
+constraint is narrower than "authenticated or not" (**Reading conventions**
+above), so probe with plain REST, which is what every step here actually uses:
 
 ```bash
 gh api repos/growilabs/growi/labels -q '.[0].name' \
@@ -158,10 +179,9 @@ gh api repos/growilabs/growi/labels -q '.[0].name' \
 
 If `gh` cannot be installed, or the REST probe above fails: **stop
 immediately and report this clearly** — treat a missing prerequisite as a
-stop condition, not something to route around by improvising a different
-approach. Do not proceed to Step 1 without confirmed REST access, since
-Step 1 onward creates issues/labels/PRs and a failure partway through is
-harder to clean up than a clean stop before starting.
+stop condition, not something to route around. Do not proceed to Step 1
+without confirmed REST access: it creates issues/labels/PRs, and a failure
+partway through is harder to clean up than a clean stop before starting.
 
 ### Job Log Fetch Method — decide once, for the whole run
 
@@ -172,26 +192,21 @@ logs. There is exactly one `gh` command for that:
 gh api --allow-escape-sequences "repos/growilabs/growi/actions/jobs/{JOB_ID}/logs"
 ```
 
-`gh run view --job {JOB_ID} --log-failed` is **not** an alternative to it —
-on a run that was re-run it exits 0 and hands back the *latest* attempt's
-log, whatever attempt the job id belongs to, so a failure reads as a pass
-with nothing to notice. `detect-flaky-ci` Step 2 spells out that command,
-that reason and the measured case; it is named here only so it is
-recognizable as the one to stay away from.
+`gh run view --job {JOB_ID} --log-failed` is **not** an alternative to it: on
+a re-run it exits 0 and hands back the *latest* attempt's log, whatever
+attempt the job id belongs to, so a failure reads as a pass with nothing to
+notice. `detect-flaky-ci` Step 2 spells out that command, that reason and the
+measured case; it is named here only so it is recognizable as one to avoid.
 
-The command above reaches the log by following a signed redirect to a
-different domain (`results-receiver.actions.githubusercontent.com` /
-`*.blob.core.windows.net`), and a cloud routine's egress proxy blocks that
-redirect's destination. The block is a network policy on the destination
-domain, not on the shape of the request (confirmed empirically), so no other
-way of asking `gh` for the log gets around it either. The GitHub
-MCP server's `mcp__github__get_job_logs` tool fetches the same content
-server-side and is not subject to that restriction.
+The command above follows a signed redirect whose destination a cloud
+routine's egress proxy blocks, and no other way of asking `gh` for the log
+gets around it. The GitHub MCP server's `mcp__github__get_job_logs` tool
+fetches the same content server-side and is not subject to that restriction
+(mechanism: research.md → 「ジョブログの取得経路が 2 つある理由」).
 
-Decide the method **exactly once, here**, and pass it down rather than
-letting each skill probe (or worse, try-and-fall-back) independently per
-log fetch — the capability is a property of this environment for the whole
-run, not of any individual log:
+Decide the method **exactly once, here**, and pass it down rather than letting
+each skill probe (or worse, try-and-fall-back) per log fetch — the capability
+is a property of this environment for the whole run, not of any one log:
 
 ```
 if `mcp__github__get_job_logs` appears among your available tools: JOB_LOG_METHOD=mcp
@@ -208,10 +223,9 @@ command's own Step 6 report.
 Invoke the `detect-flaky-ci` skill with `$ARGUMENTS` passed through
 (`--window-hours`, `--max-runs-per-workflow`, `--vitest-threshold`) plus the
 `JOB_LOG_METHOD` decided in Step 0. If `--window-hours` isn't in
-`$ARGUMENTS`, don't force a value here — let `detect-flaky-ci`'s own
-default apply (`32`: twice the longest gap between two consecutive cron
-fires of this routine, whose `0 0,16 * * *` schedule alternates 16-hour and
-8-hour gaps). Let it finish and report its summary.
+`$ARGUMENTS`, don't force a value here — let `detect-flaky-ci`'s own default
+apply (`32`; its "Why a Time Window, Not a Run Count" says how that is
+sized). Let it finish and report its summary.
 
 `--stale-days=N` is **not** one of the arguments forwarded here: it is
 consumed by this command's own Step 4 and `detect-flaky-ci` does not accept
@@ -233,19 +247,17 @@ prior routine run is not re-processed):
 gh api repos/growilabs/growi/labels --paginate -q '.[].name'
 ```
 
-REST's `labels` query parameter is an AND filter on comma-separated names
-(an issue must carry every listed label), which is exactly "{tier} AND
-still new". Run it once per tier and merge the two lists — a single query
-can't OR two different tier labels together:
+REST's `labels` query parameter is an AND filter on comma-separated names,
+which is exactly "{tier} AND still new". Run it once per tier and merge the
+two lists — a single query can't OR two tier labels together:
 
 ```bash
 gh api -X GET repos/growilabs/growi/issues -f state=open -f labels="flaky/confirmed,{EXACT_PHASE_NEW_LABEL}" --paginate -q '.[] | {number,title}'
 gh api -X GET repos/growilabs/growi/issues -f state=open -f labels="flaky/suspected,{EXACT_PHASE_NEW_LABEL}" --paginate -q '.[] | {number,title}'
 ```
 
-(`-X GET` is required whenever `-f`/`-F` is used for a read — `gh api`
-otherwise defaults to `POST`, which a read endpoint like this rejects with
-a confusing "title wasn't supplied" 422.)
+(`-X GET` is required here, as on every read that uses `-f`/`-F` — see
+**Shared constants** → Reading conventions.)
 
 Merge the two lists into **selection A**.
 
@@ -294,16 +306,9 @@ fi
 
 Two things about the shape of these commands, both of which matter:
 
-- **Aggregate outside `gh api`, never inside `-q`.** `--paginate` applies
-  the `-q` expression to **each page separately**, so a jq program that
-  wraps everything in `[...]` (e.g. `[.[] | select(...)] | max`) silently
-  computes a per-page answer and prints one result per page. Emitting one
-  object per matching item and folding them with `sort | tail -1` (shell)
-  or `jq -s ... | last` (slurp) is correct on any number of pages. Both
-  folds compare timestamps as **strings**, which is only sound because
-  GitHub returns `created_at` as fixed-width ISO-8601 UTC
-  (`2026-09-14T12:12:24Z`) — lexicographic order equals chronological order
-  for that form. Do not reformat or localize these values before comparing.
+- **Both commands fold the pages outside `gh api` and compare the timestamps
+  as strings** — see **Shared constants** → Reading conventions for why each
+  of those is required rather than optional.
 - **`PAUSED_AT` may be empty, and an empty value is not a harmless one.**
   If the label is currently on the issue but no `labeled` event for it
   survives (an event log can be truncated for a very old issue), the
@@ -315,19 +320,17 @@ Two things about the shape of these commands, both of which matter:
   either would select the issue on every subsequent run.
 
 The final `jq -s` line yields the **newest qualifying human comment**, or
-`null`. Issues where it is `null` are **not** selected into **selection B**.
-This is the intended design, not an oversight: a paused issue is *not*
-re-opened by new observations arriving, nor by time passing, nor by the
-routine running again. Only a human's answer restarts it — the issue was
-paused precisely because a human decision was missing, so restarting without
-one would stop again at the same gate and spend CI time for nothing. Paused
-issues with no answer stay visible on the dashboard (Step 5) and nowhere
-else.
+`null`. Issues where it is `null` are **not** selected into **selection B**:
+a paused issue is not re-opened by new observations arriving, by time passing,
+or by the routine running again — only a human's answer restarts it, since
+restarting without one would stop at the same gate and spend CI time for
+nothing. Paused issues with no answer stay visible on the dashboard (Step 5)
+and nowhere else.
 
-Also note what Step 2 does **not** do: it does not remove the
-`flaky/needs-decision` label. `investigate-flaky-test` removes it as the
-first thing it does when it resumes, so that an issue whose resume fails
-before it reaches that point stays visibly paused.
+Step 2 does **not** remove the `flaky/needs-decision` label.
+`investigate-flaky-test` removes it as the first thing it does when it
+resumes, so an issue whose resume fails before that point stays visibly
+paused.
 
 **For each issue in selection B**, carry its newest qualifying human comment
 forward to Step 3 — the issue number alone is not enough, because the whole
@@ -348,30 +351,22 @@ gate it stopped at.
 ### 2-C — Order and stop condition
 
 Hand Step 3 **selection A first, then selection B**, each in issue-number
-order. Newly detected issues go first because they have no human waiting on
-them; a re-opened decision has already waited, and putting it last keeps a
-long list of new issues from delaying nothing. Step 3's existing rule —
-process them **sequentially, one at a time** — applies unchanged to the
-merged list.
+order: newly detected issues have no human waiting on them, while a re-opened
+decision has already waited. Step 3's existing rule — process them
+**sequentially, one at a time** — applies unchanged to the merged list.
 
-**Deduplicate by issue number while merging** (same rule Step 5 applies when
-it merges its three tier queries). Nothing stops an issue from carrying
-`flaky/needs-decision` *and* a tier label with the still-new phase label at
-the same time, which would otherwise put it in both selections and make
-Step 3 investigate it twice in one run — two repro branches pushed, two
-investigations, for one issue. If an issue appears in both, process it
-**once, as part of selection B**: the human decision is strictly more
-information than "newly detected", and dropping the B entry would resume the
-investigation without the answer it was waiting for.
+**Deduplicate by issue number while merging** (same rule Step 5 applies to its
+three tier queries). An issue can carry `flaky/needs-decision` *and* a tier
+label with the still-new phase label at once, which would otherwise put it in
+both selections and have Step 3 investigate it twice in one run. If an issue
+appears in both, process it **once, as part of selection B** — dropping the B
+entry would resume the investigation without the answer it was waiting for.
 
 If **both** selections are empty, report that, **skip Step 3 and continue
-with Step 4** — there is nothing to investigate this run, but there is still
-work to do. This is not a stop condition for the routine: Steps 4 and 5 run
-on every run regardless of what Step 3 did or didn't do (Step 5 says so
-about itself), so ending the run here would skip this run's auto-closes and
-leave the dashboard showing the previous run's state. A non-empty selection
-B alone is enough to continue, even when selection A is empty (that is the
-normal shape of a run whose only work is a human's answer arriving).
+with Step 4**; this is not a stop condition for the routine. Steps 4 and 5 run
+on every run regardless of what Step 3 did, so ending here would skip this
+run's auto-closes and leave the dashboard showing the previous run's state. A
+non-empty selection B alone is enough to continue.
 
 ## Step 3 — Investigate each, autonomously
 
@@ -384,18 +379,16 @@ investigate-flaky-test {ISSUE_NUMBER} --auto
 ```
 
 Run these **sequentially, one issue at a time** — not in parallel. Each
-investigation may modify the working tree (branch, files, commits); running
-several concurrently in the same checkout would corrupt each other's work.
-If a genuinely parallel routine is ever needed, that requires per-issue
-worktree isolation, which is out of scope for this command as written.
+investigation may modify the working tree, so running several concurrently in
+the same checkout would corrupt each other's work; genuine parallelism would
+need per-issue worktree isolation, out of scope for this command as written.
 
 Autonomous mode means most issues resolve without stopping (HIGH-confidence
 gates cross automatically), but a MEDIUM/LOW gate inside
-`investigate-flaky-test` will still stop and ask — since this command may be
-running unattended from cron, treat any such stop as "pause this issue and
-move to the next one" rather than blocking the whole routine: note it in the
-final report as needing human attention and continue with the next issue in
-the list.
+`investigate-flaky-test` will still stop and ask. Since this command may run
+unattended from cron, treat any such stop as "pause this issue and move to the
+next one": note it in the final report as needing human attention, and
+continue with the next issue.
 
 ### Routine discipline — no subscriptions, no notifications, no wake-ups
 
@@ -412,15 +405,12 @@ is watched afterwards.
 paused issue once a human has answered, Step 4 closes what has gone quiet,
 and Step 5 shows everything still open. That is the entire recovery
 mechanism, and it is enough because nothing here is urgent to the minute.
-Watching instead is what produced the failure this rule exists to prevent: a
-session that subscribed to PR events stayed alive for a day and a half after
-its work was done.
 
 The one wait this routine does perform is the bounded, in-session polling of
 check-runs inside `investigate-flaky-test` (60-second interval, 30-minute
-cap). That is not a subscription: it blocks the step that started it, it ends
-by itself, and it leaves nothing behind. When it times out, the issue gets
-`flaky/needs-decision` and the run moves on — never convert that timeout into
+cap) — not a subscription: it blocks the step that started it, ends by
+itself, and leaves nothing behind. When it times out, the issue gets
+`flaky/needs-decision` and the run moves on; never convert that timeout into
 a wake-up.
 
 `investigate-flaky-test` follows the same rule and states it in its own text.
@@ -433,12 +423,9 @@ a wake-up.
 An identity that was seen once and never again should not stay on the
 dashboard forever. This step closes each `flaky/observing` tracking issue
 whose **newest observation** is at least `--stale-days` old (default **14**),
-recording why it was closed.
-
-It runs **here** — after the investigate loop of Step 3 and before the
-dashboard update of Step 5 — so that the dashboard Step 5 builds already
-reflects this run's closures instead of listing issues that were closed
-seconds earlier.
+recording why it was closed. It runs **here** — after Step 3's investigate
+loop and before Step 5's dashboard update — so the dashboard already reflects
+this run's closures.
 
 Read `--stale-days=N` from `$ARGUMENTS`; if it is absent use `14`. Compute
 the cutoff once, at the start of the step:
@@ -455,12 +442,9 @@ gh api -X GET repos/growilabs/growi/issues -f state=open -f labels="flaky/observ
 ```
 
 `flaky/suspected` and `flaky/confirmed` issues are **never** auto-closed,
-whatever their dates say. An issue reached those tiers because it already has
-more than one piece of evidence, or because it is queued for (or already
-under) investigation; going quiet for two weeks is not a reason to drop work
-that a human or `investigate-flaky-test` still owes an answer on. Silence
-only means "probably not worth tracking" at the `observing` tier, where a
-single observation is all there ever was.
+whatever their dates say: an issue reached those tiers because it already has
+more than one piece of evidence or is queued for investigation, and going
+quiet is not a reason to drop work someone still owes an answer on.
 
 ### 4-B — Compute each candidate's newest observation date
 
@@ -471,18 +455,15 @@ sources — the same set the dashboard counts as observations (Step 5 item 3):
 - the `Date:` line of **every comment whose first line begins with
   `### Additional observation` or `### Backfilled observation`**.
 
-Everything else is excluded: `### Collateral candidate`, `### Repro result`,
+Everything else is excluded — `### Collateral candidate`, `### Repro result`,
 `### Auto-closed: …`, `### Closed: deterministic cause, not flaky`,
-investigation and stop comments, and human comments. None of them is an
-observation, so none of them may keep an issue alive.
+investigation and stop comments, and human comments — because none of them is
+an observation, so none may keep an issue alive.
 
-**Never use the issue's `created_at` or `updated_at`** as a substitute.
+**Never use the issue's `created_at` or `updated_at`** as a substitute:
 `updated_at` is bumped by every label change, marker comment and human note,
-so an issue that has not been observed for a month can look fresh (real case:
-#11708's `updated_at` read 2026-09-14 while its newest observation was
-2026-08-13). `created_at` misses a backfilled observation that predates the
-issue, and is wrong here for the same underlying reason — neither field is an
-observation.
+so an issue unobserved for a month can still look fresh, and `created_at`
+misses a backfilled observation that predates the issue.
 
 Take the **first** `- Date:` line of each qualifying comment and stop there.
 The log excerpt further down an observation comment can contain a line that
@@ -504,24 +485,18 @@ COMMENT_DATES="$(gh api -X GET repos/growilabs/growi/issues/{N}/comments --pagin
 NEWEST="$(printf '%s\n%s\n' "$BODY_DATE" "$COMMENT_DATES" | grep -v '^[[:space:]]*$' | sort | tail -1)"
 ```
 
-The fold happens in the shell, not inside `-q`, for the reason Step 2 already
-gives: `--paginate` applies the `-q` expression to each page separately, so a
-jq program that aggregates internally returns one answer per page. The
-`sort | tail -1` compares the timestamps as strings, which is sound for the
-same reason stated there — GitHub and `detect-flaky-ci` both write
-fixed-width ISO-8601 UTC (`2026-08-14T07:39:31Z`), and for that form
-lexicographic order is chronological order.
+The fold happens in the shell rather than inside `-q`, and `sort | tail -1`
+compares the timestamps as strings — both per **Shared constants** → Reading
+conventions.
 
 ### 4-C — Skip an issue a human reopened after this step closed it
 
-A human who reopens an auto-closed issue is saying "keep tracking this" — and
-the issue is, by definition, still stale, so the next run would close it
-again and the reopen would never stick. Detect that case and leave the issue
-alone.
+A human who reopens an auto-closed issue is saying "keep tracking this", and
+the issue is by definition still stale, so the next run would close it again
+and the reopen would never stick. Detect that case and leave the issue alone.
 
-Read the two moments that decide it, folding each in the shell for the reason
-4-B gives (`--paginate` runs `-q` per page, so an aggregate inside `-q`
-returns one answer per page):
+Read the two moments that decide it, folding each in the shell the way 4-B
+does:
 
 ```bash
 # newest moment the issue was reopened
@@ -533,6 +508,10 @@ AUTOCLOSED_AT="$(gh api -X GET repos/growilabs/growi/issues/{N}/comments --pagin
   -q '.[] | select(.body | split("\n")[0] | startswith("### Auto-closed:")) | .created_at' | sort | tail -1)"
 ```
 
+The `### Auto-closed:` prefix deliberately matches two producers — this
+step's 4-E and `investigate-flaky-test`'s human-decided "not reproduced"
+close — so do not narrow the match to the full heading.
+
 Skip the issue **only when both values exist and the reopen is the later
 one**:
 
@@ -542,38 +521,32 @@ if [[ -n "$REOPENED_AT" && -n "$AUTOCLOSED_AT" && "$REOPENED_AT" > "$AUTOCLOSED_
 fi
 ```
 
-Both comparisons are string comparisons, sound for the same fixed-width
-ISO-8601 reason 4-B states. Matching the comment on the prefix
+Both comparisons are string comparisons, sound for the reason **Shared
+constants** → Reading conventions gives. Matching the comment on the prefix
 `### Auto-closed:` — not the full heading — is what makes the guard work at
 any `--stale-days` value.
 
 **An issue with no `### Auto-closed:` comment is not covered by this guard,
-deliberately.** This step never closed such an issue, so there is nothing for
-a human to have undone: closing it now is the first close, which is exactly
-what this step is for. A `reopened` event on its own says nothing about the
-stale-close policy — #11707, for instance, was closed at
-`2026-08-15T12:42:30Z` and reopened at `2026-08-15T12:43:44Z` by the same
-person, an accidental click undone 74 seconds later, and treating that as a
-decision would exempt the issue from auto-close forever. When
-`detect-flaky-ci` reopens an issue it posts a `### Additional observation`
-alongside, so the date rule in 4-B already keeps those open on the evidence
-itself — and a reopen from that path leaves the issue `flaky/confirmed`,
-which 4-A excludes in any case.
+deliberately.** This step never closed such an issue, so closing it now is the
+first close, which is exactly what this step is for; a bare `reopened` event
+says nothing about the stale-close policy (research.md →
+「reopen だけでは判断にならない」). A reopen by `detect-flaky-ci` comes with a
+`### Additional observation`, so 4-B's date rule already keeps those open on
+the evidence itself, and it leaves the issue `flaky/confirmed`, which 4-A
+excludes anyway.
 
 Record each issue skipped here as **kept open by a human reopen**, and carry
 it to 4-F.
 
 ### 4-D — A date that cannot be read is never a reason to close
 
-If `NEWEST` comes out empty (a hand-created issue that someone labeled
-`flaky/observing` by hand: no `### First observation` section and no
-observation comments), or the value found is not fixed-width ISO-8601 UTC
-ending in `Z` — in which case comparing it against `CUTOFF` in 4-E would be
-meaningless — leave the issue **open and untouched** and note its number in
-the Step 6 report. This is the same shape as Step 5's "leave the cells `—`
-and note the number" path for an issue with no readable dates. Closing an
-issue because its date could not be parsed is the one failure of this step
-that a human would have to undo by hand, so never close on missing data.
+If `NEWEST` comes out empty (a hand-labeled `flaky/observing` issue with no
+`### First observation` section and no observation comments), or the value
+found is not fixed-width ISO-8601 UTC ending in `Z` — in which case comparing
+it against `CUTOFF` in 4-E would be meaningless — leave the issue **open and
+untouched** and note its number in the Step 6 report. Closing an issue because
+its date could not be parsed is the one failure of this step a human would
+have to undo by hand, so never close on missing data.
 
 ### 4-E — Close the ones at or past the threshold
 
@@ -588,8 +561,8 @@ else
 fi
 ```
 
-Inside `[[ ]]`, `>` compares the two operands as strings, which is sound here
-for the same fixed-width ISO-8601 reason 4-B gives. Inside single brackets,
+Inside `[[ ]]`, `>` compares the two operands as strings, sound for the
+reason **Reading conventions** gives. Inside single brackets,
 `>` is **output redirection**: `[ "$NEWEST" > "$CUTOFF" ]` creates a file
 named after the cutoff and reduces the test to `[ "$NEWEST" ]`, which is true
 for every issue — the step would then close nothing and report "0
@@ -600,17 +573,13 @@ For a stale issue, first post the record, then close the issue.
 the very shell that runs the heredoc, immediately before posting.** This
 heredoc interpolates them, so an empty variable posts a comment reading
 `- Newest observation:` with nothing after it — no error, nothing to notice,
-and the only repair is a `PATCH` on the comment afterwards (which has been
-needed for real, on #11707 and #11708, when a loop lost the value between
-computing it in 4-B and posting here).
+and the only repair is a `PATCH` on the comment afterwards, which has been
+needed for real.
 
 **If either value is empty, do not post and do not close.** Leave the issue
 **open and untouched**, exactly as 4-D does, and list its number in the Step
 6 report under `Skipped (observation date unreadable)` — the same list 4-D
-feeds. The two rules differ only in where the missing value came from: 4-D's
-date could not be *read* in the first place, this one was read and then lost
-before it got here. Neither is a reason to comment on an issue or close it,
-and both leave the same visible trace, so they report in one place:
+feeds, since neither case is a reason to comment on an issue or close it:
 
 ```bash
 gh api -X POST repos/growilabs/growi/issues/{N}/comments -f body="$(cat <<EOF
@@ -632,10 +601,9 @@ gh api -X PATCH repos/growilabs/growi/issues/{N} -f state=closed -f state_reason
 Post the record first, then close — never the reverse, or a failed comment
 would leave a closed issue with no record. If the `PATCH` itself fails after
 the comment posted, note the issue number under "close failed" in the Step 6
-report and continue the run; the issue stays open with an orphan
-`### Auto-closed:` comment, the next run finds no newer `reopened` event, and
-it closes the issue then (posting a second `### Auto-closed:` comment — expected
-in that situation, not a defect).
+report and continue the run: the issue stays open with an orphan
+`### Auto-closed:` comment, and the next run closes it, posting a second
+`### Auto-closed:` comment — expected there, not a defect.
 
 At the default `--stale-days=14` the heading is exactly:
 
@@ -651,27 +619,17 @@ Anything that reads these comments back matches on the prefix
 
 **The comment must not contain a `Fixed by` line — that absence is
 load-bearing, not an oversight.** `detect-flaky-ci`'s "Existing CLOSED issue
-found" path decides whether new evidence is a real recurrence or a
-late-surfacing pre-fix failure by comparing the evidence's commit date
-against the issue's resolution time, which it reads from a free-text
-`Fixed by #{PR_NUMBER}` comment. With no such line anywhere on the issue it
-cannot determine a resolution time, and its documented behaviour for that
-case is to fall through to the "genuine recurrence" branch: reopen the issue
-and escalate it to `flaky/confirmed`. That fall-through **is** Requirement
-10.2's re-open path. An issue closed here was never fixed, so any later
-failure of the same identity is by definition a recurrence and must come
-straight back; writing a resolution marker would make `detect-flaky-ci`
-compare new evidence against a fix that does not exist and silently discard
-it as pre-fix noise. For the same reason, do not describe the closure as a
-fix and do not name a PR in the comment.
+found" path reads a resolution time from a free-text `Fixed by #{PR_NUMBER}`
+comment; finding none, it reopens the issue at `flaky/confirmed`, which is
+Requirement 10.2's re-open path and exactly what an issue closed here needs,
+since it was never fixed. A resolution marker would instead have that path
+discard the new evidence as pre-fix noise, so do not write one, do not
+describe the closure as a fix, and do not name a PR in the comment.
 
-**Leave every label in place** — in particular, keep `flaky/observing` on the
-closed issue. The tier label records what the identity was last known to be.
-When `detect-flaky-ci` reopens the issue it *adds* `flaky/confirmed` (and
-swaps the phase label), so a reopened issue carries both `flaky/observing`
-and `flaky/confirmed` at once. That is handled, not a defect: Step 5 item 1
-deduplicates by issue number and keeps the strongest tier, so the issue
-appears exactly once in the dashboard, as `confirmed`. Do not touch the
+**Leave every label in place** — in particular keep `flaky/observing`, since
+the tier label records what the identity was last known to be. A reopen by
+`detect-flaky-ci` adds `flaky/confirmed` on top and Step 5 item 1 keeps only
+the strongest tier, so the issue still appears exactly once. Do not touch the
 `phase/*` label here either — no investigation conclusion was reached.
 
 ### 4-F — What this step hands on
@@ -679,12 +637,10 @@ appears exactly once in the dashboard, as `confirmed`. Do not touch the
 The output of this step is three lists:
 
 - the `{issue number, newest observation date}` pairs **actually closed** —
-  hand this to Step 5, for the `## Auto-closed this run` section it renders
-  below the table, and to Step 6, which reports the count and the numbers;
+  for Step 5's `## Auto-closed this run` section and Step 6's count;
 - the issues **kept open by a human reopen** (4-C), by number;
 - the issues **skipped because no usable date was in hand** (4-D, plus 4-E's
-  empty-`${NEWEST}`/`${STALE_DAYS}` guard, which leaves the issue untouched
-  the same way), by number.
+  empty-`${NEWEST}`/`${STALE_DAYS}` guard), by number.
 
 Step 6 lists all three. If a list is empty, say so explicitly rather than
 omitting it.
@@ -693,24 +649,20 @@ omitting it.
 
 Run this step **even if Step 3 stopped one or more issues for human
 decision.** "ルーティンの実行が完了した場合" (Requirement 5.1 — "when a run
-of the routine has completed") means this routine cycle reaching its end,
-not every individual investigation having finished. An issue that Step 3
-paused on still has a current tier label (`flaky/observing` /
-`flaky/suspected` / `flaky/confirmed`); it simply appears in the dashboard
-table with that tier, same as any other active issue.
+of the routine has completed") means this routine cycle reaching its end, not
+every individual investigation having finished. An issue that Step 3 paused on
+still has a current tier label, so it appears in the table with that tier like
+any other active issue.
 
 1. **Re-fetch the active issue set.** "Active" here means **`open`,
    regardless of its `phase/*` label** — `phase/resolved` marks that
-   `investigate-flaky-test` finished its work on the issue (a fix PR
-   exists, or a quarantine/no-action decision was made), not that the
-   flaky test itself is confirmed gone; only closing the tracking issue
-   removes it from the dashboard (Requirement 5.4). Do not reuse the list
-   Step 2 built — labels may have changed while Step 3 and Step 4 were
-   running. Because this query is `state=open`, the issues Step 4 just
-   closed drop out of it on their own, which is exactly why that step runs
-   before this one. Fetch
-   fresh, `open`, one tier at a time (same AND-filter reasoning as Step 2 —
-   a single query can't OR two tier labels together):
+   `investigate-flaky-test` finished its work, not that the flaky test is
+   confirmed gone; only closing the tracking issue removes it from the
+   dashboard (Requirement 5.4). Do not reuse the list Step 2 built — labels
+   may have changed while Steps 3 and 4 were running, and because this query
+   is `state=open`, the issues Step 4 just closed drop out on their own.
+   Fetch fresh, `open`, one tier at a time (same AND-filter reasoning as
+   Step 2 — a single query can't OR two tier labels together):
 
    ```bash
    gh api -X GET repos/growilabs/growi/issues -f state=open -f labels="flaky/observing" --paginate -q '.[] | {number,title,labels,body}'
@@ -718,13 +670,12 @@ table with that tier, same as any other active issue.
    gh api -X GET repos/growilabs/growi/issues -f state=open -f labels="flaky/confirmed" --paginate -q '.[] | {number,title,labels,body}'
    ```
 
-   `body` is fetched here because First seen (step 3 below) is read from
-   it. Merge the three lists and deduplicate by `number` before proceeding
-   — an issue should carry exactly one tier label, but if one somehow
-   carries two (e.g. a mid-transition state), keep only its
-   `flaky/confirmed` row if present, else `flaky/suspected`, else
-   `flaky/observing` (strongest tier wins; do not emit two rows for the
-   same issue).
+   `body` is fetched here because First seen (step 3 below) is read from it.
+   Merge the three lists and deduplicate by `number`: an issue should carry
+   exactly one tier label, but if one carries two (a mid-transition state),
+   keep only its `flaky/confirmed` row if present, else `flaky/suspected`,
+   else `flaky/observing` — strongest tier wins, never two rows for one
+   issue.
 
 2. **Fetch each candidate issue's comments** — both Occurrences and Last
    seen (below) and the Fix-PR marker lookup all read from this same call,
@@ -734,22 +685,21 @@ table with that tier, same as any other active issue.
    gh api -X GET repos/growilabs/growi/issues/{NUMBER}/comments --paginate -q '.[] | {body, created_at, user}'
    ```
 
-   `created_at` and `user` are fetched here because the
-   **Building the `## Awaiting human decision` section** below reads them —
-   `created_at` to compare a comment against `Paused at`, `user` for the
-   automated-author check. The three consumers in step 3 (Occurrences,
-   First / Last seen, Fix PR) read only `body`.
+   `created_at` and `user` are fetched because **Building the `## Awaiting
+   human decision` section** below reads them — `created_at` to compare a
+   comment against `Paused at`, `user` for the automated-author check. Step
+   3's three consumers (Occurrences, First / Last seen, Fix PR) read only
+   `body`.
 
 3. **Build one row per issue** with columns `Identity | Tier | First seen |
    Last seen | Occurrences | Tracking issue | Fix PR`.
 
    **Row order, on every run** — not only when item 6 has to truncate: by
    tier first, `confirmed` before `suspected` before `observing`, then by
-   tracking-issue number **ascending** within a tier. Both keys are stable
-   values, so the same active issue set always renders in the same order and
-   two consecutive dashboard bodies differ only where something actually
-   changed. Leaving the order unspecified means it shuffles run to run and a
-   reader cannot tell a reordering from a real change.
+   tracking-issue number **ascending** within a tier. Both keys are stable,
+   so two consecutive dashboard bodies differ only where something actually
+   changed; an unspecified order shuffles run to run and a reader cannot
+   tell a reordering from a real change.
 
    The columns:
    - Identity: the issue title with the `flaky: ` prefix removed.
@@ -759,46 +709,31 @@ table with that tier, same as any other active issue.
      heading matches `### Additional observation` or
      `### Backfilled observation` (prefix match on the comment's first
      line). Do **not** count every comment — identity corrections, the
-     Fix-PR marker comment, and human notes do not represent additional
-     observations and must be excluded. (These two heading strings must
-     stay in sync with what `detect-flaky-ci/SKILL.md` actually writes; if
-     that wording ever changes, update both files together.)
+     Fix-PR marker comment and human notes are not additional observations.
+     (These two heading strings must stay in sync with what
+     `detect-flaky-ci/SKILL.md` writes; if that wording changes, update both
+     files together.)
 
-     **Nothing else counts.** Spelled out below, because every entry is a
-     comment this system itself posts on a tracking issue, and each one
-     would inflate the count if the first-line prefix match were ever
-     loosened:
-
-     | Not counted | Posted by |
-     |---|---|
-     | `### Collateral candidate` | `detect-flaky-ci` (Requirement 7.1) |
-     | `### Repro result` | the `flaky-repro` workflow (Requirement 6.2) |
-     | `### Auto-closed: …` | Step 4-E of this command, or `investigate-flaky-test` closing on a human "not reproduced" decision (same heading prefix on purpose) |
-     | `### Closed: deterministic cause, not flaky` | `investigate-flaky-test` |
-     | `**Fix PR**: {URL}` | `investigate-flaky-test` Step 6-C |
-     | any **human comment** | a person — see **Shared constants** → Automated-author signatures for how to tell a human comment from one this system wrote |
-
-     None of these first lines begins with either counted heading, so the
-     prefix match already excludes all of them. **That is the entire
-     mechanism** — no separate exclusion logic exists anywhere in the three
-     files. So never rename one of these headings into something starting
+     **Nothing else counts.** The excluded set is the one 4-B lists plus the
+     `**Fix PR**` marker (4-B has no reason to name it; keep both lists)
+     — `### Collateral candidate`, `### Repro result`, `### Auto-closed: …`,
+     `### Closed: deterministic cause, not flaky`, the `**Fix PR**: {URL}`
+     marker, and human comments (see **Shared constants** →
+     Automated-author signatures for how to tell one). None of their first
+     lines begins with either counted heading, so **the prefix match is the
+     entire mechanism** — no separate exclusion logic exists anywhere in the
+     three files. Never rename one of these headings into something starting
      with `### Additional observation`, and never relax the match from
      "first line" to "anywhere in the body".
 
-     **`### Cascaded in the same run` is a different case, and reading it
-     as one more excluded comment type gets it wrong.**
-     `detect-flaky-ci` never posts it as a comment of its own: it writes it
-     as a heading **partway down the body** of an observation comment (and
-     as a section partway down the issue body). Because only the comment's
-     **first line** is matched, an observation comment that lists three
-     cascaded tests still counts as exactly **one** occurrence — which is
-     what the run actually was — and the issue body's cascade section is
-     part of the single `1` the body already contributes. Together with the
-     `### Collateral candidate` row above, this is what satisfies
-     Requirement 7.4: collateral and cascaded failures never become
-     dashboard rows and never raise a count.
-     `detect-flaky-ci/SKILL.md` depends on both behaviours — see its
-     "Which comment headings count as an occurrence" section.
+     **`### Cascaded in the same run` is not one more excluded comment
+     type.** `detect-flaky-ci` writes it partway down an observation
+     comment's body, never as a comment of its own, so the first-line match
+     still counts that comment as exactly **one** occurrence — which is what
+     the run actually was, and what satisfies Requirement 7.4 together with
+     the exclusions above. `detect-flaky-ci/SKILL.md` depends on both
+     behaviours — see its "Which comment headings count as an occurrence"
+     section.
    - First seen / Last seen: collect the `Date:` value from **every**
      source that counts toward Occurrences above — the issue body's own
      `### First observation` section (it always has a `Date:` line, see
@@ -806,43 +741,33 @@ table with that tier, same as any other active issue.
      line — into one set of dates for this issue. First seen is the
      **earliest** date in that set, Last seen is the **latest**. Do
      **not** use the issue's `created_at` or `updated_at` for either
-     column: `created_at` is normally the same as the body's `Date:`, but
-     not always — `detect-flaky-ci/SKILL.md`'s ④ backfill check
-     deliberately searches further back than the scan window for
-     already-`flaky/observing` issues and can surface an occurrence that
-     predates the issue's own creation, which would otherwise make First
-     seen wrong; `updated_at` is bumped by label changes, the Fix-PR
-     marker comment, and other bookkeeping that isn't an observation at
-     all, which would make Last seen wrong the same way. If the issue
-     body has no `### First observation` `Date:` line at all (e.g. a
-     hand-created, manually-labeled issue) and there are no qualifying
-     comments either, leave both cells `—` (em dash) and note this issue
-     number in the Step 6 report — do not guess a date.
+     column: ④'s backfill can surface an occurrence predating the issue's
+     own creation (making First seen wrong), and `updated_at` moves on
+     bookkeeping that is not an observation (making Last seen wrong). If the
+     issue body has no `### First observation` `Date:` line and there are no
+     qualifying comments either, leave both cells `—` (em dash) and note the
+     issue number in the Step 6 report — do not guess a date.
    - Tracking issue: a link to the issue.
    - Fix PR: **forward-only**. Populate this from the comments fetched in
      step 2: a comment provides the Fix PR when **any line of its body**,
      with trailing whitespace trimmed, is exactly `**Fix PR**: {URL}`
      (written by `investigate-flaky-test` Step 6-C). Take the **last** such
      comment. Matching a whole comment body against the marker instead
-     misses every marker posted before the bare-one-line convention: #11821,
-     #11851 and #11858 all carry the marker followed by a blank line, `---`
-     and the Claude Code signature, so a whole-body match leaves their Fix
-     PR cell `—` forever, which is what the dashboard showed until this rule
-     changed. Matching per line costs nothing — no other comment this system
-     posts contains a line of that shape. If no such marker comment exists —
-     including for tracking issues created before this convention existed —
-     write `—` (em dash). Do **not** scan the issue body or other comments
-     for a PR URL as a fallback: those free-form mentions can reference
-     unrelated PRs (e.g. the PR an evidence commit originally came from),
-     and guessing wrong is worse than leaving the cell blank.
+     misses every marker posted before the bare-one-line convention — real
+     tracking issues carry the marker followed by a blank line, `---` and the
+     Claude Code signature, and a whole-body match left their Fix PR cell `—`
+     forever. If no such marker comment exists — including for tracking
+     issues created before this convention existed — write `—` (em dash). Do
+     **not** scan the issue body or other comments for a PR URL as a
+     fallback: those free-form mentions can reference unrelated PRs, and
+     guessing wrong is worse than leaving the cell blank.
 
 4. **Search for the dashboard issue** by exact title match on
    `flaky-ci-routine: dashboard` (same exact-title pattern `detect-flaky-ci`
-   already uses for tracking issues). Filter by the `flaky/dashboard` label
-   first since it's cheaper, but don't trust a 0-result label-filtered
-   query alone — if the label ever failed to attach on creation, this would
-   otherwise never find the existing dashboard issue and would create a
-   second one on every run:
+   uses for tracking issues). Filter by the `flaky/dashboard` label first
+   since it is cheaper, but do not trust a 0-result label-filtered query
+   alone: if the label ever failed to attach on creation, this would create a
+   second dashboard issue on every run:
 
    ```bash
    gh api -X GET repos/growilabs/growi/issues -f state=all -f labels="flaky/dashboard" --paginate -q '.[] | select(.title == "flaky-ci-routine: dashboard") | {number,created_at}'
@@ -851,8 +776,6 @@ table with that tier, same as any other active issue.
    - **0 results from the labeled query** → before concluding "no dashboard
      exists", run the same exact-title search once more without the label
      filter (`gh api -X GET repos/growilabs/growi/issues -f state=all --paginate -q '.[] | select(.title == "flaky-ci-routine: dashboard") | {number,created_at}'`).
-     This paginates every issue in the repo (a real but bounded cost — it
-     only runs on this 0-result path, not on every routine invocation).
      If that also finds nothing, create a new issue titled exactly
      `flaky-ci-routine: dashboard`, labeled `flaky/dashboard`, with the
      table built in step 3 as its body. If it finds an unlabeled match,
@@ -860,36 +783,30 @@ table with that tier, same as any other active issue.
      `flaky/dashboard` label while updating it (repairing the earlier
      label-attach failure).
    - **1 result** → replace that issue's body **entirely** with the freshly
-     built table (never append — a full replace is what makes resolved
-     issues disappear from the table on the very next run, and what makes
-     a zero-active-issues run show an empty table instead of stale content).
-   - **2+ results (anomaly)** → this should not happen; treat the oldest
-     (lowest `created_at`) as canonical and update it as above. Do not
-     auto-merge or delete the others. Note the anomaly (issue numbers
-     found) using item 5's note line below, and also in this routine's
-     Step 6 report.
+     built table (never append — the full replace is what makes resolved
+     issues disappear on the next run, and a zero-active run show an empty
+     table instead of stale content).
+   - **2+ results (anomaly)** → treat the oldest (lowest `created_at`) as
+     canonical and update it as above. Do not auto-merge or delete the
+     others. Note the anomaly (issue numbers found) using item 5's note line
+     below, and also in this routine's Step 6 report.
 
 5. **Body format**, in this exact order:
    - `# flaky-ci-routine dashboard` (title)
    - `_Updated: {ISO8601 timestamp}_` — read the actual current time when
      you write this line (e.g. `date -u +%Y-%m-%dT%H:%M:%SZ`); never
-     compose, round, or guess a timestamp — a header that doesn't match
-     when the write actually happened is worse than no header
+     compose, round or guess a timestamp, since a header that doesn't match
+     when the write happened is worse than no header
    - If item 4's anomaly note (2+ dashboard issues found) or item 6's
-     truncation note applies this run, one line here stating it — this is
-     the only place either note belongs; do not also prepend it above the
-     table
+     truncation note applies this run, one line here stating it — the only
+     place either note belongs; do not also prepend it above the table
    - One short paragraph explaining that this issue is create-or-updated
-     every run and the body is fully replaced (so resolved tests disappear
-     automatically and a zero-active run doesn't show stale content) —
-     this paragraph's wording may vary run to run, it's explanatory prose,
-     not a machine-read field
+     every run and the body is fully replaced. Its wording may vary run to
+     run — it is explanatory prose, not a machine-read field
    - The table from step 3. If there are zero active issues, replace the
      table with this **exact** line instead of an empty table with just
      headers: `No active flaky tests right now.` — always this string,
-     verbatim, so a reader (or a future re-implementation) can rely on it
-     as the zero-state marker rather than inferring "empty" from an absent
-     table
+     verbatim, as the zero-state marker
    - `## Awaiting human decision` — the issues stopped waiting for a human,
      built as **Building the `## Awaiting human decision` section** below
      describes
@@ -900,27 +817,24 @@ table with that tier, same as any other active issue.
    rendered on every run** — when there is nothing to list, the section
    heading is still written, followed by its own zero-state line. The
    `No active flaky tests right now.` line replaces **the table only**, not
-   the sections: a run with an empty table and two paused issues is an
-   ordinary state of this system, and dropping the sections would hide it.
+   the sections: an empty table with two paused issues is an ordinary state
+   of this system, and dropping the sections would hide it.
 
 6. **The ~65536-character body limit applies to the whole body** — title,
    notes, paragraph, table, and both sections from item 5 — not to the table
    alone. Measure all of it. If it does not fit, truncate **table rows
    only**: keep as many rows from the top of item 3's order as fit, drop the
    rest, and state explicitly — using item 5's note line — how many rows
-   were truncated and why. Never truncate silently. Truncation does not
-   reorder anything: item 3 fixes the order for every run, and keeping its
-   top rows already keeps the strongest tiers, which is what a truncated
-   table most needs to show.
+   were truncated and why. Never truncate silently. Truncation reorders
+   nothing, and keeping the top rows keeps the strongest tiers, which is what
+   a truncated table most needs to show.
 
    **Never drop either of item 5's two sections to save space, and never
    drop their zero-state lines** (`No issues are waiting for a human
-   decision.` / `None.`). Both sections are short by construction — the
-   number of paused issues is bounded by how often a human answers, and the
-   auto-closed list only ever covers one run — and they are the only place a
-   paused or just-closed issue shows up at all. A truncated table still
-   shows the same rows on the next run; a dropped section reads as "nothing
-   is waiting", which is a wrong answer rather than a partial one. In the
+   decision.` / `None.`). Both are short by construction and are the only
+   place a paused or just-closed issue shows up at all; a truncated table
+   still shows the same rows on the next run, while a dropped section reads
+   as "nothing is waiting", a wrong answer rather than a partial one. In the
    case (not expected to occur) where the two sections alone exceed the
    limit, drop `## Awaiting human decision` rows from the bottom — keep the
    oldest `Paused at` first, since that is the longest-unanswered question —
@@ -932,8 +846,7 @@ Requirement 9.2 and 9.4. This section is a **second view of issues that are
 already in the table**, not a source of extra rows: an issue carrying
 `flaky/needs-decision` still carries its tier label, so item 1 has already
 emitted a row for it. Do not add, remove or re-tier any table row on account
-of this section. It answers a different question — *what is a human being
-asked to decide, and has anything happened since we asked.*
+of this section.
 
 Fetch the candidates fresh, for the same reason item 1 re-fetches the tier
 lists: Step 3 may have **removed** the label (`investigate-flaky-test` drops
@@ -951,23 +864,22 @@ the top. Rows whose `Paused at` is `—` (see below) sort **last**: there is no
 moment to order them by, and they are a data problem rather than a waiting
 decision.
 
-Two of the cells below read this issue's comments. Item 2 has already fetched
-them for every issue item 1 returned, which is normally every candidate here
-— a `flaky/needs-decision` issue also carries a tier label. **For a candidate
-item 1 did not return** (a hand-labeled issue that never got a tier label, or
-one caught mid-transition), fetch its comments with the same call item 2
-uses, then continue as below. Do not skip the row.
+Two of the cells below read this issue's comments, which item 2 has normally
+already fetched (a `flaky/needs-decision` issue also carries a tier label).
+**For a candidate item 1 did not return** — a hand-labeled issue that never
+got a tier label, or one caught mid-transition — fetch its comments with the
+same call item 2 uses and continue as below. Do not skip the row.
 
 - **Tracking issue** — a link to the issue, as in the table.
 - **Paused at** — the newest `labeled` event for `flaky/needs-decision`,
   computed exactly as Step 2-B computes `PAUSED_AT`: same endpoint
-  (`/issues/{N}/events`), same shell-side fold, same reasoning about
-  `--paginate` applying `-q` per page. Follow that, do not restate it.
+  (`/issues/{N}/events`), same shell-side fold. Follow that, do not restate
+  it.
   If the value comes back empty, write `—` in this cell **and** `—` in
   **New observations since pause** (there is no moment to count from), and
-  list the issue number in the Step 6 report. Step 2-B reports the same
-  issue as "no `labeled` event could be read", so a number appearing in both
-  places is the expected shape, not a double count.
+  list the issue number in the Step 6 report — the same issue number Step 2-B
+  reports as "no `labeled` event could be read", which is the expected shape
+  rather than a double count.
   **Recommendation is still filled in for such a row**, via the widened
   search described below: skip the window computation entirely, take the
   newest automated comment carrying the line regardless of time, and prefix
@@ -986,12 +898,11 @@ uses, then continue as below. Do not skip the row.
   **current-pause window**, take the newest one whose **last non-empty line**
   begins with `- Recommendation: `, strip that prefix, and put the rest of
   the line in the cell verbatim.
-  - **The current-pause window** is defined — its bounds, the pause-comment
+  - **The current-pause window** is defined — bounds, the pause-comment
     ordering it pairs with, and the reason — in **Shared constants** → Pause
-    ordering; follow that, do not restate it. String comparison cannot
-    subtract, so compute the window's
-    lower bound once, the way 4-A computes `CUTOFF`, and compare every
-    comment's `created_at` against that single value:
+    ordering; follow that, do not restate it. Compute its lower bound once,
+    the way 4-A computes `CUTOFF`, and compare every comment's `created_at`
+    against that single value:
 
     ```bash
     WINDOW_START="$(date -u -d "$PAUSED_AT - 120 seconds" +%Y-%m-%dT%H:%M:%SZ)"
@@ -1003,23 +914,18 @@ uses, then continue as below. Do not skip the row.
     **Paused at** cell above for what to do when it is empty.
   - **Last line, not first — deliberately the opposite of 4-B's rule for
     `Date:`.** **Shared constants** pins this line as the pause comment's
-    *last* line, so reading from the end is what matches the contract. 4-B
-    takes the *first* `Date:` because a log excerpt further down an
-    observation comment can contain a line that looks like one. The two
-    rules differ because the two contracts differ; do not "unify" them.
+    *last* line, while 4-B takes the *first* `Date:` because a log excerpt
+    further down an observation comment can contain a line that looks like
+    one. The two contracts differ; do not "unify" the two rules.
   - **If no comment falls in that window at all, widen the search once** to
     the newest automated comment carrying the line at any time, and use it —
     but write the cell as `(may be stale) {line}`, with that exact prefix.
-    The line it finds can be arbitrarily old: an issue paused, answered,
-    resumed and paused again, whose newest pause comment failed to post,
-    would show the previous cycle's recommendation.
-    The prefix is what carries that caveat to the person reading the
-    dashboard, who never sees this procedure: it tells them the line may
-    predate the current pause and that the issue itself is the authority.
-    **Never apply the prefix to a line that did fall inside the window** —
-    a correctly paused issue would then carry the warning on every run,
-    which is the opposite of what it means, and the prefix would stop
-    telling a reader anything.
+    The line it finds can be arbitrarily old, and the prefix is what carries
+    that caveat to a dashboard reader who never sees this procedure: the line
+    may predate the current pause, and the issue itself is the authority.
+    **Never apply the prefix to a line that did fall inside the window** — a
+    correctly paused issue would then carry the warning on every run, the
+    opposite of what it means.
   - If there is still none, write `—`. Never substitute a summary of the
     comment: this cell is a verbatim copy of a line the investigation wrote,
     or it is empty.
@@ -1030,13 +936,13 @@ uses, then continue as below. Do not skip the row.
   at**. Use the comment's **first** `- Date:` line, per 4-B's rule (first
   match only, because a log excerpt can carry a lookalike line); if a
   comment has no `- Date:` line at all, fall back to its `created_at` for
-  this comparison only. Compare as strings, sound for the fixed-width
-  ISO-8601 reason Step 2-B gives. Write a plain number, `0` included.
+  this comparison only. Compare as strings, per **Shared constants** →
+  Reading conventions. Write a plain number, `0` included.
   - **A non-zero count does not re-select the issue for investigation.**
     Step 2-B re-selects on a human's answer and on nothing else; new
-    observations arriving change what this cell says and nothing more (2-B
-    explains why). The number is here to tell a human that postponing the
-    decision is getting more expensive, not to restart anything.
+    observations arriving change what this cell says and nothing more. The
+    number tells a human that postponing the decision is getting more
+    expensive; it restarts nothing.
 
 When there are zero candidates, the section's entire content is this
 **exact** line:
@@ -1045,22 +951,21 @@ When there are zero candidates, the section's entire content is this
 No issues are waiting for a human decision.
 ```
 
-Verbatim, for the same reason `No active flaky tests right now.` is
-verbatim: a reader — or a future re-implementation — should be able to rely
-on the marker instead of inferring "empty" from an absent table.
+Verbatim, for the same reason `No active flaky tests right now.` is verbatim:
+a reader, or a future re-implementation, should be able to rely on the marker
+instead of inferring "empty" from an absent table.
 
 ### Building the `## Auto-closed this run` section
 
 Requirement 10.3. This section reports **what Step 4 did on this run**, not a
 standing list: an issue appears here once, on the run that closed it, and
-never again. Everything it needs is the three lists Step 4-F hands on —
-do not re-query closed issues to rebuild them.
+never again. Everything it needs is the three lists Step 4-F hands on — do
+not re-query closed issues to rebuild them.
 
 From 4-F's first list (the `{issue number, newest observation date}` pairs
 **actually closed**) build the rows, columns
 `Tracking issue | Newest observation`, ordered by issue number. `Newest
-observation` is the `NEWEST` value 4-B computed, written exactly as it was
-read.
+observation` is the `NEWEST` value 4-B computed, written exactly as read.
 
 4-F's other two lists render as one bullet line each, **always both, even
 when empty** — an absent bullet and "nothing was skipped" must not look the
@@ -1090,20 +995,18 @@ None.
 Summarize the run: which `JOB_LOG_METHOD` Step 0 selected, how many issues
 were newly confirmed vs newly suspected by Step 1 (and, of the suspected
 ones, how many `investigate-flaky-test` promoted to confirmed via its
-confirmation measurement vs left at suspected pending human review), how many issues
-Step 2 re-selected after a human decision (selection B), how many
+confirmation measurement vs left at suspected pending human review), how many
+issues Step 2 re-selected after a human decision (selection B), how many
 `flaky/needs-decision` issues Step 2 had to skip because no `labeled` event
-could be read (empty PAUSED_AT — list their numbers so a human can look),
-how many were
-investigated in Step 3, how many resulted in a PR, how many were left
-pending human decision (and why), and how many were quarantined. Report
+could be read (empty PAUSED_AT — list their numbers so a human can look), how
+many were investigated in Step 3, how many resulted in a PR, how many were
+left pending human decision (and why), and how many were quarantined. Report
 Step 4's outcome: how many observing issues were auto-closed, with their
 numbers, plus the numbers of any left open because a human reopened them
-after an earlier auto-close and any whose observation date could not be
-read. Also
-report Step 5's outcome: whether the dashboard issue was created or updated,
-how many rows it now lists, and whether any rows were truncated (and if so,
-how many).
+after an earlier auto-close and any whose observation date could not be read.
+Also report Step 5's outcome: whether the dashboard issue was created or
+updated, how many rows it now lists, and whether any rows were truncated (and
+if so, how many).
 
 Then report these four, which come from outside Step 3's own accounting
 (Requirement 11.3). Report every one of them on every run — a `0` is a
@@ -1121,28 +1024,26 @@ result, an omitted line is a gap:
   ```
 
   Sum `updated_at - run_started_at` across those runs and report the total in
-  minutes next to the count. A measurement that was **requested but had not
-  finished** — the 30-minute-cap path, where `investigate-flaky-test` stopped
-  waiting — has no meaningful `updated_at` yet: leave it out of the sum and
-  report it separately as still running, so the total always means "CI time
-  actually consumed by completed measurements". If a `gh api` call for one of
-  the runs fails, report that id as unmeasured rather than dropping it
-  silently.
+  minutes next to the count. A measurement **requested but not finished** —
+  the 30-minute-cap path, where `investigate-flaky-test` stopped waiting — has
+  no meaningful `updated_at` yet: leave it out of the sum and report it
+  separately as still running, so the total always means "CI time actually
+  consumed by completed measurements". If a `gh api` call fails for one of the
+  runs, report that id as unmeasured rather than dropping it silently.
 - **Awaiting human decision** — how many rows Step 5's
   `## Awaiting human decision` section lists, with their issue numbers. This
-  is the **backlog**: every issue currently stopped, not only the ones
-  stopped this run. Step 3's "left pending human decision" count above is the
-  other one — the rate the backlog grows at. Both are worth having; do not
-  merge them into a single number.
+  is the **backlog** (every issue currently stopped), while Step 3's "left
+  pending human decision" count above is the rate it grows at. Both are worth
+  having; do not merge them into a single number.
 - **Excluded as failures the PR itself owns** — how many identities
   `detect-flaky-ci` kept out of tracking on that ground, with the PR numbers
   it named (or the head branch name, where the commit had no PR). Read this
   straight from `detect-flaky-ci`'s own Step 5 report in Step 1; do not
-  recompute it here. One exclusion can name more than one PR, so the PR
-  numbers need not line up one-to-one with the count.
+  recompute it. One exclusion can name more than one PR, so these numbers need
+  not line up one-to-one with the count.
 - **① suppressed by a lockfile match** — the count `detect-flaky-ci` reports
-  separately for this. These failures were **not** excluded — they were
-  tracked like any other observation — so keep this number on its own line
-  and never fold it into the exclusion count above.
+  separately for this. These failures were **not** excluded (they were tracked
+  like any other observation), so keep this number on its own line and never
+  fold it into the exclusion count above.
 
 This is the routine's output — nothing else needs to be written.

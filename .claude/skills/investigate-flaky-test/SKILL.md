@@ -987,11 +987,10 @@ redesign opportunity, not an environment-timing dead end:
   one call (e.g. `rate-limiter-flexible`'s `penalty(key, n)` reaches
   `n` consumed points through the identical internal upsert path
   `consume()` uses, in a single round-trip, instead of looping `consume()`
-  `n` times — see the `consume-points.integ.ts` fix for issue #11718/PR
-  #11719 for a worked example. The general shape: find the state-setting
-  primitive the library already ships, confirm it goes through the same
-  code path as the operation under test, and use it to jump straight to
-  one step before the boundary).
+  `n` times). The general shape: find the state-setting primitive the
+  library already ships, confirm it goes through the same code path as the
+  operation under test, and use it to jump straight to one step before the
+  boundary.
 - Exercise only the transition itself (the call(s) at and past the
   boundary) through the real code under test.
 - This turns an O(N) cost into an O(1) cost, which removes the test's
@@ -1017,13 +1016,11 @@ the same CPU while each pays its own heavy setup cost (spawning a
 migration subprocess, initializing a singleton, etc.). A same-commit
 failure across several unrelated spec files that all timed out on the
 identical `beforeAll` line, with no code change near that line, is the
-signature of this shape (see `test/setup/crowi.ts`'s `getInstance()` /
-`test/setup/migrate-mongo.ts` in GROWI's own `apps/app` for a worked
-example — PR #11824 misclassified this as "nothing to redesign, so a bump
-is fine," and the fix that replaced it, PR #11826, initially misclassified
-it too, asserting the *same* per-worker premise without checking it before
-publishing — a `console.log` count across a few files falsified it and
-changed the story that shipped). Where this applies:
+signature of this shape (`test/setup/crowi.ts`'s `getInstance()` and
+`test/setup/migrate-mongo.ts` in GROWI's own `apps/app` are the worked
+example — two successive fixes there each asserted the per-worker premise
+without checking it, and a `console.log` count across a few files falsified
+it). Where this applies:
 
 - **Measure the unloaded baseline, and don't stop at the number — check
   the model it's measuring.** Run the failing spec(s) alone (no sibling
@@ -1244,15 +1241,6 @@ Step 5 and 6-A through 6-C share shell variables (`$ISSUE_NUMBER`,
 `ISSUE_NUMBER` and `FIX_BRANCH` from the values 5-A used and `FIX_SHA` with
 `git rev-parse`, rather than inventing new ones. The one pair that must never
 be split is the PR creation and its `**Fix PR**:` marker comment in 6-C.
-
-*(The older shape of this step — `gh pr create --draft`, then `gh run rerun` /
-`gh run watch` for a repeat-green tally, then `gh pr ready` — is gone, and
-none of those commands appears anywhere in this skill any more. A cloud
-routine's token has no `actions:write`, so the reruns returned 403, and
-marking a PR ready is a GraphQL mutation its session blocks; PRs #11824,
-#11853 and #11863 each ended up in draft, with no tally and a paragraph asking
-a human to click "Ready for review". The push-triggered repro workflow
-replaces the tally, and REST PR creation replaces the draft/ready dance.)*
 
 ### 6-A: Push the fix and wait for both measurements
 
@@ -1554,11 +1542,10 @@ issue.
 
 The PR is ready for review the moment 6-C creates it, so nothing follows.
 Turning a draft PR into a ready one is `markPullRequestReadyForReview`, a
-GraphQL-only mutation with no REST equivalent — `PUT .../ready_for_review`
-404s, and a direct `PATCH .../pulls/{n} -F draft=false` was tried on #11824
-and did not flip it — and a cloud routine's session blocks GraphQL. Creating
-the PR non-draft removes that dependency entirely: readiness is decided by
-6-B's gate, before the PR exists, rather than by a state change afterwards.
+GraphQL-only mutation with no REST equivalent, and a cloud routine's session
+blocks GraphQL. Creating the PR non-draft removes that dependency entirely:
+readiness is decided by 6-B's gate, before the PR exists, rather than by a
+state change afterwards.
 
 `flaky/confirmed` stays on the issue — it is a permanent record that this was
 a real, confirmed flake, not something to remove on resolution. If the same

@@ -585,3 +585,302 @@ routine の運用値を決める — この 6 つ（Requirement 6〜11）につ�
   `detect-flaky-ci/SKILL.md`のStep1本体はこの対処を明文化していない。
   再現条件（どのコミットメッセージが原因か）は特定していない。将来また
   `jq`パースエラーが出た場合、まずこれを疑う
+
+## 実運転で見つかった規則の出典（実例と事故）
+
+`.claude/commands/flaky-ci-routine.md` と `.claude/skills/detect-flaky-ci/SKILL.md`
+は、cron から無人で動く LLM ルーティンが毎回読む手順書なので、短く保つ価値が高い。
+そこで、規則そのものは手順書に残したまま、**その規則がなぜ必要になったかを示す実例
+（issue 番号・run 番号・実測値）をこの節に移した**。手順書側には理由を 1 文だけ残して
+ある。規則を変えようとする人は、変える前にここを読んでほしい。
+
+以下は規則ごとに並べてある。
+
+### 自動投稿の署名は、囲み記号を含めずに部分一致で探す
+
+`flaky-ci-routine.md` の Shared constants → Automated-author signatures。
+
+`Investigated by Claude Code` という文字列を、前後の `*` や `_` を含めずに探す
+規則になっているのは、実際に投稿された行の書き方が揃っていなかったため:
+
+- #11851: `*Investigated by Claude Code (autonomous flaky-ci-routine)*`
+- #11707: `*Investigated by Claude Code*`
+- #11708: `_Investigated by Claude Code_`
+
+語句だけで照合すれば 3 つとも拾えるが、`*...` の形で照合すると `_..._` の形が
+人間のコメントとして通り抜けてしまう。
+
+### `gh auth status` の表示だけを見て実行可否を決めない
+
+`flaky-ci-routine.md` の Step 0。
+
+cloud routine の `gh` セッションでは、`gh auth status` が「Active account: true」
+と表示しながら、同じ出力の中でそのトークンを invalid とも書く、という状態が実際に
+起きた。どちらの表示も実行可否の判断材料にはならない。実際に効いていた制約は
+「認証できているか」ではなく「REST は通るが GraphQL は拒否される」という、より
+狭い条件だった。そのため REST の read を 1 回投げて確かめる形にしている。
+
+### 観測日時に issue の `updated_at` を使わない
+
+`flaky-ci-routine.md` の 4-B。
+
+`updated_at` はラベル変更・マーカーコメント・人間のメモでも更新されるため、
+1 か月観測されていない issue が最新に見える。実例として #11708 は、最新の観測が
+2026-08-13 なのに `updated_at` は 2026-09-14 を指していた。
+
+### 人間が reopen したかどうかは `### Auto-closed:` コメントの有無で判断する
+
+`flaky-ci-routine.md` の 4-C。
+
+`reopened` イベントがあるだけでは「人間が追跡を続けたい」とは言えない。#11707 は
+`2026-08-15T12:42:30Z` にクローズされ、`2026-08-15T12:43:44Z` に同じ人が reopen して
+いる。74 秒後の取り消しなので、誤クリックとその取り消しである。これを判断として扱うと、
+その issue は以後ずっと自動クローズの対象から外れてしまう。
+
+### 埋め込む変数が空でないことを、heredoc を実行する同じシェルで確かめる
+
+`flaky-ci-routine.md` の 4-E。
+
+`${NEWEST}` と `${STALE_DAYS}` が空のまま投稿されると、`- Newest observation:` の
+後ろに何も無いコメントが残る。エラーは出ず、気づく手がかりも無い。実際に #11707 と
+#11708 で、4-B で計算した値がループの途中で失われたまま投稿され、後からコメントを
+`PATCH` して直す必要があった。
+
+### Fix PR のマーカーは、コメント本文全体ではなく 1 行ずつ照合する
+
+`flaky-ci-routine.md` の Step 5 item 3。
+
+`**Fix PR**: {URL}` だけの 1 行という書き方が決まる前に投稿されたマーカーは、
+マーカー行のあとに空行・`---`・Claude Code の署名が続く形になっている（#11821・
+#11851・#11858）。本文全体をマーカーと比較すると、この 3 件の Fix PR 欄は永久に
+`—` のままになる。実際、この規則を 1 行照合に変えるまでダッシュボードはそう表示して
+いた。
+
+### 購読も通知も起床予約もしない
+
+`flaky-ci-routine.md` の Step 3「Routine discipline」。
+
+この規則は、PR のイベントを購読したセッションが、仕事を終えた後も 1 日半生き続けた
+事故を受けて書かれている。次の cron 実行が拾い直す作りになっているので、待つ必要は
+無い。
+
+### ロックファイルだけの差分を「無関係」と読んではいけない
+
+`detect-flaky-ci/SKILL.md` の ① 判定。
+
+依存を上げると、テストが実際に動かす相手が変わる。ロックファイルしか触っていない
+差分を「この PR は無関係」の証拠と読んだ結果、#11849 は 13 回の観測にわたって flaky
+として追跡され続けたが、実際には、その差分を作った dependabot ブランチ上で毎回同じ
+ように失敗していた。再生成されたロックファイルが `@codemirror/state` を 2 つの
+バージョンで同時に解決してしまい、CodeMirror の `instanceof` チェックでテストが落ちて
+いた。
+
+パッケージ名を取り出すときの 2 つの規則（丸括弧の組を先に落とす / 最後の `@` で切る）
+が必要な理由も実測から来ている。`snapshots:` の行は、そのパッケージが解決された相手
+（peer）を丸括弧の中に記録し、その中にも `@` が含まれる。PR #11886 の patch には
+そういう `+`/`-` 行が 36 本あった。先に丸括弧を落とさずに最後の `@` で切ると
+`@inquirer/checkbox@5.2.2(@types/node` という、どこにも一致しない名前になる。
+表の 1 行目と 3 行目は PR #11886 / #11887 / #11888 の `@codemirror` 関連 patch に、
+2 行目は同じ patch 全体に現れる形である。
+
+### 過去にさかのぼって見つけた失敗も、新しい失敗と同じ 2 つの判定を通す
+
+`detect-flaky-ci/SKILL.md` の ④。
+
+#11707 の識別キー（`external-user-group-sync.integ.ts > … > syncs groups and deletes
+groups that do not exist externally`）は、run 34838590966 と 34838596432 から
+きれいな `FAIL` ブロックとして grep で取り出せる。しかしどちらも証拠ではない。
+head コミットは `master` の祖先ではなく、ブランチ `experiment/isolate-false-app-integration`
+上にあり、どの PR にも属さないので、新規失敗の経路では「PR が無い → 除外」に当たる。
+さらに、この 2 つのジョブログには keycloak のテストが `dummy-keycloak-host.com` を
+解決しようとして出す `getaddrinfo ENOTFOUND` も含まれる（denylist が効くかどうかは、
+その行がこの識別キー自身の `FAIL` ブロックの中にあるかで決まる）。この 2 つを
+判定せずに ④ を発火させると、#11707 は証拠でないものを根拠に `flaky/suspected` へ上がり、
+ルーティンの自動クローズ対象（`flaky/observing` のみ）からも外れてしまう。
+
+### 特定の attempt のログは job id で取りに行く
+
+`detect-flaky-ci/SKILL.md` の Step 2。
+
+run 34846386483 が実測例である。attempt 1 が失敗し attempt 2 が成功した run に対して、
+失敗したジョブ 103983310790（attempt 1）のログを `gh run view --job … --log-failed`
+で求めると、attempt 2 の成功ログが返ってきた。判断材料となるログには `150 passed` と
+書いてあり、警告は何も出ない。
+
+### infra noise は失敗ごとに判定する（ジョブログ全体で判定しない）
+
+`detect-flaky-ci/SKILL.md` の Step 2。
+
+run 34838590966 / 34838596432 は 68 個の spec ファイルにまたがる 97 件の失敗を
+含んでいた。そのうち 1 件が keycloak のテストで、`dummy-keycloak-host.com` を解決
+できず `getaddrinfo ENOTFOUND` を出していた。ジョブログ全体を検索して判定すると、
+この 1 件だけでなく残る 96 件も捨てられる。96 件は infra noise ではなく、keycloak の
+DNS とは何の関係も無い。
+
+### Playwright の識別キーには必ず browser を含める
+
+`detect-flaky-ci/SKILL.md` の Step 3（Playwright の tier 1）。
+
+spec を特定できた追跡 issue は、すでにすべて browser 入りの形になっている。例:
+#11785 のタイトルは
+`playwright:webkit:playwright/20-basic-features/comments.spec.ts:...` である。
+ここで browser を落とすと、Step 4 が実際に検索するタイトル形式と識別キーがずれ、
+重複 issue が立つ。
+
+### `run-playwright` のジョブ選択は前方一致ではなく部分一致で行う
+
+`detect-flaky-ci/SKILL.md` の Step 2b。
+
+再利用可能ワークフロー経由で動くため、ジョブ名は
+`test-prod-node24 / run-playwright (chromium, 1/2, 8.0)` の形になる。実測したスキャン
+では、同じ run 一覧に対して前方一致は 0 件、部分一致は 61 件だった。
+
+### `error file=` の grep に行頭の `^` を付けない・retry の数字を足さない
+
+`detect-flaky-ci/SKILL.md` の Step 2b。
+
+ジョブ 103921032242 での実測: `^` を付けると 0 件、付けないと 1 件で、その 1 件が
+この shard の識別キー全体を決める唯一の注釈だった（ログの各行には先頭に timestamp が
+付くので、行頭の照合は決して一致しない）。
+
+`retry0` / `retry1` のような数字付きの選択肢を足してはいけない理由も同じジョブで実測
+している。以前の grep にはそれがあり、12 件一致したが、すべて `comment-retry0` という
+テスト用データに言及する `pw:api` のデバッグ行で、添付ファイルのパスは 1 件も無かった。
+
+### 1 つの原因が複数の issue に分かれてしまった実例
+
+`detect-flaky-ci/SKILL.md` の「Collateral timeouts」と「Cascaded failures」。
+
+- collateral: #11851 / #11852 / #11858 は、いずれも
+  `test/setup/migrate-mongo.ts` の setup hook が timeout した run から来ている。
+  別々に issue を立てたので、1 つの原因が 4 つに見えていた。
+- cascade: #11890 / #11891 / #11892 は #11849 の後続失敗 3 件である。
+
+### 共有 setup hook の追跡 issue は、閉じているものもパスで探す
+
+`detect-flaky-ci/SKILL.md` の「Reconciliation exception」。
+
+#11752 がこの経路のためにある issue である。開いている間はこれまでどおり見つかるが、
+いずれ閉じられた後に同じ hook が再発したとき、閉じた issue も探す経路が無ければ何も
+見つからず、重複 issue が立つ。その hook の履歴が 2 つの issue に恒久的に分かれる。
+
+### PR 自身が所有する失敗の実例と、PR が複数ある場合
+
+`detect-flaky-ci/SKILL.md` の「Failures the PR itself owns」。
+
+- #11864 は、PR #11827 がフィーチャブランチ `feat/185872-backlinks` 上で追加している
+  最中の spec を追跡してしまったもの。#11799 は、PR #11750 がマージキューを通過する
+  最中に追加していた spec を追跡してしまったもの。どちらも誰も対応できない issue に
+  なる。
+- コミット `537cb7bc96e56cf0d9fa610cb18d2e74128f8394`（#11864 の run 33857470813）は
+  2 つの PR に属している。`master` を base とする #11610 と、フィーチャブランチを
+  base とする #11827 である。両方が当該 spec を変更していた。`.[0]` だけ見ると片方
+  しか報告されない。
+- マージキューのコミット `00d87f7cfa520e93f5e407b5996ea837a4db4d0c`（#11799 の元）で
+  実測したとおり、`commits/{sha}/pulls` は空で返り、PR 番号はコミットメッセージの
+  1 行目（`Merge of #11750`）にしかない。
+
+### 修正マージより前の証拠で reopen しない
+
+`detect-flaky-ci/SKILL.md` の「Existing CLOSED issue found」。
+
+#11711 がこの分岐の実例である。再発の証拠として見つかった失敗のコミット日時が、修正
+PR のマージより前だったため、reopen せず履歴として記録するだけにした。また、この
+issue の解決記録は自由文の `Fixed by #{PR_NUMBER}` 形式で、構造化された
+`**Fix PR**: {URL}` マーカーはまだ付いていない。
+
+### 取り下げた手順: draft PR を作って後から ready にする
+
+`investigate-flaky-test/SKILL.md` の 6-C / 6-D。
+
+以前は `gh pr create --draft` で作り、`gh run rerun` / `gh run watch` で green の回数
+を数え、`gh pr ready` で ready にしていた。これは 2 つの理由で動かなかった。cloud
+routine のトークンには `actions:write` が無いので rerun は 403 を返し、PR を ready に
+するのは GraphQL の mutation（`markPullRequestReadyForReview`）で、そのセッションでは
+ブロックされる。`PUT .../ready_for_review` は 404 で、`PATCH .../pulls/{n} -F draft=false`
+も #11824 で試したが draft は外れなかった。結果として PR #11824・#11853・#11863 は
+どれも draft のまま、集計も無く、「Ready for review を押してください」という段落だけが
+残った。現在は、green の回数を数えるのは push で動く再現 workflow の役割であり、
+REST で最初から非 draft の PR を作るので、draft を ready に変える手順そのものが
+要らなくなっている。
+
+### timeout を増やすだけの修正を止める規則の出典
+
+`investigate-flaky-test/SKILL.md` の「Guardrail — a bare timeout increase is a stopgap」。
+
+- driver 1（テスト自身のパラメータで実行時間が増える形）の手本は、issue #11718 /
+  PR #11719 の `consume-points.integ.ts` の修正である。`rate-limiter-flexible` の
+  `penalty(key, n)` が `consume()` と同じ内部 upsert の経路を通りながら 1 往復で
+  `n` 点消費した状態を作れるので、`consume()` を `n` 回ループする必要が無くなった。
+- driver 2（同時に走る setup の量で実行時間が増える形）では、PR #11824 が
+  「作り直す対象が無いから timeout を上げてよい」と誤って分類した。それを置き換えた
+  PR #11826 も、公開前に確認しないまま同じ「worker ごとに 1 回」という前提を主張して
+  おり、数ファイルにまたがる `console.log` の回数を数えて初めてその前提が崩れ、
+  最終的に出した説明が変わった。
+
+## 手順書から移した仕組みの説明
+
+手順書（`.claude/commands/flaky-ci-routine.md` と
+`.claude/skills/detect-flaky-ci/SKILL.md`）には「何をするか」と「理由が 1 文ある」
+ところまでを残し、**なぜそうなるのかという仕組みの説明はここに移した**。手順書側から
+は見出し名で参照している。手順を書き換えようとする人は、先にここを読んでほしい。
+
+### pause の順序と current-pause window
+
+参照元: `flaky-ci-routine.md` の Shared constants →「Pause ordering」。
+
+`investigate-flaky-test` が issue を止めるときは、①`flaky/needs-decision` ラベルを
+付ける → ②署名付きの pause コメントを投稿する、の順で書き込む。ダッシュボード側は
+この 2 つの書き込みを次のように読む。
+
+- **Paused at** = `flaky/needs-decision` が付いた `labeled` イベントのうち最新のもの。
+- 採用するコメントの範囲 = `[Paused at − 120 秒, ∞)`。つまり Paused at 以降か、
+  その 2 分前までに投稿されたコメント。
+
+ラベルを先に付けると、pause コメントの `created_at` は必ずこの範囲に入る。逆に
+コメントを先に投稿すると、そのコメントは Paused at より前になるため範囲から外れ、
+ダッシュボードは「範囲内に無い」と判断して検索を広げる経路に入る。広げた経路で
+見つけた行には `(may be stale) ` を付ける決まりなので、**正しく止まった issue にだけ
+この警告が付く**という、意味が逆さまの結果になる。
+
+下限に 2 分の余裕を置いてあるのは、2 つの書き込みの間の時計のずれと、コメントを先に
+投稿していた古い順序で止まった issue を拾うためである。どちらも実際には数秒の差しか
+無く、2 分という幅は 1 つ前の pause 周期との間隔よりはるかに短いので、前の周期の
+コメントを誤って拾うことはない。
+
+### ジョブログの取得経路が 2 つある理由
+
+参照元: `flaky-ci-routine.md` の Step 0 →「Job Log Fetch Method」。
+
+`gh api --allow-escape-sequences "repos/.../actions/jobs/{JOB_ID}/logs"` は、
+GitHub が署名付きの一時 URL を返し、そこへリダイレクトされる作りになっている。
+転送先は `results-receiver.actions.githubusercontent.com` や
+`*.blob.core.windows.net` という別ドメインで、cloud routine の egress proxy は
+この転送先をブロックする。
+
+ブロックしているのは**転送先のドメインに対するネットワーク方針**であって、要求の
+形ではない（実測で確認した）。だから `gh` に別の聞き方をしても回避できない。
+GitHub MCP サーバーの `mcp__github__get_job_logs` は同じ内容をサーバー側で取得して
+返すので、この制限を受けない。取得できるかどうかは実行環境ごとに決まる性質なので、
+ルーティンの最初に 1 回だけ判定し、以降は全ログで同じ方法を使う。
+
+### reopen だけでは判断にならない
+
+参照元: `flaky-ci-routine.md` の 4-C。
+
+自動クローズを取り消したい人は issue を reopen する。しかしその issue は定義上まだ
+stale なので、次回の実行がまた閉じてしまい、reopen が定着しない。そこで
+「`### Auto-closed:` コメントより後の `reopened` イベントがあるなら閉じない」という
+形にしてある。
+
+`### Auto-closed:` コメントが無い issue をこの保護の対象から外しているのは、その
+issue をこのステップが閉じたことが一度も無いからである。つまり人間が取り消した
+ものが何も無く、今回の close が最初の close になる。`reopened` イベントだけを見て
+判断すると、誤クリックとその取り消し（実例は上記の #11707、74 秒差）まで「追跡を
+続けたいという意思表示」と読んでしまい、その issue は以後ずっと自動クローズの対象
+から外れる。
+
+なお `detect-flaky-ci` が再発を見つけて reopen する場合は
+`### Additional observation` も一緒に投稿されるので、4-B の日付規則がその issue を
+開いたままにする。さらにその経路の reopen は issue を `flaky/confirmed` にするため、
+4-A（`flaky/observing` だけが対象）の時点で除外される。
