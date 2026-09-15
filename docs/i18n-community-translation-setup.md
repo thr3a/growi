@@ -85,31 +85,110 @@ GitHub は PR 作成者自身による自己承認を拒否するため、「PR 
 
 「構造変更」を伴う PR（namespace 内のキーの増減など）には承認ボットは関与しません。これは通常の人レビュー必須 PR として作成され、人が承認すれば同じ既存ルールでキューに乗ります。
 
-### 4.2 用意する2つの選択肢
+### 4.2 役割を分けるべき2つの identity
 
-以下のどちらかを選び、GROWI 組織の判断で決定してください。どちらを選んでも、最終的に得られるのは「PR への承認レビューだけができるトークン」です。
+この仕組みでは、最終的に「PR を作る identity」と「PR を承認する identity」の2つを分けて運用します。どちらも GitHub Actions から使う対象ですが、長期保持する情報と一時的に mint する情報は分けます。
 
-**選択肢A: 専用の GitHub App をインストールする**
+#### 4.2.1 `I18N_SYNC_PUBLISH_TOKEN`（公開系 identity）
 
-1. GROWI 組織（または対象リポジトリ）向けに、新しい GitHub App を作成します。
-2. この GitHub App に付与する権限は、Pull requests に対する `Read and write`（承認レビューを送るために必要な最小権限）に限定します。`Contents` への書き込み権限は付与しません（承認だけができれば十分で、それ以上の権限は攻撃対象を広げるだけであるため。`.kiro/specs/i18n-community-translation/design.md` の Security Considerations）。
-3. この GitHub App を対象リポジトリにインストールします。
-4. インストール後に発行されるインストールアクセストークン（または、同期ワークフロー内で GitHub App の秘密鍵から都度トークンを生成する運用）を、後述の GitHub Actions シークレットとして使います。
+`I18N_SYNC_PUBLISH_TOKEN` は、同期ブランチの push、PR の作成・更新、必要に応じた追跡ジョブの起動に使う identity です。`git push` に使う credential でもあり、ブランチを push した主体がこの identity になります。
 
-**選択肢B: 専用のボットユーザーアカウントを発行する**
+この identity は「レビューだけ」ではなく、次のような書き込みが必要です。
 
-1. PR を作成する既定の ID（通常の `GITHUB_TOKEN`、または5.1/5.2で使う別のボット ID）とは別に、GROWI 組織に所属する専用の GitHub ユーザーアカウントを新規作成します（例: `growi-i18n-approval-bot` のような専用アカウント）。
-2. このアカウントを対象リポジトリのコラボレーターとして、PR にレビューを送れる権限（少なくとも Write 相当、または承認レビューが送れる最小権限）で招待します。
-3. このアカウントで Personal Access Token（PAT）を発行します。スコープは pull request への承認レビューを送るのに必要な最小範囲に限定し、`repo` 全体や `contents` への書き込みを含む広いスコープは選びません。
+- 同期ブランチの push
+- PR の作成または更新
+- CI を起動し、レビュー待ちの状態へ進める
 
-### 4.3 発行したトークンをシークレットとして登録する
+そのため、`I18N_SYNC_PUBLISH_TOKEN` は通常、以下のどちらかで生成します。
 
-選択肢A・Bのどちらで得たトークンも、GitHub Actions のリポジトリシークレット `I18N_SYNC_APPROVAL_TOKEN` として登録します（`.kiro/specs/i18n-community-translation/design.md` の Security Considerations）。
+- GitHub App のインストールアクセストークン（`contents: write` / `pull_requests: write` を持つ App から mint する）
+- 専用ボットアカウントの PAT（必要最小限の権限のみ）
 
-- 他の用途（PR 作成用のトークンや、POEditor API トークン）と共有せず、この用途専用のシークレットとして登録してください。
-- このトークンに `contents: write` のような書き込み権限を持たせないことを、登録前に必ず確認してください。
+`i18n-sync-pull` ワークフローでは、`actions/checkout` に対して `token: ${{ secrets.I18N_SYNC_PUBLISH_TOKEN || secrets.GITHUB_TOKEN }}` を渡します。これは、同期ブランチの push に使う認証情報がこの identity であることを意味します。
 
-このシークレットの実際のワークフローへの配線（`i18n-sync-pull` ワークフローからの参照）はタスク5.2の範囲です。本ドキュメントの手順は、シークレットの値そのものを用意するところまでです。
+> 重要: `I18N_SYNC_PUBLISH_TOKEN` は「承認レビュー用」ではありません。これは PR を作る側の identity であり、CI を動かし、ブランチを書き換え、PR を公開するための identity です。
+
+#### 4.2.2 `I18N_SYNC_APPROVAL_TOKEN`（承認用 identity）
+
+`I18N_SYNC_APPROVAL_TOKEN` は、作成された訳文のみ PR に対して承認レビューを出す identity です。
+
+- これは「PR を作る identity」ではなく、「レビューを送る identity」です。
+- `contents: write` のような書き込み権限は持たせません。
+- `POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews` など、承認レビュー送信用 API のみに限定します。
+
+この値が `I18N_SYNC_PUBLISH_TOKEN` と同じだと、GitHub は自己承認を拒否し、`apps/app/tools/i18n-sync/pull-translations.ts` 側でも実行時に弾きます。これは「PR を作る ID」と「PR にレビューを出す ID」を分ける設計です。
+
+### 4.3 GitHub App を使う場合の正しい運用
+
+GitHub App を選ぶ場合、長期間保持するのは「トークン」ではなく「秘密鍵」です。GitHub App の installation token は短時間で失効するので、repo secret に固定の長寿命 token を置いて使い回す設計は避けます。
+
+正しい運用は次の流れです。
+
+1. GitHub App を作成し、秘密鍵を安全に保管する。
+2. App ID と秘密鍵を使って JWT を作成する。
+3. installation ID を指定して `/app/installations/{installation_id}/access_tokens` を呼び、短命の installation token を mint する。
+4. その短命 token を workflow の実行時にだけ使う。
+5. 処理が終わった後に token は失効して使えなくなる。
+
+つまり、repository secrets に保管してよいのは「長期で持つべき credential」であり、`I18N_SYNC_APPROVAL_TOKEN` / `I18N_SYNC_PUBLISH_TOKEN` のような short-lived token を固定長く持つのは避けるべきです。
+
+> 重要: 長期保存すべきものは private key であり、token そのものは動的に mint して一時的に使うのが正しいです。
+
+### 4.4 どの secret を repo に置くべきか
+
+GitHub App 方式の場合、repository secret として置くべきものは次のように整理します。
+
+- `I18N_SYNC_PRIVATE_KEY` または `GROWI_I18N_APP_PRIVATE_KEY` など
+  - GitHub App の private key
+  - これは長期保管対象
+- `I18N_SYNC_APP_ID`
+  - App ID
+- `I18N_SYNC_INSTALLATION_ID`
+  - 対象リポジトリに対する installation ID
+
+一方で、以下は固定 secret として repository に置かない方がよいです。
+
+- `I18N_SYNC_PUBLISH_TOKEN`
+- `I18N_SYNC_APPROVAL_TOKEN`
+
+これらは短命な token なので、workflow の起動時に mint して使う設計にするべきです。
+
+### 4.5 役割の分離を守るための設計例
+
+GitHub App 方式で、権限を分けるなら次のようにします。
+
+- 署名・publish 用 App
+  - `contents: write`
+  - `pull_requests: write`
+- 承認用 App
+  - `pull_requests: write` のみ
+  - `contents: write` は付与しない
+
+この2つの App を分けておくことで、レビュー用 identity と push 用 identity が絶対に混ざらないようにできます。どちらも private key から mint した installation token を使う設計にすれば、固定値の token を環境に置かずに済みます。
+
+### 4.6 どの identity を workflow に渡すか（token は runtime 発行）
+
+最終的に GitHub Actions で必要になるのは次の2種類の identity ですが、固定値の token を長期間保存するのではなく、必要時に mint する運用を前提にします。
+
+- `I18N_SYNC_PUBLISH_TOKEN` = PR を作るための identity
+- `I18N_SYNC_APPROVAL_TOKEN` = PR を承認するための identity
+
+ただし、GitHub App を使う場合は、これらの値そのものを repository secret に長期保存するのではなく、private key から発行する workflow 内のプロセスとして扱います。
+
+> つまり、固定シークレットに保存するのは private key、発行するのは token という役割分担にします。token は runtime で mint し、短時間だけ使う設計が正しいです。
+
+### 4.7 実際の発行例（GitHub App の場合）
+
+GitHub App を使う場合、長期で持つのは秘密鍵であり、短命のアクセストークンは以下のような流れで生成します。
+
+```bash
+# 1. App ID と秘密鍵のパスを用意する
+# 2. JWT を作成して署名する
+# 3. installation ID を指定して installation token を mint する
+# 4. その token を workflow の実行時にだけ使う
+```
+
+実際のワークフローでは、`I18N_SYNC_APPROVAL_TOKEN` はレビュー専用、`I18N_SYNC_PUBLISH_TOKEN` は push / PR 作成専用として mint し、使い切る構造にします。これは `GitHub App` / `PAT` にかかわらず、権限の分離が最優先であるためです。
 
 ## 5. POEditor API トークンを用意する
 
@@ -121,12 +200,13 @@ GitHub は PR 作成者自身による自己承認を拒否するため、「PR 
 
 - POEditor 上の1プロジェクトと、その public join page の URL
 - `apps/app/tools/i18n-sync/sync-config.ts` の `SHARED_POEDITOR_PROJECT_ID` プレースホルダー値を置き換えるためのプロジェクト ID
-- 承認ボットの ID とトークン（`I18N_SYNC_APPROVAL_TOKEN` として登録予定）
+- GitHub App 方式の場合: App private key、App ID、installation ID（長期保存するのはこれらのみ）
+- 実行時に mint する publish/approval token の運用手順（同一 identity を使わないことを含む）
 - POEditor API トークン（`POEDITOR_API_TOKEN` として登録予定）
 
 これらは以下の後続タスクが直接使う前提です。
 
-- タスク5.1（push ワークフローの配線）・5.2（pull ワークフローの配線、承認ボット・GitHub 操作の実アダプタ実装）は、上記のシークレット（`POEDITOR_API_TOKEN` / `I18N_SYNC_APPROVAL_TOKEN`）と、置き換え済みのプロジェクト ID を前提に配線します。
+- タスク5.1（push ワークフローの配線）・5.2（pull ワークフローの配線、承認ボット・GitHub 操作の実アダプタ実装）は、上記のシークレット（`POEDITOR_API_TOKEN`、および GitHub App 方式なら private key / App ID / installation ID）と、置き換え済みのプロジェクト ID を前提に配線します。
 - タスク6.1（push 経路の実環境確認）・6.2（pull 経路の実環境確認）は、実際の POEditor プロジェクト（本番用のプロジェクト、または OSS プラン承認前であればテスト用の POEditor プロジェクト）に対して動作確認を行うために、この手順で用意した環境を使います。
 
 OSS プラン承認前にタスク6.1・6.2を進める場合は、本ドキュメント冒頭の「この手順が満たすべき条件」に従い、本番のプロジェクトではなくテスト用のプロジェクトを使ってください。
