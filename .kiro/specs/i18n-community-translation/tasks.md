@@ -116,6 +116,16 @@
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 8.1_
   - _Depends: 3.1, 3.2, 3.3, 4.2_
 
+- [x] 5.3 pullワークフローのGitHub認証を「2つのGitHub App + runtime発行トークン」方式へ移行する
+  - `docs/i18n-community-translation-setup.md` §4の方針（publish用・approval用の2つのGitHub Appを用意し、それぞれのprivate keyのみをrepository secretに長期保存し、App IDはrepository variablesに保存する）に合わせ、`.github/workflows/i18n-sync-pull.yml` の認証配線を更新する
+  - `actions/create-github-app-token@v3.2.0`（実装時点の最新版を確認して固定）を2回呼び、publish用App・approval用Appそれぞれのinstallation tokenをジョブ実行のたびに発行する。installation IDはrepository secretとして保存しない（actionが対象リポジトリへのインストールから自動解決する）
+  - `actions/checkout` に渡すtokenはpublish用App発行分のみとし、`|| secrets.GITHUB_TOKEN` のようなフォールバックは書かない（private keyの登録漏れはtoken発行ステップ自体をその場で失敗させ、CIが付かずキューに残り続ける分かりにくい失敗を避ける）
+  - `pnpm run i18n:sync:pull` に渡す `I18N_SYNC_PUBLISH_TOKEN` / `I18N_SYNC_APPROVAL_TOKEN`（CLI側の環境変数名はこのまま維持する）には、それぞれpublish用・approval用App発行分のtokenを渡し、同一実行内で2つが同じ値にならないことを保証する
+  - PAT運用を残す場合は、GitHub App運用との排他的な分岐条件（どのsecretがあるときにどの経路を使うか）をworkflow内で明示し、どちらの経路でも自己承認防止要件（publish identityとapproval identityの分離）を満たす
+  - 観測可能な完了状態: 2つのApp（private key / App ID）のみを設定した手動実行で、pull workflowが開始され、publish用・approval用それぞれで異なるtokenがCLIへ渡る
+  - _Requirements: 3.3, 3.4, 8.1_
+  - _Depends: 4.2, 5.2_
+
 ## 6. Validation: 実環境での動作確認と回帰確認
 
 - [ ] 6.1 push経路を実際のPOEditorテストプロジェクトに対して確認する
@@ -134,7 +144,7 @@
   - 観測可能な完了状態: 2種類のテストケースそれぞれについて、意図した種類の変更提案が実際のリポジトリ上に作られている
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
   - _Depends: 5.2_
-  - _Blocked: 4.2の実プロビジョニングに加え、`I18N_SYNC_PUBLISH_TOKEN`（5.2で新設、`docs/i18n-community-translation-setup.md`未記載）と`I18N_SYNC_APPROVAL_TOKEN`（承認ボット、別IDである必要あり）の実登録が人手待ちのため実行不可。_
+  - _Blocked: 4.2の実プロビジョニングに加え、publish用・approval用の2つのGitHub App（それぞれの private key を `I18N_SYNC_PUBLISH_APP_PRIVATE_KEY` / `I18N_SYNC_APPROVAL_APP_PRIVATE_KEY` として、App ID を `I18N_SYNC_PUBLISH_APP_ID` / `I18N_SYNC_APPROVAL_APP_ID` として登録すること。`docs/i18n-community-translation-setup.md` §4.3参照）の実登録が人手待ちのため実行不可。`I18N_SYNC_PUBLISH_TOKEN` / `I18N_SYNC_APPROVAL_TOKEN` という名前の値そのものはrepository secretとして登録しない（5.3でworkflow実行時にmintする方式へ変更済み）。_
 
 - [x] 6.3 リポジトリ全体のlint・test・buildが green であることを確認する
   - 新規追加したツール・ワークフローが、既存の `turbo run lint` / `turbo run test` / `turbo run build`（`@growi/app`）に悪影響を与えていないことを確認する
@@ -161,5 +171,6 @@
 なおこのフォールバックにより、`I18N_SYNC_PUBLISH_TOKEN` を登録せず `GITHUB_TOKEN` のみで運用した場合、ワークフローは失敗せず実行できてしまうが、既定の `GITHUB_TOKEN` が作成したPRイベントは他のワークフロー実行を起動しないため `ci-app-lint` が付かず、承認されてもマージキューに永遠に留まる（早期の分かりやすい失敗が、後段の分かりにくい失敗に置き換わる）。6.2で実際にシークレットを揃える際、`I18N_SYNC_PUBLISH_TOKEN` の登録漏れがないか特に確認すること。
 - (6.3) `poeditor-client.spec.ts` の20秒スロットルテストを `vi.useFakeTimers()` で時計を凍結する形に書き換え、実時間ジッターによる間欠失敗を解消した（負荷をかけた状態で修正前は20回中4回失敗、修正後は20回中0回失敗を実測）。`turbo run lint/test/build --filter @growi/app` はすべて成功。ただしレビューで `turbo run test --filter @growi/app --force`（キャッシュ無視）を実行すると `src/features/growi-vault/__tests__/clone-e2e.integ.ts` が4件失敗することが分かった。今回の差分（`poeditor-client.spec.ts` 1ファイルのみ）とは無関係で、一時gitサーバーへの接続前提が整っていない環境依存の既知の失敗（本spec外、growi-vault機能側の話）。i18n-community-translation の完了判定には影響しない。
 - (amend spec `i18n-community-translation-single-project` タスク1.1〜3.1、後日の見直しで判明) タスク1.1（namespaceごとのPOEditorプロジェクトID宣言）・タスク2（namespaceごとの個別push）・タスク3.1（namespace×言語ごとの個別export、最大12通り）は、いずれもnamespaceごとに専用のPOEditorプロジェクトを持つ当初の3プロジェクト構成を前提に実装・完了したものであり、その時点では正しかった。後日、単一の共有プロジェクトを全namespaceで使う構成（単一の`SHARED_POEDITOR_PROJECT_ID`、全namespace統合アップロード1回＋namespaceごとの非破壊的タグ付けアップロードの2段階push、言語ごとの統合exportをnamespaceへ分割するpull）に置き換えられ、これらのタスクが実装したコード自体はその後書き換わっている。3プロジェクト構成の記述を持つ現在のタスク本文は、完了当時の実装内容の記録としてそのまま残す（書き換えない）。現在の正しいアーキテクチャは`design.md`を参照すること。
+- (5.3, レビューで発見) `.github/workflows/i18n-sync-pull.yml` に、削除したはずの `GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}`（CLIへの直接受け渡し）が残っており、「フォールバックは意図的に置かない」という同ファイル内のコメントと矛盾していた。この行を削除して修正済み。あわせて、2つのApp発行トークンに一本化したことで workflow 自身の `GITHUB_TOKEN` を書き込みに使う箇所が無くなったため、`permissions` を `contents: write` / `pull-requests: write` から `contents: read` へ縮小した。さらに、6.2の `_Blocked:_` 注記が `I18N_SYNC_PUBLISH_TOKEN` / `I18N_SYNC_APPROVAL_TOKEN` を repository secret として登録するよう指示しており、`docs/i18n-community-translation-setup.md` §4.3（この2つを secret として保存しないと明記）と食い違っていたため、6.2の注記を private key / App ID の登録手順に書き換えた。
 - (amend spec `i18n-community-translation-single-project` タスク5.1実施時の発見) push CLI（タスク2）・pull CLI（タスク3.1）は、当初はGROWIの生のロケールコード（`en_US`等）をそのままPOEditor APIへ渡していた。実際にPOEditorへリクエストすると`en_US`は`"Wrong language code"`エラーで拒否され、正しくは`en`であることが実際のPOEditor APIに対するテストで判明した。これは3プロジェクト構成とは無関係な、既存のマージ済み実装の不具合であり、修正するまでは実運用のpushが毎回失敗する状態だった。`LanguageCodeMap`（GROWIロケールコード→POEditor言語コードの対応表）を新設し、push・pull双方のPOEditor API呼び出し直前でこの変換をかけることで解消した。現在の正しい対応関係はRequirement 10と`design.md`の`LanguageCodeMap`節を参照すること。タスク2・3.1自体は完了当時に正しく動作するものとして実装・レビューされたものであり、この発見によって再度やり直す必要はない（該当箇所は既に修正済み・コミット済み）。
 - (feature-level validate-impl, MANUAL_VERIFY_REQUIRED) `/kiro-validate-impl` を独立subagent（Opus）で実行。結論はGO/NO-GOではなくMANUAL_VERIFY_REQUIRED — 実装済みタスクは全て健全（承認ボット分離・PRの粒度不変条件・境界・依存方向とも問題なし）だが、4.2/6.1/6.2が人手待ちのままのため要件1.1/1.2/7.1/7.2が未充足、かつ2.x/3.x系もモック検証のみで実POEditor/実GitHub APIに対する検証が一度もない。検証で新たに1点判明: `I18N_SYNC_PUBLISH_TOKEN`未登録時のフォールバック（`||`）が警告を一切出さずGITHUB_TOKENへ切り替わっていたため、手順書通りに2つしか登録しないと「一見成功するが承認済みPRがキューに永遠に残る」という分かりにくい失敗になっていた。`readGitHubRunConfig`にフォールバック発生時の`console.error`警告を追加して修正済み（対応するテストも追加）。6.2で実シークレットを揃える前に、この警告が出ないこと（＝3つとも正しく登録されていること）を確認すること。
