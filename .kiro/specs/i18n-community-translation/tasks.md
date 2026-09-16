@@ -116,12 +116,13 @@
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 8.1_
   - _Depends: 3.1, 3.2, 3.3, 4.2_
 
-- [ ] 5.3 pullワークフローのGitHub認証を「runtime発行トークン」方式へ移行する
-  - `docs/i18n-community-translation-setup.md` の新方針（GitHub Appのprivate keyを長期保存し、`I18N_SYNC_PUBLISH_TOKEN` / `I18N_SYNC_APPROVAL_TOKEN` はworkflow実行時にmintする）に合わせ、`.github/workflows/i18n-sync-pull.yml` の認証配線を更新する
-  - GitHub App方式では、repository secretに長期保存する値を private key / App ID / installation ID に限定し、固定の長寿命 publish/approval token を前提にしない
-  - `actions/checkout` に渡す token と `pnpm run i18n:sync:pull` に渡す `I18N_SYNC_PUBLISH_TOKEN` / `I18N_SYNC_APPROVAL_TOKEN` が、同一実行内でmintされた短命トークンになることを保証する
+- [ ] 5.3 pullワークフローのGitHub認証を「2つのGitHub App + runtime発行トークン」方式へ移行する
+  - `docs/i18n-community-translation-setup.md` §4の方針（publish用・approval用の2つのGitHub Appを用意し、それぞれのprivate keyのみをrepository secretに長期保存し、App IDはrepository variablesに保存する）に合わせ、`.github/workflows/i18n-sync-pull.yml` の認証配線を更新する
+  - `actions/create-github-app-token@v3.2.0`（実装時点の最新版を確認して固定）を2回呼び、publish用App・approval用Appそれぞれのinstallation tokenをジョブ実行のたびに発行する。installation IDはrepository secretとして保存しない（actionが対象リポジトリへのインストールから自動解決する）
+  - `actions/checkout` に渡すtokenはpublish用App発行分のみとし、`|| secrets.GITHUB_TOKEN` のようなフォールバックは書かない（private keyの登録漏れはtoken発行ステップ自体をその場で失敗させ、CIが付かずキューに残り続ける分かりにくい失敗を避ける）
+  - `pnpm run i18n:sync:pull` に渡す `I18N_SYNC_PUBLISH_TOKEN` / `I18N_SYNC_APPROVAL_TOKEN`（CLI側の環境変数名はこのまま維持する）には、それぞれpublish用・approval用App発行分のtokenを渡し、同一実行内で2つが同じ値にならないことを保証する
   - PAT運用を残す場合は、GitHub App運用との排他的な分岐条件（どのsecretがあるときにどの経路を使うか）をworkflow内で明示し、どちらの経路でも自己承認防止要件（publish identityとapproval identityの分離）を満たす
-  - 観測可能な完了状態: GitHub App方式の必須secret（private key / App ID / installation ID）のみを設定した手動実行で、pull workflowが開始され、PR作成identityと承認identityが分離された状態でCLIへトークンが渡る
+  - 観測可能な完了状態: 2つのApp（private key / App ID）のみを設定した手動実行で、pull workflowが開始され、publish用・approval用それぞれで異なるtokenがCLIへ渡る
   - _Requirements: 3.3, 3.4, 8.1_
   - _Depends: 4.2, 5.2_
 

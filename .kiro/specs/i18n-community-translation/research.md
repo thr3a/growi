@@ -8,7 +8,7 @@
   - POEditor API v2 は `type=i18next` を upload/export 双方でサポートしており、入れ子 JSON をそのまま扱える（フラット化は不要）。この入れ子保持は namespace ラップ方式の前提でもあり、実プロジェクトでの実測でも確認済み
   - upload エンドポイントには「20秒に1リクエスト」という明文化されたレート制限があり、逐次呼び出しはこの間隔を空ける必要がある
   - POEditor の GitHub 連携は存在せず、API 呼び出しを自作する前提（brief.md の判断と一致）
-  - `master` の branch protection は classic Required Pull Request Reviews を有効化しておらず、Mergify アプリと merge queue に委ねている。「翻訳のみの変更は自動反映」を実現する具体的な仕組み（GitHub 標準の auto-merge か、Mergify のラベル条件によるキュー投入か）は、既存の Mergify 設定を変更せずに済むかどうかまでは未検証 — タスク化して実装時に確認する
+  - `master` の branch protection は classic Required Pull Request Reviews を有効化しておらず、Mergify アプリと merge queue に委ねている。「翻訳のみの変更は自動反映」は、既存の `.github/mergify.yml` にある「Automatic queue to merge」ルール（`#approved-reviews-by >= 1` 条件）にそのまま乗せて実現する。この条件を回避する新しい Mergify ルールを追加する案も検討したが、人レビューを経ずにマージできる経路を新設することになるため採用しない（詳細は下記「既存 `master` の branch protection / マージ経路」参照）。承認は「PR を作る identity とは別の identity」から出す設計（design.md）で満たす
   - POEditor は言語コードとして GROWI のロケールコード（`en_US`/`ja_JP`/`zh_CN`/`fr_FR`/`ko_KR`）をそのままでは受け付けない。`en_US` を渡すと `"Wrong language code"` エラーになる。正しくは `en-us`/`ja`/`zh-CN`/`fr`/`ko` へ変換する必要があり、これを行わない実装は push のたびに失敗する（実プロジェクトでの実測により判明。ただし `en_US` に対応する具体的なコードは実測時点では単なる `en` としていたが、PRレビューでの指摘を受け `en-us`（English (US)、POEditor公式の言語コード一覧に別掲）へ修正した。`en` のままだとPOEditor画面上でイギリス国旗アイコンが表示されるため。`en-us` 自体は実際のプロジェクトでまだ実行時検証していない — 単なる `en` は実測で受理されることを確認済みだが、`en-us` は公式ドキュメントの一覧に基づく変更であり、実プロビジョニング後の動作確認（tasks.md 6.1/6.2）で改めて確認すること）
 
 ## Research Log
@@ -52,9 +52,9 @@
 
 ### 既存 `master` の branch protection / マージ経路
 - **Context**: 「翻訳のみの変更は自動反映」をどう実現するかを具体化するため確認
-- **Sources Consulted**: `gh api repos/growilabs/growi/branches/master/protection`
-- **Findings**: classic の Required Pull Request Reviews は無効。Mergify アプリが `contents:write` 等の権限を持ち、merge queue を運用している。リポジトリ全体がどのようなラベル/ルールで自動マージ可否を判定しているかは、本 discovery の範囲では追い切れていない
-- **Implications**: 設計では「翻訳のみの変更は PR を作成し、GitHub の auto-merge もしくは Mergify のラベル条件経由で人の承認なしに完了させる」という到達点だけを設計として確定し、どちらの機構で実現するか・既存 Mergify 設定に例外条件を追加する必要があるかは実装タスク側で検証する前提とする（design.md の Implementation Notes に Risk として明記）
+- **Sources Consulted**: `gh api repos/growilabs/growi/branches/master/protection`、`.github/mergify.yml`
+- **Findings**: classic の Required Pull Request Reviews は無効。承認レビューの件数条件（`#approved-reviews-by >= 1`）は GitHub のブランチ保護ではなく `.github/mergify.yml` の `pull_request_rules`（「Automatic queue to merge」ルール）だけに書かれている。`queue_rules.default` 自体には承認条件は無く、CI チェック（`ci-app-lint` 等）だけが `queue_conditions`/`merge_conditions` として課されている
+- **Implications**: 「`#approved-reviews-by >= 1` を課さない新しい `pull_request_rule` を追加すれば、承認ボットという別 identity を用意せずに済むのではないか」という代替案を検討した。`queue:` アクションを使う新ルールであれば `queue_rules.default` の CI ゲートは引き続き効くため、CI を迂回するわけではない。しかし、承認レビューという「人が確認した」という手続きそのものを不要にしてしまい、PR 作成に使う identity（1つの credential）が漏えいした場合に、それだけで人レビューを経ずにマージまで到達できてしまう。現状の「別 identity が承認レビューを送る」設計では、PR 作成用の credential が単独で漏れても、もう一つの identity による承認が無い限りマージには進めない。この一段構えを失うことは受け入れられないため、Mergify 設定は変更しない。承認は「PR を作る identity とは別の identity」から出す設計を維持し、この決定は下記「Decision: Mergify のルールは変更せず、承認は別 identity から出す」に記録する
 
 ### 既存 i18n CI ゲート・ツール構成との整合
 - **Context**: 同期ワークフローが作るコード資産をどこに置くか、既存パターンをどう踏襲するかの確認
@@ -114,10 +114,19 @@
 - **Context**: requirements.md 要件3（ユーザー確認済み: ハイブリッド方式を採用）
 - **Selected Approach**: 取り込み前後で namespace×言語ファイルのキー集合を比較し、キー集合が完全一致すれば「訳文のみの変更」として CI ゲート通過を条件に自動反映、キー集合に差分があれば「構造変更」として人レビュー必須の変更提案にする
 - **Rationale**: キー集合の一致/不一致は機械的に判定できる明確な基準であり、レビューが本当に必要な変更（想定外のキー追加・削除）だけを人の目に回せる
-- **Trade-offs**: 自動反映の具体的な実現機構（GitHub 標準 auto-merge か Mergify ルールか）は本 spec の discovery だけでは確定しておらず、実装タスクでの検証が要る（上記「既存 `master` の branch protection」参照）
+- **Trade-offs**: 自動反映は既存の `.github/mergify.yml`「Automatic queue to merge」ルールにそのまま乗せる（下記 Decision 参照）ため、追加の実現機構は不要
+
+### Decision: Mergify のルールは変更せず、承認は別 identity から出す
+- **Context**: 「翻訳のみの変更を自動反映する」ために `#approved-reviews-by >= 1` 条件をどう満たすか。「承認ボットという別 identity を用意する」設計に対し、「Mergify のルールを工夫して承認件数条件そのものを外す」という代替案が出た（ユーザーが別セッションでも検討）
+- **Alternatives Considered**:
+  1. 承認ボット（PR 作成 identity とは別の identity）が承認レビューを送り、既存の「Automatic queue to merge」ルールにそのまま乗せる
+  2. `.github/mergify.yml` に、bot 作成者・特定ラベル・CI 成功を条件とし `#approved-reviews-by >= 1` を課さない新しい `pull_request_rule` を追加する（`queue:` アクションを使えば `queue_rules.default` の CI ゲート自体は維持できる）
+- **Selected Approach**: 1
+- **Rationale**: 案2は CI を迂回するわけではないが、「人が内容を確認した」という手続きを丸ごと無くしてしまう。案2を採ると、PR 作成に使う identity の credential が1つ漏れただけで、人レビューを経ずにマージまで到達できてしまう。案1では、PR 作成用の credential が漏れても、別 identity による承認が無い限りマージに進めない。この一段構えを失う変更は採用しない
+- **Trade-offs**: 案1は「PR 作成 identity」と「承認 identity」という2つの identity を用意・運用する手間が要る（`docs/i18n-community-translation-setup.md` §4 参照）。ただしこの手間は、GitHub App の private key だけを長期保存し installation token は workflow 実行のたびに発行する設計にすることで、人が手作業で token を作り直す必要が無いところまで軽減できる
+- **Follow-up**: `.github/mergify.yml` は変更しない。今後この trade-off が再検討される場合は、この Decision を起点に議論すること
 
 ## Risks & Mitigations
-- 自動マージの具体的な実現機構が既存の Mergify 運用と衝突する可能性 — 実装タスクの最初に検証し、既存運用を変更しない形（ラベル条件の追加等）に倒す
 - POEditor OSS プランの申請が承認されない可能性 — 承認されるまで本番運用（実際の同期起動）を進めない。requirements.md 要件7.2で明示済み
 - upload のレート制限（20秒に1回）を超過すると同期が失敗する — 呼び出し間に待機を入れて直列実行する設計とする
 - `sync_terms=1` はキー削除も行うため、リポジトリ側の一時的なファイル欠損や取得漏れがあると POEditor 側の翻訳を誤って削除しうる — push 対象ファイルの読み込みに失敗した場合は同期自体を中止する（部分実行しない）
